@@ -44,6 +44,7 @@ test("runMigrations creates posts and post_assets without legacy columns", () =>
       "agent_runs",
       "api_keys",
       "meta_tokens",
+      "meta_connection",
       "admin_login_challenges",
       "schema_migrations",
     ]) {
@@ -65,7 +66,7 @@ test("runMigrations is idempotent", () => {
       .prepare("SELECT COUNT(*) AS total FROM schema_migrations")
       .get() as { total: number };
 
-    assert.equal(count.total, 3);
+  assert.equal(count.total, 4);
   } finally {
     db.close();
   }

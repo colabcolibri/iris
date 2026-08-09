@@ -1,10 +1,20 @@
-const CACHE = "iris-desk-v6";
+const CACHE = "iris-desk-v7";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/iris-tokens.css",
-  "./css/style.css",
-  "./css/desk-overrides.css",
+  "./css/desk.css",
+  "./css/desk/tokens.css",
+  "./css/desk/base.css",
+  "./css/desk/layout.css",
+  "./css/desk/components/header.css",
+  "./css/desk/components/buttons.css",
+  "./css/desk/components/badge.css",
+  "./css/desk/components/tabs.css",
+  "./css/desk/views/setup.css",
+  "./css/desk/views/calendar.css",
+  "./css/desk/views/kanban.css",
+  "./css/desk/views/detail.css",
   "./js/app.js",
   "./js/app.bundle.js",
   "./js/config.js",

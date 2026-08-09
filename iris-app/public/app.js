@@ -3,6 +3,8 @@ import {
   ensureAuthenticated,
   fetchAssetBlob,
   fetchComments,
+  fetchMetaHealth,
+  fetchMetaStatus,
   fetchPost,
   fetchPosts,
   listAssets,
@@ -36,6 +38,10 @@ const commentsListEl = document.querySelector("#comments-list");
 const calendarViewEl = document.querySelector("#calendar-view");
 const kanbanViewEl = document.querySelector("#kanban-view");
 const tabs = root.querySelectorAll(".tab");
+const metaStatusTextEl = document.querySelector("#meta-status-text");
+const metaConnectLinkEl = document.querySelector("#meta-connect-link");
+const metaHealthBtnEl = document.querySelector("#meta-health-btn");
+const metaBannerEl = document.querySelector("#meta-banner");
 
 let posts = [];
 let selectedPostId = null;
@@ -72,6 +78,97 @@ function clearPreviewUrls() {
 function showError(message) {
   formErrorEl.textContent = message;
   formErrorEl.hidden = !message;
+}
+
+function showMetaBanner(message, variant = "error") {
+  if (!metaBannerEl) {
+    return;
+  }
+  metaBannerEl.textContent = message;
+  metaBannerEl.hidden = !message;
+  metaBannerEl.classList.toggle("meta-banner--success", variant === "success");
+  metaBannerEl.classList.toggle("meta-banner--error", variant === "error");
+}
+
+const META_ERROR_MESSAGES = {
+  denied: "Autorização cancelada na Meta.",
+  invalid_state: "Sessão OAuth inválida. Tente conectar novamente.",
+  exchange_failed: "Falha ao trocar o código OAuth. Verifique o app Meta.",
+  no_pages: "Nenhuma página Facebook encontrada para esta conta.",
+  no_ig_linked: "Nenhuma conta Instagram profissional vinculada à página.",
+};
+
+function applyMetaQueryFeedback() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("meta_connected") === "1") {
+    showMetaBanner("Instagram conectado com sucesso.", "success");
+  }
+  const error = params.get("meta_error");
+  if (error) {
+    showMetaBanner(META_ERROR_MESSAGES[error] ?? "Falha ao conectar Instagram.", "error");
+  }
+  if (params.has("meta_connected") || params.has("meta_error")) {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("meta_connected");
+    cleanUrl.searchParams.delete("meta_error");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
+  }
+}
+
+async function refreshMetaStatus() {
+  if (!metaStatusTextEl || !metaConnectLinkEl || !metaHealthBtnEl) {
+    return;
+  }
+
+  const status = await fetchMetaStatus();
+  const handle = status.igUsername ? `@${status.igUsername}` : null;
+
+  if (status.connected) {
+    metaStatusTextEl.textContent = handle
+      ? `Instagram conectado (${handle})`
+      : "Instagram conectado";
+    metaStatusTextEl.className = "meta-status meta-status--connected";
+    metaConnectLinkEl.textContent = "Reconectar";
+    metaConnectLinkEl.hidden = false;
+    metaHealthBtnEl.hidden = false;
+  } else if (status.tokenExpired) {
+    metaStatusTextEl.textContent = handle
+      ? `Token expirado (${handle})`
+      : "Token Instagram expirado";
+    metaStatusTextEl.className = "meta-status meta-status--disconnected";
+    metaConnectLinkEl.textContent = "Reconectar";
+    metaConnectLinkEl.hidden = false;
+    metaHealthBtnEl.hidden = false;
+  } else {
+    metaStatusTextEl.textContent = "Instagram desconectado";
+    metaStatusTextEl.className = "meta-status meta-status--disconnected";
+    metaConnectLinkEl.textContent = "Conectar Instagram";
+    metaConnectLinkEl.hidden = false;
+    metaHealthBtnEl.hidden = true;
+  }
+}
+
+async function runMetaHealthCheck() {
+  if (!metaHealthBtnEl) {
+    return;
+  }
+
+  metaHealthBtnEl.disabled = true;
+  try {
+    const result = await fetchMetaHealth();
+    if (result.ok) {
+      showMetaBanner("Conexão com a Meta OK.", "success");
+    } else {
+      showMetaBanner(result.message ?? "Falha na conexão com a Meta.", "error");
+    }
+  } catch (error) {
+    showMetaBanner(
+      error instanceof Error ? error.message : "Falha ao testar conexão.",
+      "error",
+    );
+  } finally {
+    metaHealthBtnEl.disabled = false;
+  }
 }
 
 function showView(name) {
@@ -329,6 +426,10 @@ logoutBtn?.addEventListener("click", () => {
   });
 });
 
+metaHealthBtnEl?.addEventListener("click", () => {
+  void runMetaHealthCheck();
+});
+
 subscribeRealtimeEvents({
   onPostsChanged: () => {
     void refreshPosts();
@@ -345,7 +446,8 @@ void ensureAuthenticated()
     if (!ok) {
       return;
     }
-    return refreshPosts();
+    applyMetaQueryFeedback();
+    return Promise.all([refreshPosts(), refreshMetaStatus()]);
   })
   .catch((error) => {
     showError(error instanceof Error ? error.message : "Falha ao carregar posts.");

@@ -16,6 +16,8 @@ import { handlePublishMediaRoute } from "./routes/publish-media.ts";
 import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments.ts";
 import { handleAuthRoute } from "./routes/auth.ts";
+import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
+import { handleMetaRoute } from "./routes/meta.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
@@ -157,6 +159,10 @@ async function handleRequest(
     return;
   }
 
+  if (await handleMetaAuthRoute(req, res, ctx, pathname)) {
+    return;
+  }
+
   if (pathname.startsWith("/api/")) {
     if (applyCorsIfNeeded(req, res)) {
       return;
@@ -188,6 +194,10 @@ async function handleRequest(
     }
 
     if (await handleCommentsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleMetaRoute(routeRequest)) {
       return;
     }
 

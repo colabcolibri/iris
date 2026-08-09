@@ -124,6 +124,15 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post |
 | POST | `/api/comments/:id/reply` | admin | Manual reply → Meta |
 
+## Meta (Instagram connection)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/auth/meta` | admin session | Redirect to Meta OAuth dialog |
+| GET | `/auth/meta/callback` | signed `state` | OAuth callback; stores Page token + IG account |
+| GET | `/api/meta/status` | admin | Connection status (`connected`, `@handle`, expiry) |
+| GET | `/api/meta/health` | admin | Probe Graph API (`ok` / error code) |
+
 ## Events (SSE)
 
 | Method | Path | Auth | Description |

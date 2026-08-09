@@ -10,8 +10,9 @@ test("agent desk site scaffold exists", () => {
     `${SITE}/sw.js`,
     `${SITE}/manifest.webmanifest`,
     `${SITE}/css/iris-tokens.css`,
-    `${SITE}/css/style.css`,
-    `${SITE}/css/desk-overrides.css`,
+    `${SITE}/css/desk.css`,
+    `${SITE}/css/desk/layout.css`,
+    `${SITE}/css/desk/views/kanban.css`,
     `${SITE}/js/app.js`,
     `${SITE}/js/app.bundle.js`,
     `${SITE}/js/api-client.js`,
@@ -28,7 +29,10 @@ test("agent desk index wires modules and views", () => {
   const html = readFileSync(`${SITE}/index.html`, "utf8");
   assert.match(html, /id="calendar-view"/);
   assert.match(html, /id="kanban-view"/);
-  assert.match(html, /desk-view-tabs/);
+  assert.match(html, /class="desk-tabs"/);
+  assert.match(html, /css\/desk\.css/);
+  assert.doesNotMatch(html, /bootstrap/i);
+  assert.doesNotMatch(html, /css\/style\.css/);
   assert.match(html, /app\.bundle\.js/);
   assert.match(html, /js\/app\.js/);
 });
@@ -45,4 +49,7 @@ test("agent desk app loads posts via bearer api", () => {
 
   const detail = readFileSync(`${SITE}/js/detail-panel.js`, "utf8");
   assert.match(detail, /detail-media-gallery/);
+
+  const kanbanCss = readFileSync(`${SITE}/css/desk/views/kanban.css`, "utf8");
+  assert.match(kanbanCss, /height:\s*100%/);
 });

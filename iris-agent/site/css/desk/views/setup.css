@@ -1,0 +1,44 @@
+/* Setup — credenciais */
+
+.desk-setup-card {
+  padding: 28px 24px 32px;
+  background: var(--desk-surface);
+  border: 1px solid var(--desk-border);
+  border-radius: var(--desk-radius-lg);
+  box-shadow: var(--desk-shadow);
+}
+
+.desk-setup-card .desk-title {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.desk-setup-card p {
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+
+.desk-setup-card code {
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--desk-bg);
+}
+
+.desk-setup-steps {
+  margin: 0 0 24px;
+  padding-left: 20px;
+  line-height: 1.65;
+  font-size: 0.875rem;
+}
+
+.desk-setup-upload {
+  text-align: center;
+  margin: 24px 0 0;
+}
+
+.desk-setup-hint {
+  margin: 12px 0 0;
+  font-size: 0.8125rem;
+  text-align: center;
+}

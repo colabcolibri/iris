@@ -56,6 +56,56 @@ body {
   color: var(--iris-on-primary);
 }
 
+.header-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.meta-connection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.meta-status {
+  font-size: 0.875rem;
+  color: rgb(255 255 255 / 85%);
+}
+
+.meta-status--connected {
+  color: #86efac;
+}
+
+.meta-status--disconnected {
+  color: rgb(255 255 255 / 70%);
+}
+
+.meta-connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-banner {
+  margin: 0;
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.meta-banner--success {
+  background: rgb(22 163 74 / 20%);
+  color: #dcfce7;
+}
+
+.meta-banner--error {
+  background: rgb(220 38 38 / 20%);
+  color: #fee2e2;
+}
+
 .header-actions {
   display: flex;
   flex-wrap: wrap;

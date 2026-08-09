@@ -14,6 +14,7 @@ const calendarView = root.querySelector("#calendar-view");
 const kanbanView = root.querySelector("#kanban-view");
 const refreshBtn = root.querySelector("#refresh-btn");
 const credentialsFile = root.querySelector("#credentials-file");
+const primaryPanel = root.querySelector("#desk-primary");
 const navItems = root.querySelectorAll(".desk-tab");
 
 let apiClient = null;
@@ -42,6 +43,7 @@ function showView(name) {
   detail.close();
   calendarView.hidden = name !== "calendar";
   kanbanView.hidden = name !== "kanban";
+  primaryPanel?.classList.toggle("desk-panel--kanban-mode", name === "kanban");
 
   for (const item of navItems) {
     const isActive = item.dataset.view === name;

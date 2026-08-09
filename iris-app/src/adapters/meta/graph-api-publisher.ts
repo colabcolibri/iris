@@ -8,7 +8,7 @@ import {
 } from "../../domain/publish-url.ts";
 
 export type GraphApiPublisherConfig = {
-  igUserId: string;
+  resolveIgUserId: () => string | null;
   publicBaseUrl: string;
   publishUrlSecret: string;
   graphApiVersion?: string;
@@ -62,6 +62,11 @@ export function createGraphApiPublisher(
         throw metaPublishError("Meta access token not configured");
       }
 
+      const igUserId = deps.config.resolveIgUserId();
+      if (!igUserId) {
+        throw metaPublishError("IG user id not configured");
+      }
+
       const assets = deps.assets.listByPostId(postId);
       if (assets.length === 0) {
         throw metaPublishError("post has no assets to publish");
@@ -84,7 +89,7 @@ export function createGraphApiPublisher(
           body.is_carousel_item = "true";
         }
 
-        const created = await graphPost(`/${deps.config.igUserId}/media`, token, body);
+        const created = await graphPost(`/${igUserId}/media`, token, body);
 
         if (!created.id) {
           throw metaPublishError("Meta did not return container id");
@@ -96,7 +101,7 @@ export function createGraphApiPublisher(
       let publishContainerId = containerIds[0];
 
       if (containerIds.length > 1) {
-        const carousel = await graphPost(`/${deps.config.igUserId}/media`, token, {
+        const carousel = await graphPost(`/${igUserId}/media`, token, {
           media_type: "CAROUSEL",
           children: containerIds.join(","),
         });
@@ -109,7 +114,7 @@ export function createGraphApiPublisher(
       }
 
       const published = await graphPost(
-        `/${deps.config.igUserId}/media_publish`,
+        `/${igUserId}/media_publish`,
         token,
         { creation_id: publishContainerId },
       );

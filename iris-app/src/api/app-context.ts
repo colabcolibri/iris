@@ -9,6 +9,7 @@ import {
   bootstrapMetaTokenFromEnv,
   createSqliteMetaTokenStore,
 } from "../adapters/sqlite/meta-token-repository.ts";
+import { createSqliteMetaConnectionStore } from "../adapters/sqlite/meta-connection-repository.ts";
 import { createSharpImageOptimizer } from "../adapters/image-optimizer/sharp-optimizer.ts";
 import { createFsMediaStorage } from "../adapters/media-storage/fs-media-storage.ts";
 import { createGraphApiPublisher } from "../adapters/meta/graph-api-publisher.ts";
@@ -26,6 +27,7 @@ import type { CommentRepository } from "../ports/comment-repository.ts";
 import type { ImageOptimizer } from "../ports/image-optimizer.ts";
 import type { MediaStorage } from "../ports/media-storage.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
+import type { MetaConnectionStore } from "../ports/meta-connection-store.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../ports/meta-token-store.ts";
 import type { PostRepository } from "../ports/post-repository.ts";
@@ -41,6 +43,7 @@ export type AppContext = {
   mediaStorage: MediaStorage;
   imageOptimizer: ImageOptimizer;
   metaTokenStore: MetaTokenStore;
+  metaConnectionStore: MetaConnectionStore;
   metaPublisher: MetaPublisher | null;
   metaCommentReplier: MetaCommentReplier | null;
   agentRuns: AgentRunRepository;
@@ -48,6 +51,8 @@ export type AppContext = {
   publishUrlSecret: string | null;
   metaAppSecret: string | null;
   metaWebhookVerifyToken: string | null;
+  publicBaseUrl: string | null;
+  graphApiVersion: string;
   emailSender: EmailSender;
   adminLoginChallenges: AdminLoginChallengeRepository;
 };
@@ -78,19 +83,28 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const metaTokenStore = createSqliteMetaTokenStore(options.db, {
     encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
   });
+  const metaConnectionStore = createSqliteMetaConnectionStore(options.db);
 
   bootstrapMetaTokenFromEnv(
     metaTokenStore,
     options.metaAccessToken ?? process.env.META_ACCESS_TOKEN,
   );
 
+  const envIgUserId = options.igUserId ?? process.env.META_IG_USER_ID ?? "";
   const publicBaseUrl =
     options.publicBaseUrl ?? process.env.IRIS_PUBLIC_BASE_URL ?? "";
   const publishUrlSecret =
     options.publishUrlSecret ?? process.env.IRIS_PUBLISH_URL_SECRET ?? "";
-  const igUserId = options.igUserId ?? process.env.META_IG_USER_ID ?? "";
   const graphApiVersion =
-    options.graphApiVersion ?? process.env.META_GRAPH_API_VERSION;
+    options.graphApiVersion ?? process.env.META_GRAPH_API_VERSION ?? "v21.0";
+
+  const resolveIgUserId = (): string | null => {
+    const fromStore = metaConnectionStore.get()?.igUserId;
+    if (fromStore) {
+      return fromStore;
+    }
+    return envIgUserId || null;
+  };
 
   const assets = createSqliteAssetRepository(options.db);
   const metaAppSecret = options.metaAppSecret ?? process.env.META_APP_SECRET ?? "";
@@ -98,12 +112,12 @@ export function createAppContext(options: AppContextOptions): AppContext {
     options.metaWebhookVerifyToken ?? process.env.META_WEBHOOK_VERIFY_TOKEN ?? "";
 
   const metaPublisher =
-    igUserId && publicBaseUrl && publishUrlSecret
+    publicBaseUrl && publishUrlSecret
       ? createGraphApiPublisher({
           metaTokenStore,
           assets,
           config: {
-            igUserId,
+            resolveIgUserId,
             publicBaseUrl,
             publishUrlSecret,
             graphApiVersion,
@@ -132,6 +146,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     mediaStorage: createFsMediaStorage(mediaRoot),
     imageOptimizer: createSharpImageOptimizer(),
     metaTokenStore,
+    metaConnectionStore,
     metaPublisher,
     metaCommentReplier,
     agentRuns: createSqliteAgentRunRepository(options.db),
@@ -139,6 +154,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     publishUrlSecret: publishUrlSecret || null,
     metaAppSecret: metaAppSecret || null,
     metaWebhookVerifyToken: metaWebhookVerifyToken || null,
+    publicBaseUrl: publicBaseUrl || null,
+    graphApiVersion,
     emailSender,
     adminLoginChallenges,
   };

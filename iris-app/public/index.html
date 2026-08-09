@@ -16,7 +16,17 @@
   <body>
     <div class="app-shell" id="app">
       <header class="app-header">
-        <h1>Iris</h1>
+        <div class="header-brand">
+          <h1>Iris</h1>
+          <div id="meta-connection" class="meta-connection" aria-live="polite">
+            <span id="meta-status-text" class="meta-status meta-status--disconnected">Instagram desconectado</span>
+            <div class="meta-connection-actions">
+              <a id="meta-connect-link" class="btn-ghost" href="/auth/meta">Conectar Instagram</a>
+              <button type="button" class="btn-ghost" id="meta-health-btn" hidden>Testar conexão</button>
+            </div>
+            <p id="meta-banner" class="meta-banner" hidden></p>
+          </div>
+        </div>
         <div class="header-actions">
           <button type="button" class="btn-ghost" id="logout-btn">Sair</button>
           <button type="button" class="btn-primary" id="new-post-btn">Nova postagem</button>

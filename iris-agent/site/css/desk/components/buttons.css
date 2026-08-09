@@ -1,0 +1,88 @@
+/* Botões */
+
+.desk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.desk-btn--ghost-light {
+  border-color: rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 8%);
+  color: var(--iris-on-primary);
+}
+
+.desk-btn--ghost-light:hover {
+  background: rgb(255 255 255 / 16%);
+}
+
+.desk-btn--primary {
+  background: var(--desk-accent);
+  color: #fff;
+}
+
+.desk-btn--primary:hover {
+  background: #5f24c4;
+}
+
+.desk-btn--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--desk-border);
+  background: var(--desk-surface);
+  color: var(--desk-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.desk-btn--icon:hover {
+  color: var(--desk-text);
+  border-color: var(--iris-outline-variant);
+  background: var(--desk-surface-muted);
+}
+
+.desk-btn--nav {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--desk-border);
+  background: var(--desk-surface);
+  color: var(--desk-text);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.desk-btn--nav:hover {
+  border-color: var(--desk-accent);
+  color: var(--desk-accent);
+}
+
+.desk-btn--close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--desk-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.desk-btn--close:hover {
+  background: var(--desk-surface-muted);
+  color: var(--desk-text);
+}

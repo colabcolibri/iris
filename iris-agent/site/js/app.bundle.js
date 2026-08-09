@@ -627,6 +627,7 @@
   var kanbanView = root.querySelector("#kanban-view");
   var refreshBtn = root.querySelector("#refresh-btn");
   var credentialsFile = root.querySelector("#credentials-file");
+  var primaryPanel = root.querySelector("#desk-primary");
   var navItems = root.querySelectorAll(".desk-tab");
   var apiClient = null;
   var getApiClient = () => apiClient;
@@ -649,6 +650,7 @@
     detail.close();
     calendarView.hidden = name !== "calendar";
     kanbanView.hidden = name !== "kanban";
+    primaryPanel?.classList.toggle("desk-panel--kanban-mode", name === "kanban");
     for (const item of navItems) {
       const isActive = item.dataset.view === name;
       item.classList.toggle("active", isActive);

@@ -76,7 +76,7 @@ test("graph api publisher uploads carousel and publishes", async () => {
       metaTokenStore,
       assets,
       config: {
-        igUserId: "123456789",
+        resolveIgUserId: () => "123456789",
         publicBaseUrl: "https://iris.example.com",
         publishUrlSecret: "publish-secret",
         fetchImpl: fetchImpl as typeof fetch,
@@ -145,7 +145,7 @@ test("graph api publisher publishes single image without carousel", async () => 
       metaTokenStore,
       assets,
       config: {
-        igUserId: "123456789",
+        resolveIgUserId: () => "123456789",
         publicBaseUrl: "https://iris.example.com",
         publishUrlSecret: "publish-secret",
         fetchImpl: fetchImpl as typeof fetch,

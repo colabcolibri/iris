@@ -93,6 +93,14 @@ export async function logout() {
   return apiFetch("/api/auth/logout", { method: "POST" });
 }
 
+export async function fetchMetaStatus() {
+  return apiFetch("/api/meta/status");
+}
+
+export async function fetchMetaHealth() {
+  return apiFetch("/api/meta/health");
+}
+
 export async function fetchAssetBlob(postId, filename) {
   const response = await fetch(`/api/posts/${postId}/assets/${filename}`, {
     credentials: "include",
