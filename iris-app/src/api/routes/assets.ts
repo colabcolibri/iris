@@ -1,6 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
 import type { AppContext } from "../app-context.ts";
 import { getImageLimits } from "../../domain/image-limits.ts";
 import { BodyTooLargeError, sendError } from "../json.ts";
@@ -92,11 +91,6 @@ export async function handleAssetsRoute(request: RouteRequest): Promise<boolean>
 
   const fileMatch = /^\/api\/posts\/([^/]+)\/assets\/([^/]+)$/.exec(pathname);
   if (fileMatch && req.method === "GET") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
-
     const postId = fileMatch[1];
     const filename = fileMatch[2];
     const post = ctx.posts.findById(postId);

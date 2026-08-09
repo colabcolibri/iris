@@ -1,0 +1,29 @@
+/* Iris design tokens — Stitch "Iris desk editorial offline" */
+:root {
+  --iris-bg: #f6f3ee;
+  --iris-background: #fdf8f7;
+  --iris-surface: #fdf8f7;
+  --iris-surface-low: #f7f3f1;
+  --iris-surface-container: #f1edec;
+  --iris-surface-lowest: #ffffff;
+  --iris-text: #1c1b1b;
+  --iris-text-soft: #4d4540;
+  --iris-muted: #7e7570;
+  --iris-primary: #000000;
+  --iris-on-primary: #ffffff;
+  --iris-on-primary-muted: #888380;
+  --iris-secondary: #712edd;
+  --iris-secondary-container: #8b4ef7;
+  --iris-secondary-soft: #ebddff;
+  --iris-outline: #7e7570;
+  --iris-outline-variant: #d0c4be;
+  --iris-border: #e5e1da;
+  --iris-error: #ba1a1a;
+  --iris-success: #15803d;
+  --iris-success-bright: #4ade80;
+  --iris-scheduled-bright: #60a5fa;
+  --iris-failed-bright: #f87171;
+  --iris-draft: #78716c;
+  --iris-font-display: "Playfair Display", Georgia, serif;
+  --iris-font-body: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+}

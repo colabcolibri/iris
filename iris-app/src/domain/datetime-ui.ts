@@ -1,3 +1,14 @@
+import { ValidationError } from "../api/json.ts";
+
+export function parseIsoDateParam(value: string, fieldName: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new ValidationError(`${fieldName} must be a valid ISO 8601 date`);
+  }
+
+  return date.toISOString();
+}
+
 export function toIsoFromDatetimeLocal(value: string | null | undefined): string | null {
   if (!value) {
     return null;

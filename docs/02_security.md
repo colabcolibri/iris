@@ -23,7 +23,7 @@ blocks: [03_user_types.md, 05_architecture.md]
 | Actor | Mechanism | Storage |
 | ----- | --------- | ------- |
 | Operador (UI) | OTP por email + cookie `iris_session` HttpOnly | `IRIS_SESSION_SECRET`, `IRIS_OTP_PEPPER`, `RESEND_API_KEY` no server |
-| Agente IA | `Authorization: Bearer` agent token | `IRIS_AGENT_TOKEN` (env local do agente) |
+| Agente IA | `Authorization: Bearer` agent token | `iris-agent/iris.credentials.json` (kit portável) |
 | Admin (legacy/CLI) | `Authorization: Bearer` admin token | `IRIS_ADMIN_TOKEN` no server — não usar na UI |
 | Meta webhook | `X-Hub-Signature-256` HMAC | `META_APP_SECRET` |
 
@@ -47,6 +47,18 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 - Agentes **não** recebem credenciais Meta nem path do SQLite
 - Apenas endpoints documentados em `07_api_contracts`
 - `agent_runs` audita cada execução de resposta automática
+
+## Agente local (credenciais)
+
+| Regra | Detalhe |
+| ----- | ------- |
+| Arquivo | `iris-agent/iris.credentials.json` — **gitignored** |
+| Pacote | `iris-agent/` — kit `.agent/` Meridian + `publications/` (portável; sem Node) |
+| Conteúdo | Apenas `apiUrl` + `agentToken` (+ `insecureAllowHttp` em dev) — **sem** tokens Meta |
+| Espelhamento | `agentToken` deve ser idêntico a `IRIS_AGENT_TOKEN` no `iris-app/.env` do server |
+| Geração | `openssl rand -hex 32` — rotacionar se vazamento suspeito |
+| HTTP | Bloqueado em `NODE_ENV=production`; em dev, HTTP só para localhost com `insecureAllowHttp: true` |
+| Diagnóstico | `curl` com Bearer — ver skill `push-publication` / `credentials-contract.md` |
 
 ## Data sensitivity
 

@@ -19,7 +19,7 @@ workers/*
 agents/ (server)
   └── LLM reply only
 
-.agent/skills/push-publication/  ← agente LOCAL, chama HTTP; não importa src/
+iris-agent/.agent/skills/push-publication/  ← agente LOCAL (kit portável), curl na API; não importa iris-app/src/
 ```
 
 ## Rules

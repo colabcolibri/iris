@@ -12,4 +12,8 @@ UI: http://127.0.0.1:8792/ — faça login em `/login.html` com o email configur
 
 **Dev (email):** suba o Mailpit (`mailpit` — SMTP `:1025`, UI `:8025`) e rode `pnpm dev`. Em dev o provider default é `smtp`; os OTP aparecem no Mailpit.
 
+## Agente local
+
+O agente **não** fica neste pacote. Use o workspace portável **`../iris-agent/`** (kit Meridian + `publications/` + credenciais). Ver `../iris-agent/README.md`.
+
 Ver `../docs/` para arquitetura, API e backlog.

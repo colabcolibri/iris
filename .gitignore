@@ -6,20 +6,15 @@ iris-app/.env
 iris-app/.env.*
 !iris-app/.env.example
 
+# Local agent package (Meridian kit — portável, sem Node)
+iris-agent/iris.credentials.json
+iris-agent/publications/*
+!iris-agent/publications/_example/
+!iris-agent/publications/_example/**
+
 # Dependencies
 node_modules/
 iris-app/node_modules/
-
-# Build
-dist/
-build/
-iris-app/dist/
-iris-app/build/
-
-# Local publication drafts (keep _example template tracked)
-iris-app/publications/*
-!iris-app/publications/_example/
-!iris-app/publications/_example/**
 
 # Data
 data/

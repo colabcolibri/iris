@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iris desk - Kanban</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container": "#f1edec",
+                      "tertiary-container": "#1a1c1c",
+                      "tertiary-fixed": "#e2e2e2",
+                      "on-tertiary-container": "#838484",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed": "#ebddff",
+                      "on-primary-container": "#888380",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed-dim": "#c6c6c6",
+                      "on-secondary-fixed-variant": "#5b00c5",
+                      "surface-container-low": "#f7f3f1",
+                      "on-surface": "#1c1b1b",
+                      "primary": "#000000",
+                      "surface": "#fdf8f7",
+                      "background": "#fdf8f7",
+                      "on-primary-fixed-variant": "#4a4643",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#ccc5c2",
+                      "secondary": "#712edd",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#625d5b",
+                      "primary-container": "#1e1b19",
+                      "on-surface-variant": "#4d4540",
+                      "on-background": "#1c1b1b",
+                      "on-tertiary-fixed-variant": "#454747",
+                      "on-secondary-fixed": "#250059",
+                      "on-secondary-container": "#fffbff",
+                      "tertiary": "#000000",
+                      "outline-variant": "#d0c4be",
+                      "error": "#ba1a1a",
+                      "surface-variant": "#e6e1e0",
+                      "secondary-container": "#8b4ef7",
+                      "inverse-surface": "#313030",
+                      "surface-bright": "#fdf8f7",
+                      "surface-container-high": "#ece7e6",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#e6e1e0",
+                      "primary-fixed-dim": "#ccc5c2",
+                      "secondary-fixed-dim": "#d3bbff",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed": "#1e1b19",
+                      "outline": "#7e7570",
+                      "on-secondary": "#ffffff",
+                      "surface-dim": "#ddd9d8",
+                      "inverse-on-surface": "#f4f0ef",
+                      "primary-fixed": "#e9e1dd",
+                      "on-tertiary-fixed": "#1a1c1c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-lg": "32px",
+                      "unit": "4px",
+                      "stack-sm": "8px",
+                      "stack-md": "16px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "container-max": "1440px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "Hanken Grotesk"
+                      ],
+                      "body-sm": [
+                              "Hanken Grotesk"
+                      ],
+                      "label-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "Playfair Display"
+                      ],
+                      "headline-md": [
+                              "Playfair Display"
+                      ],
+                      "headline-lg": [
+                              "Playfair Display"
+                      ],
+                      "display-lg": [
+                              "Playfair Display"
+                      ],
+                      "body-lg": [
+                              "Hanken Grotesk"
+                      ],
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "10px",
+                              {
+                                      "lineHeight": "12px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        /* Editorial Modernism specific tweaks */
+        body {
+            background-color: #f6f3ee; /* Custom cream requested */
+        }
+        .editorial-border {
+            border: 1px solid #e5e1da;
+        }
+        .kanban-col-border {
+            border-top-width: 4px;
+        }
+        /* Custom scrollbar for columns */
+        .kanban-col-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .kanban-col-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .kanban-col-scroll::-webkit-scrollbar-thumb {
+            background-color: #d0c4be;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-on-background font-body-md h-screen flex overflow-hidden antialiased">
+<!-- SideNavBar (JSON Derived) -->
+<nav class="bg-surface-container-low dark:bg-surface-container-highest flex flex-col h-full py-stack-lg px-stack-md docked full-height left-0 w-64 border-r border-outline-variant hidden md:flex shrink-0">
+<div class="mb-stack-lg px-unit">
+<h1 class="font-headline-md text-headline-md text-primary font-bold uppercase tracking-tighter">Iris desk</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-unit">Editorial</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md py-3 px-stack-md rounded-DEFAULT mb-stack-lg hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add</span>
+            Novo Post
+        </button>
+<ul class="flex flex-col gap-2">
+<li>
+<a class="flex items-center gap-3 px-stack-sm py-2 rounded-DEFAULT hover:bg-surface-variant/50 transition-all text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+<span class="font-label-md text-label-md">Calendário</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-stack-sm py-2 rounded-DEFAULT hover:bg-surface-variant/50 transition-all text-secondary font-bold border-r-4 border-secondary bg-surface-variant/30" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">view_kanban</span>
+<span class="font-label-md text-label-md">Kanban</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-stack-sm py-2 rounded-DEFAULT hover:bg-surface-variant/50 transition-all text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+<span class="font-label-md text-label-md">Arquivos</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-stack-sm py-2 rounded-DEFAULT hover:bg-surface-variant/50 transition-all text-on-surface-variant font-medium mt-stack-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-md text-label-md">Configurações</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- TopAppBar (JSON Derived - slightly modified for desktop internal context) -->
+<header class="bg-primary dark:bg-inverse-surface border-b border-outline dark:border-outline-variant flex justify-between items-center w-full px-margin-desktop py-stack-sm shrink-0 h-16">
+<div class="flex items-center gap-4 md:hidden">
+<span class="material-symbols-outlined text-on-primary">menu</span>
+<span class="font-headline-md text-headline-md text-on-primary dark:text-inverse-on-surface font-bold uppercase tracking-tighter">Iris desk</span>
+</div>
+<div class="hidden md:flex flex-1">
+<h2 class="font-headline-md text-headline-md text-on-primary">Calendário editorial</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">refresh</span>
+</button>
+<button class="text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors active:scale-95 duration-100 relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full"></span>
+</button>
+<button class="text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Kanban Board Area -->
+<div class="flex-1 overflow-x-auto overflow-y-hidden px-margin-mobile md:px-margin-desktop py-stack-lg">
+<div class="flex gap-gutter h-full min-w-max pb-4">
+<!-- Column 1: Rascunho -->
+<div class="w-80 flex flex-col bg-surface-container-lowest editorial-border rounded-lg kanban-col-border border-t-outline-variant h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0 rounded-t-lg">
+<h3 class="font-label-md text-label-md uppercase text-on-surface">Rascunho</h3>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">4</span>
+</div>
+<div class="p-4 flex-1 overflow-y-auto kanban-col-scroll flex flex-col gap-4">
+<!-- Card 1 -->
+<div class="bg-surface editorial-border p-4 rounded cursor-pointer hover:border-secondary transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-surface-variant/50 text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant">Instagram</span>
+<button class="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mb-3 line-clamp-2">Legenda do post de lançamento da nova coleção de outono...</p>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">10 Out, 14:00</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface editorial-border p-4 rounded cursor-pointer hover:border-secondary transition-colors group">
+<div class="w-full h-32 mb-3 bg-surface-variant rounded flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="object-cover w-full h-full opacity-80 mix-blend-multiply" data-alt="A detailed digital rendering of a sleek, minimalist modern living room. The room is bathed in soft, high-key natural light filtering through sheer curtains. The aesthetic is editorial and clean, featuring neutral cream tones, a striking black marble coffee table, and a single vibrant red accent chair. The mood is calm and sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaIfvVTKWAz9WscGUMwgnwvuwBNVpPnfKXW74MBbvPmwSwUm1c0aPE7Jeye_SrrKRwQWci3iX7DEbVptPrnQvp8XLVKkEe0iOKtPrRTMvX2taJRIpvFuyvOKT7_NkldTu9LNdJOBCZUjIysNkIhC-sa-6mAQR-TrdhYDdtCE12OFTwneijvTDRTfhWhNo58cWX9aVKBxsgWgHFMJJ6YVSYQrlquShAZI5EHnOzyBRrf1NKoe75l5uACsfbiCH-KTdr8iwDPSZS9wrS"/>
+</div>
+<div class="flex justify-between items-start mb-2">
+<span class="bg-surface-variant/50 text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant">Blog</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mb-3 line-clamp-2">Tendências de design para 2024 - Rascunho inicial</p>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">12 Out, 09:00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 2: Agendado -->
+<div class="w-80 flex flex-col bg-surface-container-lowest editorial-border rounded-lg kanban-col-border border-t-[#60a5fa] h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0 rounded-t-lg">
+<h3 class="font-label-md text-label-md uppercase text-on-surface">Agendado</h3>
+<span class="bg-[#60a5fa]/10 text-[#60a5fa] px-2 py-1 rounded-full font-label-sm text-label-sm border border-[#60a5fa]/20">3</span>
+</div>
+<div class="p-4 flex-1 overflow-y-auto kanban-col-scroll flex flex-col gap-4">
+<!-- Card 3 -->
+<div class="bg-surface editorial-border p-4 rounded cursor-pointer hover:border-[#60a5fa] transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-surface-variant/50 text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant">LinkedIn</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mb-3">Anúncio da nova parceria estratégica com a TechCorp.</p>
+<div class="flex items-center gap-2 text-[#60a5fa]">
+<span class="material-symbols-outlined text-[14px]">event_available</span>
+<span class="font-label-sm text-label-sm">Amanhã, 10:00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 3: Publicado -->
+<div class="w-80 flex flex-col bg-surface-container-lowest editorial-border rounded-lg kanban-col-border border-t-[#4ade80] h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0 rounded-t-lg">
+<h3 class="font-label-md text-label-md uppercase text-on-surface">Publicado</h3>
+<span class="bg-[#4ade80]/10 text-[#4ade80] px-2 py-1 rounded-full font-label-sm text-label-sm border border-[#4ade80]/20">8</span>
+</div>
+<div class="p-4 flex-1 overflow-y-auto kanban-col-scroll flex flex-col gap-4">
+<!-- Card 4 -->
+<div class="bg-surface editorial-border p-4 rounded opacity-75 hover:opacity-100 transition-opacity">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-surface-variant/50 text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant">Newsletter</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mb-3">Resumo da semana: Outubro #1</p>
+<div class="flex items-center gap-2 text-[#4ade80]">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-label-sm text-label-sm">Ontem, 18:00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 4: Falhou -->
+<div class="w-80 flex flex-col bg-surface-container-lowest editorial-border rounded-lg kanban-col-border border-t-[#f87171] h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0 rounded-t-lg">
+<h3 class="font-label-md text-label-md uppercase text-on-surface">Falhou</h3>
+<span class="bg-[#f87171]/10 text-[#f87171] px-2 py-1 rounded-full font-label-sm text-label-sm border border-[#f87171]/20">1</span>
+</div>
+<div class="p-4 flex-1 overflow-y-auto kanban-col-scroll flex flex-col gap-4">
+<!-- Card 5 -->
+<div class="bg-surface border border-[#f87171]/50 p-4 rounded cursor-pointer hover:border-[#f87171] transition-colors bg-[#f87171]/5">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-surface-variant/50 text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant">Twitter</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mb-3">Erro na API de agendamento. Tentar novamente.</p>
+<div class="flex items-center gap-2 text-[#f87171]">
+<span class="material-symbols-outlined text-[14px]">error</span>
+<span class="font-label-sm text-label-sm">Falha ao publicar</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 5: Cancelado -->
+<div class="w-80 flex flex-col bg-surface-container-lowest editorial-border rounded-lg kanban-col-border border-t-outline-variant h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0 rounded-t-lg">
+<h3 class="font-label-md text-label-md uppercase text-on-surface">Cancelado</h3>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">0</span>
+</div>
+<div class="p-4 flex-1 overflow-y-auto kanban-col-scroll flex flex-col items-center justify-center opacity-50">
+<span class="material-symbols-outlined text-display-lg text-outline mb-2" style="font-variation-settings: 'FILL' 0;">inbox</span>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Vazio</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

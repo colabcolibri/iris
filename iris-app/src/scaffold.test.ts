@@ -16,17 +16,12 @@ const REQUIRED_DIRS = [
   "src/agents",
   "public",
   "migrations",
-  "publications/_example",
 ];
 
 test("required SRP directories exist", () => {
   for (const dir of REQUIRED_DIRS) {
     assert.ok(existsSync(dir), `missing ${dir}`);
   }
-});
-
-test("publications example template exists", () => {
-  assert.ok(existsSync("publications/_example/post.md"));
 });
 
 test("createServer returns an http server", () => {

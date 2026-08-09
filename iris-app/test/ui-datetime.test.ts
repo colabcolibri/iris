@@ -21,9 +21,9 @@ test("datetime converts iso to datetime-local", () => {
   assert.match(local, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
 });
 
-test("index.html includes post list shell", () => {
+test("index.html includes editorial shell", () => {
   const html = readFileSync(join(PUBLIC_DIR, "index.html"), "utf8");
-  assert.match(html, /id="post-list"/);
+  assert.match(html, /id="calendar-view"/);
   assert.match(html, /id="post-form"/);
   assert.match(html, /style\.css/);
 });

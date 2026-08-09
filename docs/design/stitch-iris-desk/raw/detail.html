@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iris Desk - Calendário Editorial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Playfair+Display:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "error": "#ba1a1a",
+                        "outline": "#7e7570",
+                        "on-surface-variant": "#4d4540",
+                        "on-secondary-fixed-variant": "#5b00c5",
+                        "on-secondary-fixed": "#250059",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#1c1b1b",
+                        "on-secondary-container": "#fffbff",
+                        "inverse-on-surface": "#f4f0ef",
+                        "background": "#fdf8f7",
+                        "on-primary-container": "#888380",
+                        "inverse-primary": "#ccc5c2",
+                        "surface-container": "#f1edec",
+                        "primary-fixed": "#e9e1dd",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e6e1e0",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#ccc5c2",
+                        "on-primary-fixed": "#1e1b19",
+                        "inverse-surface": "#313030",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e6e1e0",
+                        "primary": "#000000",
+                        "on-tertiary-container": "#838484",
+                        "surface-container-high": "#ece7e6",
+                        "tertiary-container": "#1a1c1c",
+                        "surface-dim": "#ddd9d8",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "secondary": "#712edd",
+                        "outline-variant": "#d0c4be",
+                        "secondary-container": "#8b4ef7",
+                        "surface": "#fdf8f7",
+                        "on-primary-fixed-variant": "#4a4643",
+                        "on-background": "#1c1b1b",
+                        "surface-tint": "#625d5b",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "surface-bright": "#fdf8f7",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#1e1b19",
+                        "secondary-fixed": "#ebddff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#d3bbff",
+                        "surface-container-low": "#f7f3f1",
+                        "custom-cream": "#f6f3ee",
+                        "custom-charcoal": "#1c1917"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "container-max": "1440px",
+                        "unit": "4px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-lg": ["Playfair Display"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Playfair Display"],
+                        "label-md": ["Hanken Grotesk"],
+                        "display-lg": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #f6f3ee; }
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, #e5e1da 1px, transparent 1px),
+                linear-gradient(to bottom, #e5e1da 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface h-screen overflow-hidden flex flex-col antialiased">
+<!-- TopAppBar -->
+<header class="bg-primary dark:bg-inverse-surface text-on-primary dark:text-inverse-on-surface flex justify-between items-center w-full px-margin-desktop py-stack-sm border-b border-outline dark:border-outline-variant docked full-width top-0 z-50 shrink-0 h-[64px]">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-lg text-headline-lg text-on-primary dark:text-inverse-on-surface font-bold uppercase tracking-tighter">Iris desk</span>
+<nav class="hidden md:flex items-center gap-stack-lg ml-margin-desktop">
+<a class="font-label-md text-label-md text-on-primary font-bold border-b-2 border-secondary-container hover:bg-primary-container/20 transition-colors py-2 active:scale-95 duration-100" href="#">Calendário editorial</a>
+</nav>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="hover:bg-primary-container/20 transition-colors p-2 rounded-full active:scale-95 duration-100"><span class="material-symbols-outlined text-[20px]">refresh</span></button>
+<button class="hover:bg-primary-container/20 transition-colors p-2 rounded-full active:scale-95 duration-100"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+<button class="hover:bg-primary-container/20 transition-colors p-2 rounded-full active:scale-95 duration-100"><span class="material-symbols-outlined text-[20px]">account_circle</span></button>
+</div>
+</header>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-low dark:bg-surface-container-highest flex flex-col h-full py-stack-lg px-stack-md docked full-height left-0 w-64 border-r border-outline-variant shrink-0 hidden md:flex">
+<div class="mb-stack-lg px-stack-sm">
+<div class="font-headline-md text-headline-md text-primary">Iris desk</div>
+<div class="font-label-md text-label-md text-on-surface-variant uppercase mt-1">Editorial</div>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md py-3 px-4 rounded-DEFAULT w-full mb-stack-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Novo Post
+            </button>
+<nav class="flex flex-col gap-2 flex-1">
+<a class="flex items-center gap-3 px-3 py-2 text-secondary font-bold border-r-4 border-secondary hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200 bg-surface-variant/30" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-label-md text-label-md">Calendário</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">view_kanban</span>
+<span class="font-label-md text-label-md">Kanban</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="font-label-md text-label-md">Arquivos</span>
+</a>
+</nav>
+<div class="mt-auto pt-stack-md border-t border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-medium hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-md text-label-md">Configurações</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area (Partially visible Calendar Grid) -->
+<main class="flex-1 overflow-auto grid-bg p-margin-desktop relative">
+<div class="max-w-[800px]">
+<div class="flex items-center justify-between mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg text-primary">Outubro 2023</h1>
+<div class="flex gap-2">
+<button class="p-2 border border-outline-variant rounded-DEFAULT hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="p-2 border border-outline-variant rounded-DEFAULT hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-px bg-outline-variant border border-outline-variant">
+<!-- Days Header -->
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Dom</div>
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Seg</div>
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Ter</div>
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Qua</div>
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Qui</div>
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Sex</div>
+<div class="bg-surface-container-low p-2 text-center font-label-sm text-label-sm uppercase text-on-surface-variant">Sáb</div>
+<!-- Calendar Cells (Sample) -->
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">1</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">2</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">3</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">4</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">5</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">6</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">7</span>
+</div>
+<div class="bg-custom-cream h-32 p-2 flex flex-col relative">
+<span class="font-body-sm text-body-sm text-on-surface-variant">8</span>
+<div class="mt-1 bg-surface-variant border border-outline-variant p-1 rounded-DEFAULT">
+<div class="font-label-sm text-label-sm truncate">Rascunho Design</div>
+</div>
+</div>
+<!-- ... more cells ... -->
+</div>
+</div>
+<!-- Overlay to darken main content slightly when drawer is open -->
+<div class="absolute inset-0 bg-primary/5 pointer-events-none"></div>
+</main>
+<!-- Detail Drawer (Inspector Panel) -->
+<aside class="w-[380px] bg-[#fdfcfb] border-l border-[#e5e1da] shadow-[-4px_0_24px_rgba(0,0,0,0.02)] flex flex-col shrink-0 relative z-10 overflow-y-auto">
+<!-- Drawer Header -->
+<div class="px-stack-lg pt-stack-lg pb-stack-md flex justify-between items-start sticky top-0 bg-[#fdfcfb]/95 backdrop-blur-sm z-20 border-b border-[#e5e1da]">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-custom-charcoal mb-2">Postagem</h2>
+<span class="inline-block px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm uppercase tracking-wider border border-blue-200">Agendado</span>
+</div>
+<button class="p-1 hover:bg-surface-variant rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<div class="p-stack-lg flex flex-col gap-stack-lg">
+<!-- Metadata Section -->
+<div class="flex flex-col gap-3 font-body-sm text-body-sm border-b border-[#e5e1da] pb-stack-lg">
+<div class="grid grid-cols-[100px_1fr] items-baseline">
+<span class="text-on-surface-variant font-medium">ID</span>
+<span class="font-mono text-xs text-custom-charcoal">#INST-942</span>
+</div>
+<div class="grid grid-cols-[100px_1fr] items-baseline">
+<span class="text-on-surface-variant font-medium">Canal</span>
+<div class="flex items-center gap-1.5 text-custom-charcoal">
+<svg aria-hidden="true" class="w-4 h-4 text-on-surface-variant" fill="currentColor" viewbox="0 0 24 24"><path clip-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" fill-rule="evenodd"></path></svg>
+                            Instagram @estudio.arquitetura
+                        </div>
+</div>
+<div class="grid grid-cols-[100px_1fr] items-baseline">
+<span class="text-on-surface-variant font-medium">Agendado</span>
+<span class="text-custom-charcoal font-medium">12 Out, 14:00</span>
+</div>
+<div class="grid grid-cols-[100px_1fr] items-baseline">
+<span class="text-on-surface-variant font-medium">Publicado</span>
+<span class="text-on-surface-variant">--</span>
+</div>
+<div class="grid grid-cols-[100px_1fr] items-baseline">
+<span class="text-on-surface-variant font-medium">Criado</span>
+<span class="text-on-surface-variant">08 Out, 09:15</span>
+</div>
+</div>
+<!-- Media Placeholder -->
+<div>
+<h3 class="font-label-md text-label-md uppercase text-on-surface-variant mb-2">Mídia</h3>
+<div class="w-full aspect-video bg-surface-container-high border border-outline-variant flex items-center justify-center relative group cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-outline text-[32px] opacity-50 group-hover:opacity-100 transition-opacity">imagesmode</span>
+<div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white font-label-sm text-label-sm px-2 py-1 rounded-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">view_carousel</span> 1/4
+                        </div>
+</div>
+</div>
+<!-- Caption Block -->
+<div>
+<div class="flex justify-between items-baseline mb-2">
+<h3 class="font-label-md text-label-md uppercase text-on-surface-variant">Legenda</h3>
+<button class="font-label-sm text-label-sm text-secondary hover:underline uppercase">Editar</button>
+</div>
+<div class="bg-surface-container-low p-4 border border-outline-variant font-body-sm text-body-sm text-custom-charcoal leading-relaxed whitespace-pre-wrap">Explorando a intersecção entre brutalismo e conforto no nosso último projeto residencial na Vila Madalena. O concreto aparente encontra madeiras quentes e luz natural abundante para criar um refúgio urbano sereno. 
+
+Deslize para ver os detalhes da textura e a composição espacial da sala de estar.
+
+#arquiteturabrasileira #interiordesign #minimalism #brutalism #saopaulo</div>
+</div>
+</div>
+<!-- Drawer Footer Actions -->
+<div class="mt-auto p-stack-lg border-t border-[#e5e1da] bg-[#fdfcfb] flex flex-col gap-3">
+<button class="w-full bg-custom-charcoal text-white font-label-md text-label-md py-3 rounded-DEFAULT hover:bg-black transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">edit_calendar</span>
+                    Reagendar
+                </button>
+<button class="w-full bg-transparent text-custom-charcoal font-label-md text-label-md py-3 rounded-DEFAULT hover:bg-surface-variant transition-colors border border-outline-variant">
+                    Reverter para Rascunho
+                </button>
+</div>
+</aside>
+</div>
+</body></html>

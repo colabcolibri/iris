@@ -76,7 +76,12 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
 
       const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
       const rows = db
-        .prepare(`SELECT * FROM posts ${where} ORDER BY created_at DESC`)
+        .prepare(
+          `SELECT posts.*,
+            (SELECT COUNT(*) FROM post_assets WHERE post_assets.post_id = posts.id) AS assets_count
+           FROM posts ${where}
+           ORDER BY datetime(COALESCE(posts.scheduled_at, posts.created_at)) DESC`,
+        )
         .all(...(params as (string | number)[]));
 
       return rows.map((row) => mapPostRow(row as never));

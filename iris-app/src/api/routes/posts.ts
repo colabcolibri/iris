@@ -13,6 +13,7 @@ import {
   normalizeCreatePost,
   normalizeUpdatePost,
 } from "../../domain/post-mutations.ts";
+import { parseIsoDateParam } from "../../domain/datetime-ui.ts";
 import { applyScheduleRules } from "../../domain/schedule.ts";
 import type { PostStatus } from "../../domain/post.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
@@ -31,13 +32,22 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
   const { pathname, searchParams } = new URL(req.url ?? "/", "http://localhost");
 
   if (pathname === "/api/posts" && req.method === "GET") {
-    const status = searchParams.get("status") as PostStatus | null;
-    const posts = ctx.posts.list({
-      status: status ?? undefined,
-      from: searchParams.get("from") ?? undefined,
-      to: searchParams.get("to") ?? undefined,
-    });
-    sendJson(res, 200, { posts: posts.map(serializePost) });
+    try {
+      const status = searchParams.get("status") as PostStatus | null;
+      const fromRaw = searchParams.get("from");
+      const toRaw = searchParams.get("to");
+      const from = fromRaw ? parseIsoDateParam(fromRaw, "from") : undefined;
+      const to = toRaw ? parseIsoDateParam(toRaw, "to") : undefined;
+
+      const posts = ctx.posts.list({
+        status: status ?? undefined,
+        from,
+        to,
+      });
+      sendJson(res, 200, { posts: posts.map(serializePost) });
+    } catch (error) {
+      handlePostsError(res, error);
+    }
     return true;
   }
 

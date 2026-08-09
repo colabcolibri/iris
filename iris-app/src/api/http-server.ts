@@ -16,11 +16,16 @@ import { handlePublishMediaRoute } from "./routes/publish-media.ts";
 import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments.ts";
 import { handleAuthRoute } from "./routes/auth.ts";
+import { applyCorsIfNeeded } from "./cors.ts";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
+const REPO_ROOT = join(PROJECT_ROOT, "..");
+const DESK_DIR = join(REPO_ROOT, "iris-agent", "site");
+const DESK_CREDENTIALS_PATH = join(REPO_ROOT, "iris-agent", "iris.credentials.json");
+const DESK_URL_PREFIX = "/desk";
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -32,7 +37,7 @@ const MIME_TYPES: Record<string, string> = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
 };
 
 export type HttpServerOptions = {
@@ -74,6 +79,51 @@ function resolvePublicPath(pathname: string): string | null {
   return absolutePath;
 }
 
+function resolveDeskPath(pathname: string): string | null {
+  if (!pathname.startsWith(DESK_URL_PREFIX)) {
+    return null;
+  }
+
+  let relativePath = pathname.slice(DESK_URL_PREFIX.length);
+  if (relativePath === "" || relativePath === "/") {
+    relativePath = "/index.html";
+  }
+
+  const safePath = normalize(relativePath).replace(/^(\.\.[/\\])+/, "");
+  const absolutePath = join(DESK_DIR, safePath);
+
+  if (!absolutePath.startsWith(DESK_DIR)) {
+    return null;
+  }
+
+  return absolutePath;
+}
+
+function sendFile(filePath: string, res: ServerResponse): void {
+  const body = readFileSync(filePath);
+  const contentType = MIME_TYPES[extname(filePath)] ?? "application/octet-stream";
+  res.writeHead(200, { "Content-Type": contentType });
+  res.end(body);
+}
+
+function serveDesk(pathname: string, res: ServerResponse): boolean {
+  if (pathname === `${DESK_URL_PREFIX}/iris.credentials.json`) {
+    if (!existsSync(DESK_CREDENTIALS_PATH)) {
+      return false;
+    }
+    sendFile(DESK_CREDENTIALS_PATH, res);
+    return true;
+  }
+
+  const filePath = resolveDeskPath(pathname);
+  if (!filePath || !existsSync(filePath)) {
+    return false;
+  }
+
+  sendFile(filePath, res);
+  return true;
+}
+
 function serveStatic(pathname: string, res: ServerResponse): void {
   const filePath = resolvePublicPath(pathname);
 
@@ -82,11 +132,7 @@ function serveStatic(pathname: string, res: ServerResponse): void {
     return;
   }
 
-  const body = readFileSync(filePath);
-  const contentType = MIME_TYPES[extname(filePath)] ?? "application/octet-stream";
-
-  res.writeHead(200, { "Content-Type": contentType });
-  res.end(body);
+  sendFile(filePath, res);
 }
 
 async function handleRequest(
@@ -112,6 +158,10 @@ async function handleRequest(
   }
 
   if (pathname.startsWith("/api/")) {
+    if (applyCorsIfNeeded(req, res)) {
+      return;
+    }
+
     if (await handleAuthRoute(req, res, ctx, pathname)) {
       return;
     }
@@ -150,6 +200,20 @@ async function handleRequest(
   }
 
   if (req.method === "GET") {
+    if (pathname === DESK_URL_PREFIX) {
+      res.writeHead(302, { Location: `${DESK_URL_PREFIX}/` });
+      res.end();
+      return;
+    }
+
+    if (pathname.startsWith(`${DESK_URL_PREFIX}/`)) {
+      if (serveDesk(pathname, res)) {
+        return;
+      }
+      sendError(res, 404, "Not found");
+      return;
+    }
+
     serveStatic(pathname, res);
     return;
   }
@@ -208,4 +272,8 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
 
 export function getPublicDirectory(): string {
   return PUBLIC_DIR;
+}
+
+export function getDeskDirectory(): string {
+  return DESK_DIR;
 }

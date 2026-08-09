@@ -4,17 +4,18 @@
 
 Iris é um **gestor de postagens genérico**. Não conhece Casper, Canva nem qualquer ferramenta de criação. O **agente local** monta o pacote; o **server** armazena mídia + metadados e publica no Instagram.
 
-## Pasta local (`iris-app/publications/`)
+## Pasta local (`iris-agent/publications/`)
 
-Convive com o app em `iris-app/` (gitignored ou commitada conforme política da equipe):
+Dentro do pacote portável `iris-agent/`:
 
 ```txt
-iris-app/publications/
-  2026-08-12-lancamento-produto/
-    post.md
-    01.png
-    02.png
-    03.png
+iris-agent/
+  .agent/
+  iris.credentials.json
+  publications/
+    minha-postagem/
+      post.md
+      01.png
 ```
 
 ### `post.md`
@@ -81,4 +82,4 @@ Iris nunca importa código nem schema do Casper.
 
 ## Skill do agente
 
-`.agent/skills/push-publication/` — procedimento para scan, validação, upload e atualização de `post.md`.
+`.agent/skills/push-publication/` em `iris-agent/.agent/` — agente `@iris-local`, push via `curl`.

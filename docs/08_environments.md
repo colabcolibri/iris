@@ -24,9 +24,30 @@ blocks: []
 | `IRIS_EMAIL_PROVIDER` | `smtp` (dev) | `smtp`, `resend`, `logging` ou `noop` |
 | `IRIS_SMTP_HOST` | `127.0.0.1` | Host SMTP (dev: Mailpit) |
 | `IRIS_SMTP_PORT` | `1025` | Porta SMTP (Mailpit) |
-| `IRIS_AGENT_TOKEN` | required | Agent Bearer token |
+| `IRIS_AGENT_TOKEN` | required | Agent Bearer token (espelhar em `agent/iris.credentials.json`) |
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
+
+## Agente local (`iris-agent/`)
+
+Pacote **portável** na raiz do repo: `iris-agent/`. Kit Meridian em `.agent/` — **sem Node**.
+
+| Campo | Obrigatório | Descrição |
+| ----- | ----------- | --------- |
+| `apiUrl` | sim | Base da API Iris (`http://127.0.0.1:8792` em dev) |
+| `agentToken` | sim | Mesmo valor de `IRIS_AGENT_TOKEN` no `iris-app/.env` |
+| `insecureAllowHttp` | dev | `true` só para localhost em HTTP |
+| `publicationsDir` | não | Default `./publications` |
+
+```bash
+cd iris-agent
+cp iris.credentials.example.json iris.credentials.json
+./.agent/scripts/sync_cursor_kit.sh
+```
+
+Push via agente `@iris-local` / skill `push-publication` (`curl` + Bearer). Ver `iris-agent/README.md`.
+
+**Risco aceito:** arquivo só local; nunca commitar. Produção: `apiUrl` HTTPS.
 
 ```bash
 cd iris-app

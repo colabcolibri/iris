@@ -14,6 +14,7 @@ type PostRow = {
   auto_reply_enabled: number;
   created_at: string;
   updated_at: string;
+  assets_count?: number | string;
 };
 
 type CommentRow = {
@@ -55,6 +56,8 @@ export function mapPostRow(row: PostRow): Post {
     autoReplyEnabled: row.auto_reply_enabled === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    assetsCount:
+      row.assets_count !== undefined ? Number(row.assets_count) : undefined,
   };
 }
 
@@ -101,7 +104,7 @@ export function mapAssetRow(row: AssetRow): PostAsset {
 }
 
 export function serializePost(post: Post) {
-  return {
+  const payload: Record<string, unknown> = {
     id: post.id,
     status: post.status,
     channel: post.channel,
@@ -115,6 +118,12 @@ export function serializePost(post: Post) {
     created_at: post.createdAt,
     updated_at: post.updatedAt,
   };
+
+  if (post.assetsCount !== undefined) {
+    payload.assets_count = post.assetsCount;
+  }
+
+  return payload;
 }
 
 export function serializeAsset(asset: PostAsset) {

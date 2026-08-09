@@ -7,6 +7,12 @@
       "name": "Iris",
       "docs": "docs",
       "qualitySiege": "standard"
+    },
+    {
+      "id": "iris-agent",
+      "name": "Iris local agent",
+      "docs": "docs",
+      "qualitySiege": "kit"
     }
   ],
   "exclude": []

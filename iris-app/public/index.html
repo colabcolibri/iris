@@ -4,10 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Iris</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/iris-tokens.css" />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <div class="app-shell" id="app">
       <header class="app-header">
         <h1>Iris</h1>
         <div class="header-actions">
@@ -16,11 +23,40 @@
         </div>
       </header>
 
+      <nav class="view-tabs" role="tablist" aria-label="Visões">
+        <button
+          type="button"
+          class="tab is-active"
+          data-view="calendar"
+          role="tab"
+          aria-selected="true"
+        >
+          Calendário
+        </button>
+        <button type="button" class="tab" data-view="kanban" role="tab" aria-selected="false">
+          Kanban
+        </button>
+      </nav>
+
       <div class="app-layout">
-        <aside class="panel">
-          <h2>Postagens</h2>
-          <div id="post-list" aria-live="polite"></div>
-        </aside>
+        <section class="panel main-panel">
+          <section id="calendar-view" class="view-panel" aria-labelledby="calendar-heading">
+            <div class="view-toolbar">
+              <button type="button" class="btn-ghost" id="cal-prev" aria-label="Mês anterior">
+                ‹
+              </button>
+              <h2 id="calendar-heading" class="view-title"></h2>
+              <button type="button" class="btn-ghost" id="cal-next" aria-label="Próximo mês">
+                ›
+              </button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Calendário mensal"></div>
+          </section>
+
+          <section id="kanban-view" class="view-panel" hidden aria-label="Kanban por status">
+            <div class="kanban-board" id="kanban-board"></div>
+          </section>
+        </section>
 
         <main class="panel" id="post-detail">
           <h2 id="detail-title">Detalhe</h2>

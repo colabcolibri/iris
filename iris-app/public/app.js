@@ -12,9 +12,12 @@ import {
   updatePost,
   uploadAsset,
 } from "./api-client.js";
+import { createCalendarView } from "./calendar-view.js";
+import { createKanbanView } from "./kanban-view.js";
+import { monthRange } from "./date-utils.js";
 import { toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "./datetime.js";
 
-const postListEl = document.querySelector("#post-list");
+const root = document.querySelector("#app");
 const postFormEl = document.querySelector("#post-form");
 const detailEmptyEl = document.querySelector("#detail-empty");
 const detailTitleEl = document.querySelector("#detail-title");
@@ -30,11 +33,33 @@ const cancelFormBtn = document.querySelector("#cancel-form-btn");
 const logoutBtn = document.querySelector("#logout-btn");
 const commentsPanelEl = document.querySelector("#comments-panel");
 const commentsListEl = document.querySelector("#comments-list");
+const calendarViewEl = document.querySelector("#calendar-view");
+const kanbanViewEl = document.querySelector("#kanban-view");
+const tabs = root.querySelectorAll(".tab");
 
 let posts = [];
 let selectedPostId = null;
 let editingPostId = null;
+let activeView = "calendar";
 const previewUrls = [];
+
+const calendar = createCalendarView(root, {
+  onSelect: (post) => {
+    void selectPost(post.id);
+  },
+  onMonthChange: () => {
+    void refreshPosts();
+  },
+});
+
+const kanban = createKanbanView(root, {
+  onSelect: (post) => {
+    void selectPost(post.id);
+  },
+  onStatusChange: (post, nextStatus) => {
+    void changePostStatus(post, nextStatus);
+  },
+});
 
 function clearPreviewUrls() {
   for (const url of previewUrls) {
@@ -49,52 +74,22 @@ function showError(message) {
   formErrorEl.hidden = !message;
 }
 
-function postTitle(post) {
-  const caption = (post.caption ?? "").trim();
-  if (caption) {
-    return caption.length > 80 ? `${caption.slice(0, 80)}…` : caption;
+function showView(name) {
+  activeView = name;
+  calendarViewEl.hidden = name !== "calendar";
+  kanbanViewEl.hidden = name !== "kanban";
+
+  for (const tab of tabs) {
+    const isActive = tab.dataset.view === name;
+    tab.classList.toggle("is-active", isActive);
+    tab.setAttribute("aria-selected", isActive ? "true" : "false");
   }
-  return `Post ${post.id.slice(0, 8)}`;
+
+  void refreshPosts();
 }
 
-function renderPostList() {
-  postListEl.replaceChildren();
-
-  if (posts.length === 0) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = "Nenhuma postagem ainda.";
-    postListEl.append(empty);
-    return;
-  }
-
-  for (const post of posts) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `post-card${post.id === selectedPostId ? " selected" : ""}`;
-    button.dataset.postId = post.id;
-
-    const badge = document.createElement("span");
-    badge.className = "status-badge";
-    badge.dataset.status = post.status;
-    badge.textContent = post.status;
-
-    const title = document.createElement("p");
-    title.className = "post-card-title";
-    title.textContent = postTitle(post);
-
-    const meta = document.createElement("p");
-    meta.className = "post-card-meta";
-    meta.textContent = post.scheduled_at
-      ? `Agendado: ${new Date(post.scheduled_at).toLocaleString("pt-BR")}`
-      : post.channel;
-
-    button.append(badge, title, meta);
-    button.addEventListener("click", () => {
-      void selectPost(post.id);
-    });
-    postListEl.append(button);
-  }
+for (const tab of tabs) {
+  tab.addEventListener("click", () => showView(tab.dataset.view));
 }
 
 async function renderAssetPreview(postId) {
@@ -217,17 +212,40 @@ async function renderComments(postId) {
   }
 }
 
+function renderViews() {
+  calendar.setPosts(posts);
+  kanban.setPosts(posts);
+}
+
 async function refreshPosts() {
-  posts = await fetchPosts();
-  renderPostList();
+  if (activeView === "calendar") {
+    const { from, to } = monthRange(calendar.getCursor());
+    posts = await fetchPosts({ from, to });
+  } else {
+    posts = await fetchPosts();
+  }
+  renderViews();
 }
 
 async function selectPost(postId) {
   selectedPostId = postId;
-  renderPostList();
   const post = await fetchPost(postId);
   showForm("edit", post);
   await renderComments(postId);
+}
+
+async function changePostStatus(post, nextStatus) {
+  showError("");
+  try {
+    await updatePost(post.id, { status: nextStatus });
+    await refreshPosts();
+    if (selectedPostId === post.id) {
+      const updated = await fetchPost(post.id);
+      showForm("edit", updated);
+    }
+  } catch (error) {
+    showError(error instanceof Error ? error.message : "Falha ao atualizar status.");
+  }
 }
 
 async function uploadSelectedFiles(postId) {
@@ -298,7 +316,6 @@ scheduleBtn.addEventListener("click", () => {
 
 newPostBtn.addEventListener("click", () => {
   selectedPostId = null;
-  renderPostList();
   showForm("create");
 });
 

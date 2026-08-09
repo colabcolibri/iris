@@ -1,0 +1,13 @@
+iris.credentials.json
+publications/*
+!publications/_example/
+!publications/_example/**
+
+site/node_modules/
+
+# Meridian IDE adapters (gerados por sync — não commitar)
+.cursor/
+.claude/
+.codex/
+.agents/
+AGENTS.md

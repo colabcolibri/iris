@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iris desk - Calendário</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=Playfair+Display:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#8b4ef7",
+                        "surface-bright": "#fdf8f7",
+                        "inverse-surface": "#313030",
+                        "on-primary-fixed-variant": "#4a4643",
+                        "on-tertiary-container": "#838484",
+                        "primary-fixed": "#e9e1dd",
+                        "surface-container-low": "#f7f3f1",
+                        "tertiary": "#000000",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1c1b1b",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "inverse-on-surface": "#f4f0ef",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-surface-variant": "#4d4540",
+                        "outline-variant": "#d0c4be",
+                        "tertiary-container": "#1a1c1c",
+                        "surface-variant": "#e6e1e0",
+                        "secondary-fixed-dim": "#d3bbff",
+                        "on-primary-fixed": "#1e1b19",
+                        "primary-container": "#1e1b19",
+                        "surface": "#fdf8f7",
+                        "surface-container-high": "#ece7e6",
+                        "secondary": "#712edd",
+                        "error": "#ba1a1a",
+                        "outline": "#7e7570",
+                        "secondary-fixed": "#ebddff",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-tint": "#625d5b",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#5b00c5",
+                        "on-primary": "#ffffff",
+                        "background": "#fdf8f7",
+                        "on-secondary-fixed": "#250059",
+                        "on-primary-container": "#888380",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#fffbff",
+                        "primary-fixed-dim": "#ccc5c2",
+                        "surface-container": "#f1edec",
+                        "primary": "#000000",
+                        "inverse-primary": "#ccc5c2",
+                        "surface-dim": "#ddd9d8",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1c1b1b",
+                        "surface-container-highest": "#e6e1e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "margin-desktop": "40px",
+                        "unit": "4px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "display-lg": ["Playfair Display"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "label-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "body-sm": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar -->
+<header class="bg-primary dark:bg-inverse-surface text-on-primary dark:text-inverse-on-surface flex justify-between items-center w-full px-margin-desktop py-stack-sm border-b border-outline dark:border-outline-variant docked full-width top-0 z-50">
+<div class="flex items-center gap-stack-md">
+<span class="material-symbols-outlined font-headline-lg text-headline-lg text-on-primary dark:text-inverse-on-surface font-bold uppercase tracking-tighter">auto_awesome</span>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold uppercase tracking-tighter">Iris desk</span>
+<span class="font-label-md text-label-md text-on-primary-container">Calendário editorial</span>
+</div>
+</div>
+<nav class="hidden md:flex gap-stack-lg">
+<a class="flex flex-col text-on-primary font-bold border-b-2 border-secondary-container hover:bg-primary-container/20 transition-colors active:scale-95 duration-100 font-label-md text-label-md py-stack-sm" href="#">
+<span>Calendário editorial</span>
+</a>
+</nav>
+<div class="flex items-center gap-stack-md">
+<div class="hidden lg:flex items-center gap-stack-md px-stack-md py-stack-sm rounded-full bg-surface-container/10 border border-outline/30">
+<div class="flex flex-col items-center px-stack-sm">
+<span class="font-headline-md text-headline-md">24</span>
+<span class="font-label-sm text-label-sm text-on-primary-container uppercase">Total</span>
+</div>
+<div class="w-px h-6 bg-outline/30"></div>
+<div class="flex flex-col items-center px-stack-sm">
+<span class="font-headline-md text-headline-md text-secondary-fixed-dim">8</span>
+<span class="font-label-sm text-label-sm text-on-primary-container uppercase">Agendados</span>
+</div>
+<div class="w-px h-6 bg-outline/30"></div>
+<div class="flex flex-col items-center px-stack-sm">
+<span class="font-headline-md text-headline-md text-[#4ade80]">12</span>
+<span class="font-label-sm text-label-sm text-on-primary-container uppercase">Publicados</span>
+</div>
+<div class="w-px h-6 bg-outline/30"></div>
+<div class="flex flex-col items-center px-stack-sm">
+<span class="font-headline-md text-headline-md text-tertiary-fixed-dim">4</span>
+<span class="font-label-sm text-label-sm text-on-primary-container uppercase">Rascunhos</span>
+</div>
+</div>
+<button class="hover:bg-primary-container/20 transition-colors active:scale-95 duration-100 p-unit rounded-full">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<button class="hover:bg-primary-container/20 transition-colors active:scale-95 duration-100 p-unit rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-primary-container/20 transition-colors active:scale-95 duration-100 p-unit rounded-full">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-low dark:bg-surface-container-highest text-primary dark:text-inverse-primary border-r border-outline-variant docked full-height left-0 w-64 flex flex-col h-full py-stack-lg px-stack-md hidden md:flex z-40">
+<div class="mb-stack-lg flex items-center gap-stack-sm px-stack-sm">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined font-label-md">auto_awesome</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Iris desk</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Editorial</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-stack-sm font-label-md text-label-md">
+<a class="flex items-center gap-stack-sm px-stack-md py-stack-sm rounded-r-lg text-secondary font-bold border-r-4 border-secondary bg-surface-variant/20 hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span>Calendário</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-md py-stack-sm rounded-r-lg text-on-surface-variant font-medium hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">view_kanban</span>
+<span>Kanban</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-md py-stack-sm rounded-r-lg text-on-surface-variant font-medium hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Arquivos</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-md py-stack-sm rounded-r-lg text-on-surface-variant font-medium hover:bg-surface-variant/50 transition-all active:translate-x-1 duration-200 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configurações</span>
+</a>
+</nav>
+<button class="mt-stack-lg w-full bg-primary text-on-primary py-stack-sm px-stack-md rounded font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">
+                Novo Post
+            </button>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop bg-background">
+<div class="max-w-container-max mx-auto h-full flex flex-col">
+<!-- Main Content Header -->
+<div class="flex justify-between items-end mb-stack-lg border-b border-surface-variant pb-stack-md">
+<div class="flex items-center gap-stack-md">
+<h1 class="font-display-lg text-display-lg text-on-background">Agosto 2026</h1>
+<div class="flex gap-unit">
+<button class="p-unit rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined font-label-md">chevron_left</span>
+</button>
+<button class="p-unit rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined font-label-md">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex gap-stack-md items-center">
+<div class="flex items-center gap-unit bg-surface-container px-stack-md py-unit rounded-full border border-outline-variant">
+<div class="w-2 h-2 rounded-full bg-[#4ade80]"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Online 24 posts</span>
+</div>
+</div>
+</div>
+<!-- Calendar Grid Container -->
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg flex flex-col overflow-hidden shadow-sm">
+<!-- Days of Week Header -->
+<div class="grid grid-cols-7 border-b border-outline-variant bg-surface-container-low font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">
+<div class="p-stack-sm text-center border-r border-outline-variant">Dom</div>
+<div class="p-stack-sm text-center border-r border-outline-variant">Seg</div>
+<div class="p-stack-sm text-center border-r border-outline-variant">Ter</div>
+<div class="p-stack-sm text-center border-r border-outline-variant">Qua</div>
+<div class="p-stack-sm text-center border-r border-outline-variant">Qui</div>
+<div class="p-stack-sm text-center border-r border-outline-variant">Sex</div>
+<div class="p-stack-sm text-center">Sáb</div>
+</div>
+<!-- Calendar Cells -->
+<!-- Note: For brevity, generating a structured sample of the month rather than 31 complex blocks. -->
+<div class="grid grid-cols-7 flex-1 auto-rows-fr bg-outline-variant gap-px">
+<!-- Empty cells for previous month padding -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit opacity-50">
+<span class="font-headline-md text-headline-md text-outline">26</span>
+</div>
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit opacity-50">
+<span class="font-headline-md text-headline-md text-outline">27</span>
+</div>
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit opacity-50">
+<span class="font-headline-md text-headline-md text-outline">28</span>
+</div>
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit opacity-50">
+<span class="font-headline-md text-headline-md text-outline">29</span>
+</div>
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit opacity-50">
+<span class="font-headline-md text-headline-md text-outline">30</span>
+</div>
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit opacity-50">
+<span class="font-headline-md text-headline-md text-outline">31</span>
+</div>
+<!-- Day 1 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">1</span>
+</div>
+<!-- Day 2 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">2</span>
+</div>
+<!-- Day 3 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">3</span>
+</div>
+<!-- Day 4 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">4</span>
+</div>
+<!-- Day 5 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">5</span>
+<!-- Post Chip: Published -->
+<div class="mt-auto bg-surface border border-outline-variant rounded flex items-stretch overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<div class="w-1 bg-[#4ade80] flex-shrink-0"></div>
+<div class="p-unit flex-1 flex items-center gap-unit overflow-hidden">
+<span class="material-symbols-outlined text-[14px] text-outline flex-shrink-0">photo_camera</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate text-xs leading-tight">Dicas de branding...</span>
+</div>
+</div>
+</div>
+<!-- Day 6 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">6</span>
+</div>
+<!-- Day 7 -->
+<div class="bg-surface-container-lowest p-stack-sm flex flex-col gap-unit group hover:bg-surface-container-low transition-colors relative">
+<span class="font-headline-md text-headline-md text-on-surface">7</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

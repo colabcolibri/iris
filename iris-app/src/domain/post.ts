@@ -18,6 +18,7 @@ export type Post = {
   autoReplyEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+  assetsCount?: number;
 };
 
 export type PostAsset = {

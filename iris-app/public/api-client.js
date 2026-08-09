@@ -34,8 +34,13 @@ async function apiFetch(path, options = {}) {
   return response;
 }
 
-export async function fetchPosts() {
-  const payload = await apiFetch("/api/posts");
+export async function fetchPosts(params = {}) {
+  const query = new URLSearchParams();
+  if (params.from) query.set("from", params.from);
+  if (params.to) query.set("to", params.to);
+  if (params.status) query.set("status", params.status);
+  const suffix = query.toString() ? `?${query}` : "";
+  const payload = await apiFetch(`/api/posts${suffix}`);
   return payload.posts ?? [];
 }
 

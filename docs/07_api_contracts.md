@@ -52,6 +52,33 @@ blocks: []
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/posts` | admin, agent | List (query: `status`, `from`, `to`) |
+
+### GET /api/posts — query params
+
+| Param | Type | Description |
+| ----- | ---- | ----------- |
+| `status` | string | Optional filter: `draft`, `scheduled`, `published`, `cancelled`, `failed` |
+| `from` | ISO 8601 UTC | Inclusive lower bound on display date |
+| `to` | ISO 8601 UTC | Inclusive upper bound on display date |
+
+**Display date rule:** posts are matched by `COALESCE(scheduled_at, created_at)` — drafts without `scheduled_at` use `created_at`. Results are ordered by that same coalesced datetime descending.
+
+**Response fields (list):** each post includes `id`, `status`, `scheduled_at`, `published_at`, `created_at`, `caption`, `assets_count` (integer ≥ 0, from subquery — no per-post asset fetch).
+
+**Examples:**
+
+```bash
+# Agent token
+curl -H "Authorization: Bearer $IRIS_AGENT_TOKEN" \
+  "http://127.0.0.1:8792/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z"
+
+# UI session (cookie after OTP login)
+curl -b "iris_session=..." \
+  "http://127.0.0.1:8792/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z"
+```
+
+Invalid `from`/`to` values return `422` with `{ "error": "from must be a valid ISO 8601 date" }`.
+
 | GET | `/api/posts/:id` | admin, agent | Post + asset metadata |
 | POST | `/api/posts` | admin, agent | Create post |
 | PATCH | `/api/posts/:id` | admin, agent | Update caption, schedule, status |
@@ -115,7 +142,9 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | Method | Path |
 | ------ | ---- |
 | GET | `/health` |
-| GET | `/`, `/app.js`, `/style.css` |
+| GET | `/` — admin UI (OTP session) |
+| GET | `/desk/` — agent desk (offline-first; static from `iris-agent/site/`) |
+| GET | `/desk/iris.credentials.json` — local agent config (dev only; gitignored source in `iris-agent/`) |
 
 ## Contrato local (agente, não é HTTP)
 

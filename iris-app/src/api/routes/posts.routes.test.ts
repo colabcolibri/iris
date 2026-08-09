@@ -119,6 +119,13 @@ test("posts crud and asset upload flow", async () => {
     assert.equal(fileResponse.status, 200);
     assert.equal(fileResponse.headers.get("content-type"), "image/jpeg");
 
+    const agentFileResponse = await fetch(
+      `${baseUrl}/api/posts/${created.id}/assets/${filename}`,
+      { headers: { Authorization: `Bearer ${AGENT}` } },
+    );
+    assert.equal(agentFileResponse.status, 200);
+    assert.equal(agentFileResponse.headers.get("content-type"), "image/jpeg");
+
     const scheduledAt = new Date(Date.now() + 3_600_000).toISOString();
     const scheduleResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
       method: "PATCH",
@@ -184,5 +191,124 @@ test("agent cannot toggle auto_reply without admin", async () => {
     assert.equal(adminPatch.status, 200);
     const updated = (await adminPatch.json()) as { auto_reply_enabled: boolean };
     assert.equal(updated.auto_reply_enabled, true);
+  });
+});
+
+test("list posts filters by from/to and includes assets_count", async () => {
+  await withIntegrationServer(async ({ baseUrl }) => {
+    const inRangeAt = "2026-08-15T12:00:00.000Z";
+    const outRangeAt = "2026-09-10T12:00:00.000Z";
+
+    const inRangeResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        caption: "Agosto",
+        channel: "instagram",
+        scheduled_at: inRangeAt,
+      }),
+    });
+    const inRange = (await inRangeResponse.json()) as { id: string };
+
+    const outRangeResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        caption: "Setembro",
+        channel: "instagram",
+        scheduled_at: outRangeAt,
+      }),
+    });
+    const outRange = (await outRangeResponse.json()) as { id: string };
+
+    const draftResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        caption: "Draft sem agenda",
+        channel: "instagram",
+      }),
+    });
+    const draft = (await draftResponse.json()) as { id: string };
+
+    const listResponse = await fetch(
+      `${baseUrl}/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z`,
+      { headers: { Authorization: `Bearer ${AGENT}` } },
+    );
+    assert.equal(listResponse.status, 200);
+    const payload = (await listResponse.json()) as {
+      posts: Array<{ id: string; assets_count?: number }>;
+    };
+
+    const ids = payload.posts.map((post) => post.id);
+    assert.ok(ids.includes(inRange.id));
+    assert.ok(ids.includes(draft.id));
+    assert.ok(!ids.includes(outRange.id));
+    assert.ok(payload.posts.every((post) => typeof post.assets_count === "number"));
+
+    const emptyResponse = await fetch(
+      `${baseUrl}/api/posts?from=2099-01-01T00:00:00.000Z&to=2099-01-31T23:59:59.999Z`,
+      { headers: { Authorization: `Bearer ${AGENT}` } },
+    );
+    const emptyPayload = (await emptyResponse.json()) as { posts: unknown[] };
+    assert.equal(emptyPayload.posts.length, 0);
+
+    const invalidResponse = await fetch(`${baseUrl}/api/posts?from=not-a-date`, {
+      headers: { Authorization: `Bearer ${AGENT}` },
+    });
+    assert.equal(invalidResponse.status, 422);
+  });
+});
+
+test("list posts returns assets_count after upload", async () => {
+  await withIntegrationServer(async ({ baseUrl }) => {
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ caption: "com mídia", channel: "instagram" }),
+    });
+    const created = (await createResponse.json()) as { id: string };
+
+    const png = await sharp({
+      create: {
+        width: 400,
+        height: 400,
+        channels: 3,
+        background: "#ff0000",
+      },
+    })
+      .png()
+      .toBuffer();
+
+    const boundary = "----iris-assets-count";
+    const body = Buffer.concat([
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="sort_order"\r\n\r\n1\r\n`,
+      ),
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\n`,
+      ),
+      png,
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+
+    await fetch(`${baseUrl}/api/posts/${created.id}/assets`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${AGENT}`,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+
+    const listResponse = await fetch(`${baseUrl}/api/posts`, {
+      headers: { Authorization: `Bearer ${AGENT}` },
+    });
+    const payload = (await listResponse.json()) as {
+      posts: Array<{ id: string; assets_count: number }>;
+    };
+    const listed = payload.posts.find((post) => post.id === created.id);
+    assert.ok(listed);
+    assert.equal(listed!.assets_count, 1);
   });
 });

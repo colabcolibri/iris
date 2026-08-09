@@ -11,7 +11,7 @@ blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_syst
 
 ## Objective
 
-Forma do Iris: mini-server com camadas SRP, mídia em disco, SQLite, UI HTML, Meta API. Pacote local em `publications/` — ver `docs/architecture/local-publications.md`.
+Forma do Iris: mini-server com camadas SRP, mídia em disco, SQLite, UI HTML, Meta API. Pacote local do agente em `iris-agent/publications/` — ver `docs/architecture/local-publications.md`.
 
 ## System context
 
@@ -54,8 +54,7 @@ flowchart TB
 iris/                     # workspace Meridian
   docs/                   # phase docs do produto
   .meridian/              # backlog SQLite
-  iris-app/               # aplicação Node
-    publications/         # pacotes locais (post.md + imagens)
+  iris-app/               # aplicação Node (server + UI)
     src/
       domain/
       ports/
@@ -72,7 +71,11 @@ iris/                     # workspace Meridian
     data/
       iris.db
       media/{post_id}/
-  .agent/                 # skills incl. push-publication
+  iris-agent/             # kit agente local (portável, sem Node)
+    .agent/               # skills + agents Meridian
+    publications/         # post.md + imagens
+    iris.credentials.json
+  .agent/                 # kit Meridian do produto (symlink push-publication → iris-agent)
 ```
 
 ## Layers and boundaries
