@@ -6,7 +6,7 @@
   "description": "Iris — agendamento, publicação e comentários no Instagram (serviço independente do Casper)",
   "type": "module",
   "scripts": {
-    "dev": "node --experimental-strip-types src/server.ts",
+    "dev": "node --env-file=.env --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test $(find src test -name '*.test.ts' -print 2>/dev/null | tr '\\n' ' ')"
   },

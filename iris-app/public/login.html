@@ -9,32 +9,70 @@
   <body>
     <div class="app-shell login-shell">
       <main class="panel login-panel">
-        <h1>Iris</h1>
-        <p class="login-lead">Entre com o código enviado ao seu email.</p>
+        <header class="login-brand">
+          <h1>Iris</h1>
+        </header>
 
-        <form id="login-form" class="login-form">
-          <div class="form-field" id="email-step">
-            <label for="login-email">Email</label>
-            <input id="login-email" name="email" type="email" required autocomplete="email" />
-            <button type="button" class="btn-primary" id="send-code-btn">Enviar código</button>
-          </div>
+        <div class="login-progress" aria-hidden="true">
+          <span class="login-progress-dot is-active" id="progress-email"></span>
+          <span class="login-progress-dot" id="progress-code"></span>
+        </div>
 
-          <div class="form-field" id="code-step" hidden>
-            <label for="login-code">Código de 6 dígitos</label>
-            <input
-              id="login-code"
-              name="code"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]{6}"
-              maxlength="6"
-              required
-              autocomplete="one-time-code"
-            />
-            <button type="submit" class="btn-primary">Entrar</button>
-          </div>
+        <form id="login-form" class="login-form" novalidate>
+          <section class="login-view" id="email-step">
+            <h2 class="login-title">Entrar</h2>
 
-          <p class="error-banner" id="login-error" hidden></p>
+            <div class="form-field">
+              <label for="login-email">Email</label>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                placeholder="seu@email.com"
+              />
+            </div>
+
+            <button type="button" class="btn-primary btn-block" id="send-code-btn">
+              Continuar
+            </button>
+          </section>
+
+          <section class="login-view" id="code-step" hidden>
+            <h2 class="login-title">Código de acesso</h2>
+            <p class="login-sent-to">
+              Enviado para <strong id="code-sent-email"></strong>
+              <button type="button" class="btn-link btn-link-inline" id="change-email-btn">Alterar</button>
+            </p>
+
+            <div class="form-field">
+              <label for="login-code" class="sr-only">Código de 6 dígitos</label>
+              <input
+                id="login-code"
+                name="code"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                required
+                autocomplete="one-time-code"
+                placeholder="000000"
+                class="login-code-input"
+                aria-label="Código de 6 dígitos"
+              />
+            </div>
+
+            <button type="submit" class="btn-primary btn-block" id="confirm-code-btn">
+              Entrar
+            </button>
+
+            <p class="login-resend">
+              <button type="button" class="btn-link" id="resend-code-btn">Reenviar código</button>
+            </p>
+          </section>
+
+          <p class="login-feedback" id="login-feedback" hidden role="alert"></p>
         </form>
       </main>
     </div>
