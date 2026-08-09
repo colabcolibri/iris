@@ -10,22 +10,17 @@ import {
   sameDay,
   truncate,
 } from "@/lib/date-utils";
+import { formatChipTime, sameZonedCalendarDay } from "@/lib/datetime";
 import type { Post } from "@/lib/types";
 
 type CalendarViewProps = {
   posts: Post[];
   cursor: Date;
   selectedId: string | null;
+  timeZone: string;
   onCursorChange: (date: Date) => void;
   onSelect: (post: Post) => void;
 };
-
-function formatChipTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 const CHIP_STYLES: Record<string, string> = {
   draft: "border-primary/20 bg-muted text-foreground",
@@ -39,6 +34,7 @@ export function CalendarView({
   posts,
   cursor,
   selectedId,
+  timeZone,
   onCursorChange,
   onSelect,
 }: CalendarViewProps) {
@@ -102,7 +98,7 @@ export function CalendarView({
           const dayPosts = posts.filter((post) => {
             const raw = postDisplayDate(post);
             if (!raw) return false;
-            return sameDay(new Date(raw), day);
+            return sameZonedCalendarDay(raw, day, timeZone);
           });
 
           const isOutside = day.getMonth() !== month;
@@ -127,7 +123,7 @@ export function CalendarView({
               </span>
 
               {dayPosts.slice(0, 3).map((post) => {
-                const time = post.scheduled_at ? formatChipTime(post.scheduled_at) : "";
+                const time = post.scheduled_at ? formatChipTime(post.scheduled_at, timeZone) : "";
                 const label = truncate(post.caption, 22);
 
                 return (

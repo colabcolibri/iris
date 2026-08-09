@@ -56,21 +56,3 @@ export function calendarCells(year: number, monthIndex: number) {
 
   return cells;
 }
-
-export function monthRange(date: Date) {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const from = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0)).toISOString();
-  const to = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999)).toISOString();
-  return { from, to };
-}
-
-export function formatWhen(iso: string | null | undefined) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}

@@ -9,19 +9,21 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatWhen, postDisplayDate, truncate } from "@/lib/date-utils";
+import { formatWhen } from "@/lib/datetime";
+import { postDisplayDate, truncate } from "@/lib/date-utils";
 import { MOVE_STATUS_OPTIONS } from "@/lib/status";
 import type { Post, PostStatus } from "@/lib/types";
 
 type KanbanCardProps = {
   post: Post;
+  timeZone: string;
   onOpen: () => void;
   onStatusChange: (status: PostStatus) => void;
 };
 
-export function KanbanCard({ post, onOpen, onStatusChange }: KanbanCardProps) {
+export function KanbanCard({ post, timeZone, onOpen, onStatusChange }: KanbanCardProps) {
   const moveOptions = MOVE_STATUS_OPTIONS.filter((option) => option.value !== post.status);
-  const when = formatWhen(postDisplayDate(post));
+  const when = formatWhen(postDisplayDate(post), timeZone);
   const isFailed = post.status === "failed";
   const isPublished = post.status === "published";
   const isScheduled = post.status === "scheduled";

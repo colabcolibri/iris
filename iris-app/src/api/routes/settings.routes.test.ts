@@ -125,3 +125,44 @@ test("PUT reply persona persists and agent cannot write", async () => {
     assert.equal(body.max_chars, 420);
   });
 });
+
+test("GET app settings returns default timezone", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const response = await fetch(`${baseUrl}/api/settings/app`, {
+      headers: { Cookie: adminCookie },
+    });
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { timezone: string };
+    assert.equal(body.timezone, "America/Sao_Paulo");
+  });
+});
+
+test("PUT app settings persists timezone and rejects invalid zone", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const putResponse = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ timezone: "Europe/Lisbon" }),
+    });
+    assert.equal(putResponse.status, 200);
+
+    const invalid = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ timezone: "Invalid/Zone" }),
+    });
+    assert.equal(invalid.status, 422);
+
+    const getResponse = await fetch(`${baseUrl}/api/settings/app`, {
+      headers: { Cookie: adminCookie },
+    });
+    const body = (await getResponse.json()) as { timezone: string };
+    assert.equal(body.timezone, "Europe/Lisbon");
+  });
+});

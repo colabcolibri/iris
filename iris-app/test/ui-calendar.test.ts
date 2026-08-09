@@ -13,8 +13,10 @@ test("admin includes calendar view", () => {
 
 test("calendar utilities and api filtering exist", () => {
   const dateUtils = readFileSync(`${ADMIN}/lib/date-utils.ts`, "utf8");
-  assert.match(dateUtils, /monthRange/);
   assert.match(dateUtils, /postDisplayDate/);
+
+  const datetime = readFileSync(`${ADMIN}/lib/datetime.ts`, "utf8");
+  assert.match(datetime, /monthRange/);
 
   const api = readFileSync(`${ADMIN}/lib/api.ts`, "utf8");
   assert.match(api, /fetchPosts/);

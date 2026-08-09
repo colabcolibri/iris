@@ -1,4 +1,5 @@
 import { AtSign, LogOut, Plus } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MetaStatus } from "@/lib/types";
@@ -15,9 +16,12 @@ export function AppHeader({ meta, onLogout, onNewPost, onMetaHealth }: AppHeader
   const handle = meta?.igUsername ? `@${meta.igUsername}` : null;
 
   return (
-    <header className="flex h-20 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-black/20 bg-[#292929] px-6 text-white shadow-sm">
-      <div className="flex items-center gap-6">
-        <span className="font-display text-3xl font-semibold tracking-tight md:hidden">Iris</span>
+    <header className="flex h-20 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-black/20 bg-[#1f1d1b] px-6 text-white shadow-sm">
+      <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-3 md:hidden">
+          <BrandLogo size="sm" />
+          <span className="font-display text-2xl font-semibold tracking-tight">Iris</span>
+        </div>
 
         {connected && handle ? (
           <div className="hidden items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 md:flex">

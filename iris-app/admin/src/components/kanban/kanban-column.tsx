@@ -9,11 +9,18 @@ const EMPTY_MESSAGES: Partial<Record<PostStatus, string>> = {
 type KanbanColumnProps = {
   column: { id: PostStatus; label: string };
   posts: Post[];
+  timeZone: string;
   onOpenPost: (post: Post) => void;
   onStatusChange: (post: Post, status: PostStatus) => void;
 };
 
-export function KanbanColumn({ column, posts, onOpenPost, onStatusChange }: KanbanColumnProps) {
+export function KanbanColumn({
+  column,
+  posts,
+  timeZone,
+  onOpenPost,
+  onStatusChange,
+}: KanbanColumnProps) {
   return (
     <KanbanColumnShell status={column.id} label={column.label} count={posts.length}>
       {posts.length === 0 ? (
@@ -23,6 +30,7 @@ export function KanbanColumn({ column, posts, onOpenPost, onStatusChange }: Kanb
           <KanbanCard
             key={post.id}
             post={post}
+            timeZone={timeZone}
             onOpen={() => onOpenPost(post)}
             onStatusChange={(status) => onStatusChange(post, status)}
           />

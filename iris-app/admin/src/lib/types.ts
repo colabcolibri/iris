@@ -44,6 +44,11 @@ export type ReplyPersona = {
   updated_at: string;
 };
 
+export type AppSettings = {
+  timezone: string;
+  updated_at: string;
+};
+
 export type ReplyInspectionThreadEntry = {
   author: string | null;
   text: string | null;

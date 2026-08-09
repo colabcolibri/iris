@@ -19,6 +19,7 @@ import { handleAuthRoute } from "./routes/auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
+import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
@@ -174,6 +175,10 @@ async function handleRequest(
     }
 
     if (await handleSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleAppSettingsRoute(routeRequest)) {
       return;
     }
 

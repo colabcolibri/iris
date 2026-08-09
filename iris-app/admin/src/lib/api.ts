@@ -1,4 +1,4 @@
-import type { Asset, Comment, MetaStatus, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
+import type { AppSettings, Asset, Comment, MetaStatus, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -214,6 +214,17 @@ export function updateReplyPersona(body: {
   max_chars: number;
 }) {
   return apiFetch<ReplyPersona>("/api/settings/reply-persona", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export function fetchAppSettings() {
+  return apiFetch<AppSettings>("/api/settings/app");
+}
+
+export function updateAppSettings(body: { timezone: string }) {
+  return apiFetch<AppSettings>("/api/settings/app", {
     method: "PUT",
     body: JSON.stringify(body),
   });

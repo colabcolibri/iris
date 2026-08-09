@@ -24,6 +24,7 @@ type PostDialogProps = {
   post: Post | null;
   metaConnected: boolean;
   metaIgUsername?: string | null;
+  timeZone: string;
   saving: boolean;
   error: string;
   caption: string;
@@ -46,6 +47,7 @@ export function PostDialog({
   post,
   metaConnected,
   metaIgUsername,
+  timeZone,
   saving,
   error,
   caption,
@@ -191,6 +193,7 @@ export function PostDialog({
                   onChange={(e) => onScheduledAtChange(e.target.value)}
                   className="border-0 border-b bg-muted/60 focus-visible:ring-0"
                 />
+                <p className="text-xs text-muted-foreground">Horário no fuso editorial: {timeZone}</p>
               </div>
               <label className="flex items-center gap-2 pb-2 text-sm">
                 <input

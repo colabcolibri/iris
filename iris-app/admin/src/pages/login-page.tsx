@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,14 +57,17 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-[#f2f2ef] p-4">
+    <div className="flex min-h-svh items-center justify-center bg-background p-4">
       <main className="w-full max-w-md">
-        <div className="flex flex-col gap-6 rounded-xl border border-border bg-card p-8 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)]">
-          <div className="space-y-2 text-center">
-            <h1 className="font-display text-5xl font-semibold tracking-tight">Iris</h1>
-            <p className="font-display text-xl text-muted-foreground">
-              {step === "email" ? "Entrar com seu email" : `Código enviado para ${email}`}
-            </p>
+        <div className="flex flex-col gap-6 rounded-xl border border-border/80 bg-card p-8 shadow-[0_8px_40px_-12px_rgba(26,24,20,0.18)]">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <BrandLogo size="lg" className="ring-0" />
+            <div className="space-y-1">
+              <h1 className="font-display text-4xl font-semibold tracking-tight">Iris</h1>
+              <p className="text-base text-muted-foreground">
+                {step === "email" ? "Entrar com seu email" : `Código enviado para ${email}`}
+              </p>
+            </div>
           </div>
 
           {step === "email" ? (

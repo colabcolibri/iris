@@ -25,7 +25,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@iris/domain/*": ["../src/domain/*"]
     }
   },
   "include": ["src"]

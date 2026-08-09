@@ -18,6 +18,7 @@ import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-rep
 import { createEnvLlmCompleter } from "../adapters/llm/env-llm-completer.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
 import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
+import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-repository.ts";
 import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
 import {
   createSqliteAdminLoginChallengeRepository,
@@ -36,6 +37,7 @@ import type { MetaPublisher } from "../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../ports/meta-token-store.ts";
 import type { PostRepository } from "../ports/post-repository.ts";
 import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
+import type { AppSettingsStore } from "../ports/app-settings-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 
@@ -63,6 +65,7 @@ export type AppContext = {
   emailSender: EmailSender;
   adminLoginChallenges: AdminLoginChallengeRepository;
   replyPersonaStore: ReplyPersonaStore;
+  appSettingsStore: AppSettingsStore;
   imageContextProvider: ImageContextProvider;
   replyContextAssembler: ReplyContextAssemblerDeps;
 };
@@ -155,6 +158,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
   const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
+  const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const imageContextProvider = createEnvImageContextProvider({
     llm: llmCompleter,
     model: process.env.LLM_MODEL,
@@ -192,6 +196,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     emailSender,
     adminLoginChallenges,
     replyPersonaStore,
+    appSettingsStore,
     imageContextProvider,
     replyContextAssembler,
   };

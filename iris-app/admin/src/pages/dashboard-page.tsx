@@ -1,39 +1,39 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { AppHeader } from "@/components/layout/app-header";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppShell } from "@/components/layout/app-shell";
+import type { AppView } from "@/components/layout/app-sidebar";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { PostDialog, type PostDialogMode } from "@/components/posts/post-dialog";
+import { useAppSettings } from "@/contexts/app-settings-context";
+import { useMetaSession } from "@/hooks/use-meta-session";
 import {
   createPost,
-  fetchMetaHealth,
-  fetchMetaStatus,
   fetchPost,
   fetchPosts,
   listAssets,
-  logout,
   subscribeRealtimeEvents,
   UnauthorizedError,
   updatePost,
   uploadAsset,
 } from "@/lib/api";
-import { monthRange } from "@/lib/date-utils";
-import { toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/lib/datetime";
-import type { MetaStatus, Post, PostStatus } from "@/lib/types";
-
-type ViewMode = "calendar" | "kanban";
+import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/lib/datetime";
+import type { Post, PostStatus } from "@/lib/types";
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const [view, setView] = useState<ViewMode>("kanban");
+  const [searchParams] = useSearchParams();
+  const { timezone } = useAppSettings();
+  const { meta, handleLogout, handleMetaHealth } = useMetaSession();
+  const [view, setView] = useState<AppView>(
+    searchParams.get("view") === "kanban" ? "kanban" : "calendar",
+  );
   const [posts, setPosts] = useState<Post[]>([]);
   const [cursor, setCursor] = useState(() => new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<PostDialogMode | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [meta, setMeta] = useState<MetaStatus | null>(null);
   const [caption, setCaption] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [autoReply, setAutoReply] = useState(false);
@@ -44,10 +44,10 @@ export function DashboardPage() {
   const loadPosts = useCallback(async () => {
     const data =
       view === "calendar"
-        ? await fetchPosts(monthRange(cursor))
+        ? await fetchPosts(monthRange(cursor, timezone))
         : await fetchPosts();
     setPosts(data);
-  }, [view, cursor]);
+  }, [view, cursor, timezone]);
 
   const handleAuthError = useCallback(
     (err: unknown) => {
@@ -59,20 +59,6 @@ export function DashboardPage() {
     },
     [navigate],
   );
-
-  useEffect(() => {
-    void fetchMetaStatus()
-      .then(setMeta)
-      .catch((err) => {
-        if (handleAuthError(err)) return;
-        setMeta({
-          connected: false,
-          igUsername: null,
-          tokenExpired: false,
-        });
-        toast.error("Falha ao carregar status da Meta.");
-      });
-  }, [handleAuthError]);
 
   useEffect(() => {
     void loadPosts().catch((err) => {
@@ -118,7 +104,7 @@ export function DashboardPage() {
     setSelectedPost(post);
     setDialogMode("edit");
     setCaption(post.caption ?? "");
-    setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at));
+    setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
     setAutoReply(Boolean(post.auto_reply_enabled));
     setFiles(null);
     setError("");
@@ -152,7 +138,7 @@ export function DashboardPage() {
     setSaving(true);
     setError("");
     try {
-      const scheduledIso = toIsoFromDatetimeLocal(scheduledAt);
+      const scheduledIso = toIsoFromDatetimeLocal(scheduledAt, timezone);
       let postId = selectedPost?.id;
 
       if (!postId) {
@@ -199,56 +185,43 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex h-svh flex-col overflow-hidden bg-background">
-      <AppHeader
-        meta={meta}
-        onNewPost={openCreate}
-        onLogout={() => {
-          void logout().finally(() => navigate("/login", { replace: true }));
-        }}
-        onMetaHealth={() => {
-          void fetchMetaHealth()
-            .then((result) => {
-              if (result.ok) toast.success("Conexão com a Meta OK.");
-              else toast.error(result.message ?? "Falha na conexão.");
-            })
-            .catch(() => toast.error("Falha ao testar conexão."));
-        }}
-      />
+    <AppShell
+      meta={meta}
+      onNewPost={openCreate}
+      onLogout={handleLogout}
+      onMetaHealth={handleMetaHealth}
+      sidebarView={view}
+      onSidebarViewChange={setView}
+    >
+      {view === "kanban" && (
+        <header className="shrink-0 px-8 pt-8 pb-4">
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
+            Pipeline editorial
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Organize rascunhos, agendamentos e publicações.
+          </p>
+        </header>
+      )}
 
-      <div className="flex min-h-0 flex-1">
-        <AppSidebar view={view} onViewChange={setView} />
-
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          {view === "kanban" && (
-            <header className="shrink-0 px-8 pt-8 pb-4">
-              <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
-                Pipeline editorial
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Organize rascunhos, agendamentos e publicações.
-              </p>
-            </header>
-          )}
-
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-8 pb-8">
-            {view === "kanban" ? (
-              <KanbanBoard
-                posts={posts}
-                onOpenPost={openPost}
-                onStatusChange={(post, status) => void changeStatus(post, status)}
-              />
-            ) : (
-              <CalendarView
-                posts={posts}
-                cursor={cursor}
-                selectedId={selectedPost?.id ?? null}
-                onCursorChange={setCursor}
-                onSelect={openPost}
-              />
-            )}
-          </div>
-        </main>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-8 pb-8">
+        {view === "kanban" ? (
+          <KanbanBoard
+            posts={posts}
+            timeZone={timezone}
+            onOpenPost={openPost}
+            onStatusChange={(post, status) => void changeStatus(post, status)}
+          />
+        ) : (
+          <CalendarView
+            posts={posts}
+            cursor={cursor}
+            selectedId={selectedPost?.id ?? null}
+            timeZone={timezone}
+            onCursorChange={setCursor}
+            onSelect={openPost}
+          />
+        )}
       </div>
 
       <PostDialog
@@ -257,6 +230,7 @@ export function DashboardPage() {
         post={selectedPost}
         metaConnected={Boolean(meta?.connected)}
         metaIgUsername={meta?.igUsername}
+        timeZone={timezone}
         saving={saving}
         error={error}
         caption={caption}
@@ -294,6 +268,6 @@ export function DashboardPage() {
           selectedPost?.status === "failed" ? () => void savePost(true) : undefined
         }
       />
-    </div>
+    </AppShell>
   );
 }
