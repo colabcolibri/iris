@@ -1,11 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage } from "node:http";
+import { readSessionToken, verifySessionToken } from "./session.ts";
 
 export type AuthRole = "admin" | "agent";
 
 export type AuthContext = {
   role: AuthRole;
-  token: string;
+  token?: string;
+  email?: string;
 };
 
 export type AuthConfig = {
@@ -47,17 +49,26 @@ export function authenticateRequest(
   req: IncomingMessage,
   config: AuthConfig,
 ): AuthResult {
+  const sessionToken = readSessionToken(req);
+  const session = verifySessionToken(sessionToken);
+  if (session.ok) {
+    return {
+      ok: true,
+      context: { role: "admin", email: session.email },
+    };
+  }
+
   const token = extractBearerToken(req);
 
   if (!token) {
     return { ok: false, status: 401, message: "Authorization required" };
   }
 
-  if (safeEqual(config.adminToken, token)) {
+  if (config.adminToken && safeEqual(config.adminToken, token)) {
     return { ok: true, context: { role: "admin", token } };
   }
 
-  if (safeEqual(config.agentToken, token)) {
+  if (config.agentToken && safeEqual(config.agentToken, token)) {
     return { ok: true, context: { role: "agent", token } };
   }
 

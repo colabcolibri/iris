@@ -16,14 +16,30 @@ blocks: []
 
 ## Authentication
 
+### UI (operador)
+
+1. `POST /api/auth/request-code` com `{ "email": "..." }` — público
+2. `POST /api/auth/confirm` com `{ "email": "...", "code": "123456" }` — define cookie `iris_session` (HttpOnly)
+3. Chamadas `/api/*` da UI usam cookie (`credentials: include`) — sem header `Authorization`
+
+### API (agente / scripts)
+
 | Header | Value |
 | ------ | ----- |
 | `Authorization` | `Bearer <token>` |
 
 | Token | Access |
 | ----- | ------ |
-| Admin | All `/api/*` |
+| Admin (legacy) | All `/api/*` — emergência/CLI apenas |
 | Agent | `posts`, `assets`, `comments` per scope |
+
+### Auth routes
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| POST | `/api/auth/request-code` | public | Envia OTP ao email allowlisted |
+| POST | `/api/auth/confirm` | public | Valida OTP e emite cookie de sessão |
+| POST | `/api/auth/logout` | public | Limpa cookie de sessão |
 
 ## Error envelope
 

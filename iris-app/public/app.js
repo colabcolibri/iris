@@ -1,10 +1,12 @@
 import {
   createPost,
+  ensureAuthenticated,
   fetchAssetBlob,
   fetchComments,
   fetchPost,
   fetchPosts,
   listAssets,
+  logout,
   replyToComment,
   subscribeRealtimeEvents,
   updatePost,
@@ -25,6 +27,7 @@ const formErrorEl = document.querySelector("#form-error");
 const newPostBtn = document.querySelector("#new-post-btn");
 const scheduleBtn = document.querySelector("#schedule-btn");
 const cancelFormBtn = document.querySelector("#cancel-form-btn");
+const logoutBtn = document.querySelector("#logout-btn");
 const commentsPanelEl = document.querySelector("#comments-panel");
 const commentsListEl = document.querySelector("#comments-list");
 
@@ -303,6 +306,12 @@ cancelFormBtn.addEventListener("click", () => {
   hideForm();
 });
 
+logoutBtn?.addEventListener("click", () => {
+  void logout().finally(() => {
+    window.location.href = "/login.html";
+  });
+});
+
 subscribeRealtimeEvents({
   onPostsChanged: () => {
     void refreshPosts();
@@ -314,6 +323,13 @@ subscribeRealtimeEvents({
   },
 });
 
-void refreshPosts().catch((error) => {
-  showError(error instanceof Error ? error.message : "Falha ao carregar posts.");
-});
+void ensureAuthenticated()
+  .then((ok) => {
+    if (!ok) {
+      return;
+    }
+    return refreshPosts();
+  })
+  .catch((error) => {
+    showError(error instanceof Error ? error.message : "Falha ao carregar posts.");
+  });

@@ -15,6 +15,7 @@ import { handleEventsRoute } from "./routes/events.ts";
 import { handlePublishMediaRoute } from "./routes/publish-media.ts";
 import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments.ts";
+import { handleAuthRoute } from "./routes/auth.ts";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 
@@ -48,6 +49,7 @@ export type HttpServerOptions = {
   graphApiVersion?: string;
   metaAppSecret?: string;
   metaWebhookVerifyToken?: string;
+  emailSender?: import("../ports/email-sender.ts").EmailSender;
   startScheduler?: boolean;
   publishTickMs?: number;
   replyTickMs?: number;
@@ -110,6 +112,10 @@ async function handleRequest(
   }
 
   if (pathname.startsWith("/api/")) {
+    if (await handleAuthRoute(req, res, ctx, pathname)) {
+      return;
+    }
+
     const authResult = authenticateRequest(req, ctx.auth);
     if (!authResult.ok) {
       sendError(res, authResult.status, authResult.message);
@@ -171,6 +177,7 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     graphApiVersion: options.graphApiVersion,
     metaAppSecret: options.metaAppSecret,
     metaWebhookVerifyToken: options.metaWebhookVerifyToken,
+    emailSender: options.emailSender,
   });
 
   const stopPublishScheduler = options.startScheduler

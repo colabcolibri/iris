@@ -46,6 +46,32 @@ body {
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-shell {
+  min-height: 100vh;
+  place-items: center;
+}
+
+.login-panel {
+  width: min(100%, 420px);
+  margin: 0 auto;
+}
+
+.login-lead {
+  color: var(--muted);
+  margin-top: 0;
+}
+
+.login-form .btn-primary {
+  margin-top: 8px;
+}
+
 .app-layout {
   display: grid;
   gap: 16px;

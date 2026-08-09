@@ -15,6 +15,10 @@ import { createGraphApiPublisher } from "../adapters/meta/graph-api-publisher.ts
 import { createGraphApiCommentReplier } from "../adapters/meta/graph-api-comment-replier.ts";
 import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-repository.ts";
 import { createEnvLlmCompleter } from "../adapters/llm/env-llm-completer.ts";
+import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
+import { createSqliteAdminLoginChallengeRepository } from "../adapters/sqlite/admin-login-challenge-repository.ts";
+import type { AdminLoginChallengeRepository } from "../adapters/sqlite/admin-login-challenge-repository.ts";
+import type { EmailSender } from "../ports/email-sender.ts";
 import type { AgentRunRepository } from "../ports/agent-run-repository.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
 import type { AssetRepository } from "../ports/asset-repository.ts";
@@ -44,6 +48,8 @@ export type AppContext = {
   publishUrlSecret: string | null;
   metaAppSecret: string | null;
   metaWebhookVerifyToken: string | null;
+  emailSender: EmailSender;
+  adminLoginChallenges: AdminLoginChallengeRepository;
 };
 
 export type AppContextOptions = {
@@ -59,6 +65,7 @@ export type AppContextOptions = {
   graphApiVersion?: string;
   metaAppSecret?: string;
   metaWebhookVerifyToken?: string;
+  emailSender?: EmailSender;
 };
 
 export function createAppContext(options: AppContextOptions): AppContext {
@@ -113,6 +120,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
 
   const llmApiKey = process.env.LLM_API_KEY ?? "";
   const llmCompleter = llmApiKey ? createEnvLlmCompleter() : null;
+  const emailSender = options.emailSender ?? createEmailSenderFromEnv();
+  const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
 
   return {
     db: options.db,
@@ -130,5 +139,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     publishUrlSecret: publishUrlSecret || null,
     metaAppSecret: metaAppSecret || null,
     metaWebhookVerifyToken: metaWebhookVerifyToken || null,
+    emailSender,
+    adminLoginChallenges,
   };
 }

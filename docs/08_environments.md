@@ -16,8 +16,14 @@ blocks: []
 | `PORT` | `8792` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `IRIS_DB_PATH` | `./data/iris.db` | SQLite file |
-| `IRIS_ADMIN_TOKEN` | required | Admin Bearer token |
+| `IRIS_ADMIN_EMAIL` | required (UI) | Email allowlisted para OTP |
+| `IRIS_SESSION_SECRET` | required (UI) | HMAC da sessão HttpOnly |
+| `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
+| `RESEND_API_KEY` | prod | Envio de email (Resend) |
+| `IRIS_FROM_EMAIL` | required com Resend | Remetente transacional |
+| `IRIS_EMAIL_PROVIDER` | `logging` (dev) | `resend`, `logging` ou `noop` |
 | `IRIS_AGENT_TOKEN` | required | Agent Bearer token |
+| `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
 
 ```bash
@@ -27,7 +33,7 @@ pnpm install
 pnpm dev
 ```
 
-UI: `http://127.0.0.1:8792/`
+UI: `http://127.0.0.1:8792/` — login em `/login.html` com OTP enviado ao `IRIS_ADMIN_EMAIL`.
 
 ## Production
 

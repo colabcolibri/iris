@@ -15,23 +15,24 @@ blocks: [03_user_types.md, 05_architecture.md]
 | ---- | ---------- | ----------- |
 | Public internet | Meta webhooks (assinados), UI HTML | Untrusted input — validar sempre |
 | Server | API, workers, SQLite, tokens Meta/LLM | Trusted boundary |
-| Local operator | Navegador com admin token | Semi-trusted — token em env local |
+| Local operator | Navegador com sessão OTP (cookie HttpOnly) | Semi-trusted — sem segredo no JS |
 | Agents | Cursor / workers com agent token | Semi-trusted — escopo limitado |
 
 ## Authentication
 
 | Actor | Mechanism | Storage |
 | ----- | --------- | ------- |
-| Operador (UI) | `Authorization: Bearer` admin token | `IRIS_ADMIN_TOKEN` em `.env` |
-| Agente IA | `Authorization: Bearer` agent token | `IRIS_AGENT_TOKEN` ou row em `api_keys` (hash) |
+| Operador (UI) | OTP por email + cookie `iris_session` HttpOnly | `IRIS_SESSION_SECRET`, `IRIS_OTP_PEPPER`, `RESEND_API_KEY` no server |
+| Agente IA | `Authorization: Bearer` agent token | `IRIS_AGENT_TOKEN` (env local do agente) |
+| Admin (legacy/CLI) | `Authorization: Bearer` admin token | `IRIS_ADMIN_TOKEN` no server — não usar na UI |
 | Meta webhook | `X-Hub-Signature-256` HMAC | `META_APP_SECRET` |
 
-Comparação de tokens com `timingSafeEqual` (padrão license-server).
+Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + pepper; sessão assinada com HMAC.
 
 ## Secrets
 
-- Nunca expor `META_ACCESS_TOKEN`, `META_APP_SECRET`, `IRIS_ADMIN_TOKEN` ao cliente HTML
-- UI armazena admin token em `sessionStorage` apenas se login manual; preferir proxy same-origin sem expor token ao JS quando possível
+- Nunca expor `META_ACCESS_TOKEN`, `META_APP_SECRET`, `RESEND_API_KEY`, `IRIS_SESSION_SECRET` ao cliente HTML
+- UI **não** armazena tokens em `sessionStorage` — autenticação via cookie HttpOnly após OTP
 - Tokens Meta criptografados em repouso na tabela `meta_tokens` (v1-S4)
 
 ## API hardening

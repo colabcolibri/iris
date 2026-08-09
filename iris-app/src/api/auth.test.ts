@@ -1,12 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { authenticateRequest } from "./auth.ts";
+import { createSessionToken } from "./session.ts";
 import { IncomingMessage } from "node:http";
 
-function mockRequest(authHeader?: string): IncomingMessage {
-  return {
-    headers: authHeader ? { authorization: authHeader } : {},
-  } as IncomingMessage;
+function mockRequest(authHeader?: string, cookie?: string): IncomingMessage {
+  const headers: Record<string, string> = {};
+  if (authHeader) {
+    headers.authorization = authHeader;
+  }
+  if (cookie) {
+    headers.cookie = cookie;
+  }
+  return { headers } as IncomingMessage;
 }
 
 const config = {
@@ -44,4 +50,19 @@ test("accepts agent token", () => {
   if (result.ok) {
     assert.equal(result.context.role, "agent");
   }
+});
+
+test("accepts valid session cookie as admin", () => {
+  process.env.IRIS_SESSION_SECRET = "test-session-secret";
+  const token = createSessionToken("admin@example.com");
+  const result = authenticateRequest(
+    mockRequest(undefined, `iris_session=${encodeURIComponent(token)}`),
+    config,
+  );
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.context.role, "admin");
+    assert.equal(result.context.email, "admin@example.com");
+  }
+  delete process.env.IRIS_SESSION_SECRET;
 });

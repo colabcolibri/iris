@@ -1,25 +1,21 @@
-const TOKEN_KEY = "iris_admin_token";
-
-export function getToken() {
-  let token = sessionStorage.getItem(TOKEN_KEY);
-  if (!token) {
-    token = window.prompt("Token admin (IRIS_ADMIN_TOKEN):") ?? "";
-    if (token) {
-      sessionStorage.setItem(TOKEN_KEY, token);
-    }
-  }
-  return token;
-}
-
 async function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers ?? {});
-  headers.set("Authorization", `Bearer ${getToken()}`);
 
   if (options.body && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(path, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    const authError = new Error("Unauthorized");
+    authError.name = "UnauthorizedError";
+    throw authError;
+  }
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
@@ -88,11 +84,20 @@ export async function replyToComment(commentId, message) {
   });
 }
 
+export async function logout() {
+  return apiFetch("/api/auth/logout", { method: "POST" });
+}
+
 export async function fetchAssetBlob(postId, filename) {
-  const headers = { Authorization: `Bearer ${getToken()}` };
   const response = await fetch(`/api/posts/${postId}/assets/${filename}`, {
-    headers,
+    credentials: "include",
   });
+
+  if (response.status === 401) {
+    const authError = new Error("Unauthorized");
+    authError.name = "UnauthorizedError";
+    throw authError;
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to load asset (${response.status})`);
@@ -141,7 +146,7 @@ export function subscribeRealtimeEvents({ onPostsChanged, onCommentsChanged }) {
     while (!aborted) {
       try {
         const response = await fetch("/api/events", {
-          headers: { Authorization: `Bearer ${getToken()}` },
+          credentials: "include",
         });
 
         if (!response.ok || !response.body) {
@@ -185,4 +190,17 @@ export function subscribeRealtimeEvents({ onPostsChanged, onCommentsChanged }) {
     aborted = true;
     reader?.cancel().catch(() => undefined);
   };
+}
+
+export async function ensureAuthenticated() {
+  try {
+    await fetchPosts();
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === "UnauthorizedError") {
+      window.location.href = "/login.html";
+      return false;
+    }
+    throw error;
+  }
 }
