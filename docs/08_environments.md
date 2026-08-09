@@ -21,7 +21,9 @@ blocks: []
 | `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
 | `RESEND_API_KEY` | prod | Envio de email (Resend) |
 | `IRIS_FROM_EMAIL` | required com Resend | Remetente transacional |
-| `IRIS_EMAIL_PROVIDER` | `logging` (dev) | `resend`, `logging` ou `noop` |
+| `IRIS_EMAIL_PROVIDER` | `smtp` (dev) | `smtp`, `resend`, `logging` ou `noop` |
+| `IRIS_SMTP_HOST` | `127.0.0.1` | Host SMTP (dev: Mailpit) |
+| `IRIS_SMTP_PORT` | `1025` | Porta SMTP (Mailpit) |
 | `IRIS_AGENT_TOKEN` | required | Agent Bearer token |
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |

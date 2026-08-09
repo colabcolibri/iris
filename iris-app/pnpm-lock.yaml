@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      nodemailer:
+        specifier: ^7.0.5
+        version: 7.0.13
       sharp:
         specifier: ^0.35.0
         version: 0.35.3(@types/node@25.9.5)
@@ -15,6 +18,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.9.5
+      '@types/nodemailer':
+        specifier: ^6.4.17
+        version: 6.4.24
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -189,9 +195,16 @@ packages:
   '@types/node@25.9.5':
     resolution: {integrity: sha512-OScDchr2fwuUmWdf4kZ9h7PcJiYDVInhJizG/biAq3cAvqwYktuy/TYGGdZNMtNTFUP7rnb0NU4TUdm82kt4Rg==}
 
+  '@types/nodemailer@6.4.24':
+    resolution: {integrity: sha512-Ww4u0rT9wQNXh4JiQaIwx3QWdcOFXzOjQA2zc+jtFYNmQiT4mIUqcDin51bDFdkzKubFnQCZNK7FIHlPKQ/q9w==}
+
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
+
+  nodemailer@7.0.13:
+    resolution: {integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==}
+    engines: {node: '>=6.0.0'}
 
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
@@ -335,7 +348,13 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/nodemailer@6.4.24':
+    dependencies:
+      '@types/node': 25.9.5
+
   detect-libc@2.1.2: {}
+
+  nodemailer@7.0.13: {}
 
   semver@7.8.5: {}
 

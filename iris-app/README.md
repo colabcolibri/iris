@@ -8,6 +8,8 @@ pnpm install
 pnpm dev
 ```
 
-UI: http://127.0.0.1:8792/ — faça login em `/login.html` com o email configurado em `IRIS_ADMIN_EMAIL`. Em dev, com `IRIS_EMAIL_PROVIDER=logging`, o código OTP aparece no terminal do servidor.
+UI: http://127.0.0.1:8792/ — faça login em `/login.html` com o email configurado em `IRIS_ADMIN_EMAIL`.
+
+**Dev (email):** suba o Mailpit (`mailpit` — SMTP `:1025`, UI `:8025`) e rode `pnpm dev`. Em dev o provider default é `smtp`; os OTP aparecem no Mailpit.
 
 Ver `../docs/` para arquitetura, API e backlog.

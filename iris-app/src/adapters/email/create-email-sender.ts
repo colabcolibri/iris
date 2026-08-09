@@ -2,22 +2,30 @@ import type { EmailSender } from "../../ports/email-sender.ts";
 import { createLoggingEmailSender } from "./logging-email-sender.ts";
 import { createNoopEmailSender } from "./noop-email-sender.ts";
 import { createResendEmailSender } from "./resend-email-sender.ts";
+import { createSmtpEmailSender } from "./smtp-email-sender.ts";
 
-export type EmailProvider = "resend" | "logging" | "noop";
+export type EmailProvider = "resend" | "smtp" | "logging" | "noop";
 
 function isNodeTestRunner(): boolean {
   return process.env.NODE_TEST_CONTEXT != null;
 }
 
+function isDevServer(): boolean {
+  return process.env.NODE_ENV !== "production";
+}
+
 export function resolveEmailProvider(): EmailProvider {
   const raw = process.env.IRIS_EMAIL_PROVIDER?.trim().toLowerCase();
-  if (raw === "resend" || raw === "logging" || raw === "noop") {
+  if (raw === "resend" || raw === "smtp" || raw === "logging" || raw === "noop") {
     return raw;
   }
   if (isNodeTestRunner()) {
     return "noop";
   }
-  return "logging";
+  if (isDevServer()) {
+    return "smtp";
+  }
+  return "noop";
 }
 
 export function createEmailSenderFromEnv(): EmailSender {
@@ -32,6 +40,8 @@ export function createEmailSenderFromEnv(): EmailSender {
       }
       return createResendEmailSender({ apiKey, defaultFrom: from });
     }
+    case "smtp":
+      return createSmtpEmailSender({ defaultFrom: from });
     case "logging":
       return createLoggingEmailSender();
     default:
