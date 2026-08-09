@@ -46,10 +46,11 @@ export function CalendarView({
   const month = cursor.getMonth();
   const cells = calendarCells(year, month);
   const today = new Date();
+  const rowCount = cells.length / 7;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="flex h-full min-h-0 flex-col pt-8">
+      <header className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
             Calendário editorial
@@ -82,7 +83,7 @@ export function CalendarView({
         </div>
       </header>
 
-      <div className="mb-2 grid grid-cols-7 gap-px">
+      <div className="mb-2 grid shrink-0 grid-cols-7 gap-px">
         {WEEKDAYS.map((label) => (
           <div
             key={label}
@@ -93,7 +94,10 @@ export function CalendarView({
         ))}
       </div>
 
-      <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-px overflow-auto rounded-lg border border-border/50 bg-border/30">
+      <div
+        className="grid min-h-0 flex-1 grid-cols-7 gap-px overflow-hidden rounded-lg border border-border/50 bg-border/30"
+        style={{ gridTemplateRows: `repeat(${rowCount}, minmax(0, 1fr))` }}
+      >
         {cells.map((day) => {
           const dayPosts = posts.filter((post) => {
             const raw = postDisplayDate(post);
@@ -108,7 +112,7 @@ export function CalendarView({
             <div
               key={day.toISOString()}
               className={cn(
-                "flex min-h-[120px] flex-col gap-1 bg-card p-2 transition-colors hover:bg-muted/50",
+                "flex min-h-0 flex-col gap-1 overflow-y-auto bg-card p-2 transition-colors hover:bg-muted/50",
                 isOutside && "opacity-40",
                 isToday && "ring-2 ring-inset ring-primary",
               )}

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { confirmLoginCode, requestLoginCode } from "@/lib/api";
@@ -57,15 +56,16 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="font-display text-2xl">Iris</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {step === "email" ? "Entre com seu email" : `Código enviado para ${email}`}
-          </p>
-        </CardHeader>
-        <CardContent>
+    <div className="flex min-h-svh items-center justify-center bg-[#f2f2ef] p-4">
+      <main className="w-full max-w-md">
+        <div className="flex flex-col gap-6 rounded-xl border border-border bg-card p-8 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)]">
+          <div className="space-y-2 text-center">
+            <h1 className="font-display text-5xl font-semibold tracking-tight">Iris</h1>
+            <p className="font-display text-xl text-muted-foreground">
+              {step === "email" ? "Entrar com seu email" : `Código enviado para ${email}`}
+            </p>
+          </div>
+
           {step === "email" ? (
             <form
               className="space-y-4"
@@ -75,19 +75,26 @@ export function LoginPage() {
               }}
             >
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm font-semibold">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="seu@email.com"
+                  placeholder="editor@iris.studio"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="border-0 border-b bg-muted/80 focus-visible:ring-0"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+              <Button type="submit" className="w-full rounded-lg" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="mr-2 size-4" />
+                )}
                 Continuar
               </Button>
             </form>
@@ -99,14 +106,14 @@ export function LoginPage() {
                   id="code"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  className="text-center text-lg tracking-[0.3em]"
+                  className="border-0 border-b bg-muted/80 text-center text-lg tracking-[0.3em] focus-visible:ring-0"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   maxLength={6}
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full rounded-lg" disabled={loading}>
                 {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Entrar
               </Button>
@@ -130,10 +137,10 @@ export function LoginPage() {
           )}
 
           {feedback && (
-            <p className="mt-4 text-center text-sm text-muted-foreground">{feedback}</p>
+            <p className="text-center text-sm text-muted-foreground">{feedback}</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </main>
     </div>
   );
 }

@@ -95,7 +95,7 @@ AppDialog.Footer = function AppDialogFooter({ children, className }: AppDialogFo
   return (
     <div
       className={cn(
-        "flex shrink-0 flex-col-reverse gap-2 border-t bg-muted/40 px-6 py-4 sm:flex-row sm:justify-end",
+        "flex shrink-0 flex-col-reverse gap-2 border-t bg-muted/60 px-6 py-4 sm:flex-row sm:justify-end",
         className,
       )}
     >

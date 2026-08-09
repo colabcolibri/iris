@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { CloudUpload, Loader2 } from "lucide-react";
 import { StatusBadge } from "@/components/posts/status-badge";
 import { AppDialog } from "@/components/templates/app-dialog";
 import { Button } from "@/components/ui/button";
@@ -114,257 +114,270 @@ export function PostDialog({
   if (!mode) return null;
 
   const title = mode === "create" ? "Nova postagem" : "Editar postagem";
-  const description =
-    mode === "create"
-      ? "Crie um rascunho ou agende para o Instagram."
-      : "Revise legenda, mídia e agendamento.";
   const comments = inspection?.comments ?? [];
 
   return (
     <AppDialog open={open} onOpenChange={onOpenChange} size="xl">
-      <AppDialog.Header title={title} description={description}>
+      <AppDialog.Header title={title}>
         {post ? <StatusBadge status={post.status} /> : null}
       </AppDialog.Header>
 
       <AppDialog.Body>
-        <div className="min-w-0 space-y-5">
-          {post?.status === "failed" && post.error_message && (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              Causa da falha: {post.error_message}
-            </p>
-          )}
+        <div className="grid min-w-0 gap-8 lg:grid-cols-12">
+          <div className="flex min-w-0 flex-col gap-6 lg:col-span-7">
+            {post?.status === "failed" && post.error_message && (
+              <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                Causa da falha: {post.error_message}
+              </p>
+            )}
 
-          {post?.status === "published" && post.ig_media_id && (
-            <p className="text-sm text-muted-foreground">
-              ID na Meta: {post.ig_media_id}
-              {metaIgUsername && (
-                <>
-                  {" · "}
-                  <a
-                    href={`https://www.instagram.com/${metaIgUsername}/`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Abrir perfil no Instagram
-                  </a>
-                </>
-              )}
-            </p>
-          )}
+            {post?.status === "published" && post.ig_media_id && (
+              <p className="text-sm text-muted-foreground">
+                ID na Meta: {post.ig_media_id}
+                {metaIgUsername && (
+                  <>
+                    {" · "}
+                    <a
+                      href={`https://www.instagram.com/${metaIgUsername}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      Abrir perfil no Instagram
+                    </a>
+                  </>
+                )}
+              </p>
+            )}
 
-          {post?.status === "failed" && (onRetryDraft || onRetrySchedule) && (
-            <div className="flex flex-wrap gap-2">
-              {onRetryDraft && (
-                <Button type="button" variant="outline" size="sm" onClick={onRetryDraft}>
-                  Voltar a rascunho
-                </Button>
-              )}
-              {onRetrySchedule && (
-                <Button type="button" size="sm" onClick={onRetrySchedule}>
-                  Reagendar
-                </Button>
-              )}
-            </div>
-          )}
+            {post?.status === "failed" && (onRetryDraft || onRetrySchedule) && (
+              <div className="flex flex-wrap gap-2">
+                {onRetryDraft && (
+                  <Button type="button" variant="outline" size="sm" onClick={onRetryDraft}>
+                    Voltar a rascunho
+                  </Button>
+                )}
+                {onRetrySchedule && (
+                  <Button type="button" size="sm" onClick={onRetrySchedule}>
+                    Reagendar
+                  </Button>
+                )}
+              </div>
+            )}
 
-          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="post-caption">Legenda</Label>
+              <Label htmlFor="post-caption" className="text-xs font-semibold tracking-wide uppercase">
+                Legenda
+              </Label>
               <Textarea
                 id="post-caption"
                 value={caption}
                 onChange={(e) => onCaptionChange(e.target.value)}
                 rows={5}
+                className="min-h-32 resize-none border-0 border-b bg-muted/60 focus-visible:ring-0"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="post-scheduled-at">Agendar para</Label>
-              <Input
-                id="post-scheduled-at"
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={(e) => onScheduledAtChange(e.target.value)}
-              />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="post-scheduled-at" className="text-xs font-semibold tracking-wide uppercase">
+                  Agendar para
+                </Label>
+                <Input
+                  id="post-scheduled-at"
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => onScheduledAtChange(e.target.value)}
+                  className="border-0 border-b bg-muted/60 focus-visible:ring-0"
+                />
+              </div>
+              <label className="flex items-center gap-2 pb-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={autoReply}
+                  onChange={(e) => onAutoReplyChange(e.target.checked)}
+                  className="size-4 rounded border-border text-primary"
+                />
+                Resposta automática a comentários
+              </label>
             </div>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={autoReply}
-                onChange={(e) => onAutoReplyChange(e.target.checked)}
-              />
-              Resposta automática a comentários
-            </label>
+            {post?.id && (
+              <>
+                <Separator />
+                {inspection && (
+                  <section className="space-y-3 rounded-lg border bg-muted/40 p-3">
+                    <h3 className="text-sm font-semibold">Contexto do post</h3>
+                    <p className="text-sm break-words text-muted-foreground">
+                      {inspection.post_context.caption_truncated ?? "(sem legenda)"}
+                    </p>
+                    {inspection.auto_reply_enabled && (
+                      <p className="text-xs">
+                        <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">
+                          Auto-reply ativo
+                        </span>
+                        {" · "}
+                        <Link
+                          to="/persona"
+                          className="text-primary underline-offset-4 hover:underline"
+                        >
+                          Editar persona
+                        </Link>
+                      </p>
+                    )}
+                  </section>
+                )}
+                <section className="space-y-3">
+                  <h3 className="border-b pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Comentários
+                  </h3>
+                  {loadingComments ? (
+                    <p className="text-sm text-muted-foreground">Carregando…</p>
+                  ) : comments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {comments.map((comment) => (
+                        <article
+                          key={comment.id}
+                          className="rounded-lg border bg-muted/40 p-3 text-sm"
+                        >
+                          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <strong className="text-foreground">
+                              {comment.author_username ?? "usuário"}
+                            </strong>
+                            <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
+                          </div>
+                          <p className="break-words">{comment.text}</p>
+                          {comment.thread.length > 0 && (
+                            <details className="mt-2">
+                              <summary className="cursor-pointer text-xs text-primary">
+                                Ver conversa
+                              </summary>
+                              <ul className="mt-2 space-y-2 border-l-2 border-muted pl-3 text-xs">
+                                {comment.thread.map((entry, index) => (
+                                  <li key={`${comment.id}-${index}`} className="break-words">
+                                    <span className="font-medium text-foreground">
+                                      {entry.is_brand_reply
+                                        ? "marca"
+                                        : (entry.author ?? "usuário")}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      {" · "}
+                                      {new Date(entry.at).toLocaleString("pt-BR")}
+                                    </span>
+                                    <p className="text-muted-foreground">{entry.text}</p>
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          )}
+                          {comment.status === "pending" && (
+                            <form
+                              className="mt-3 space-y-2"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                const message = replyDrafts[comment.id]?.trim();
+                                if (!message) return;
+                                void replyToComment(comment.id, message).then(() =>
+                                  fetchReplyInspection(post.id).then(setInspection),
+                                );
+                              }}
+                            >
+                              <Textarea
+                                placeholder="Responder…"
+                                value={replyDrafts[comment.id] ?? ""}
+                                onChange={(e) =>
+                                  setReplyDrafts((prev) => ({
+                                    ...prev,
+                                    [comment.id]: e.target.value,
+                                  }))
+                                }
+                                rows={2}
+                                className="resize-none"
+                              />
+                              <Button type="submit" size="sm">
+                                Responder
+                              </Button>
+                            </form>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="post-asset-files">Imagens</Label>
+          <div className="flex min-w-0 flex-col gap-4 lg:col-span-5">
+            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Mídia
+            </Label>
+            <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/30 p-8 text-center transition-colors hover:border-primary hover:bg-muted/50">
+              <CloudUpload className="mb-2 size-8 text-muted-foreground" />
+              <span className="text-sm font-medium">Adicionar mídia</span>
+              <span className="mt-1 text-xs text-muted-foreground">
+                Arraste ou clique para selecionar
+              </span>
               <Input
                 id="post-asset-files"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 multiple
+                className="sr-only"
                 onChange={(e) => onFilesChange(e.target.files)}
               />
-            </div>
+            </label>
 
             {assetUrls.length > 0 && (
-              <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
+              <div className="grid min-w-0 grid-cols-3 gap-2">
                 {assetUrls.map((url) => (
                   <img
                     key={url}
                     src={url}
                     alt=""
-                    className="aspect-square w-full max-w-full rounded-lg border object-cover"
+                    className="aspect-square w-full max-w-full rounded-md border object-cover"
                   />
                 ))}
               </div>
             )}
           </div>
-
-          {!metaConnected && (
-            <p className="text-xs text-muted-foreground">
-              Conecte o Instagram para agendar publicações.
-            </p>
-          )}
-
-          {error && (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-
-          {post?.id && (
-            <>
-              <Separator />
-              {inspection && (
-                <section className="space-y-3 rounded-lg border bg-muted/30 p-3">
-                  <h3 className="text-sm font-semibold">Contexto do post</h3>
-                  <p className="text-sm text-muted-foreground break-words">
-                    {inspection.post_context.caption_truncated ?? "(sem legenda)"}
-                  </p>
-                  {inspection.post_context.assets.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {inspection.post_context.assets.map((asset) =>
-                        asset.public_url ? (
-                          <img
-                            key={asset.filename}
-                            src={asset.public_url}
-                            alt=""
-                            className="aspect-square rounded-lg border object-cover"
-                          />
-                        ) : null,
-                      )}
-                    </div>
-                  )}
-                  {inspection.auto_reply_enabled && (
-                    <p className="text-xs">
-                      <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">
-                        Auto-reply ativo
-                      </span>
-                      {" · "}
-                      <Link
-                        to="/persona"
-                        className="text-primary underline-offset-4 hover:underline"
-                      >
-                        Editar persona
-                      </Link>
-                    </p>
-                  )}
-                </section>
-              )}
-              <section className="max-h-80 space-y-3 overflow-y-auto">
-                <h3 className="text-sm font-semibold">Comentários</h3>
-                {loadingComments ? (
-                  <p className="text-sm text-muted-foreground">Carregando…</p>
-                ) : comments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {comments.map((comment) => (
-                      <article key={comment.id} className="rounded-lg border bg-card p-3 text-sm">
-                        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <strong className="text-foreground">
-                            {comment.author_username ?? "usuário"}
-                          </strong>
-                          <span>{comment.status}</span>
-                          <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
-                        </div>
-                        <p className="break-words">{comment.text}</p>
-                        {comment.thread.length > 0 && (
-                          <details className="mt-2">
-                            <summary className="cursor-pointer text-xs text-primary">
-                              Ver conversa
-                            </summary>
-                            <ul className="mt-2 space-y-2 border-l-2 border-muted pl-3 text-xs">
-                              {comment.thread.map((entry, index) => (
-                                <li key={`${comment.id}-${index}`} className="break-words">
-                                  <span className="font-medium text-foreground">
-                                    {entry.is_brand_reply
-                                      ? "marca"
-                                      : (entry.author ?? "usuário")}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    {" · "}
-                                    {new Date(entry.at).toLocaleString("pt-BR")}
-                                  </span>
-                                  <p className="text-muted-foreground">{entry.text}</p>
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        )}
-                        {comment.status === "pending" && (
-                          <form
-                            className="mt-3 space-y-2"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              const message = replyDrafts[comment.id]?.trim();
-                              if (!message) return;
-                              void replyToComment(comment.id, message).then(() =>
-                                fetchReplyInspection(post.id).then(setInspection),
-                              );
-                            }}
-                          >
-                            <Textarea
-                              placeholder="Sua resposta…"
-                              value={replyDrafts[comment.id] ?? ""}
-                              onChange={(e) =>
-                                setReplyDrafts((prev) => ({
-                                  ...prev,
-                                  [comment.id]: e.target.value,
-                                }))
-                              }
-                              rows={2}
-                            />
-                            <Button type="submit" size="sm">
-                              Responder
-                            </Button>
-                          </form>
-                        )}
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </>
-          )}
         </div>
+
+        {!metaConnected && (
+          <p className="mt-6 text-xs text-muted-foreground">
+            Conecte o Instagram para agendar publicações.
+          </p>
+        )}
+
+        {error && (
+          <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </AppDialog.Body>
 
-      <AppDialog.Footer>
+      <AppDialog.Footer className="justify-between sm:justify-between">
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
           Fechar
         </Button>
-        <Button type="button" variant="secondary" onClick={onSchedule} disabled={saving || !metaConnected}>
-          Agendar
-        </Button>
-        <Button type="button" onClick={onSaveDraft} disabled={saving}>
-          {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Salvar rascunho
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-primary text-primary"
+            onClick={onSchedule}
+            disabled={saving || !metaConnected}
+          >
+            Agendar
+          </Button>
+          <Button type="button" onClick={onSaveDraft} disabled={saving}>
+            {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Salvar rascunho
+          </Button>
+        </div>
       </AppDialog.Footer>
     </AppDialog>
   );

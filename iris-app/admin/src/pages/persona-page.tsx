@@ -85,7 +85,6 @@ export function PersonaPage() {
             })
             .catch(() => toast.error("Falha ao testar conexão."));
         }}
-        personaActive
       />
 
       <div className="mx-auto w-full max-w-2xl flex-1 overflow-auto p-4 md:p-6">
