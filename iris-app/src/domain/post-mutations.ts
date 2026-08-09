@@ -40,6 +40,7 @@ export type UpdatePostPayload = {
   scheduled_at?: unknown;
   source_note?: unknown;
   status?: unknown;
+  auto_reply_enabled?: unknown;
 };
 
 export type NormalizedUpdatePost = {
@@ -48,6 +49,7 @@ export type NormalizedUpdatePost = {
   scheduledAt?: string | null;
   sourceNote?: string | null;
   status?: PostStatus;
+  autoReplyEnabled?: boolean;
 };
 
 export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePost {
@@ -102,6 +104,13 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
       throw new ValidationError("invalid status");
     }
     update.status = body.status as PostStatus;
+  }
+
+  if ("auto_reply_enabled" in body) {
+    if (typeof body.auto_reply_enabled !== "boolean") {
+      throw new ValidationError("auto_reply_enabled must be a boolean");
+    }
+    update.autoReplyEnabled = body.auto_reply_enabled;
   }
 
   return update;

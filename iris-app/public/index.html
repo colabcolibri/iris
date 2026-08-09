@@ -34,6 +34,11 @@
               <input id="scheduled-at" name="scheduled_at" type="datetime-local" />
             </div>
 
+            <div class="form-field form-field-inline">
+              <input id="auto-reply-enabled" name="auto_reply_enabled" type="checkbox" />
+              <label for="auto-reply-enabled">Resposta automática a comentários</label>
+            </div>
+
             <div class="form-field">
               <label for="asset-files">Imagens</label>
               <input id="asset-files" name="assets" type="file" accept="image/png,image/jpeg,image/webp" multiple />
@@ -49,6 +54,11 @@
 
             <p class="error-banner" id="form-error" hidden></p>
           </form>
+
+          <section class="comments-panel" id="comments-panel" hidden>
+            <h3>Comentários</h3>
+            <div id="comments-list" aria-live="polite"></div>
+          </section>
         </main>
       </div>
     </div>

@@ -4,6 +4,10 @@ export type PostsChangedPayload = {
   post_id?: string;
 };
 
+export type CommentsChangedPayload = {
+  post_id?: string;
+};
+
 class EventBus {
   private readonly clients = new Set<ServerResponse>();
 
@@ -35,4 +39,10 @@ export const eventBus = new EventBus();
 
 export function notifyPostsChanged(payload: PostsChangedPayload = {}): void {
   eventBus.broadcast("posts-changed", payload);
+}
+
+export function notifyCommentsChanged(
+  payload: CommentsChangedPayload = {},
+): void {
+  eventBus.broadcast("comments-changed", payload);
 }

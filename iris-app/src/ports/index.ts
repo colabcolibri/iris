@@ -12,3 +12,5 @@ export type {
 } from "./post-repository.ts";
 export type { MetaTokenStore } from "./meta-token-store.ts";
 export type { MetaPublisher } from "./meta-publisher.ts";
+export type { CommentRepository } from "./comment-repository.ts";
+export type { MetaCommentReplier } from "./meta-comment-replier.ts";

@@ -1,2 +1,2 @@
-/** Server-side LLM agents — implemented in US-0017+. */
-export {};
+export { generateReply } from "./reply-agent.ts";
+export type { ReplyAgentInput, ReplyAgentOptions } from "./reply-agent.ts";

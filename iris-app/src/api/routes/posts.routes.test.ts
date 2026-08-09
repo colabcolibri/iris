@@ -159,3 +159,30 @@ test("agent cannot delete posts", async () => {
     assert.equal(deleteResponse.status, 403);
   });
 });
+
+test("agent cannot toggle auto_reply without admin", async () => {
+  await withIntegrationServer(async ({ baseUrl }) => {
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ caption: "x", channel: "instagram" }),
+    });
+    const created = (await createResponse.json()) as { id: string };
+
+    const patchResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(AGENT),
+      body: JSON.stringify({ auto_reply_enabled: true }),
+    });
+    assert.equal(patchResponse.status, 403);
+
+    const adminPatch = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(ADMIN),
+      body: JSON.stringify({ auto_reply_enabled: true }),
+    });
+    assert.equal(adminPatch.status, 200);
+    const updated = (await adminPatch.json()) as { auto_reply_enabled: boolean };
+    assert.equal(updated.auto_reply_enabled, true);
+  });
+});

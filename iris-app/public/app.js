@@ -1,10 +1,12 @@
 import {
   createPost,
   fetchAssetBlob,
+  fetchComments,
   fetchPost,
   fetchPosts,
   listAssets,
-  subscribePostsChanged,
+  replyToComment,
+  subscribeRealtimeEvents,
   updatePost,
   uploadAsset,
 } from "./api-client.js";
@@ -16,12 +18,15 @@ const detailEmptyEl = document.querySelector("#detail-empty");
 const detailTitleEl = document.querySelector("#detail-title");
 const captionEl = document.querySelector("#caption");
 const scheduledAtEl = document.querySelector("#scheduled-at");
+const autoReplyEnabledEl = document.querySelector("#auto-reply-enabled");
 const assetFilesEl = document.querySelector("#asset-files");
 const assetPreviewEl = document.querySelector("#asset-preview");
 const formErrorEl = document.querySelector("#form-error");
 const newPostBtn = document.querySelector("#new-post-btn");
 const scheduleBtn = document.querySelector("#schedule-btn");
 const cancelFormBtn = document.querySelector("#cancel-form-btn");
+const commentsPanelEl = document.querySelector("#comments-panel");
+const commentsListEl = document.querySelector("#comments-list");
 
 let posts = [];
 let selectedPostId = null;
@@ -115,6 +120,7 @@ function showForm(mode, post = null) {
 
   captionEl.value = post?.caption ?? "";
   scheduledAtEl.value = toDatetimeLocalFromIso(post?.scheduled_at);
+  autoReplyEnabledEl.checked = Boolean(post?.auto_reply_enabled);
   assetFilesEl.value = "";
   clearPreviewUrls();
 
@@ -127,9 +133,85 @@ function hideForm() {
   postFormEl.hidden = true;
   detailEmptyEl.hidden = false;
   detailTitleEl.textContent = "Detalhe";
+  commentsPanelEl.hidden = true;
   editingPostId = null;
   showError("");
   clearPreviewUrls();
+}
+
+async function renderComments(postId) {
+  commentsPanelEl.hidden = false;
+  commentsListEl.replaceChildren();
+
+  const comments = await fetchComments(postId);
+
+  if (comments.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "Nenhum comentário ainda.";
+    commentsListEl.append(empty);
+    return;
+  }
+
+  for (const comment of comments) {
+    const item = document.createElement("article");
+    item.className = "comment-item";
+    item.dataset.commentId = comment.id;
+
+    const meta = document.createElement("div");
+    meta.className = "comment-meta";
+
+    const author = document.createElement("strong");
+    author.textContent = comment.author_username ?? "usuário";
+
+    const status = document.createElement("span");
+    status.className = "comment-status";
+    status.dataset.status = comment.status;
+    status.textContent = comment.status;
+    if (comment.error_message) {
+      status.title = comment.error_message;
+    }
+
+    const time = document.createElement("span");
+    time.textContent = new Date(comment.created_at).toLocaleString("pt-BR");
+
+    meta.append(author, status, time);
+
+    const text = document.createElement("p");
+    text.textContent = comment.text ?? "";
+
+    item.append(meta, text);
+
+    if (comment.status === "pending") {
+      const form = document.createElement("form");
+      form.className = "comment-reply-form";
+
+      const textarea = document.createElement("textarea");
+      textarea.placeholder = "Sua resposta…";
+      textarea.required = true;
+
+      const button = document.createElement("button");
+      button.type = "submit";
+      button.className = "btn-primary";
+      button.textContent = "Responder";
+
+      form.append(textarea, button);
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        button.disabled = true;
+        void replyToComment(comment.id, textarea.value.trim())
+          .then(() => renderComments(postId))
+          .catch((error) => {
+            button.disabled = false;
+            showError(error instanceof Error ? error.message : "Falha ao responder.");
+          });
+      });
+
+      item.append(form);
+    }
+
+    commentsListEl.append(item);
+  }
 }
 
 async function refreshPosts() {
@@ -142,6 +224,7 @@ async function selectPost(postId) {
   renderPostList();
   const post = await fetchPost(postId);
   showForm("edit", post);
+  await renderComments(postId);
 }
 
 async function uploadSelectedFiles(postId) {
@@ -173,6 +256,7 @@ async function savePost({ schedule }) {
       await updatePost(postId, {
         caption: captionEl.value,
         scheduled_at: scheduledAt,
+        auto_reply_enabled: autoReplyEnabledEl.checked,
       });
     }
 
@@ -194,6 +278,7 @@ async function savePost({ schedule }) {
     await refreshPosts();
     const post = await fetchPost(postId);
     showForm("edit", post);
+    await renderComments(postId);
   } catch (error) {
     showError(error instanceof Error ? error.message : "Falha ao salvar.");
   }
@@ -218,8 +303,15 @@ cancelFormBtn.addEventListener("click", () => {
   hideForm();
 });
 
-subscribePostsChanged(() => {
-  void refreshPosts();
+subscribeRealtimeEvents({
+  onPostsChanged: () => {
+    void refreshPosts();
+  },
+  onCommentsChanged: (payload) => {
+    if (payload?.post_id && payload.post_id === selectedPostId) {
+      void renderComments(selectedPostId);
+    }
+  },
 });
 
 void refreshPosts().catch((error) => {

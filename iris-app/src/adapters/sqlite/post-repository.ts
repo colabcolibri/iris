@@ -48,6 +48,13 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
       return row ? mapPostRow(row as never) : null;
     },
 
+    findByIgMediaId(igMediaId) {
+      const row = db
+        .prepare("SELECT * FROM posts WHERE ig_media_id = ? LIMIT 1")
+        .get(igMediaId);
+      return row ? mapPostRow(row as never) : null;
+    },
+
     list(filter = {}) {
       const clauses: string[] = [];
       const params: unknown[] = [];
@@ -97,6 +104,10 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
           input.errorMessage !== undefined
             ? input.errorMessage
             : current.errorMessage,
+        autoReplyEnabled:
+          input.autoReplyEnabled !== undefined
+            ? input.autoReplyEnabled
+            : current.autoReplyEnabled,
       };
 
       const updatedAt = new Date().toISOString();
@@ -104,7 +115,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
       db.prepare(`
         UPDATE posts
         SET caption = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
-            published_at = ?, ig_media_id = ?, error_message = ?, updated_at = ?
+            published_at = ?, ig_media_id = ?, error_message = ?, auto_reply_enabled = ?,
+            updated_at = ?
         WHERE id = ?
       `).run(
         next.caption,
@@ -115,6 +127,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.publishedAt,
         next.igMediaId,
         next.errorMessage,
+        next.autoReplyEnabled ? 1 : 0,
         updatedAt,
         id,
       );

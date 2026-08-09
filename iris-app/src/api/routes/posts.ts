@@ -80,6 +80,12 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
   if (req.method === "PATCH") {
     try {
       const body = await readJsonBody<Record<string, unknown>>(req);
+
+      if ("auto_reply_enabled" in body && !requireAdmin(auth)) {
+        sendError(res, 403, "admin token required");
+        return true;
+      }
+
       const update = normalizeUpdatePost(body);
       const current = ctx.posts.findById(postId);
       if (!current) {

@@ -1,4 +1,5 @@
 import type { Post, PostAsset } from "../../domain/post.ts";
+import type { Comment } from "../../domain/comment.ts";
 
 type PostRow = {
   id: string;
@@ -13,6 +14,17 @@ type PostRow = {
   auto_reply_enabled: number;
   created_at: string;
   updated_at: string;
+};
+
+type CommentRow = {
+  id: string;
+  ig_comment_id: string;
+  post_id: string;
+  author_username: string | null;
+  text: string | null;
+  status: string;
+  error_message: string | null;
+  created_at: string;
 };
 
 type AssetRow = {
@@ -43,6 +55,32 @@ export function mapPostRow(row: PostRow): Post {
     autoReplyEnabled: row.auto_reply_enabled === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+export function mapCommentRow(row: CommentRow): Comment {
+  return {
+    id: row.id,
+    igCommentId: row.ig_comment_id,
+    postId: row.post_id,
+    authorUsername: row.author_username,
+    text: row.text,
+    status: row.status as Comment["status"],
+    errorMessage: row.error_message,
+    createdAt: row.created_at,
+  };
+}
+
+export function serializeComment(comment: Comment) {
+  return {
+    id: comment.id,
+    ig_comment_id: comment.igCommentId,
+    post_id: comment.postId,
+    author_username: comment.authorUsername,
+    text: comment.text,
+    status: comment.status,
+    error_message: comment.errorMessage,
+    created_at: comment.createdAt,
   };
 }
 

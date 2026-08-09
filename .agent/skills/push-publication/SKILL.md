@@ -26,6 +26,14 @@ allowed-tools: Read, Glob, Grep, Bash
 8. Atualizar `post.md`: `iris_post_id`, `pushed_at` (ISO)
 9. Reportar URL do post na UI admin se aplicável
 
+## CLI
+
+```bash
+cd iris-app
+IRIS_API_URL=http://127.0.0.1:8792 IRIS_AGENT_TOKEN=... \
+  node --experimental-strip-types scripts/push-publication.ts publications/{slug}
+```
+
 ## External tools (optional)
 
 Se imagens não estão na pasta, o agente obtém de qualquer fonte e salva na pasta antes do push. **Não é necessário otimizar localmente** — o server redimensiona e comprime no upload (ver `docs/architecture/image-optimization.md`). Pré-otimizar só economiza banda no upload.

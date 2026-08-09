@@ -13,7 +13,10 @@ import { handlePostsRoute } from "./routes/posts.ts";
 import { handleAssetsRoute } from "./routes/assets.ts";
 import { handleEventsRoute } from "./routes/events.ts";
 import { handlePublishMediaRoute } from "./routes/publish-media.ts";
+import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
+import { handleCommentsRoute } from "./routes/comments.ts";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
+import { startCommentResponder } from "../workers/comment-responder.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
@@ -43,8 +46,11 @@ export type HttpServerOptions = {
   publicBaseUrl?: string;
   publishUrlSecret?: string;
   graphApiVersion?: string;
+  metaAppSecret?: string;
+  metaWebhookVerifyToken?: string;
   startScheduler?: boolean;
   publishTickMs?: number;
+  replyTickMs?: number;
 };
 
 export type HttpServerHandle = {
@@ -99,6 +105,10 @@ async function handleRequest(
     return;
   }
 
+  if (await handleMetaWebhookRoute(req, res, ctx, pathname)) {
+    return;
+  }
+
   if (pathname.startsWith("/api/")) {
     const authResult = authenticateRequest(req, ctx.auth);
     if (!authResult.ok) {
@@ -118,6 +128,10 @@ async function handleRequest(
     }
 
     if (handleEventsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleCommentsRoute(routeRequest)) {
       return;
     }
 
@@ -155,13 +169,26 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     publicBaseUrl: options.publicBaseUrl,
     publishUrlSecret: options.publishUrlSecret,
     graphApiVersion: options.graphApiVersion,
+    metaAppSecret: options.metaAppSecret,
+    metaWebhookVerifyToken: options.metaWebhookVerifyToken,
   });
 
-  const stopScheduler = options.startScheduler
+  const stopPublishScheduler = options.startScheduler
     ? startPublishScheduler(ctx, {
         intervalMs: options.publishTickMs,
       })
     : () => undefined;
+
+  const stopCommentResponder = options.startScheduler
+    ? startCommentResponder(ctx, {
+        intervalMs: options.replyTickMs,
+      })
+    : () => undefined;
+
+  const stopScheduler = () => {
+    stopPublishScheduler();
+    stopCommentResponder();
+  };
 
   const server = createHttpServer((req, res) => {
     void handleRequest(req, res, ctx).catch(() => {

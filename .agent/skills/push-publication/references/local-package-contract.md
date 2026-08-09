@@ -35,6 +35,8 @@ POST /api/posts/:id/assets  (× N)
 PATCH /api/posts/:id        (status scheduled, se aplicável)
 ```
 
+Script: `iris-app/scripts/push-publication.ts` (`IRIS_API_URL`, `IRIS_AGENT_TOKEN`).
+
 ## Validation before push
 
 - `status === ready`

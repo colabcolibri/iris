@@ -17,6 +17,7 @@ export type UpdatePostInput = {
   publishedAt?: string | null;
   igMediaId?: string | null;
   errorMessage?: string | null;
+  autoReplyEnabled?: boolean;
 };
 
 export type ListPostsFilter = {
@@ -28,6 +29,7 @@ export type ListPostsFilter = {
 export type PostRepository = {
   create(input: CreatePostInput): Post;
   findById(id: string): Post | null;
+  findByIgMediaId(igMediaId: string): Post | null;
   list(filter?: ListPostsFilter): Post[];
   update(id: string, input: UpdatePostInput): Post | null;
   cancel(id: string): Post | null;

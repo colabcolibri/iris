@@ -15,10 +15,10 @@ export function sendError(res: ServerResponse, status: number, message: string):
   sendJson(res, status, { error: message });
 }
 
-export async function readJsonBody<T extends Record<string, unknown>>(
+export async function readRawBody(
   req: IncomingMessage,
   limit = JSON_BODY_LIMIT,
-): Promise<T> {
+): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let total = 0;
 
@@ -31,11 +31,19 @@ export async function readJsonBody<T extends Record<string, unknown>>(
     chunks.push(buffer);
   }
 
-  if (chunks.length === 0) {
+  return Buffer.concat(chunks);
+}
+
+export async function readJsonBody<T extends Record<string, unknown>>(
+  req: IncomingMessage,
+  limit = JSON_BODY_LIMIT,
+): Promise<T> {
+  const raw = await readRawBody(req, limit);
+  if (raw.length === 0) {
     return {} as T;
   }
 
-  return JSON.parse(Buffer.concat(chunks).toString("utf8")) as T;
+  return JSON.parse(raw.toString("utf8")) as T;
 }
 
 export class BodyTooLargeError extends Error {

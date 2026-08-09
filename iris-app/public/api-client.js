@@ -76,6 +76,18 @@ export async function uploadAsset(postId, file, sortOrder) {
   });
 }
 
+export async function fetchComments(postId) {
+  const payload = await apiFetch(`/api/posts/${postId}/comments`);
+  return payload.comments ?? [];
+}
+
+export async function replyToComment(commentId, message) {
+  return apiFetch(`/api/comments/${commentId}/reply`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
+
 export async function fetchAssetBlob(postId, filename) {
   const headers = { Authorization: `Bearer ${getToken()}` };
   const response = await fetch(`/api/posts/${postId}/assets/${filename}`, {
@@ -115,6 +127,12 @@ function parseSseChunk(chunk, onEvent) {
 }
 
 export function subscribePostsChanged(onEvent) {
+  return subscribeRealtimeEvents({
+    onPostsChanged: onEvent,
+  });
+}
+
+export function subscribeRealtimeEvents({ onPostsChanged, onCommentsChanged }) {
   let aborted = false;
   let retryMs = 1000;
   let reader = null;
@@ -143,8 +161,11 @@ export function subscribePostsChanged(onEvent) {
 
           buffer += decoder.decode(value, { stream: true });
           buffer = parseSseChunk(buffer, (eventName, data) => {
-            if (eventName === "posts-changed") {
-              onEvent(data);
+            if (eventName === "posts-changed" && onPostsChanged) {
+              onPostsChanged(data);
+            }
+            if (eventName === "comments-changed" && onCommentsChanged) {
+              onCommentsChanged(data);
             }
           });
         }
