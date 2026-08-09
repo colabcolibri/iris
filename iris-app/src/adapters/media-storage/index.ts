@@ -1,2 +1,1 @@
-/** Filesystem media storage — implemented in US-0019+. */
-export {};
+export { createFsMediaStorage } from "./fs-media-storage.ts";

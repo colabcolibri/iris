@@ -1,2 +1,2 @@
-/** REST route handlers — wired in US-0004+. */
-export {};
+export { handlePostsRoute } from "./posts.ts";
+export { handleAssetsRoute } from "./assets.ts";

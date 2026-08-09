@@ -3,8 +3,14 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, extname, dirname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { DatabaseSync } from "node:sqlite";
 import { openDatabase } from "../adapters/sqlite/connection.ts";
 import { runMigrations } from "../adapters/sqlite/migrate.ts";
+import { authenticateRequest } from "./auth.ts";
+import { createAppContext } from "./app-context.ts";
+import { sendError } from "./json.ts";
+import { handlePostsRoute } from "./routes/posts.ts";
+import { handleAssetsRoute } from "./routes/assets.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
@@ -25,6 +31,14 @@ const MIME_TYPES: Record<string, string> = {
 export type HttpServerOptions = {
   dbPath?: string;
   skipMigrations?: boolean;
+  adminToken?: string;
+  agentToken?: string;
+  mediaRoot?: string;
+};
+
+export type HttpServerHandle = {
+  server: Server;
+  db: DatabaseSync;
 };
 
 function resolvePublicPath(pathname: string): string | null {
@@ -43,8 +57,7 @@ function serveStatic(pathname: string, res: ServerResponse): void {
   const filePath = resolvePublicPath(pathname);
 
   if (!filePath || !existsSync(filePath)) {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Not found" }));
+    sendError(res, 404, "Not found");
     return;
   }
 
@@ -55,7 +68,12 @@ function serveStatic(pathname: string, res: ServerResponse): void {
   res.end(body);
 }
 
-function handleRequest(req: IncomingMessage, res: ServerResponse): void {
+async function handleRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  options: HttpServerOptions,
+  db: DatabaseSync,
+): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const { pathname } = url;
 
@@ -65,26 +83,61 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  if (pathname.startsWith("/api/")) {
+    const ctx = createAppContext({
+      db,
+      adminToken: options.adminToken,
+      agentToken: options.agentToken,
+      mediaRoot: options.mediaRoot,
+    });
+
+    const authResult = authenticateRequest(req, ctx.auth);
+    if (!authResult.ok) {
+      sendError(res, authResult.status, authResult.message);
+      return;
+    }
+
+    const routeRequest = {
+      req,
+      res,
+      ctx,
+      auth: authResult.context,
+    };
+
+    if (await handleAssetsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handlePostsRoute(routeRequest)) {
+      return;
+    }
+
+    sendError(res, 404, "Not found");
+    return;
+  }
+
   if (req.method === "GET") {
     serveStatic(pathname, res);
     return;
   }
 
-  res.writeHead(404, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ error: "Not found" }));
+  sendError(res, 404, "Not found");
 }
 
-export function createServer(options: HttpServerOptions = {}): Server {
+export function createServer(options: HttpServerOptions = {}): HttpServerHandle {
+  const db = openDatabase(options.dbPath);
+
   if (!options.skipMigrations) {
-    const db = openDatabase(options.dbPath);
-    try {
-      runMigrations(db);
-    } finally {
-      db.close();
-    }
+    runMigrations(db);
   }
 
-  return createHttpServer(handleRequest);
+  const server = createHttpServer((req, res) => {
+    void handleRequest(req, res, options, db).catch(() => {
+      sendError(res, 500, "internal server error");
+    });
+  });
+
+  return { server, db };
 }
 
 export function getPublicDirectory(): string {

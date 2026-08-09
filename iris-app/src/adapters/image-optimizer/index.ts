@@ -1,2 +1,1 @@
-/** sharp pipeline — implemented in US-0021+. */
-export {};
+export { createSharpImageOptimizer } from "./sharp-optimizer.ts";

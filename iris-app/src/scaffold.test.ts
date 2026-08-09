@@ -30,7 +30,7 @@ test("publications example template exists", () => {
 });
 
 test("createServer returns an http server", () => {
-  const server = createServer({ skipMigrations: true });
+  const { server } = createServer({ skipMigrations: true });
   assert.equal(typeof server.listen, "function");
   server.close();
 });

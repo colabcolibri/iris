@@ -15,4 +15,5 @@ export type CreateAssetInput = {
 export type AssetRepository = {
   create(input: CreateAssetInput): PostAsset;
   listByPostId(postId: string): PostAsset[];
+  findByPostIdAndFilename(postId: string, filename: string): PostAsset | null;
 };
