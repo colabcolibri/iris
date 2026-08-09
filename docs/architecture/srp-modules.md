@@ -3,29 +3,37 @@
 ## Dependency diagram
 
 ```txt
-server.ts
+iris-app/src/server.ts
   └── api/routes/*
-        └── use-cases (thin)
-              └── ports (interfaces)
+        └── use-cases
+              └── ports
                     ↑
               adapters/sqlite
+              adapters/media-storage
               adapters/meta
               adapters/sse
 
 workers/*
-  └── ports + adapters (same as api)
+  └── ports + adapters
 
-agents/*
-  └── ports only (reply text generation)
+agents/ (server)
+  └── LLM reply only
+
+.agent/skills/push-publication/  ← agente LOCAL, chama HTTP; não importa src/
 ```
 
 ## Rules
 
-1. `domain/` has zero imports from `adapters/` or `api/`
-2. `api/` does not import `adapters/meta` directly — inject via composition root (`server.ts`)
-3. New external system = new adapter implementing a port, not new logic in `api/`
-4. Workers share repositories with API via injected ports
+1. `domain/` zero imports de `adapters/` ou `api/`
+2. `adapters/media-storage/` único dono de `data/media/`
+3. `adapters/image-optimizer/` único lugar com sharp — chamado só no upload
+4. Publish worker lê `MediaStorage` + `PostRepository` — nunca URLs externas na v1
+5. Nenhum módulo em `src/` referencia Casper ou `publications/`
 
-## Adding a channel (future)
+## Agente local vs server
 
-New file `adapters/linkedin/` + port `ChannelPublisher` — posts table gains `channel` column; workers iterate publishers by channel.
+| Onde | Responsabilidade |
+| ---- | ---------------- |
+| `iris-app/publications/` + skill push | Montar pacote, upload, atualizar post.md |
+| `iris-app/src/api` | Receber bytes, persistir, agendar |
+| `iris-app/src/workers` | Publicar no IG no horário |

@@ -1,7 +1,7 @@
 ---
 title: API contracts
 status: approved
-version: 1.0
+version: 1.1
 updated: 2026-08-09
 depends_on: [05_architecture.md, 06_database.md, 02_security.md]
 blocks: []
@@ -23,7 +23,7 @@ blocks: []
 | Token | Access |
 | ----- | ------ |
 | Admin | All `/api/*` |
-| Agent | `/api/posts`, `/api/comments` (read/write per scope) |
+| Agent | `posts`, `assets`, `comments` per scope |
 
 ## Error envelope
 
@@ -35,62 +35,72 @@ blocks: []
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
-| GET | `/api/posts` | admin, agent | List posts (query: `status`, `from`, `to`) |
-| GET | `/api/posts/:id` | admin, agent | Single post + assets |
+| GET | `/api/posts` | admin, agent | List (query: `status`, `from`, `to`) |
+| GET | `/api/posts/:id` | admin, agent | Post + asset metadata |
 | POST | `/api/posts` | admin, agent | Create post |
 | PATCH | `/api/posts/:id` | admin, agent | Update caption, schedule, status |
-| DELETE | `/api/posts/:id` | admin | Soft cancel (`status=cancelled`) |
+| DELETE | `/api/posts/:id` | admin | Cancel (`status=cancelled`) |
 
 ### POST /api/posts body
 
 ```json
 {
   "caption": "string",
+  "channel": "instagram",
   "scheduled_at": "2026-08-10T18:00:00.000Z",
-  "deck_ref": "d-abc123",
-  "media_urls": ["https://..."],
+  "source_note": "opcional — texto livre",
   "status": "draft"
 }
 ```
+
+## Assets (mídia)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| POST | `/api/posts/:id/assets` | admin, agent | Multipart upload (`file`, `sort_order`) |
+| GET | `/api/posts/:id/assets` | admin, agent | List assets metadata |
+| GET | `/api/posts/:id/assets/:filename` | admin | Serve bytes (preview UI) |
+| DELETE | `/api/posts/:id/assets/:assetId` | admin | Remove before publish |
+
+### POST /api/posts/:id/assets
+
+- `Content-Type: multipart/form-data`
+- Field `file`: imagem PNG/JPG/WebP
+- Field `sort_order`: integer (opcional)
+- **Raw max:** `IRIS_UPLOAD_MAX_BYTES` (default 15 MB) — rejeita 413 acima disso
+- **Server otimiza sempre:** resize (long edge ≤ 1080), JPEG quality 85, strip EXIF — ver `docs/architecture/image-optimization.md`
+- **Armazena só JPEG otimizado** em `data/media/{post_id}/{sort_order}.jpg`
+- Response inclui `width`, `height`, `original_size_bytes`, `optimized_size_bytes`
+
+Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 
 ## Comments
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post |
-| POST | `/api/comments/:id/reply` | admin | Manual reply (sends to Meta) |
+| POST | `/api/comments/:id/reply` | admin | Manual reply → Meta |
 
 ## Events (SSE)
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
-| GET | `/api/events` | admin | `text/event-stream`; events: `posts-changed`, `comments-changed` |
+| GET | `/api/events` | admin | `posts-changed`, `comments-changed` |
 
 ## Webhooks
 
-| Method | Path | Auth | Description |
-| ------ | ---- | ---- | ----------- |
-| GET | `/webhooks/meta` | verify token | Meta subscription challenge |
-| POST | `/webhooks/meta` | HMAC | Comment notifications |
-
-## Health
-
 | Method | Path | Auth |
 | ------ | ---- | ---- |
-| GET | `/health` | none |
+| GET | `/webhooks/meta` | verify token |
+| POST | `/webhooks/meta` | HMAC |
 
-## Static UI
+## Health & static
 
 | Method | Path |
 | ------ | ---- |
+| GET | `/health` |
 | GET | `/`, `/app.js`, `/style.css` |
 
-## Casper integration contract
+## Contrato local (agente, não é HTTP)
 
-Agent Casper (ou operador) envia a Iris:
-
-- `deck_ref`: id da pasta slide no workspace Casper
-- `media_urls`: URLs públicas ou paths servidos por export Casper
-- `caption`: de `copy_instagram.md` ou gerado
-
-Sem endpoint Casper→Iris automático na v1; agente orquestra.
+Pacote em `publications/{slug}/` — ver `docs/architecture/local-publications.md`. O agente traduz isso em chamadas HTTP acima. **Iris não lê a pasta local** — só recebe uploads.

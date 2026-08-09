@@ -1,7 +1,7 @@
 ---
 title: User types
 status: approved
-version: 1.0
+version: 1.1
 updated: 2026-08-09
 depends_on: [00_scope.md, 02_security.md]
 blocks: [05_architecture.md, 06_database.md]
@@ -13,52 +13,62 @@ blocks: [05_architecture.md, 06_database.md]
 
 ### Operador editorial
 
-**Who:** Pessoa responsável pela presença no Instagram da marca (ex.: Sergio / equipe Colibri).
+**Who:** Pessoa responsável pela presença no Instagram da marca.
 
 **Goals:**
 - Ver calendário de postagens e status
 - Criar, editar legendas, reprogramar horários
-- Acompanhar comentários e respostas (manuais ou automáticas)
+- Fazer upload de imagens pela UI (alternativa ao agente)
+- Acompanhar comentários e respostas
 
-**Permissions:** token admin — CRUD completo em posts, leitura de comentários, configuração de auto-resposta.
+**Permissions:** token admin — CRUD posts, upload mídia, comentários, auto-reply.
 
-**Surfaces:** UI HTML (`/`), mesma origem do server.
+**Surfaces:** UI HTML (`/`).
 
 ---
 
-### Agente de IA
+### Agente local
 
-**Who:** Agente Cursor ou worker no servidor com skill Iris.
+**Who:** Agente Cursor no workspace Iris com skills do kit.
 
 **Goals:**
-- Inserir postagens a partir de conteúdo Casper exportado
-- Reprogramar `scheduled_at`
-- Consultar status e comentários pendentes
-- (Server worker) Gerar e enviar respostas a comentários
+- Escanear `publications/*/post.md` com `status: ready`
+- Obter imagens de qualquer fonte (pasta local, export manual, API externa como Casper) e salvar na pasta
+- Push: criar post + upload multipart + agendar
+- Reprogramar `scheduled_at`, consultar status
 
-**Permissions:** token agent — `posts:read`, `posts:write`, `posts:schedule`, `comments:read`; mutações de publicação Meta apenas via workers internos, não via token agent externo.
+**Permissions:** token agent — `posts:read`, `posts:write`, `posts:schedule`, `assets:write`, `comments:read`. Sem tokens Meta.
 
-**Surfaces:** REST API `/api/*`; sem acesso direto ao banco.
+**Surfaces:** REST `/api/*`; pasta `publications/` no disco local.
+
+---
+
+### Worker no server
+
+**Who:** Processos `publish-scheduler` e `comment-responder` dentro do Iris.
+
+**Goals:** Publicar posts no horário; responder comentários quando habilitado.
+
+**Permissions:** interno — acesso a `meta_tokens` e `data/media/`.
 
 ---
 
 ### Sistema Meta (webhook)
 
-**Who:** Instagram Graph API enviando eventos de comentário.
+**Who:** Instagram Graph API.
 
-**Goals:** Notificar Iris sobre novos comentários em mídias publicadas.
+**Goals:** Notificar novos comentários.
 
-**Permissions:** endpoint `POST /webhooks/meta` com verificação de assinatura.
-
-**Surfaces:** Webhook HTTP apenas.
+**Permissions:** `POST /webhooks/meta` com HMAC.
 
 ## Profile matrix
 
-| Action | Operador | Agente | Meta webhook |
-| ------ | -------- | ------ | ------------ |
-| List/create/edit posts | yes | yes | no |
-| Schedule post | yes | yes | no |
-| Trigger publish | worker only | no | no |
-| List comments | yes | yes | no |
-| Ingest comment | no | no | yes (create) |
-| Auto-reply | worker | no | no |
+| Action | Operador | Agente local | Worker | Meta |
+| ------ | -------- | ------------ | ------ | ---- |
+| CRUD posts | yes | yes | no | no |
+| Upload mídia | yes | yes | no | no |
+| Schedule | yes | yes | no | no |
+| Publish IG | no | no | yes | no |
+| List comments | yes | yes | no | no |
+| Ingest comment | no | no | no | yes |
+| Auto-reply | no | no | yes | no |

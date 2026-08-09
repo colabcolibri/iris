@@ -21,6 +21,7 @@ blocks: []
 | `NODE_ENV` | `development` | |
 
 ```bash
+cd iris-app
 cp .env.example .env
 pnpm install
 pnpm dev

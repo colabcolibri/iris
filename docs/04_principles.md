@@ -1,7 +1,7 @@
 ---
 title: Principles
 status: approved
-version: 1.0
+version: 1.1
 updated: 2026-08-09
 depends_on: [00_scope.md, 01_tech_stack.md]
 blocks: [05_architecture.md]
@@ -11,45 +11,43 @@ blocks: [05_architecture.md]
 
 ## Single responsibility (SRP)
 
-Cada módulo tem uma razão para mudar:
-
 | Módulo | Responsabilidade única |
 | ------ | ---------------------- |
-| `domain/` | Regras de negócio puras (status, validação de agenda) |
-| `ports/` | Contratos (interfaces) — sem I/O |
+| `domain/` | Regras de negócio (status, agenda, validação de mídia mínima) |
+| `ports/` | Contratos — sem I/O |
 | `adapters/sqlite/` | Persistência |
+| `adapters/media-storage/` | Gravar/servir `data/media/` |
+| `adapters/image-optimizer/` | sharp: resize, JPEG, strip EXIF |
 | `adapters/meta/` | Graph API Instagram |
 | `adapters/sse/` | Broadcast de eventos |
 | `api/` | HTTP: parse, auth, delegação |
-| `workers/` | Jobs temporais (publish, reply) |
-| `agents/` | Orquestração LLM — não publica diretamente |
+| `workers/` | Publish e reply no tempo certo |
+| `agents/` (server) | LLM para respostas a comentários |
+| Agente local (`.agent/`) | Montar pacote `publications/` e push — **fora** do runtime server |
 
 ## Dependency rule
 
-Dependências apontam **para dentro**: `api` → use cases → `ports` ← `adapters`. `domain` não importa nada externo.
+`api` → use cases → `ports` ← `adapters`. `domain` não importa adapters.
+
+## Iris não conhece ferramentas de criação
+
+- Sem `deck_ref`, sem imports de Casper, sem endpoints Casper→Iris
+- Campo opcional `source_note` (texto livre) só para rastreabilidade humana
+- Se o agente usar Casper, isso acontece **antes** do push, na máquina local
 
 ## Simplicity
 
-- Sem framework web até provar necessidade
-- Sem fila externa na v1 — worker in-process com tick de 60s
-- HTML estático; sem build de frontend na v1
-
-## Documentation precedes code
-
-Meridian: US `ready: true` antes de implementar. Phase docs guiam decisões.
-
-## Loose coupling with Casper
-
-Iris referencia `deck_ref` e `media_urls` — nunca importa código Casper.
+- Mídia no disco do server na v1 (sem S3)
+- HTML estático; worker in-process
 
 ## Real-time without polling
 
-UI atualiza via SSE após mutações; fetch inicial no load.
+SSE após mutações; fetch no load.
 
 ## Fail visibly
 
-Posts `failed` guardam erro da Meta; comentários `reply_failed` auditados em `agent_runs`.
+`failed` + `error_message` em posts; auditoria em `agent_runs`.
 
 ## Security by default
 
-Tokens no servidor; agentes só via API autenticada.
+Tokens Meta/LLM só no server; agente local só Bearer na API.

@@ -2,16 +2,28 @@
 .env
 .env.*
 !.env.example
+iris-app/.env
+iris-app/.env.*
+!iris-app/.env.example
 
 # Dependencies
 node_modules/
+iris-app/node_modules/
 
 # Build
 dist/
 build/
+iris-app/dist/
+iris-app/build/
+
+# Local publication drafts (keep _example template tracked)
+iris-app/publications/*
+!iris-app/publications/_example/
+!iris-app/publications/_example/**
 
 # Data
 data/
+iris-app/data/
 *.db
 *.db-journal
 

@@ -1,7 +1,7 @@
 ---
 title: Database
 status: approved
-version: 1.0
+version: 1.1
 updated: 2026-08-09
 depends_on: [05_architecture.md]
 blocks: [07_api_contracts.md]
@@ -11,9 +11,7 @@ blocks: [07_api_contracts.md]
 
 ## Engine
 
-SQLite via `node:sqlite` (`DatabaseSync`). Path: `IRIS_DB_PATH` (default `./data/iris.db`).
-
-Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplicadas no boot.
+SQLite (`node:sqlite`). Path: `IRIS_DB_PATH` (default `./data/iris.db`). Migrations em `migrations/`.
 
 ## Tables (v1)
 
@@ -23,16 +21,18 @@ Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplica
 | ------ | ---- | ----- |
 | id | TEXT PK | UUID |
 | status | TEXT | `draft`, `scheduled`, `published`, `cancelled`, `failed` |
-| caption | TEXT | Legenda IG |
+| channel | TEXT | `instagram` (v1); extensível |
+| caption | TEXT | Legenda |
 | scheduled_at | TEXT ISO | Nullable |
 | published_at | TEXT ISO | Nullable |
-| ig_media_id | TEXT | Preenchido após publish |
-| deck_ref | TEXT | Referência Casper (slide id) |
-| media_urls | TEXT | JSON array de URLs |
+| ig_media_id | TEXT | Após publish Meta |
+| source_note | TEXT | Opcional — texto livre (rastreio humano) |
 | error_message | TEXT | Último erro Meta |
 | auto_reply_enabled | INTEGER | 0/1 |
 | created_at | TEXT | |
 | updated_at | TEXT | |
+
+Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 
 ### `post_assets`
 
@@ -40,15 +40,22 @@ Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplica
 | ------ | ---- | ----- |
 | id | TEXT PK | |
 | post_id | TEXT FK | |
-| sort_order | INTEGER | Ordem do carrossel |
-| url | TEXT | URL da imagem |
+| sort_order | INTEGER | Ordem carrossel |
+| storage_path | TEXT | Relativo a `data/media/` ex. `{post_id}/01.jpg` |
+| original_filename | TEXT | Nome no upload |
+| mime | TEXT | `image/jpeg` após otimização |
+| width | INTEGER | px após resize |
+| height | INTEGER | px após resize |
+| original_size_bytes | INTEGER | Upload bruto |
+| optimized_size_bytes | INTEGER | Em disco |
+| created_at | TEXT | |
 
 ### `comments`
 
 | Column | Type | Notes |
 | ------ | ---- | ----- |
-| id | TEXT PK | UUID interno |
-| ig_comment_id | TEXT UNIQUE | ID Meta |
+| id | TEXT PK | |
+| ig_comment_id | TEXT UNIQUE | |
 | post_id | TEXT FK | |
 | author_username | TEXT | |
 | text | TEXT | |
@@ -61,8 +68,8 @@ Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplica
 | ------ | ---- | ----- |
 | id | TEXT PK | |
 | comment_id | TEXT FK | |
-| draft_text | TEXT | Gerado pelo agente |
-| sent_text | TEXT | Enviado à Meta |
+| draft_text | TEXT | |
+| sent_text | TEXT | |
 | status | TEXT | `draft`, `sent`, `failed` |
 | agent_run_id | TEXT FK | |
 
@@ -72,7 +79,7 @@ Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplica
 | ------ | ---- | ----- |
 | id | TEXT PK | |
 | trigger | TEXT | `webhook`, `manual`, `worker` |
-| input_summary | TEXT | Sem PII completo |
+| input_summary | TEXT | |
 | output_summary | TEXT | |
 | status | TEXT | `ok`, `failed` |
 | created_at | TEXT | |
@@ -82,11 +89,11 @@ Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplica
 | Column | Type | Notes |
 | ------ | ---- | ----- |
 | id | TEXT PK | |
-| label | TEXT | ex. `cursor-agent` |
-| key_hash | TEXT | SHA-256 |
-| scopes | TEXT | JSON array |
+| label | TEXT | |
+| key_hash | TEXT | |
+| scopes | TEXT | JSON |
 | created_at | TEXT | |
-| revoked_at | TEXT | Nullable |
+| revoked_at | TEXT | |
 
 ### `meta_tokens`
 
@@ -97,12 +104,21 @@ Migrations em `migrations/` com prefixo `YYYYMMDDHHMMSS_description.sql`. Aplica
 | expires_at | TEXT | |
 | updated_at | TEXT | |
 
+## Filesystem (não-SQL)
+
+```txt
+data/media/{post_id}/{filename}
+```
+
+Índice em `post_assets.storage_path`. Worker e Meta leem daqui.
+
 ## Indexes
 
-- `posts(status, scheduled_at)` — worker publish
-- `comments(post_id)` — UI list
-- `comments(ig_comment_id)` — webhook dedup
+- `posts(status, scheduled_at)`
+- `post_assets(post_id, sort_order)`
+- `comments(post_id)`
+- `comments(ig_comment_id)`
 
 ## Backup
 
-Copiar `data/iris.db` periodicamente em produção. Sem `db reset` em dev com dados reais.
+SQLite + cópia de `data/media/` juntos.

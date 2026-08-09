@@ -1,22 +1,44 @@
-# Iris
+# Iris (workspace Meridian)
 
-Serviço online para **agendar, publicar e gerenciar postagens no Instagram**, com suporte a comentários e agentes de IA via API.
+Repositório **Meridian** do produto Iris — gestor de postagens para Instagram.
 
-Iris é um produto **independente do Casper** (open-slide). Casper cria conteúdo; Iris entrega no canal.
+| Área | Caminho | Conteúdo |
+| ---- | ------- | -------- |
+| Meridian | `docs/`, `.meridian/` | Phase docs, backlog, decisões |
+| Aplicação | `iris-app/` | Código Node (API, UI, workers) |
+
+**Genérico** — não acoplado a Casper nem a outra ferramenta de criação. O agente local monta pacotes em `iris-app/publications/` e envia ao server.
+
+## Fluxo resumido
+
+```txt
+iris-app/publications/{slug}/post.md + imagens  →  agente push  →  Iris server  →  Instagram
+```
+
+Ver `docs/architecture/local-publications.md`.
 
 ## Meridian
-
-Este projeto usa o protocolo [Meridian](https://github.com/colabcolibri/meridian). Phase docs em `docs/`; backlog em `.meridian/meridian.db`.
 
 ```bash
 python3 .agent/scripts/validate_meridian.py .
 ```
 
-## Dev (após implementação)
+## Dev (aplicação)
 
 ```bash
+cd iris-app
 cp .env.example .env
 pnpm install
 pnpm dev
 # UI: http://127.0.0.1:8792/
+```
+
+## Estrutura local de publicação
+
+```txt
+iris-app/publications/
+  minha-postagem/
+    post.md      # frontmatter + legenda
+    01.png
+    02.png
 ```

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "default": "iris",
+  "projects": [
+    {
+      "id": "iris",
+      "name": "Iris",
+      "docs": "docs",
+      "qualitySiege": "standard"
+    }
+  ],
+  "exclude": []
+}

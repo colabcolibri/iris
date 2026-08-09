@@ -1,7 +1,7 @@
 ---
 title: Scope
 status: approved
-version: 1.0
+version: 1.1
 updated: 2026-08-09
 depends_on: []
 blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
@@ -11,68 +11,68 @@ blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 
 ## Name and description
 
-**Iris** é um serviço online que agenda, publica e acompanha postagens no Instagram. Roda como mini-server Node com SQLite, expõe API REST para agentes de IA e serve uma interface HTML simples no navegador. Opera de forma independente do Casper (criação de slides); integração com Casper é por referência (`deck_id`, URLs de mídia exportada), sem acoplamento de código.
+**Iris** é um serviço online que agenda, publica e acompanha postagens no Instagram. Roda como mini-server Node com SQLite, expõe API REST para agentes de IA e serve uma interface HTML simples no navegador. É um **gestor de postagens genérico** — não depende de Casper, Canva ou qualquer ferramenta de criação. Texto e imagens chegam ao server via API (upload); o agente local monta pacotes em `publications/` e faz o push.
 
 ## Problem it solves
 
-**Before:** postagens no IG são gerenciadas em planilhas, notas ou na cabeça. Agendar exige app manual; comentários ficam espalhados; agentes de IA não têm API segura para criar ou reprogramar posts. Casper exporta carrosséis, mas não publica nem responde comentários.
+**Before:** postagens no IG são gerenciadas em planilhas, notas ou na cabeça. Agendar exige app manual; comentários ficam espalhados; agentes de IA não têm API segura para criar ou reprogramar posts; mídia fica em pastas locais sem fluxo claro até o servidor.
 
-**After:** um calendário editorial centralizado com status de cada postagem, publicação programada via API oficial da Meta, comentários sincronizados na mesma UI, e agentes que operam só via API autenticada (sem acesso a tokens ou banco).
+**After:** calendário editorial centralizado, mídia armazenada no server, publicação programada via API oficial da Meta, comentários sincronizados na UI, e agente local que empacota `post.md` + imagens e envia via API — sem acoplamento a outro produto.
 
-**Why now:** o fluxo Casper → export → IG precisa de um “mensageiro” dedicado (Iris) com SRP claro, pronto para automação de comentários no servidor.
+**Why now:** precisamos de um serviço dedicado (Iris) com SRP claro: server = agenda + armazena + publica; agente local = monta conteúdo de qualquer fonte.
 
 ## Who it is for
 
 | Audience | Role | Context | Technical level | Primary need |
 | -------- | ---- | ------- | --------------- | ------------ |
 | **Operador editorial** | Dono da conta IG / marketing | Agenda posts, revisa legendas, responde comentários | Médio | Ver calendário, editar, publicar |
-| **Agente de IA** | Cursor / worker no server | Cria posts, reprograma, gera rascunhos de resposta | Alto (via API) | Endpoints estáveis, tokens com escopo |
-| **Integrador Casper** | Fluxo humano ou agente Casper | Envia deck exportado para Iris | Médio | Referência de deck + URLs de mídia |
+| **Agente local** | Cursor no workspace Iris | Lê `publications/`, faz upload, agenda | Alto (via API) | Endpoints estáveis, skill push-publication |
+| **Worker no server** | Processo Iris | Publica no horário, responde comentários | — | Tokens Meta só no server |
 
 ## In initial scope (v1)
 
 - CRUD de postagens com status (`draft`, `scheduled`, `published`, `cancelled`, `failed`)
-- Agendamento com `scheduled_at` e worker que publica via Graph API
-- Interface HTML servida pelo mesmo processo (lista + edição básica)
-- Atualização em tempo real via SSE (sem polling)
+- **Upload de mídia** multipart; **otimização automática no server** (resize + JPEG) antes de persistir
+- Agendamento com `scheduled_at` e worker que publica via Graph API a partir do disco
+- Pasta local `publications/` + `post.md` + skill agente `push-publication`
+- Interface HTML (lista + edição + preview de mídia)
+- SSE (sem polling)
 - Autenticação Bearer (admin + agent)
-- Webhook Meta para ingestão de comentários
-- Exibição de comentários por postagem na UI
-- Kit `.agent/` com skills para agentes operarem a API
-- Worker + agente para resposta automática a comentários (fase final da v1)
+- Webhook Meta + comentários na UI
+- Worker + agente para resposta automática a comentários
 
 ## Out of initial scope
 
-- LinkedIn, TikTok ou outros canais (arquitetura preparada, não implementado)
+- Integração embutida com Casper, Canva ou outros criadores (agente local resolve)
+- LinkedIn, TikTok (arquitetura `channel` preparada, não implementado)
 - App mobile nativo
-- Multi-tenant / múltiplas contas IG por instância (v1 = uma conta)
-- UI React/SPA elaborada (HTML + JS vanilla)
-- Código dentro do monorepo open-slide / Casper
-- Aprovação humana obrigatória antes de cada resposta automática (pode entrar em v2)
+- Multi-tenant / múltiplas contas IG
+- UI React/SPA
+- Object storage S3 (v1 = disco local no server)
 
 ## Known constraints
 
 | Constraint | Detail |
 | ---------- | ------ |
-| Stack | Node 22+, TypeScript, SQLite (`node:sqlite`), HTTP nativo |
-| Meta API | Conta IG Business/Creator + Página Facebook + app Meta Developers |
-| Deploy | Servidor online 24/7 (webhooks + scheduler) |
-| Repo | Projeto separado em `/Code/iris`, não dentro de open-slide |
+| Stack | Node 22+, TypeScript, SQLite, HTTP nativo |
+| Meta API | IG Business/Creator + Página Facebook + app Meta |
+| Deploy | Server online 24/7 |
+| Mídia | Deve estar no server antes do publish |
 | Segurança | Tokens Meta e LLM apenas no servidor |
 
 ## Assumptions
 
 | Assumption | Confidence | Validation |
 | ---------- | ---------- | ---------- |
-| Uma conta IG Colibri na v1 | high | Confirmar com operador |
-| Graph API suporta agendamento de carrossel | medium | Spike em EPIC-4 |
-| SSE suficiente para sync UI (sem WebSocket) | high | Implementação v1-S3 |
-| Casper envia URLs públicas ou paths acordados | medium | Definir contrato em `07_api_contracts` |
+| Uma conta IG na v1 | high | Operador |
+| Agente local é quem busca imagens (pasta, export, API externa) | high | Skill push-publication |
+| Graph API suporta carrossel a partir de upload | medium | Spike EPIC-4 |
+| SSE suficiente para sync UI | high | v1-S3 |
 
 ## Open questions
 
 | Question | Owner | Target date |
 | -------- | ----- | ----------- |
-| Host de produção (Railway, Fly, VPS)? | Operador | Antes de v1-S4 |
-| Modelo LLM para respostas automáticas? | Operador | Antes de v1-S6 |
-| Aprovação humana em respostas automáticas na v1? | Operador | Antes de v1-S6 |
+| Host de produção? | Operador | Antes v1-S4 |
+| LLM para respostas automáticas? | Operador | Antes v1-S6 |
+| `publications/` no git ou só local? | Operador | Antes v1-S6 |
