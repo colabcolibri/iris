@@ -12,7 +12,6 @@ iris-agent/
   iris.credentials.json      # gitignored — sua config local
   iris.credentials.example.json
   publications/              # post.md + imagens por slug
-  site/                      # desk estático (HTML/CSS/JS) — calendário + kanban
   README.md
 ```
 
@@ -43,27 +42,15 @@ Isso cria symlinks em `.cursor/skills/`, `.cursor/agents/`, etc. — padrão Mer
 
 Não há `pnpm`, `node` nem processo rodando neste pacote.
 
-## Desk estático (`site/`)
+## Admin (UI)
 
-Mini site **offline-first** com calendário e kanban das postagens. HTML, CSS e JS puros — sem build.
-
-No monorepo, o `iris-app` serve o desk em **`/desk/`** — um único endereço:
+Calendário, kanban e edição de postagens ficam no **admin online** servido pelo `iris-app`:
 
 ```bash
 cd iris-app && pnpm dev
-# admin:  http://127.0.0.1:8792/
-# desk:   http://127.0.0.1:8792/desk/
+# http://127.0.0.1:8792/
 ```
-
-- Lê `iris.credentials.json` na raiz de `iris-agent/` (exposto em `/desk/iris.credentials.json`)
-- Sincroniza com `GET /api/posts` no mesmo host (Bearer agent) — sem CORS em dev
-- Cache em `localStorage` + service worker para uso offline após primeiro load
-- Responsivo (mobile / tablet / desktop)
-
-**Pacote portável** (cópia só de `iris-agent/`): sirva `site/` com qualquer host estático local se não tiver o `iris-app` por perto — o fluxo principal no monorepo é `/desk/` no server Iris.
-
-O agente editorial continua via API/curl; o desk é a visão humana do mesmo calendário.
 
 ## Server
 
-O Iris HTTP server fica em `iris-app/` (`pnpm dev`). Este pacote é só o **cliente agente**.
+O Iris HTTP server fica em `iris-app/` (`pnpm dev`). Este pacote é só o **cliente agente** (push de publicações locais via API).

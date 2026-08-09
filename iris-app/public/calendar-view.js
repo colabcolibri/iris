@@ -7,6 +7,7 @@ import {
   sameDay,
   truncate,
 } from "./date-utils.js";
+import { failedChipPrefix, postErrorTitle, statusLabel } from "./status-labels.js";
 
 function formatChipTime(iso) {
   if (!iso) return "";
@@ -70,8 +71,17 @@ export function createCalendarView(root, { onSelect, onMonthChange }) {
         chip.dataset.status = post.status;
 
         const time = post.scheduled_at ? formatChipTime(post.scheduled_at) : "";
-        const label = time ? `${time} · ${truncate(post.caption, 24)}` : truncate(post.caption, 28);
+        const prefix = failedChipPrefix(post);
+        const captionPart = truncate(post.caption, prefix ? 20 : 24);
+        const label = time
+          ? `${time} · ${prefix}${captionPart}`
+          : `${prefix}${truncate(post.caption, 28)}`;
         chip.textContent = label;
+        chip.setAttribute("aria-label", `${statusLabel(post.status)}: ${post.caption ?? ""}`);
+        const errorTitle = postErrorTitle(post);
+        if (errorTitle) {
+          chip.title = errorTitle;
+        }
         chip.addEventListener("click", () => onSelect(post));
         cell.appendChild(chip);
       }

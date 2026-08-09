@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export type ParsedCommentEntry = {
   igCommentId: string;
   igMediaId: string;
+  parentIgCommentId: string | null;
   text: string | null;
   authorUsername: string | null;
 };
@@ -119,9 +120,20 @@ export function parseCommentEntries(payload: unknown): ParsedCommentEntry[] {
           ? (record.from as Record<string, unknown>)
           : null;
 
+      const parentRaw =
+        record.parent_id ??
+        record.parent_comment_id ??
+        (record.parent &&
+        typeof record.parent === "object" &&
+        typeof (record.parent as Record<string, unknown>).id === "string"
+          ? (record.parent as Record<string, unknown>).id
+          : null);
+
       parsed.push({
         igCommentId,
         igMediaId,
+        parentIgCommentId:
+          typeof parentRaw === "string" && parentRaw.trim() ? parentRaw : null,
         text: typeof record.text === "string" ? record.text : null,
         authorUsername:
           from && typeof from.username === "string" ? from.username : null,

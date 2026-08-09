@@ -3,6 +3,11 @@ import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
 import { generateReply } from "../agents/reply-agent.ts";
 import { notifyCommentsChanged } from "../adapters/sse/event-bus.ts";
+import { assembleReplyContext } from "../domain/reply-context/reply-context-assembler.ts";
+import {
+  buildReplyAuditSummary,
+  serializeReplyAuditSummary,
+} from "../domain/reply-context/build-reply-audit-summary.ts";
 
 export type CommentResponderOptions = {
   intervalMs?: number;
@@ -37,14 +42,22 @@ export function startCommentResponder(
       const pending = ctx.comments.listPendingForAutoReply();
 
       for (const comment of pending) {
-        const inputSummary = `@${comment.authorUsername ?? "user"}: ${(comment.text ?? "").slice(0, 120)}`;
+        const context = await assembleReplyContext(
+          comment.id,
+          ctx.replyContextAssembler,
+        );
+
+        if (!context) {
+          continue;
+        }
+
+        const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
 
         try {
-          const message = await generateReply({ llm }, {
-            caption: comment.postCaption,
-            commentText: comment.text,
-            authorUsername: comment.authorUsername,
-          });
+          const message = await generateReply(
+            { llm, assembler: ctx.replyContextAssembler },
+            { prebuiltContext: context },
+          );
 
           await replier.reply(comment.igCommentId, message);
 

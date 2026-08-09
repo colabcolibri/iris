@@ -21,16 +21,13 @@ test("datetime converts iso to datetime-local", () => {
   assert.match(local, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
 });
 
-test("index.html includes editorial shell", () => {
+test("built shell and status badges exist", () => {
   const html = readFileSync(join(PUBLIC_DIR, "index.html"), "utf8");
-  assert.match(html, /id="calendar-view"/);
-  assert.match(html, /id="post-form"/);
-  assert.match(html, /style\.css/);
-});
+  assert.match(html, /id="root"/);
+  assert.match(html, /<title>Iris<\/title>/);
 
-test("style.css defines status badges", () => {
-  const css = readFileSync(join(PUBLIC_DIR, "style.css"), "utf8");
+  const badge = readFileSync(join(PUBLIC_DIR, "../admin/src/components/posts/status-badge.tsx"), "utf8");
   for (const status of ["draft", "scheduled", "published", "cancelled", "failed"]) {
-    assert.match(css, new RegExp(`data-status="${status}"`));
+    assert.match(badge, new RegExp(status));
   }
 });

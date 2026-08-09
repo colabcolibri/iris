@@ -17,10 +17,19 @@ test("comment responder replies to pending comments with auto_reply enabled", as
       agentToken: "agent",
       encryptionKey: "f".repeat(64),
       metaAccessToken: "meta",
+      publicBaseUrl: "https://iris.example",
+      publishUrlSecret: "publish-secret",
     });
 
     const post = ctx.posts.create({ channel: "instagram", caption: "Post caption" });
     ctx.posts.update(post.id, { autoReplyEnabled: true });
+
+    ctx.replyPersonaStore.upsert({
+      systemPrompt: "Responda com empatia.",
+      tone: "amigável",
+      brandName: "Iris",
+      maxChars: 280,
+    });
 
     const { comment } = ctx.comments.upsertFromWebhook({
       igCommentId: "ig-c-1",
@@ -30,6 +39,7 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     });
 
     const replies: string[] = [];
+    let capturedPrompt = "";
 
     ctx.metaCommentReplier = {
       async reply(_igCommentId, message) {
@@ -38,7 +48,8 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     };
 
     ctx.llmCompleter = {
-      async complete() {
+      async complete(prompt) {
+        capturedPrompt = prompt;
         return "Obrigado pelo interesse!";
       },
     };
@@ -50,11 +61,20 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     const updated = ctx.comments.findById(comment.id);
     assert.equal(updated?.status, "replied");
     assert.equal(replies.length, 1);
+    assert.match(capturedPrompt, /## Persona/);
+    assert.match(capturedPrompt, /Responda com empatia/);
 
-    const runs = db.prepare("SELECT COUNT(*) AS total FROM agent_runs").get() as {
-      total: number;
+    const run = db
+      .prepare("SELECT input_summary FROM agent_runs ORDER BY id DESC LIMIT 1")
+      .get() as { input_summary: string };
+    const summary = JSON.parse(run.input_summary) as {
+      post_id: string;
+      thread_length: number;
+      asset_count: number;
     };
-    assert.equal(runs.total, 1);
+    assert.equal(summary.post_id, post.id);
+    assert.equal(typeof summary.thread_length, "number");
+    assert.doesNotMatch(run.input_summary, /Quanto custa/);
   } finally {
     db.close();
   }

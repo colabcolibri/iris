@@ -5,6 +5,7 @@ import type { AppContext } from "../app-context.ts";
 import {
   BodyTooLargeError,
   readJsonBody,
+  sendApiError,
   sendError,
   sendJson,
   ValidationError,
@@ -15,6 +16,7 @@ import {
 } from "../../domain/post-mutations.ts";
 import { parseIsoDateParam } from "../../domain/datetime-ui.ts";
 import { applyScheduleRules } from "../../domain/schedule.ts";
+import { assertMetaReadyForSchedule, MetaNotConnectedError } from "../../domain/meta-readiness.ts";
 import type { PostStatus } from "../../domain/post.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
@@ -125,10 +127,19 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
                 : current.scheduledAt,
           };
 
+      if (schedule.status === "scheduled") {
+        assertMetaReadyForSchedule(ctx);
+      }
+
+      const nextStatus = schedule.status;
+      const clearError =
+        nextStatus === "draft" && current.status === "failed";
+
       const updated = ctx.posts.update(postId, {
         ...update,
-        status: schedule.status,
+        status: nextStatus,
         scheduledAt: schedule.scheduledAt,
+        errorMessage: clearError ? null : undefined,
       });
 
       notifyPostsChanged({ post_id: postId });
@@ -160,6 +171,11 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
 }
 
 function handlePostsError(res: ServerResponse, error: unknown): void {
+  if (error instanceof MetaNotConnectedError) {
+    sendApiError(res, 422, error.message, error.code);
+    return;
+  }
+
   if (error instanceof ValidationError) {
     sendError(res, 422, error.message);
     return;

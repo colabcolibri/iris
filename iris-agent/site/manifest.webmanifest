@@ -1,9 +1,0 @@
-{
-  "name": "Iris desk",
-  "short_name": "Iris",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#f8f9fa",
-  "theme_color": "#1c1917",
-  "lang": "pt-BR"
-}

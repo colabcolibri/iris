@@ -7,6 +7,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file=.env --experimental-strip-types src/server.ts",
+    "dev:admin": "pnpm --dir admin dev",
+    "build:admin": "pnpm --dir admin build",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test $(find src test -name '*.test.ts' -print 2>/dev/null | tr '\\n' ' ')"
   },

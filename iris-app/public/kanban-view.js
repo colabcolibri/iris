@@ -1,4 +1,5 @@
 import { postDisplayDate, truncate } from "./date-utils.js";
+import { postErrorTitle, statusLabel } from "./status-labels.js";
 
 const COLUMNS = [
   { id: "draft", label: "Rascunho" },
@@ -64,7 +65,11 @@ export function createKanbanView(root, { onSelect, onStatusChange }) {
         const badge = document.createElement("span");
         badge.className = "status-badge";
         badge.dataset.status = post.status;
-        badge.textContent = post.status;
+        badge.textContent = statusLabel(post.status);
+        const errorTitle = postErrorTitle(post);
+        if (errorTitle) {
+          badge.title = errorTitle;
+        }
 
         const heading = document.createElement("button");
         heading.type = "button";

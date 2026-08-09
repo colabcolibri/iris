@@ -80,6 +80,7 @@ async function handleMetaWebhookPost(
       const result = ctx.comments.upsertFromWebhook({
         igCommentId: entry.igCommentId,
         postId: post.id,
+        parentIgCommentId: entry.parentIgCommentId,
         authorUsername: entry.authorUsername,
         text: entry.text,
       });

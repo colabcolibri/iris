@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "connected": true,
+    "igUsername": "iris.studio",
+    "tokenExpired": false
+  },
+  "user": {
+    "email": "editor@iris.studio"
+  },
+  "kanbanColumns": [
+    { "id": "draft", "label": "Rascunho", "count": 3 },
+    { "id": "scheduled", "label": "Agendado", "count": 4 },
+    { "id": "published", "label": "Publicado", "count": 12 },
+    { "id": "failed", "label": "Falhou", "count": 1 },
+    { "id": "cancelled", "label": "Cancelado", "count": 2 }
+  ],
+  "posts": [
+    {
+      "id": "post_01",
+      "status": "scheduled",
+      "caption": "Lançamento da coleção outono — peças em linho e tons terrosos. Carrossel com 5 fotos no feed.",
+      "scheduled_at": "2026-08-15T18:30:00.000Z",
+      "assets_count": 5,
+      "channel": "instagram"
+    },
+    {
+      "id": "post_02",
+      "status": "draft",
+      "caption": "Bastidores do shooting. Legenda curta com CTA para newsletter.",
+      "scheduled_at": null,
+      "assets_count": 2,
+      "channel": "instagram"
+    },
+    {
+      "id": "post_03",
+      "status": "published",
+      "caption": "Reel: 3 dicas de styling para o escritório em casa.",
+      "published_at": "2026-08-10T14:00:00.000Z",
+      "assets_count": 1,
+      "channel": "instagram",
+      "ig_media_id": "17895695668004550"
+    },
+    {
+      "id": "post_04",
+      "status": "failed",
+      "caption": "Post de parceria — verificar permissões da marca antes de republicar.",
+      "scheduled_at": "2026-08-12T09:00:00.000Z",
+      "assets_count": 3,
+      "error_message": "Meta API: media publish failed — invalid aspect ratio",
+      "channel": "instagram"
+    },
+    {
+      "id": "post_05",
+      "status": "scheduled",
+      "caption": "Quote card — tipografia Playfair sobre fundo creme.",
+      "scheduled_at": "2026-08-18T12:00:00.000Z",
+      "assets_count": 1,
+      "channel": "instagram"
+    }
+  ],
+  "calendarMonth": {
+    "label": "Agosto 2026",
+    "today": "2026-08-09",
+    "sampleChips": [
+      { "day": 10, "time": "14:00", "status": "published", "caption": "Reel: 3 dicas de styling…" },
+      { "day": 12, "time": "09:00", "status": "failed", "caption": "Post de parceria…" },
+      { "day": 15, "time": "18:30", "status": "scheduled", "caption": "Lançamento da coleção outono…" },
+      { "day": 18, "time": "12:00", "status": "scheduled", "caption": "Quote card…" }
+    ]
+  },
+  "postDialog": {
+    "mode": "edit",
+    "title": "Editar postagem",
+    "caption": "Lançamento da coleção outono — peças em linho e tons terrosos.",
+    "scheduled_at_local": "2026-08-15T15:30",
+    "auto_reply_enabled": true,
+    "assets_preview": 3,
+    "comments": [
+      {
+        "author": "marina.costa",
+        "text": "Amei o tom da terceira foto! Qual filtro vocês usaram?",
+        "status": "pending",
+        "created_at": "2026-08-09T20:12:00.000Z"
+      },
+      {
+        "author": "joao.editorial",
+        "text": "Podemos adiar 30min? O export ainda está renderizando.",
+        "status": "replied",
+        "created_at": "2026-08-09T19:40:00.000Z"
+      }
+    ],
+    "footerActions": ["Fechar", "Agendar", "Salvar rascunho"]
+  },
+  "login": {
+    "step": "email",
+    "title": "Entrar",
+    "subtitle": "Acesso editorial ao Iris"
+  }
+}

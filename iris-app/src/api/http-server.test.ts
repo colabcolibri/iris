@@ -51,27 +51,13 @@ test("serves public/index.html at root", async () => {
   });
 });
 
-test("serves iris-agent desk at /desk/", async () => {
+test("spa routes fall back to index.html", async () => {
   await withServer(async (port) => {
-    const redirect = await fetch(`http://127.0.0.1:${port}/desk`, { redirect: "manual" });
-    assert.equal(redirect.status, 302);
-    assert.equal(redirect.headers.get("location"), "/desk/");
-
-    const response = await fetch(`http://127.0.0.1:${port}/desk/`);
+    const response = await fetch(`http://127.0.0.1:${port}/login`);
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, /<title>Iris desk<\/title>/);
-
-    const js = await fetch(`http://127.0.0.1:${port}/desk/js/app.js`);
-    assert.equal(js.status, 200);
-  });
-});
-
-test("unknown routes return 404 json", async () => {
-  await withServer(async (port) => {
-    const response = await fetch(`http://127.0.0.1:${port}/missing-page`);
-    assert.equal(response.status, 404);
-    assert.deepEqual(await response.json(), { error: "Not found" });
+    assert.match(html, /<title>Iris<\/title>/);
+    assert.match(html, /id="root"/);
   });
 });
 

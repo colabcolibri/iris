@@ -10,8 +10,8 @@ import { mapCommentRow } from "./mappers.ts";
 export function createSqliteCommentRepository(db: DatabaseSync): CommentRepository {
   const insert = db.prepare(`
     INSERT INTO comments (
-      id, ig_comment_id, post_id, author_username, text, status, error_message, created_at
-    ) VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?)
+      id, ig_comment_id, post_id, parent_ig_comment_id, author_username, text, status, error_message, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, 'pending', NULL, ?)
   `);
 
   const selectByIgCommentId = db.prepare(
@@ -47,6 +47,13 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     ORDER BY datetime(c.created_at) ASC
   `);
 
+  const listSentRepliesByPostIdStmt = db.prepare(`
+    SELECT cr.comment_id, cr.sent_text
+    FROM comment_replies cr
+    INNER JOIN comments c ON c.id = cr.comment_id
+    WHERE c.post_id = ? AND cr.status = 'sent' AND cr.sent_text IS NOT NULL
+  `);
+
   return {
     upsertFromWebhook(input: UpsertCommentInput) {
       const existing = selectByIgCommentId.get(input.igCommentId);
@@ -62,6 +69,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
         id,
         input.igCommentId,
         input.postId,
+        input.parentIgCommentId ?? null,
         input.authorUsername ?? null,
         input.text ?? null,
         now,
@@ -78,6 +86,16 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
     listByPostId(postId) {
       return listByPostId.all(postId).map((row) => mapCommentRow(row as never));
+    },
+
+    listSentRepliesByPostId(postId) {
+      return listSentRepliesByPostIdStmt.all(postId).map((row) => {
+        const record = row as { comment_id: string; sent_text: string };
+        return {
+          commentId: record.comment_id,
+          sentText: record.sent_text,
+        };
+      });
     },
 
     listPendingForAutoReply() {

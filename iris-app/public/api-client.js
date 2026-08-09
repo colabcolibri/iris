@@ -19,7 +19,12 @@ async function apiFetch(path, options = {}) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.error ?? `Request failed (${response.status})`);
+    const message = payload.error ?? `Request failed (${response.status})`;
+    const error = new Error(message);
+    if (payload.code) {
+      error.code = payload.code;
+    }
+    throw error;
   }
 
   if (response.status === 204) {

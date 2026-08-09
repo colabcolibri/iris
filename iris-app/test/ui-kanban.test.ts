@@ -2,32 +2,33 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const PUBLIC = "public";
+const ADMIN = "admin/src";
 
-test("index.html includes kanban view and tabs", () => {
-  const html = readFileSync(`${PUBLIC}/index.html`, "utf8");
-  assert.match(html, /id="kanban-view"/);
-  assert.match(html, /id="kanban-board"/);
-  assert.match(html, /data-view="kanban"/);
-  assert.match(html, /Calendário/);
-  assert.match(html, /Kanban/);
+test("admin includes kanban board", () => {
+  const board = readFileSync(`${ADMIN}/components/kanban/kanban-board.tsx`, "utf8");
+  assert.match(board, /KanbanBoard/);
+  assert.match(board, /onStatusChange/);
+  assert.match(board, /KANBAN_COLUMNS/);
 });
 
-test("kanban module supports status changes", () => {
-  const kanbanJs = readFileSync(`${PUBLIC}/kanban-view.js`, "utf8");
-  assert.match(kanbanJs, /createKanbanView/);
-  assert.match(kanbanJs, /onStatusChange/);
-  assert.match(kanbanJs, /kanban-col/);
-
-  const css = readFileSync(`${PUBLIC}/style.css`, "utf8");
-  assert.match(css, /\.kanban-board/);
-  assert.match(css, /\.kanban-status-select/);
+test("kanban card supports status changes", () => {
+  const card = readFileSync(`${ADMIN}/components/kanban/kanban-card.tsx`, "utf8");
+  assert.match(card, /DropdownMenuGroup/);
+  assert.match(card, /MOVE_STATUS_OPTIONS/);
+  assert.match(card, /onStatusChange/);
+  assert.match(card, /KanbanColumnShell\.Card/);
 });
 
-test("app.js wires kanban and updatePost for status", () => {
-  const app = readFileSync(`${PUBLIC}/app.js`, "utf8");
-  assert.match(app, /createKanbanView/);
-  assert.match(app, /changePostStatus/);
-  assert.match(app, /updatePost\(post\.id, \{ status: nextStatus \}\)/);
-  assert.match(app, /showView/);
+test("kanban uses column shell template", () => {
+  const column = readFileSync(`${ADMIN}/components/templates/kanban-column-shell.tsx`, "utf8");
+  assert.match(column, /KanbanColumnShell/);
+  assert.match(column, /KanbanColumnShell\.Card/);
+});
+
+test("dashboard wires kanban and updatePost for status", () => {
+  const dashboard = readFileSync(`${ADMIN}/pages/dashboard-page.tsx`, "utf8");
+  assert.match(dashboard, /KanbanBoard/);
+  assert.match(dashboard, /changeStatus/);
+  assert.match(dashboard, /updatePost\(post\.id, \{ status \}\)/);
+  assert.match(dashboard, /PostDialog/);
 });

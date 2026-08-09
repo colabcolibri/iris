@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Iris</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -10,108 +10,10 @@
       href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/iris-tokens.css" />
-    <link rel="stylesheet" href="/style.css" />
+    <script type="module" crossorigin src="/assets/index-C7lNfec6.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D9M1_jNz.css">
   </head>
   <body>
-    <div class="app-shell" id="app">
-      <header class="app-header">
-        <div class="header-brand">
-          <h1>Iris</h1>
-          <div id="meta-connection" class="meta-connection" aria-live="polite">
-            <span id="meta-status-text" class="meta-status meta-status--disconnected">Instagram desconectado</span>
-            <div class="meta-connection-actions">
-              <a id="meta-connect-link" class="btn-ghost" href="/auth/meta">Conectar Instagram</a>
-              <button type="button" class="btn-ghost" id="meta-health-btn" hidden>Testar conexão</button>
-            </div>
-            <p id="meta-banner" class="meta-banner" hidden></p>
-          </div>
-        </div>
-        <div class="header-actions">
-          <button type="button" class="btn-ghost" id="logout-btn">Sair</button>
-          <button type="button" class="btn-primary" id="new-post-btn">Nova postagem</button>
-        </div>
-      </header>
-
-      <nav class="view-tabs" role="tablist" aria-label="Visões">
-        <button
-          type="button"
-          class="tab is-active"
-          data-view="calendar"
-          role="tab"
-          aria-selected="true"
-        >
-          Calendário
-        </button>
-        <button type="button" class="tab" data-view="kanban" role="tab" aria-selected="false">
-          Kanban
-        </button>
-      </nav>
-
-      <div class="app-layout">
-        <section class="panel main-panel">
-          <section id="calendar-view" class="view-panel" aria-labelledby="calendar-heading">
-            <div class="view-toolbar">
-              <button type="button" class="btn-ghost" id="cal-prev" aria-label="Mês anterior">
-                ‹
-              </button>
-              <h2 id="calendar-heading" class="view-title"></h2>
-              <button type="button" class="btn-ghost" id="cal-next" aria-label="Próximo mês">
-                ›
-              </button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Calendário mensal"></div>
-          </section>
-
-          <section id="kanban-view" class="view-panel" hidden aria-label="Kanban por status">
-            <div class="kanban-board" id="kanban-board"></div>
-          </section>
-        </section>
-
-        <main class="panel" id="post-detail">
-          <h2 id="detail-title">Detalhe</h2>
-          <p class="empty-state" id="detail-empty">Selecione uma postagem ou crie uma nova.</p>
-
-          <form id="post-form" hidden>
-            <div class="form-field">
-              <label for="caption">Legenda</label>
-              <textarea id="caption" name="caption" required></textarea>
-            </div>
-
-            <div class="form-field">
-              <label for="scheduled-at">Agendar para</label>
-              <input id="scheduled-at" name="scheduled_at" type="datetime-local" />
-            </div>
-
-            <div class="form-field form-field-inline">
-              <input id="auto-reply-enabled" name="auto_reply_enabled" type="checkbox" />
-              <label for="auto-reply-enabled">Resposta automática a comentários</label>
-            </div>
-
-            <div class="form-field">
-              <label for="asset-files">Imagens</label>
-              <input id="asset-files" name="assets" type="file" accept="image/png,image/jpeg,image/webp" multiple />
-            </div>
-
-            <div id="asset-preview" aria-live="polite"></div>
-
-            <div class="btn-row">
-              <button type="submit" class="btn-primary" id="save-draft-btn">Salvar rascunho</button>
-              <button type="button" class="btn-primary" id="schedule-btn">Agendar</button>
-              <button type="button" class="btn-ghost" id="cancel-form-btn">Cancelar</button>
-            </div>
-
-            <p class="error-banner" id="form-error" hidden></p>
-          </form>
-
-          <section class="comments-panel" id="comments-panel" hidden>
-            <h3>Comentários</h3>
-            <div id="comments-list" aria-live="polite"></div>
-          </section>
-        </main>
-      </div>
-    </div>
-
-    <script type="module" src="/app.js"></script>
+    <div id="root"></div>
   </body>
 </html>

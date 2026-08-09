@@ -21,6 +21,7 @@ type CommentRow = {
   id: string;
   ig_comment_id: string;
   post_id: string;
+  parent_ig_comment_id: string | null;
   author_username: string | null;
   text: string | null;
   status: string;
@@ -66,6 +67,7 @@ export function mapCommentRow(row: CommentRow): Comment {
     id: row.id,
     igCommentId: row.ig_comment_id,
     postId: row.post_id,
+    parentIgCommentId: row.parent_ig_comment_id,
     authorUsername: row.author_username,
     text: row.text,
     status: row.status as Comment["status"],

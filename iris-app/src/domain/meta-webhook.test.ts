@@ -48,6 +48,7 @@ test("parseCommentEntries extracts instagram comment payload", () => {
   assert.deepEqual(entries[0], {
     igCommentId: "comment-1",
     igMediaId: "media-99",
+    parentIgCommentId: null,
     text: "ótimo post",
     authorUsername: "fan_user",
   });

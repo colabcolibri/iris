@@ -11,6 +11,7 @@ const AGENT = "integration-agent";
 
 async function withIntegrationServer(
   run: (ctx: { port: number; baseUrl: string }) => Promise<void>,
+  options: { metaAccessToken?: string; igUserId?: string } = {},
 ): Promise<void> {
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-media-"));
   const { server, stopScheduler } = createServer({
@@ -18,6 +19,8 @@ async function withIntegrationServer(
     adminToken: ADMIN,
     agentToken: AGENT,
     mediaRoot,
+    metaAccessToken: options.metaAccessToken ?? "integration-meta-token",
+    igUserId: options.igUserId ?? "123456789",
   });
 
   await new Promise<void>((resolve) => {
@@ -310,5 +313,141 @@ test("list posts returns assets_count after upload", async () => {
     const listed = payload.posts.find((post) => post.id === created.id);
     assert.ok(listed);
     assert.equal(listed!.assets_count, 1);
+  });
+});
+
+test("schedule without meta connection returns meta_not_connected", async () => {
+  await withIntegrationServer(
+    async ({ baseUrl }) => {
+      const createResponse = await fetch(`${baseUrl}/api/posts`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ caption: "sem meta", channel: "instagram" }),
+      });
+      const created = (await createResponse.json()) as { id: string };
+
+      const png = await sharp({
+        create: {
+          width: 400,
+          height: 400,
+          channels: 3,
+          background: "#000000",
+        },
+      })
+        .png()
+        .toBuffer();
+
+      const boundary = "----iris-no-meta";
+      const body = Buffer.concat([
+        Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="sort_order"\r\n\r\n1\r\n`,
+        ),
+        Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\n`,
+        ),
+        png,
+        Buffer.from(`\r\n--${boundary}--\r\n`),
+      ]);
+
+      await fetch(`${baseUrl}/api/posts/${created.id}/assets`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${AGENT}`,
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+      });
+
+      const scheduledAt = new Date(Date.now() + 3_600_000).toISOString();
+      const scheduleResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ status: "scheduled", scheduled_at: scheduledAt }),
+      });
+
+      assert.equal(scheduleResponse.status, 422);
+      const payload = (await scheduleResponse.json()) as { error: string; code: string };
+      assert.equal(payload.code, "meta_not_connected");
+    },
+    { metaAccessToken: "", igUserId: "" },
+  );
+});
+
+test("failed post can return to draft or be rescheduled when meta connected", async () => {
+  await withIntegrationServer(async ({ baseUrl }) => {
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ caption: "falhou", channel: "instagram" }),
+    });
+    const created = (await createResponse.json()) as { id: string };
+
+    const png = await sharp({
+      create: {
+        width: 400,
+        height: 400,
+        channels: 3,
+        background: "#336699",
+      },
+    })
+      .png()
+      .toBuffer();
+
+    const boundary = "----iris-failed";
+    const body = Buffer.concat([
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="sort_order"\r\n\r\n1\r\n`,
+      ),
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\n`,
+      ),
+      png,
+      Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+
+    await fetch(`${baseUrl}/api/posts/${created.id}/assets`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${AGENT}`,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+
+    await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ status: "failed" }),
+    });
+
+    const draftResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ status: "draft" }),
+    });
+    assert.equal(draftResponse.status, 200);
+    const draft = (await draftResponse.json()) as { status: string; error_message: string | null };
+    assert.equal(draft.status, "draft");
+    assert.equal(draft.error_message, null);
+
+    await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ status: "failed" }),
+    });
+
+    const scheduledAt = new Date(Date.now() + 3_600_000).toISOString();
+    const scheduleResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ status: "scheduled", scheduled_at: scheduledAt }),
+    });
+    assert.equal(scheduleResponse.status, 200);
+    const scheduled = (await scheduleResponse.json()) as {
+      status: string;
+      scheduled_at: string;
+    };
+    assert.equal(scheduled.status, "scheduled");
+    assert.equal(scheduled.scheduled_at, scheduledAt);
   });
 });

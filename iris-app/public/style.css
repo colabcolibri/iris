@@ -676,6 +676,49 @@ body {
   color: var(--danger);
 }
 
+.post-status-panel {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.post-error-message {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 0.875rem;
+  word-break: break-word;
+}
+
+.post-published-meta {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+.post-ig-link {
+  color: var(--accent);
+}
+
+.post-failed-actions {
+  margin-top: 12px;
+}
+
+.schedule-gate-banner {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.875rem;
+  word-break: break-word;
+}
+
+.schedule-gate-banner a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .form-field {
   display: grid;
   gap: 6px;

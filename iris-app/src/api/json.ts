@@ -15,6 +15,19 @@ export function sendError(res: ServerResponse, status: number, message: string):
   sendJson(res, status, { error: message });
 }
 
+export function sendApiError(
+  res: ServerResponse,
+  status: number,
+  message: string,
+  code?: string,
+): void {
+  const body: { error: string; code?: string } = { error: message };
+  if (code) {
+    body.code = code;
+  }
+  sendJson(res, status, body);
+}
+
 export async function readRawBody(
   req: IncomingMessage,
   limit = JSON_BODY_LIMIT,

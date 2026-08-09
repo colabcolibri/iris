@@ -2,39 +2,36 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const PUBLIC = "public";
+const ADMIN = "admin/src";
 
-test("index.html includes calendar view scaffold", () => {
-  const html = readFileSync(`${PUBLIC}/index.html`, "utf8");
-  assert.match(html, /id="calendar-view"/);
-  assert.match(html, /id="calendar-grid"/);
-  assert.match(html, /id="cal-prev"/);
-  assert.match(html, /id="cal-next"/);
-  assert.match(html, /data-view="calendar"/);
+test("admin includes calendar view", () => {
+  const calendar = readFileSync(`${ADMIN}/components/calendar/calendar-view.tsx`, "utf8");
+  assert.match(calendar, /CalendarView/);
+  assert.match(calendar, /calendarCells/);
+  assert.match(calendar, /onCursorChange/);
 });
 
-test("calendar modules and styles exist", () => {
-  const calendarJs = readFileSync(`${PUBLIC}/calendar-view.js`, "utf8");
-  assert.match(calendarJs, /createCalendarView/);
-  assert.match(calendarJs, /onMonthChange/);
-
-  const dateUtils = readFileSync(`${PUBLIC}/date-utils.js`, "utf8");
+test("calendar utilities and api filtering exist", () => {
+  const dateUtils = readFileSync(`${ADMIN}/lib/date-utils.ts`, "utf8");
   assert.match(dateUtils, /monthRange/);
   assert.match(dateUtils, /postDisplayDate/);
 
-  const api = readFileSync(`${PUBLIC}/api-client.js`, "utf8");
-  assert.match(api, /fetchPosts\(params/);
+  const api = readFileSync(`${ADMIN}/lib/api.ts`, "utf8");
+  assert.match(api, /fetchPosts/);
   assert.match(api, /from/);
   assert.match(api, /to/);
-
-  const css = readFileSync(`${PUBLIC}/style.css`, "utf8");
-  assert.match(css, /\.calendar-grid/);
-  assert.match(css, /\.cal-chip/);
 });
 
-test("app.js wires calendar as default view", () => {
-  const app = readFileSync(`${PUBLIC}/app.js`, "utf8");
-  assert.match(app, /createCalendarView/);
-  assert.match(app, /monthRange/);
-  assert.match(app, /subscribeRealtimeEvents/);
+test("dashboard wires calendar and realtime", () => {
+  const dashboard = readFileSync(`${ADMIN}/pages/dashboard-page.tsx`, "utf8");
+  assert.match(dashboard, /CalendarView/);
+  assert.match(dashboard, /monthRange/);
+  assert.match(dashboard, /subscribeRealtimeEvents/);
+});
+
+test("built index serves react shell", () => {
+  const html = readFileSync("public/index.html", "utf8");
+  assert.match(html, /<title>Iris<\/title>/);
+  assert.match(html, /id="root"/);
+  assert.match(html, /assets\/index-.*\.js/);
 });

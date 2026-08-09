@@ -18,6 +18,7 @@ import { createCalendarView } from "./calendar-view.js";
 import { createKanbanView } from "./kanban-view.js";
 import { monthRange } from "./date-utils.js";
 import { toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "./datetime.js";
+import { statusLabel } from "./status-labels.js";
 
 const root = document.querySelector("#app");
 const postFormEl = document.querySelector("#post-form");
@@ -42,11 +43,21 @@ const metaStatusTextEl = document.querySelector("#meta-status-text");
 const metaConnectLinkEl = document.querySelector("#meta-connect-link");
 const metaHealthBtnEl = document.querySelector("#meta-health-btn");
 const metaBannerEl = document.querySelector("#meta-banner");
+const postStatusPanelEl = document.querySelector("#post-status-panel");
+const postStatusBadgeEl = document.querySelector("#post-status-badge");
+const postErrorMessageEl = document.querySelector("#post-error-message");
+const postPublishedMetaEl = document.querySelector("#post-published-meta");
+const postFailedActionsEl = document.querySelector("#post-failed-actions");
+const retryDraftBtnEl = document.querySelector("#retry-draft-btn");
+const retryScheduleBtnEl = document.querySelector("#retry-schedule-btn");
+const scheduleGateBannerEl = document.querySelector("#schedule-gate-banner");
 
 let posts = [];
 let selectedPostId = null;
 let editingPostId = null;
 let activeView = "calendar";
+let metaConnected = false;
+let metaIgUsername = null;
 const previewUrls = [];
 
 const calendar = createCalendarView(root, {
@@ -122,6 +133,8 @@ async function refreshMetaStatus() {
 
   const status = await fetchMetaStatus();
   const handle = status.igUsername ? `@${status.igUsername}` : null;
+  metaIgUsername = status.igUsername ?? null;
+  metaConnected = Boolean(status.connected);
 
   if (status.connected) {
     metaStatusTextEl.textContent = handle
@@ -145,6 +158,65 @@ async function refreshMetaStatus() {
     metaConnectLinkEl.textContent = "Conectar Instagram";
     metaConnectLinkEl.hidden = false;
     metaHealthBtnEl.hidden = true;
+  }
+
+  updateScheduleGate();
+}
+
+function updateScheduleGate() {
+  if (!scheduleBtn || !scheduleGateBannerEl) {
+    return;
+  }
+
+  scheduleBtn.disabled = !metaConnected;
+  scheduleGateBannerEl.hidden = metaConnected;
+}
+
+function renderPostStatusPanel(post) {
+  if (!postStatusPanelEl || !postStatusBadgeEl) {
+    return;
+  }
+
+  if (!post?.id) {
+    postStatusPanelEl.hidden = true;
+    return;
+  }
+
+  postStatusPanelEl.hidden = false;
+  postStatusBadgeEl.dataset.status = post.status;
+  postStatusBadgeEl.textContent = statusLabel(post.status);
+
+  if (postErrorMessageEl) {
+    const showError = post.status === "failed" && post.error_message;
+    postErrorMessageEl.hidden = !showError;
+    postErrorMessageEl.textContent = showError
+      ? `Causa da falha: ${post.error_message}`
+      : "";
+  }
+
+  if (postPublishedMetaEl) {
+    const showPublished = post.status === "published" && post.ig_media_id;
+    postPublishedMetaEl.hidden = !showPublished;
+    if (showPublished) {
+      postPublishedMetaEl.replaceChildren();
+      const idLine = document.createElement("span");
+      idLine.textContent = `ID na Meta: ${post.ig_media_id}`;
+      postPublishedMetaEl.append(idLine);
+
+      if (metaIgUsername) {
+        const link = document.createElement("a");
+        link.href = `https://www.instagram.com/${metaIgUsername}/`;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Abrir perfil no Instagram";
+        link.className = "post-ig-link";
+        postPublishedMetaEl.append(document.createTextNode(" · "), link);
+      }
+    }
+  }
+
+  if (postFailedActionsEl) {
+    postFailedActionsEl.hidden = post.status !== "failed";
   }
 }
 
@@ -222,6 +294,9 @@ function showForm(mode, post = null) {
   if (post?.id) {
     void renderAssetPreview(post.id);
   }
+
+  renderPostStatusPanel(post);
+  updateScheduleGate();
 }
 
 function hideForm() {
@@ -322,6 +397,20 @@ async function refreshPosts() {
     posts = await fetchPosts();
   }
   renderViews();
+
+  if (selectedPostId) {
+    try {
+      const post = await fetchPost(selectedPostId);
+      if (editingPostId === selectedPostId) {
+        showForm("edit", post);
+        await renderComments(selectedPostId);
+      } else {
+        renderPostStatusPanel(post);
+      }
+    } catch {
+      // post may have been removed
+    }
+  }
 }
 
 async function selectPost(postId) {
@@ -382,6 +471,10 @@ async function savePost({ schedule }) {
       await uploadSelectedFiles(postId);
     }
 
+    if (schedule && !metaConnected) {
+      throw new Error("Conecte Instagram antes de agendar.");
+    }
+
     if (schedule) {
       if (!scheduledAt) {
         throw new Error("Informe data e hora para agendar.");
@@ -398,7 +491,12 @@ async function savePost({ schedule }) {
     showForm("edit", post);
     await renderComments(postId);
   } catch (error) {
-    showError(error instanceof Error ? error.message : "Falha ao salvar.");
+    if (error?.code === "meta_not_connected") {
+      showError("Conecte Instagram antes de agendar.");
+      showMetaBanner("Conecte Instagram para agendar publicações.", "error");
+    } else {
+      showError(error instanceof Error ? error.message : "Falha ao salvar.");
+    }
   }
 }
 
@@ -428,6 +526,32 @@ logoutBtn?.addEventListener("click", () => {
 
 metaHealthBtnEl?.addEventListener("click", () => {
   void runMetaHealthCheck();
+});
+
+retryDraftBtnEl?.addEventListener("click", () => {
+  if (!editingPostId) {
+    return;
+  }
+  showError("");
+  void updatePost(editingPostId, { status: "draft" })
+    .then(async () => {
+      await refreshPosts();
+      const post = await fetchPost(editingPostId);
+      showForm("edit", post);
+      await renderComments(editingPostId);
+    })
+    .catch((error) => {
+      showError(error instanceof Error ? error.message : "Falha ao voltar a rascunho.");
+    });
+});
+
+retryScheduleBtnEl?.addEventListener("click", () => {
+  if (!scheduledAtEl.value) {
+    showError("Informe data e hora para reagendar.");
+    scheduledAtEl.focus();
+    return;
+  }
+  void savePost({ schedule: true });
 });
 
 subscribeRealtimeEvents({

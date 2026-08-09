@@ -122,6 +122,7 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post |
+| GET | `/api/posts/:id/reply-inspection` | admin | Post context + comment threads for supervision |
 | POST | `/api/comments/:id/reply` | admin | Manual reply → Meta |
 
 ## Meta (Instagram connection)
@@ -132,6 +133,13 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | GET | `/auth/meta/callback` | signed `state` | OAuth callback; stores Page token + IG account |
 | GET | `/api/meta/status` | admin | Connection status (`connected`, `@handle`, expiry) |
 | GET | `/api/meta/health` | admin | Probe Graph API (`ok` / error code) |
+
+## Settings (reply persona)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/api/settings/reply-persona` | admin | Read global reply persona (defaults if unset) |
+| PUT | `/api/settings/reply-persona` | admin | Update `system_prompt`, `tone`, `brand_name`, `max_chars` (100–1000) |
 
 ## Events (SSE)
 
@@ -152,8 +160,6 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | ------ | ---- |
 | GET | `/health` |
 | GET | `/` — admin UI (OTP session) |
-| GET | `/desk/` — agent desk (offline-first; static from `iris-agent/site/`) |
-| GET | `/desk/iris.credentials.json` — local agent config (dev only; gitignored source in `iris-agent/`) |
 
 ## Contrato local (agente, não é HTTP)
 

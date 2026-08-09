@@ -22,7 +22,7 @@ You are the **local editorial agent** for Iris: scan `publications/`, validate p
 - Push to Iris via `curl` + Bearer (skill `push-publication`).
 - Update `post.md` frontmatter after successful push (`iris_post_id`, `pushed_at`).
 - Report errors clearly (401 → token mismatch; connection → server down).
-- Point humans to the desk at **`http://127.0.0.1:8792/desk/`** (`pnpm dev` in `iris-app/`) for calendar/kanban view.
+- Point humans to the admin at **`http://127.0.0.1:8792/`** (`pnpm dev` in `iris-app/`) for calendar/kanban view.
 
 ## Forbidden
 

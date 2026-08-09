@@ -2,14 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-test("index.html includes auto reply toggle", () => {
-  const html = readFileSync("public/index.html", "utf8");
-  assert.match(html, /id="auto-reply-enabled"/);
-  assert.match(html, /auto_reply_enabled/);
+test("post dialog includes auto reply toggle", () => {
+  const dialog = readFileSync("admin/src/components/posts/post-dialog.tsx", "utf8");
+  assert.match(dialog, /autoReply/);
+  assert.match(dialog, /Resposta automática/);
 });
 
-test("app.js persists auto_reply_enabled on update", () => {
-  const js = readFileSync("public/app.js", "utf8");
-  assert.match(js, /autoReplyEnabledEl/);
-  assert.match(js, /auto_reply_enabled/);
+test("dashboard persists auto_reply_enabled on update", () => {
+  const dashboard = readFileSync("admin/src/pages/dashboard-page.tsx", "utf8");
+  assert.match(dashboard, /auto_reply_enabled/);
+  assert.match(dashboard, /PostDialog/);
 });

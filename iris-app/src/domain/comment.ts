@@ -4,6 +4,7 @@ export type Comment = {
   id: string;
   igCommentId: string;
   postId: string;
+  parentIgCommentId: string | null;
   authorUsername: string | null;
   text: string | null;
   status: CommentStatus;

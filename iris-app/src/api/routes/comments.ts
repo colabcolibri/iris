@@ -11,6 +11,7 @@ import {
 } from "../json.ts";
 import { serializeComment } from "../../adapters/sqlite/mappers.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
+import { buildReplyInspection } from "../../domain/reply-context/build-reply-inspection.ts";
 
 const MAX_REPLY_LENGTH = 2200;
 
@@ -38,6 +39,25 @@ export async function handleCommentsRoute(
 
     const comments = ctx.comments.listByPostId(postId);
     sendJson(res, 200, { comments: comments.map(serializeComment) });
+    return true;
+  }
+
+  const inspectionMatch = /^\/api\/posts\/([^/]+)\/reply-inspection$/.exec(pathname);
+  if (inspectionMatch && req.method === "GET") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const postId = inspectionMatch[1];
+    const inspection = buildReplyInspection(postId, ctx.replyContextAssembler);
+
+    if (!inspection) {
+      sendError(res, 404, "post not found");
+      return true;
+    }
+
+    sendJson(res, 200, inspection);
     return true;
   }
 

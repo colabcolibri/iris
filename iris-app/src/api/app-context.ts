@@ -17,8 +17,12 @@ import { createGraphApiCommentReplier } from "../adapters/meta/graph-api-comment
 import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-repository.ts";
 import { createEnvLlmCompleter } from "../adapters/llm/env-llm-completer.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
-import { createSqliteAdminLoginChallengeRepository } from "../adapters/sqlite/admin-login-challenge-repository.ts";
-import type { AdminLoginChallengeRepository } from "../adapters/sqlite/admin-login-challenge-repository.ts";
+import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
+import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
+import {
+  createSqliteAdminLoginChallengeRepository,
+  type AdminLoginChallengeRepository,
+} from "../adapters/sqlite/admin-login-challenge-repository.ts";
 import type { EmailSender } from "../ports/email-sender.ts";
 import type { AgentRunRepository } from "../ports/agent-run-repository.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
@@ -31,6 +35,9 @@ import type { MetaConnectionStore } from "../ports/meta-connection-store.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../ports/meta-token-store.ts";
 import type { PostRepository } from "../ports/post-repository.ts";
+import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
+import type { ImageContextProvider } from "../ports/image-context-provider.ts";
+import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 
 const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -55,6 +62,9 @@ export type AppContext = {
   graphApiVersion: string;
   emailSender: EmailSender;
   adminLoginChallenges: AdminLoginChallengeRepository;
+  replyPersonaStore: ReplyPersonaStore;
+  imageContextProvider: ImageContextProvider;
+  replyContextAssembler: ReplyContextAssemblerDeps;
 };
 
 export type AppContextOptions = {
@@ -91,6 +101,14 @@ export function createAppContext(options: AppContextOptions): AppContext {
   );
 
   const envIgUserId = options.igUserId ?? process.env.META_IG_USER_ID ?? "";
+  if (envIgUserId && !metaConnectionStore.get()) {
+    metaConnectionStore.upsert({
+      igUserId: envIgUserId,
+      igUsername: null,
+      pageId: "env-bootstrap",
+      pageName: null,
+    });
+  }
   const publicBaseUrl =
     options.publicBaseUrl ?? process.env.IRIS_PUBLIC_BASE_URL ?? "";
   const publishUrlSecret =
@@ -136,13 +154,28 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const llmCompleter = llmApiKey ? createEnvLlmCompleter() : null;
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
+  const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
+  const imageContextProvider = createEnvImageContextProvider({
+    llm: llmCompleter,
+    model: process.env.LLM_MODEL,
+  });
+
+  const replyContextAssembler: ReplyContextAssemblerDeps = {
+    posts: createSqlitePostRepository(options.db),
+    assets,
+    comments: createSqliteCommentRepository(options.db),
+    personaStore: replyPersonaStore,
+    imageContextProvider,
+    publicBaseUrl: publicBaseUrl || null,
+    publishUrlSecret: publishUrlSecret || null,
+  };
 
   return {
     db: options.db,
     auth,
-    posts: createSqlitePostRepository(options.db),
+    posts: replyContextAssembler.posts,
     assets,
-    comments: createSqliteCommentRepository(options.db),
+    comments: replyContextAssembler.comments,
     mediaStorage: createFsMediaStorage(mediaRoot),
     imageOptimizer: createSharpImageOptimizer(),
     metaTokenStore,
@@ -158,5 +191,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     graphApiVersion,
     emailSender,
     adminLoginChallenges,
+    replyPersonaStore,
+    imageContextProvider,
+    replyContextAssembler,
   };
 }
