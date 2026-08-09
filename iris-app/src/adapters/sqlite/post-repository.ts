@@ -89,13 +89,22 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         sourceNote:
           input.sourceNote !== undefined ? input.sourceNote : current.sourceNote,
         status: input.status !== undefined ? input.status : current.status,
+        publishedAt:
+          input.publishedAt !== undefined ? input.publishedAt : current.publishedAt,
+        igMediaId:
+          input.igMediaId !== undefined ? input.igMediaId : current.igMediaId,
+        errorMessage:
+          input.errorMessage !== undefined
+            ? input.errorMessage
+            : current.errorMessage,
       };
 
       const updatedAt = new Date().toISOString();
 
       db.prepare(`
         UPDATE posts
-        SET caption = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?, updated_at = ?
+        SET caption = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
+            published_at = ?, ig_media_id = ?, error_message = ?, updated_at = ?
         WHERE id = ?
       `).run(
         next.caption,
@@ -103,6 +112,9 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.scheduledAt,
         next.sourceNote,
         next.status,
+        next.publishedAt,
+        next.igMediaId,
+        next.errorMessage,
         updatedAt,
         id,
       );

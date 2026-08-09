@@ -16,6 +16,7 @@ import {
 import { applyScheduleRules } from "../../domain/schedule.ts";
 import type { PostStatus } from "../../domain/post.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
+import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -51,6 +52,7 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
         sourceNote: input.sourceNote,
         status: input.status,
       });
+      notifyPostsChanged({ post_id: post.id });
       sendJson(res, 201, serializePost(post));
     } catch (error) {
       handlePostsError(res, error);
@@ -113,6 +115,7 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
         scheduledAt: schedule.scheduledAt,
       });
 
+      notifyPostsChanged({ post_id: postId });
       sendJson(res, 200, serializePost(updated!));
     } catch (error) {
       handlePostsError(res, error);
@@ -132,6 +135,7 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
       return true;
     }
 
+    notifyPostsChanged({ post_id: postId });
     sendJson(res, 200, serializePost(cancelled));
     return true;
   }

@@ -13,7 +13,7 @@ async function withIntegrationServer(
   run: (ctx: { port: number; baseUrl: string }) => Promise<void>,
 ): Promise<void> {
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-media-"));
-  const { server } = createServer({
+  const { server, stopScheduler } = createServer({
     dbPath: ":memory:",
     adminToken: ADMIN,
     agentToken: AGENT,
@@ -32,6 +32,7 @@ async function withIntegrationServer(
   try {
     await run({ port, baseUrl });
   } finally {
+    stopScheduler();
     await new Promise<void>((resolve, reject) => {
       server.close((error?: Error) => (error ? reject(error) : resolve()));
     });

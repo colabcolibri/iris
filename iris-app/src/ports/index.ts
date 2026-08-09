@@ -10,3 +10,5 @@ export type {
   PostRepository,
   UpdatePostInput,
 } from "./post-repository.ts";
+export type { MetaTokenStore } from "./meta-token-store.ts";
+export type { MetaPublisher } from "./meta-publisher.ts";

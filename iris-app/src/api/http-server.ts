@@ -7,10 +7,13 @@ import type { DatabaseSync } from "node:sqlite";
 import { openDatabase } from "../adapters/sqlite/connection.ts";
 import { runMigrations } from "../adapters/sqlite/migrate.ts";
 import { authenticateRequest } from "./auth.ts";
-import { createAppContext } from "./app-context.ts";
+import { createAppContext, type AppContext } from "./app-context.ts";
 import { sendError } from "./json.ts";
 import { handlePostsRoute } from "./routes/posts.ts";
 import { handleAssetsRoute } from "./routes/assets.ts";
+import { handleEventsRoute } from "./routes/events.ts";
+import { handlePublishMediaRoute } from "./routes/publish-media.ts";
+import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
@@ -34,11 +37,21 @@ export type HttpServerOptions = {
   adminToken?: string;
   agentToken?: string;
   mediaRoot?: string;
+  encryptionKey?: string;
+  metaAccessToken?: string;
+  igUserId?: string;
+  publicBaseUrl?: string;
+  publishUrlSecret?: string;
+  graphApiVersion?: string;
+  startScheduler?: boolean;
+  publishTickMs?: number;
 };
 
 export type HttpServerHandle = {
   server: Server;
   db: DatabaseSync;
+  ctx: AppContext;
+  stopScheduler: () => void;
 };
 
 function resolvePublicPath(pathname: string): string | null {
@@ -71,8 +84,7 @@ function serveStatic(pathname: string, res: ServerResponse): void {
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
-  options: HttpServerOptions,
-  db: DatabaseSync,
+  ctx: AppContext,
 ): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const { pathname } = url;
@@ -83,14 +95,11 @@ async function handleRequest(
     return;
   }
 
-  if (pathname.startsWith("/api/")) {
-    const ctx = createAppContext({
-      db,
-      adminToken: options.adminToken,
-      agentToken: options.agentToken,
-      mediaRoot: options.mediaRoot,
-    });
+  if (handlePublishMediaRoute(req, res, ctx, pathname)) {
+    return;
+  }
 
+  if (pathname.startsWith("/api/")) {
     const authResult = authenticateRequest(req, ctx.auth);
     if (!authResult.ok) {
       sendError(res, authResult.status, authResult.message);
@@ -105,6 +114,10 @@ async function handleRequest(
     };
 
     if (await handleAssetsRoute(routeRequest)) {
+      return;
+    }
+
+    if (handleEventsRoute(routeRequest)) {
       return;
     }
 
@@ -131,13 +144,32 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     runMigrations(db);
   }
 
+  const ctx = createAppContext({
+    db,
+    adminToken: options.adminToken,
+    agentToken: options.agentToken,
+    mediaRoot: options.mediaRoot,
+    encryptionKey: options.encryptionKey,
+    metaAccessToken: options.metaAccessToken,
+    igUserId: options.igUserId,
+    publicBaseUrl: options.publicBaseUrl,
+    publishUrlSecret: options.publishUrlSecret,
+    graphApiVersion: options.graphApiVersion,
+  });
+
+  const stopScheduler = options.startScheduler
+    ? startPublishScheduler(ctx, {
+        intervalMs: options.publishTickMs,
+      })
+    : () => undefined;
+
   const server = createHttpServer((req, res) => {
-    void handleRequest(req, res, options, db).catch(() => {
+    void handleRequest(req, res, ctx).catch(() => {
       sendError(res, 500, "internal server error");
     });
   });
 
-  return { server, db };
+  return { server, db, ctx, stopScheduler };
 }
 
 export function getPublicDirectory(): string {

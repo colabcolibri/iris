@@ -54,3 +54,15 @@ export function applyScheduleRules(input: ScheduleInput): ScheduleResult {
     scheduledAt,
   };
 }
+
+export function isDueForPublish(
+  post: { status: PostStatus; scheduledAt: string | null },
+  nowMs = Date.now(),
+): boolean {
+  if (post.status !== "scheduled" || !post.scheduledAt) {
+    return false;
+  }
+
+  const scheduledMs = new Date(post.scheduledAt).getTime();
+  return !Number.isNaN(scheduledMs) && scheduledMs <= nowMs;
+}

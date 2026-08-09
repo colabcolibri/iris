@@ -8,6 +8,7 @@ import { MultipartParseError, parseMultipart } from "../multipart.ts";
 import { ImageOptimizationError } from "../../ports/image-optimizer.ts";
 import { serializeAsset } from "../../adapters/sqlite/mappers.ts";
 import { sendJson } from "../json.ts";
+import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -78,6 +79,7 @@ export async function handleAssetsRoute(request: RouteRequest): Promise<boolean>
           optimizedSizeBytes: optimized.optimizedSizeBytes,
         });
 
+        notifyPostsChanged({ post_id: postId });
         sendJson(res, 201, serializeAsset(asset));
       } catch (error) {
         handleAssetsError(res, error);

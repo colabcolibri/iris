@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyScheduleRules } from "./schedule.ts";
+import { applyScheduleRules, isDueForPublish } from "./schedule.ts";
 import { ValidationError } from "../api/json.ts";
 
 test("rejects scheduled_at in the past", () => {
@@ -40,4 +40,19 @@ test("schedules post with future date and assets", () => {
 
   assert.equal(result.status, "scheduled");
   assert.equal(result.scheduledAt, scheduledAt);
+});
+
+test("isDueForPublish detects scheduled posts in the past", () => {
+  const past = new Date(Date.now() - 60_000).toISOString();
+  assert.equal(
+    isDueForPublish({ status: "scheduled", scheduledAt: past }),
+    true,
+  );
+  assert.equal(
+    isDueForPublish({
+      status: "scheduled",
+      scheduledAt: new Date(Date.now() + 60_000).toISOString(),
+    }),
+    false,
+  );
 });

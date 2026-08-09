@@ -1,2 +1,2 @@
-/** Instagram Graph API adapter — implemented in US-0010+. */
-export {};
+/** Instagram Graph API adapter. */
+export { createGraphApiPublisher } from "./graph-api-publisher.ts";

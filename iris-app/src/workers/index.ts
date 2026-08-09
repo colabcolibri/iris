@@ -1,2 +1,2 @@
-/** Background workers — implemented in US-0011+. */
-export {};
+/** Background workers. */
+export { startPublishScheduler } from "./publish-scheduler.ts";

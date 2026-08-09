@@ -9,7 +9,7 @@ async function withServer(
   run: (port: number) => Promise<void>,
   options: { dbPath?: string } = {},
 ): Promise<void> {
-  const { server } = createServer({
+  const { server, stopScheduler } = createServer({
     dbPath: options.dbPath ?? ":memory:",
     adminToken: ADMIN,
     agentToken: AGENT,
@@ -27,6 +27,7 @@ async function withServer(
   try {
     await run(port);
   } finally {
+    stopScheduler();
     await new Promise<void>((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
     });

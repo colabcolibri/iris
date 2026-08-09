@@ -14,6 +14,9 @@ export type UpdatePostInput = {
   scheduledAt?: string | null;
   sourceNote?: string | null;
   status?: PostStatus;
+  publishedAt?: string | null;
+  igMediaId?: string | null;
+  errorMessage?: string | null;
 };
 
 export type ListPostsFilter = {

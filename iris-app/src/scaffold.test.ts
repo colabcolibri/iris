@@ -30,7 +30,8 @@ test("publications example template exists", () => {
 });
 
 test("createServer returns an http server", () => {
-  const { server } = createServer({ skipMigrations: true });
+  const { server, stopScheduler } = createServer({ dbPath: ":memory:" });
+  stopScheduler();
   assert.equal(typeof server.listen, "function");
   server.close();
 });

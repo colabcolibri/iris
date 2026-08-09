@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "node --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test $(find src -name '*.test.ts' -print 2>/dev/null | tr '\\n' ' ')"
+    "test": "node --experimental-strip-types --test $(find src test -name '*.test.ts' -print 2>/dev/null | tr '\\n' ' ')"
   },
   "engines": {
     "node": ">=22"
