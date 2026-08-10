@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -348,5 +348,17 @@ export function fetchWebhookEvents(limit = 30) {
   const safeLimit = Math.min(Math.max(limit, 1), 100);
   return apiFetch<{ events: WebhookEvent[] }>(`/api/settings/webhook-events?limit=${safeLimit}`).then(
     (payload) => payload.events,
+  );
+}
+
+export function fetchMetaTestInsights(mediaId?: string) {
+  const query = mediaId?.trim() ? `?media_id=${encodeURIComponent(mediaId.trim())}` : "";
+  return apiFetch<MetaTestInsightsResult>(`/api/meta/test/insights${query}`);
+}
+
+export function fetchMetaTestConversations(limit = 5) {
+  const safeLimit = Math.min(Math.max(limit, 1), 25);
+  return apiFetch<MetaTestConversationsResult>(
+    `/api/meta/test/conversations?limit=${safeLimit}`,
   );
 }

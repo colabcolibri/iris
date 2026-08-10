@@ -154,6 +154,7 @@ Ver `docs/architecture/mcp-integration.md` para setup por client.
 | `docs/architecture/mcp-integration.md` | MCP — Cursor, ChatGPT, Claude, validate, tools |
 | `docs/architecture/image-optimization.md` | Pipeline sharp, limites, env |
 | `docs/architecture/meta-integration.md` | Graph API, webhooks |
+| `docs/architecture/meta-app-review.md` | Checklist revisão app Meta (IGIris) |
 | `docs/architecture/srp-modules.md` | Módulos e dependências |
 
 ## Gaps

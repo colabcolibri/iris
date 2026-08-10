@@ -15,6 +15,8 @@ import { createFsMediaStorage } from "../adapters/media-storage/fs-media-storage
 import { createGraphApiPublisher } from "../adapters/meta/graph-api-publisher.ts";
 import { createGraphApiCommentReplier } from "../adapters/meta/graph-api-comment-replier.ts";
 import { createGraphApiCommentReader } from "../adapters/meta/graph-api-comment-reader.ts";
+import { createGraphApiInsightsReader } from "../adapters/meta/graph-api-insights-reader.ts";
+import { createGraphApiConversationsReader } from "../adapters/meta/graph-api-conversations-reader.ts";
 import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-repository.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
 import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
@@ -41,6 +43,8 @@ import type { MediaStorage } from "../ports/media-storage.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { MetaCommentReader } from "../ports/meta-comment-reader.ts";
 import type { MetaConnectionStore } from "../ports/meta-connection-store.ts";
+import type { MetaConversationsReader } from "../ports/meta-conversations-reader.ts";
+import type { MetaInsightsReader } from "../ports/meta-insights-reader.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../ports/meta-token-store.ts";
 import type { PostRepository } from "../ports/post-repository.ts";
@@ -78,6 +82,8 @@ export type AppContext = {
   metaPublisher: MetaPublisher | null;
   metaCommentReplier: MetaCommentReplier;
   metaCommentReader: MetaCommentReader;
+  metaInsightsReader: MetaInsightsReader;
+  metaConversationsReader: MetaConversationsReader;
   agentRuns: AgentRunRepository;
   llmCompleter: LlmCompleter | null;
   llmSettingsStore: LlmSettingsStore;
@@ -187,6 +193,19 @@ export function createAppContext(options: AppContextOptions): AppContext {
     },
   });
 
+  const metaInsightsReader = createGraphApiInsightsReader({
+    metaTokenStore,
+    config: { graphApiVersion },
+  });
+
+  const metaConversationsReader = createGraphApiConversationsReader({
+    metaTokenStore,
+    config: {
+      resolveIgUserId,
+      graphApiVersion,
+    },
+  });
+
   const llmSettingsStore = createSqliteLlmSettingsStore(options.db, {
     encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
   });
@@ -243,6 +262,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     metaPublisher,
     metaCommentReplier,
     metaCommentReader,
+    metaInsightsReader,
+    metaConversationsReader,
     agentRuns: createSqliteAgentRunRepository(options.db),
     llmCompleter,
     llmSettingsStore,

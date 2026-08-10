@@ -183,3 +183,30 @@ export type WebhookEvent = {
   payload_json: string;
   payload_truncated: boolean;
 };
+
+export type MetaTestInsightMetric = {
+  name: string;
+  period: string;
+  values: Array<{ value: number }>;
+};
+
+export type MetaTestInsightsResult = {
+  ok: boolean;
+  code?: string;
+  message?: string;
+  media_id?: string;
+  insights?: MetaTestInsightMetric[];
+};
+
+export type MetaTestConversation = {
+  id: string;
+  updated_time: string | null;
+};
+
+export type MetaTestConversationsResult = {
+  ok: boolean;
+  code?: string;
+  message?: string;
+  count?: number;
+  conversations?: MetaTestConversation[];
+};

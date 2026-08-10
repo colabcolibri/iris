@@ -19,6 +19,7 @@ import { handleAuthRoute } from "./routes/auth.ts";
 import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
+import { handleMetaTestRoute } from "./routes/meta-test.ts";
 import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
 import {
@@ -254,6 +255,10 @@ async function handleRequest(
     }
 
     if (await handleCommentsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleMetaTestRoute(routeRequest)) {
       return;
     }
 

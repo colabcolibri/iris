@@ -199,6 +199,15 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | GET | `/api/meta/health` | admin | Probe Graph API (`ok` / error code) |
 | POST | `/api/meta/disconnect` | admin | Remove stored Instagram token + connection |
 
+## Meta test (app review)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/api/meta/test/insights?media_id=` | admin | Fetch Instagram media insights; default media = latest published/monitored post |
+| GET | `/api/meta/test/conversations?limit=5` | admin | List Instagram conversations summary (`id`, `updated_time`); no message bodies |
+
+Responses: `{ ok: true, ... }` or `{ ok: false, code, message }`. Codes: `not_connected`, `no_media`, `insights_failed`, `unsupported`, `conversations_failed`.
+
 ## Settings (reply persona)
 
 | Method | Path | Auth | Description |

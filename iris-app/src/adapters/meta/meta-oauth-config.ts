@@ -3,6 +3,9 @@ export const META_OAUTH_SCOPES = [
   "instagram_business_basic",
   "instagram_business_content_publish",
   "instagram_business_manage_comments",
+  // Meta app review v1.9 — operador deve reconectar após deploy
+  "instagram_business_manage_insights",
+  "instagram_business_manage_messages",
 ] as const;
 
 export type MetaOAuthConfig = {

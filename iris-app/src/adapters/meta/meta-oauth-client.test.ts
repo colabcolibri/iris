@@ -18,6 +18,8 @@ test("buildMetaAuthorizeUrl uses Instagram OAuth and business scopes", () => {
   assert.match(url, /client_id=app-123/);
   assert.match(url, /state=signed-state/);
   assert.match(url, /instagram_business_basic/);
+  assert.match(url, /instagram_business_manage_insights/);
+  assert.match(url, /instagram_business_manage_messages/);
   assert.doesNotMatch(url, /pages_show_list/);
 });
 

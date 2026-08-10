@@ -10,6 +10,10 @@
   - `instagram_business_basic`
   - `instagram_business_content_publish`
   - `instagram_business_manage_comments`
+  - `instagram_business_manage_insights` (revisão app v1.9)
+  - `instagram_business_manage_messages` (revisão app v1.9)
+- Após atualizar scopes em produção, o operador deve **Trocar conta** no header para obter token novo.
+- Checklist completo de revisão: `docs/architecture/meta-app-review.md`
 - Long-lived Instagram user access token stored server-side (`meta_tokens` table)
 - **Não** exige Página do Facebook
 
