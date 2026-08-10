@@ -26,6 +26,27 @@ export type RemoteMediaSlide = {
   thumbnailUrl: string | null;
 };
 
+export type BrowsableMediaItem = {
+  igMediaId: string;
+  caption: string | null;
+  timestamp: string | null;
+  permalink: string | null;
+  mediaType: string | null;
+  thumbnailUrl: string | null;
+  likeCount: number | null;
+  commentsCount: number | null;
+};
+
+export type ListBrowsableMediaResult = {
+  items: BrowsableMediaItem[];
+  nextCursor: string | null;
+};
+
+export type ListBrowsableMediaOptions = {
+  limit?: number;
+  after?: string | null;
+};
+
 export type RemoteMediaMetadata = {
   igMediaId: string;
   caption: string | null;
@@ -49,5 +70,6 @@ export type MetaCommentReader = {
   ): Promise<RemoteMediaWithComments[]>;
   fetchMediaMetadata(igMediaId: string): Promise<RemoteMediaMetadata>;
   fetchMediaPreview(igMediaId: string): Promise<RemoteMediaPreview>;
+  listBrowsableMedia(options?: ListBrowsableMediaOptions): Promise<ListBrowsableMediaResult>;
   findMediaByPermalink(permalink: string): Promise<RemoteMediaMetadata | null>;
 };

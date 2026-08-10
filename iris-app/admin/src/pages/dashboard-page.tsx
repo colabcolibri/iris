@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
-import type { AppView } from "@/components/layout/app-sidebar";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { PostDialog, type PostDialogMode } from "@/components/posts/post-dialog";
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
-import { useMetaSession } from "@/hooks/use-meta-session";
+import { useMetaSession } from "@/contexts/meta-session-context";
+import { useDashboardView } from "@/hooks/use-dashboard-view";
 import {
   createPost,
   fetchPost,
@@ -25,13 +23,10 @@ import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/li
 import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 export function DashboardPage() {
-  const [searchParams] = useSearchParams();
   const { timezone } = useAppSettings();
-  const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
+  const { meta } = useMetaSession();
+  const { view } = useDashboardView();
   const { confirm } = useConfirmDialog();
-  const [view, setView] = useState<AppView>(
-    searchParams.get("view") === "kanban" ? "kanban" : "calendar",
-  );
   const [posts, setPosts] = useState<Post[]>([]);
   const [cursor, setCursor] = useState(() => new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -225,13 +220,7 @@ export function DashboardPage() {
   }
 
   return (
-    <AppShell
-      meta={meta}
-      onDisconnectMeta={handleDisconnect}
-      onMetaHealth={handleMetaHealth}
-      sidebarView={view}
-      onSidebarViewChange={setView}
-    >
+    <>
       {view === "kanban" && (
         <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 px-8 pt-8 pb-4">
           <div>
@@ -324,6 +313,6 @@ export function DashboardPage() {
           selectedPost?.status === "failed" ? () => void savePost(true) : undefined
         }
       />
-    </AppShell>
+    </>
   );
 }

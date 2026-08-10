@@ -1,7 +1,6 @@
-import { MessageCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { postPreviewUrl } from "@/hooks/use-post-preview";
+import { Heart, ImageIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { postPreviewUrl } from "@/hooks/use-post-preview";
 import type { CommentPostSummary } from "@/lib/types";
 
 type PostInboxListProps = {
@@ -21,6 +20,14 @@ function formatListDate(value: string | null): string {
   });
 }
 
+function listCaption(caption: string | null): string {
+  const text = caption?.trim();
+  if (!text) {
+    return "(sem legenda)";
+  }
+  return text.split("\n")[0]?.trim() ?? text;
+}
+
 function resolveThumbnail(
   post: CommentPostSummary,
   thumbnailOverrides?: Record<string, string | null | undefined>,
@@ -30,6 +37,28 @@ function resolveThumbnail(
     return override;
   }
   return postPreviewUrl(post);
+}
+
+function statusBadge(post: CommentPostSummary): { label: string; className: string } {
+  if (post.status === "scheduled") {
+    return {
+      label: "Agendada",
+      className:
+        "border-border/60 bg-muted/80 text-muted-foreground",
+    };
+  }
+  if (post.is_external || post.status === "monitored") {
+    return {
+      label: "Externa",
+      className:
+        "border-border/60 bg-muted/80 text-muted-foreground",
+    };
+  }
+  return {
+    label: "Publicada",
+    className:
+      "border-amber-500/25 bg-amber-500/10 text-amber-900 dark:text-amber-100",
+  };
 }
 
 function PostInboxItem({
@@ -44,49 +73,82 @@ function PostInboxItem({
   onSelect: () => void;
 }) {
   const preview = resolveThumbnail(post, thumbnailOverrides);
-  const initial = (post.caption?.trim()?.[0] ?? "P").toUpperCase();
+  const badge = statusBadge(post);
+  const hasEngagement = post.comments_count > 0 || post.status === "published";
 
   return (
     <button
       type="button"
       onClick={onSelect}
       className={cn(
-        "group flex w-full gap-3 rounded-xl border p-3 text-left transition-all",
+        "flex w-full items-start gap-3 border-l-4 p-4 text-left transition-colors",
         selected
-          ? "border-primary bg-primary/5 shadow-sm"
-          : "border-transparent bg-background hover:border-border/80 hover:bg-muted/40",
+          ? "border-l-primary bg-primary/10 hover:bg-muted/40"
+          : "border-l-transparent border-b border-border/50 hover:bg-muted/40",
       )}
     >
-      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border/50">
+      <div className="relative size-16 shrink-0">
         {preview ? (
-          <img src={preview} alt="" className="size-full object-cover" loading="lazy" />
+          <img
+            src={preview}
+            alt=""
+            className="size-16 rounded-md border border-border/50 object-cover"
+            loading="lazy"
+          />
         ) : (
-          <div className="flex size-full flex-col items-center justify-center bg-linear-to-br from-violet-500/20 to-orange-400/20 text-sm font-semibold text-primary">
-            {initial}
+          <div
+            className="flex size-16 items-center justify-center rounded-md border border-border/50 bg-muted"
+          >
+            <ImageIcon className="size-5 text-muted-foreground/70" />
           </div>
         )}
         {post.pending_count > 0 ? (
-          <span className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white shadow">
+          <span
+            className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white shadow"
+          >
             {post.pending_count > 9 ? "9+" : post.pending_count}
           </span>
         ) : null}
       </div>
 
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <p className="line-clamp-2 text-sm leading-snug font-medium group-hover:text-primary">
-          {post.caption?.trim() || "(sem legenda)"}
-        </p>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{formatListDate(post.published_at)}</span>
-          <span className="inline-flex items-center gap-1">
-            <MessageCircle className="size-3" />
-            {post.comments_count}
+      <div className="min-w-0 flex-1 flex flex-col">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              "rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+              badge.className,
+            )}
+          >
+            {badge.label}
           </span>
-          {post.is_external ? (
-            <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
-              externa
-            </Badge>
-          ) : null}
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {formatListDate(post.published_at)}
+          </span>
+        </div>
+
+        <p
+          className={cn(
+            "truncate text-sm text-foreground",
+            selected ? "font-semibold" : "font-normal",
+          )}
+        >
+          {listCaption(post.caption)}
+        </p>
+
+        <div
+          className={cn(
+            "mt-1 flex items-center gap-2 text-muted-foreground",
+            !hasEngagement && "opacity-0",
+          )}
+        >
+          <span className="inline-flex items-center gap-1 text-xs">
+            <Heart className="size-3.5 shrink-0" aria-hidden />
+            <span className="tabular-nums">—</span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs">
+            <MessageCircle className="size-3.5 shrink-0" aria-hidden />
+            <span className="tabular-nums">{post.comments_count}</span>
+          </span>
         </div>
       </div>
     </button>
@@ -100,7 +162,7 @@ export function PostInboxList({
   onSelect,
 }: PostInboxListProps) {
   return (
-    <div className="space-y-1">
+    <div className="flex flex-col">
       {posts.map((post) => (
         <PostInboxItem
           key={post.post_id}

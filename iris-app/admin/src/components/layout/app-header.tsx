@@ -2,8 +2,7 @@ import { ChevronDown, LogOut, RefreshCw, UserRound, Unplug } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { BrandLogo } from "@/components/layout/brand-logo";
-import { AppMobileNav } from "@/components/layout/app-mobile-nav";
-import type { AppView } from "@/components/layout/app-sidebar";
+import { IrisSidebarTrigger } from "@/components/layout/iris-sidebar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,27 +15,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthSession } from "@/contexts/auth-session-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
+import { useMetaSession } from "@/contexts/meta-session-context";
 import { cn } from "@/lib/utils";
-import type { MetaStatus } from "@/lib/types";
 
-type AppHeaderProps = {
-  meta: MetaStatus | null;
-  onDisconnectMeta?: () => Promise<boolean>;
-  onMetaHealth?: () => void;
-  sidebarView?: AppView;
-  onSidebarViewChange?: (view: AppView) => void;
-};
-
-export function AppHeader({
-  meta,
-  onDisconnectMeta,
-  onMetaHealth,
-  sidebarView,
-  onSidebarViewChange,
-}: AppHeaderProps) {
+export function AppHeader() {
   const navigate = useNavigate();
   const { signOut } = useAuthSession();
   const { confirm } = useConfirmDialog();
+  const { meta, handleDisconnect, handleMetaHealth } = useMetaSession();
   const connected = Boolean(meta?.connected);
   const handle = meta?.igUsername ? `@${meta.igUsername}` : null;
   const tokenExpired = Boolean(meta?.tokenExpired);
@@ -53,8 +39,7 @@ export function AppHeader({
     navigate("/login", { replace: true });
   }
 
-  async function handleDisconnect() {
-    if (!onDisconnectMeta) return;
+  async function handleDisconnectMeta() {
     const ok = await confirm({
       title: "Desconectar Instagram?",
       description:
@@ -63,7 +48,7 @@ export function AppHeader({
       variant: "destructive",
     });
     if (!ok) return;
-    await onDisconnectMeta();
+    await handleDisconnect();
   }
 
   async function handleSwitchAccount() {
@@ -80,7 +65,7 @@ export function AppHeader({
   return (
     <header className="flex h-20 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-black/20 bg-[#1f1d1b] px-4 text-white shadow-sm sm:gap-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-3 md:gap-5">
-        <AppMobileNav view={sidebarView} onViewChange={onSidebarViewChange} />
+        <IrisSidebarTrigger />
         <div className="flex min-w-0 items-center gap-3">
           <BrandLogo size="sm" />
           <div className="min-w-0">
@@ -142,28 +127,22 @@ export function AppHeader({
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Instagram conectado</DropdownMenuLabel>
                   <p className="px-2 pb-1 text-xs text-muted-foreground">{handle}</p>
-                  {onMetaHealth ? (
-                    <DropdownMenuItem onClick={onMetaHealth}>
-                      <RefreshCw className="size-4" />
-                      Testar conexão
-                    </DropdownMenuItem>
-                  ) : null}
+                  <DropdownMenuItem onClick={() => void handleMetaHealth()}>
+                    <RefreshCw className="size-4" />
+                    Testar conexão
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => void handleSwitchAccount()}>
                     <UserRound className="size-4" />
                     Trocar conta
                   </DropdownMenuItem>
-                  {onDisconnectMeta ? (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => void handleDisconnect()}
-                      >
-                        <Unplug className="size-4" />
-                        Desconectar
-                      </DropdownMenuItem>
-                    </>
-                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => void handleDisconnectMeta()}
+                  >
+                    <Unplug className="size-4" />
+                    Desconectar
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>

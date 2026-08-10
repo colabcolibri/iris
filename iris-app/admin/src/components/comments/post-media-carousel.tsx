@@ -12,6 +12,7 @@ type PostMediaCarouselProps = {
   loading?: boolean;
   caption?: string | null;
   className?: string;
+  layout?: "default" | "hero";
 };
 
 const NAV_BUTTON_CLASS =
@@ -30,11 +31,13 @@ export function PostMediaCarousel({
   loading = false,
   caption,
   className,
+  layout = "default",
 }: PostMediaCarouselProps) {
   const [index, setIndex] = useState(0);
   const initial = (caption?.trim()?.[0] ?? "I").toUpperCase();
   const hasMultiple = slides.length > 1;
   const current = slides[index];
+  const isHero = layout === "hero";
 
   useEffect(() => {
     setIndex(0);
@@ -50,7 +53,14 @@ export function PostMediaCarousel({
 
   return (
     <div className={cn("flex w-full flex-col", className)}>
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-muted/80 shadow-md ring-1 ring-border/60">
+      <div
+        className={cn(
+          "relative w-full overflow-hidden bg-muted/80",
+          isHero
+            ? "aspect-[4/5] w-full max-h-[min(52vh,520px)] shrink-0"
+            : "aspect-[4/5] rounded-2xl shadow-md ring-1 ring-border/60",
+        )}
+      >
         {current ? (
           <div className="absolute inset-0 flex items-center justify-center p-2">
             {isVideoSlide(current) ? (
@@ -81,7 +91,12 @@ export function PostMediaCarousel({
             <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-linear-to-br from-violet-500/15 via-background to-orange-400/15 p-6 text-center">
+          <div
+            className={cn(
+              "flex flex-col items-center justify-center gap-3 bg-linear-to-br from-violet-500/15 via-background to-orange-400/15 p-6 text-center",
+              isHero ? "size-full" : "absolute inset-0",
+            )}
+          >
             <div className="flex size-16 items-center justify-center rounded-2xl bg-background/80 text-2xl font-semibold text-primary shadow-sm">
               {initial}
             </div>
@@ -92,23 +107,55 @@ export function PostMediaCarousel({
           </div>
         )}
 
+        {hasMultiple && isHero ? (
+          <>
+            <button
+              type="button"
+              className="absolute top-1/2 left-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-30"
+              onClick={goPrev}
+              aria-label="Slide anterior"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              type="button"
+              className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-30"
+              onClick={goNext}
+              aria-label="Próximo slide"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+            <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1.5 bg-linear-to-t from-black/45 to-transparent px-4 pt-8 pb-3">
+              {slides.map((slide, slideIndex) => (
+                <button
+                  key={`${slide.src}-${slideIndex}`}
+                  type="button"
+                  onClick={() => setIndex(slideIndex)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-[width,background-color]",
+                    slideIndex === index ? "w-5 bg-white" : "w-1.5 bg-white/45",
+                  )}
+                  aria-label={`Ir para slide ${slideIndex + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
       </div>
 
-      <div className="mt-2 flex h-9 items-center justify-center gap-2">
-        <button
-          type="button"
-          className={NAV_BUTTON_CLASS}
-          onClick={goPrev}
-          disabled={!hasMultiple}
-          aria-label="Slide anterior"
-          tabIndex={hasMultiple ? 0 : -1}
-        >
-          <ChevronLeft className="size-4" />
-        </button>
+      {hasMultiple && !isHero ? (
+        <div className="mt-2 flex h-9 items-center justify-center gap-2">
+          <button
+            type="button"
+            className={NAV_BUTTON_CLASS}
+            onClick={goPrev}
+            aria-label="Slide anterior"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
 
-        <div className="flex min-w-[4.5rem] items-center justify-center gap-1.5">
-          {hasMultiple ? (
-            slides.map((slide, slideIndex) => (
+          <div className="flex min-w-[4.5rem] items-center justify-center gap-1.5">
+            {slides.map((slide, slideIndex) => (
               <button
                 key={`${slide.src}-${slideIndex}`}
                 type="button"
@@ -119,25 +166,23 @@ export function PostMediaCarousel({
                 )}
                 aria-label={`Ir para slide ${slideIndex + 1}`}
               />
-            ))
-          ) : (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {slides.length === 1 ? "1 / 1" : "—"}
-            </span>
-          )}
-        </div>
+            ))}
+          </div>
 
-        <button
-          type="button"
-          className={NAV_BUTTON_CLASS}
-          onClick={goNext}
-          disabled={!hasMultiple}
-          aria-label="Próximo slide"
-          tabIndex={hasMultiple ? 0 : -1}
-        >
-          <ChevronRight className="size-4" />
-        </button>
-      </div>
+          <button
+            type="button"
+            className={NAV_BUTTON_CLASS}
+            onClick={goNext}
+            aria-label="Próximo slide"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      ) : !isHero && slides.length === 1 ? (
+        <div className="mt-2 flex h-9 items-center justify-center gap-2">
+          <span className="text-xs text-muted-foreground tabular-nums">1 / 1</span>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -19,7 +19,10 @@ type GraphApiCommentReaderDeps = {
 
 type GraphPaging<T> = {
   data?: T[];
-  paging?: { next?: string };
+  paging?: {
+    next?: string;
+    cursors?: { before?: string; after?: string };
+  };
   error?: { message?: string; code?: number };
 };
 
@@ -28,6 +31,7 @@ type GraphMedia = {
   caption?: string;
   timestamp?: string;
   comments_count?: number;
+  like_count?: number;
   permalink?: string;
   media_type?: string;
   media_url?: string;
@@ -51,6 +55,8 @@ const MEDIA_PREVIEW_FIELDS =
   "id,caption,timestamp,permalink,media_type,media_url,thumbnail_url";
 const MEDIA_CAROUSEL_FIELDS =
   "id,permalink,media_type,media_url,thumbnail_url,children{media_type,media_url,thumbnail_url}";
+const MEDIA_BROWSE_FIELDS =
+  "id,caption,timestamp,permalink,media_type,media_url,thumbnail_url,like_count,comments_count";
 const COMMENT_FIELDS =
   "id,text,from{username},timestamp,parent_id,replies{id,text,from{username},timestamp,parent_id}";
 
@@ -186,6 +192,24 @@ export function createGraphApiCommentReader(
       permalink: media.permalink ?? null,
       mediaType: media.media_type ?? null,
       slides: extractMediaSlides(media),
+    };
+  }
+
+  function mapBrowsableMedia(media: GraphMedia) {
+    if (!media.id) {
+      return null;
+    }
+
+    return {
+      igMediaId: media.id,
+      caption: media.caption ?? null,
+      timestamp: media.timestamp ?? null,
+      permalink: media.permalink ?? null,
+      mediaType: media.media_type ?? null,
+      thumbnailUrl: media.thumbnail_url ?? media.media_url ?? null,
+      likeCount: typeof media.like_count === "number" ? media.like_count : null,
+      commentsCount:
+        typeof media.comments_count === "number" ? media.comments_count : null,
     };
   }
 
@@ -325,6 +349,33 @@ export function createGraphApiCommentReader(
         }
         return mapMediaPreview(media);
       }
+    },
+
+    async listBrowsableMedia(options) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
+      }
+
+      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 50);
+      const mediaUrl = new URL(`${base}/me/media`);
+      mediaUrl.searchParams.set("fields", MEDIA_BROWSE_FIELDS);
+      mediaUrl.searchParams.set("limit", String(limit));
+      mediaUrl.searchParams.set("access_token", token);
+
+      if (options?.after) {
+        mediaUrl.searchParams.set("after", options.after);
+      }
+
+      const page = await fetchGraph<GraphPaging<GraphMedia>>(mediaUrl.toString());
+      const items = (page.data ?? [])
+        .map((media) => mapBrowsableMedia(media))
+        .filter((media): media is NonNullable<typeof media> => Boolean(media));
+
+      return {
+        items,
+        nextCursor: page.paging?.cursors?.after ?? null,
+      };
     },
 
     async findMediaByPermalink(permalink: string) {

@@ -8,6 +8,7 @@ test("comments page includes post-centric sync UI", () => {
   assert.match(page, /fetchPostInsights/);
   assert.match(page, /syncPostComments/);
   assert.match(page, /registerMonitoredPost/);
+  assert.match(page, /ImportPostsDialog/);
   assert.match(page, /PostDetailPanel/);
 });
 

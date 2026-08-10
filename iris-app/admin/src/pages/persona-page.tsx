@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useMetaSession } from "@/hooks/use-meta-session";
 import { fetchReplyPersona, updateReplyPersona } from "@/lib/api";
 import type { ReplyPersona } from "@/lib/types";
 
 export function PersonaPage() {
-  const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
   const [persona, setPersona] = useState<ReplyPersona | null>(null);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [tone, setTone] = useState("");
@@ -54,8 +51,7 @@ export function PersonaPage() {
   const preview = systemPrompt.trim().split("\n").slice(0, 2).join("\n");
 
   return (
-    <AppShell meta={meta} onDisconnectMeta={handleDisconnect} onMetaHealth={handleMetaHealth}>
-      <div className="flex-1 overflow-auto px-6 py-8 md:px-10">
+    <div className="flex-1 overflow-auto px-6 py-8 md:px-10">
         <div className="mx-auto w-full max-w-2xl space-y-6">
           <header className="space-y-1">
             <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
@@ -127,6 +123,5 @@ export function PersonaPage() {
           </Card>
         </div>
       </div>
-    </AppShell>
   );
 }

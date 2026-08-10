@@ -1,4 +1,5 @@
 import { AppNavigation } from "@/components/layout/app-navigation";
+import { IrisSidebar } from "@/components/layout/iris-sidebar";
 
 export type AppView = "calendar" | "kanban";
 
@@ -9,8 +10,8 @@ type AppSidebarProps = {
 
 export function AppSidebar({ view, onViewChange }: AppSidebarProps) {
   return (
-    <aside className="hidden h-full w-70 shrink-0 flex-col gap-2 border-r border-sidebar-border bg-sidebar p-4 md:flex">
+    <IrisSidebar>
       <AppNavigation view={view} onViewChange={onViewChange} />
-    </aside>
+    </IrisSidebar>
   );
 }

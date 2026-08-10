@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AppSettings, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -113,6 +113,25 @@ export function registerMonitoredPost(body: { ig_media_id?: string; permalink?: 
   return apiFetch<Post>("/api/comments/monitored-posts", {
     method: "POST",
     body: JSON.stringify(body),
+  });
+}
+
+export function browseMetaMedia(params: { limit?: number; after?: string | null } = {}) {
+  const query = new URLSearchParams();
+  if (params.limit) {
+    query.set("limit", String(params.limit));
+  }
+  if (params.after) {
+    query.set("after", params.after);
+  }
+  const suffix = query.toString() ? `?${query}` : "";
+  return apiFetch<BrowseMediaPage>(`/api/meta/media/browse${suffix}`);
+}
+
+export function importMonitoredPostsBatch(igMediaIds: string[]) {
+  return apiFetch<ImportMonitoredPostsBatchResult>("/api/comments/monitored-posts/batch", {
+    method: "POST",
+    body: JSON.stringify({ ig_media_ids: igMediaIds }),
   });
 }
 

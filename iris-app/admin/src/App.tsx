@@ -1,9 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { GuestRoute } from "@/components/auth/guest-route";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AppLayout } from "@/components/layout/app-layout";
 import { AppSettingsProvider } from "@/contexts/app-settings-context";
 import { AuthSessionProvider } from "@/contexts/auth-session-context";
 import { ConfirmDialogProvider } from "@/contexts/confirm-dialog-context";
+import { MetaSessionProvider } from "@/contexts/meta-session-context";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { LoginPage } from "@/pages/login-page";
 import { PersonaPage } from "@/pages/persona-page";
@@ -20,45 +22,20 @@ export function App() {
           <BrowserRouter>
             <Routes>
               <Route
-                path="/"
                 element={
                   <ProtectedRoute>
-                    <DashboardPage />
+                    <MetaSessionProvider>
+                      <AppLayout />
+                    </MetaSessionProvider>
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="/comments"
-                element={
-                  <ProtectedRoute>
-                    <CommentsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/webhooks"
-                element={
-                  <ProtectedRoute>
-                    <WebhooksPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/persona"
-                element={
-                  <ProtectedRoute>
-                    <PersonaPage />
-                  </ProtectedRoute>
-                }
-              />
+              >
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/comments" element={<CommentsPage />} />
+                <Route path="/webhooks" element={<WebhooksPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/persona" element={<PersonaPage />} />
+              </Route>
               <Route
                 path="/login"
                 element={

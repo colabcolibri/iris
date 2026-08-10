@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { TIMEZONE_OPTIONS } from "@iris/domain/timezone";
-import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -9,11 +8,11 @@ import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
 import { MetaReviewCard } from "@/components/settings/meta-review-card";
 import { useAppSettings } from "@/contexts/app-settings-context";
-import { useMetaSession } from "@/hooks/use-meta-session";
+import { useMetaSession } from "@/contexts/meta-session-context";
 import { formatInTimeZone } from "@/lib/datetime";
 
 export function SettingsPage() {
-  const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
+  const { meta, handleMetaHealth } = useMetaSession();
   const { timezone, loading, saveTimezone } = useAppSettings();
   const [draft, setDraft] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -42,8 +41,7 @@ export function SettingsPage() {
   });
 
   return (
-    <AppShell meta={meta} onDisconnectMeta={handleDisconnect} onMetaHealth={handleMetaHealth}>
-      <div className="flex-1 overflow-auto px-6 py-8 md:px-10">
+    <div className="flex-1 overflow-auto px-6 py-8 md:px-10">
         <div className="mx-auto w-full max-w-2xl space-y-6">
           <header className="space-y-1">
             <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
@@ -106,6 +104,5 @@ export function SettingsPage() {
           <MetaReviewCard meta={meta} onMetaHealth={handleMetaHealth} />
         </div>
       </div>
-    </AppShell>
   );
 }

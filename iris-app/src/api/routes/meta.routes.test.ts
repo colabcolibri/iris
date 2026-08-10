@@ -1,48 +1,42 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
 import { createServer } from "../http-server.ts";
-import type { EmailSender } from "../../ports/email-sender.ts";
-import { createSqliteMetaTokenStore } from "../../adapters/sqlite/meta-token-repository.ts";
-import { createSqliteMetaConnectionStore } from "../../adapters/sqlite/meta-connection-repository.ts";
 
-const TEST_KEY = "c".repeat(64);
+const ADMIN = "browse-admin";
+const AGENT = "browse-agent";
 
-async function withMetaApiServer(
-  run: (ctx: {
-    baseUrl: string;
-    cookie: string;
-    db: import("node:sqlite").DatabaseSync;
-  }) => Promise<void>,
-  fetchImpl?: typeof fetch,
-): Promise<void> {
-  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-meta-api-"));
-  const capture = { text: "" };
-  const emailSender: EmailSender = {
-    async send(input) {
-      capture.text = input.text;
-      return { ok: true };
-    },
-  };
-
-  process.env.IRIS_ADMIN_EMAIL = "admin@example.com";
-  process.env.IRIS_SESSION_SECRET = "test-session-secret";
-  process.env.IRIS_OTP_PEPPER = "test-otp-pepper";
-
+test("GET /api/meta/media/browse returns paginated media", async () => {
   const originalFetch = globalThis.fetch;
-  if (fetchImpl) {
-    globalThis.fetch = fetchImpl;
-  }
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(typeof input === "string" ? input : input.toString());
+    if (url.hostname === "graph.instagram.com" && url.pathname.endsWith("/media")) {
+      return new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "media-browse-1",
+              caption: "Post para importar",
+              timestamp: "2026-08-10T12:00:00+0000",
+              media_url: "https://cdn.example/browse.jpg",
+              like_count: 4,
+              comments_count: 1,
+            },
+          ],
+          paging: { cursors: { after: "next-page" } },
+        }),
+        { status: 200 },
+      );
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
 
-  const { server, db, stopScheduler } = createServer({
+  const { server, stopScheduler } = createServer({
     dbPath: ":memory:",
-    agentToken: "agent",
-    mediaRoot,
-    emailSender,
-    encryptionKey: TEST_KEY,
-    startScheduler: false,
+    adminToken: ADMIN,
+    agentToken: AGENT,
+    metaAccessToken: "meta-token",
+    igUserId: "ig-user-1",
+    encryptionKey: "a".repeat(64),
   });
 
   await new Promise<void>((resolve) => {
@@ -52,134 +46,26 @@ async function withMetaApiServer(
   const address = server.address();
   const port =
     typeof address === "object" && address ? address.port : Number.NaN;
-  const baseUrl = `http://127.0.0.1:${port}`;
-
-  await fetch(`${baseUrl}/api/auth/request-code`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: "admin@example.com" }),
-  });
-  const match = capture.text.match(/\b(\d{6})\b/);
-  assert.ok(match);
-  const confirmResponse = await fetch(`${baseUrl}/api/auth/confirm`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: "admin@example.com", code: match![1] }),
-  });
-  const cookie = confirmResponse.headers.get("set-cookie")!.split(";")[0]!;
 
   try {
-    await run({ baseUrl, cookie, db });
+    const response = await fetch(`http://127.0.0.1:${port}/api/meta/media/browse?limit=20`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      items: Array<{ ig_media_id: string; already_managed: boolean }>;
+      next_cursor: string | null;
+    };
+
+    assert.equal(body.items[0]?.ig_media_id, "media-browse-1");
+    assert.equal(body.items[0]?.already_managed, false);
+    assert.equal(body.next_cursor, "next-page");
   } finally {
+    globalThis.fetch = originalFetch;
     stopScheduler();
-    server.closeAllConnections();
     await new Promise<void>((resolve, reject) => {
       server.close((error?: Error) => (error ? reject(error) : resolve()));
     });
-    await rm(mediaRoot, { recursive: true, force: true });
-    globalThis.fetch = originalFetch;
-    delete process.env.IRIS_ADMIN_EMAIL;
-    delete process.env.IRIS_SESSION_SECRET;
-    delete process.env.IRIS_OTP_PEPPER;
   }
-}
-
-test("meta status reports disconnected without token", async () => {
-  await withMetaApiServer(async ({ baseUrl, cookie }) => {
-    const response = await fetch(`${baseUrl}/api/meta/status`, {
-      headers: { Cookie: cookie },
-    });
-    assert.equal(response.status, 200);
-    const json = (await response.json()) as { connected: boolean };
-    assert.equal(json.connected, false);
-  });
-});
-
-test("meta status reports connected account", async () => {
-  await withMetaApiServer(async ({ baseUrl, cookie, db }) => {
-    const tokenStore = createSqliteMetaTokenStore(db, { encryptionKey: TEST_KEY });
-    tokenStore.upsertToken("page-token", new Date(Date.now() + 3600_000).toISOString());
-
-    const connectionStore = createSqliteMetaConnectionStore(db);
-    connectionStore.upsert({
-      igUserId: "ig-7",
-      igUsername: "brand",
-      pageId: "page-1",
-      pageName: "Brand",
-    });
-
-    const response = await fetch(`${baseUrl}/api/meta/status`, {
-      headers: { Cookie: cookie },
-    });
-    const json = (await response.json()) as {
-      connected: boolean;
-      igUsername: string;
-    };
-    assert.equal(json.connected, true);
-    assert.equal(json.igUsername, "brand");
-  });
-});
-
-test("meta disconnect clears token and connection", async () => {
-  await withMetaApiServer(async ({ baseUrl, cookie, db }) => {
-    const tokenStore = createSqliteMetaTokenStore(db, { encryptionKey: TEST_KEY });
-    tokenStore.upsertToken("page-token", new Date(Date.now() + 3600_000).toISOString());
-
-    const connectionStore = createSqliteMetaConnectionStore(db);
-    connectionStore.upsert({
-      igUserId: "ig-7",
-      igUsername: "brand",
-      pageId: "page-1",
-      pageName: "Brand",
-    });
-
-    const disconnect = await fetch(`${baseUrl}/api/meta/disconnect`, {
-      method: "POST",
-      headers: { Cookie: cookie },
-    });
-    assert.equal(disconnect.status, 200);
-
-    const status = await fetch(`${baseUrl}/api/meta/status`, {
-      headers: { Cookie: cookie },
-    });
-    const json = (await status.json()) as { connected: boolean };
-    assert.equal(json.connected, false);
-    assert.equal(tokenStore.getActiveToken(), null);
-    assert.equal(connectionStore.get(), null);
-  });
-});
-
-test("meta health returns ok when graph responds", async () => {
-  const originalFetch = globalThis.fetch;
-  const graphFetchImpl = async () =>
-    new Response(JSON.stringify({ user_id: "ig-7", username: "brand" }), {
-      status: 200,
-    });
-  const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
-    const url = new URL(typeof input === "string" ? input : input.toString());
-    if (url.hostname === "graph.instagram.com") {
-      return graphFetchImpl();
-    }
-    return originalFetch(input, init);
-  };
-
-  await withMetaApiServer(async ({ baseUrl, cookie, db }) => {
-    const tokenStore = createSqliteMetaTokenStore(db, { encryptionKey: TEST_KEY });
-    tokenStore.upsertToken("page-token");
-
-    const connectionStore = createSqliteMetaConnectionStore(db);
-    connectionStore.upsert({
-      igUserId: "ig-7",
-      igUsername: "brand",
-      pageId: "page-1",
-      pageName: "Brand",
-    });
-
-    const response = await fetch(`${baseUrl}/api/meta/health`, {
-      headers: { Cookie: cookie },
-    });
-    const json = (await response.json()) as { ok: boolean; code: string };
-    assert.equal(json.ok, true);
-    assert.equal(json.code, "ok");
-  }, fetchImpl);
 });

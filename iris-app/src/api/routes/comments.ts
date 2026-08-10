@@ -22,6 +22,7 @@ import {
 import { serializeReplyContext } from "../../domain/reply-context/serialize-reply-context.ts";
 import { assembleReplyContext } from "../../domain/reply-context/reply-context-assembler.ts";
 import { registerMonitoredPost } from "../../domain/comments/register-monitored-post.ts";
+import { registerMonitoredPostsBatch } from "../../domain/comments/register-monitored-posts-batch.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
 
 function serializeCommentWithDraft(
@@ -173,6 +174,36 @@ export async function handleCommentsRoute(
       insights,
       media,
     });
+    return true;
+  }
+
+  if (pathname === "/api/comments/monitored-posts/batch" && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const readiness = getMetaReadiness(ctx);
+    if (!readiness.ready) {
+      sendError(res, 503, metaReadinessMessage(readiness));
+      return true;
+    }
+
+    try {
+      const body = await readJsonBody<{ ig_media_ids?: unknown }>(req);
+      const result = await registerMonitoredPostsBatch(body.ig_media_ids, {
+        posts: ctx.posts,
+        metaCommentReader: ctx.metaCommentReader,
+      });
+
+      sendJson(res, 201, {
+        imported: result.imported.map(serializePost),
+        skipped: result.skipped,
+      });
+    } catch (error) {
+      handleCommentsError(res, error);
+    }
+
     return true;
   }
 

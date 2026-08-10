@@ -86,6 +86,29 @@ export type PostInsightsResult = {
   media?: PostInsightsMedia;
 };
 
+export type BrowseableMediaItem = {
+  ig_media_id: string;
+  caption: string | null;
+  published_at: string | null;
+  permalink: string | null;
+  media_type: string | null;
+  thumbnail_url: string | null;
+  like_count: number | null;
+  comments_count: number | null;
+  already_managed: boolean;
+  managed_post_id: string | null;
+};
+
+export type BrowseMediaPage = {
+  items: BrowseableMediaItem[];
+  next_cursor: string | null;
+};
+
+export type ImportMonitoredPostsBatchResult = {
+  imported: Post[];
+  skipped: Array<{ ig_media_id: string; reason: string }>;
+};
+
 export type SyncPostCommentsResult = {
   post_id: string;
   ig_media_id: string;
