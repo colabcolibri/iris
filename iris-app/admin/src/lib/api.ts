@@ -111,6 +111,20 @@ export function logout() {
   return apiFetch("/api/auth/logout", { method: "POST" });
 }
 
+export async function fetchAuthMe(): Promise<{ authenticated: true; email: string } | null> {
+  const response = await fetch("/api/auth/me", { credentials: "include" });
+  if (response.status === 401) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(payload.error ?? `Request failed (${response.status})`);
+  }
+
+  return response.json() as Promise<{ authenticated: true; email: string }>;
+}
+
 export function fetchMetaStatus() {
   return apiFetch<MetaStatus>("/api/meta/status");
 }

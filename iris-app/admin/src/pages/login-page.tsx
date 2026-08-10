@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { confirmLoginCode, requestLoginCode } from "@/lib/api";
+import { useAuthSession } from "@/contexts/auth-session-context";
 
 type Step = "email" | "code";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { refresh } = useAuthSession();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -48,7 +51,9 @@ export function LoginPage() {
     setFeedback("");
     try {
       await confirmLoginCode(email.trim(), code.trim());
-      navigate("/", { replace: true });
+      await refresh();
+      const returnUrl = searchParams.get("returnUrl");
+      navigate(returnUrl && returnUrl.startsWith("/") ? returnUrl : "/", { replace: true });
     } catch (err) {
       setFeedback(err instanceof Error ? err.message : "Código inválido ou expirado.");
     } finally {
@@ -143,6 +148,12 @@ export function LoginPage() {
           {feedback && (
             <p className="text-center text-sm text-muted-foreground">{feedback}</p>
           )}
+
+          <p className="text-center text-xs text-muted-foreground">
+            <Link to="/privacy" className="hover:text-foreground hover:underline">
+              Política de privacidade
+            </Link>
+          </p>
         </div>
       </main>
     </div>

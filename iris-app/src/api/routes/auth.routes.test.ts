@@ -127,3 +127,42 @@ test("posts require auth without session or bearer", async () => {
     assert.equal(response.status, 401);
   });
 });
+
+test("GET /api/auth/me returns 401 without session", async () => {
+  await withAuthServer(async ({ baseUrl }) => {
+    const response = await fetch(`${baseUrl}/api/auth/me`);
+    assert.equal(response.status, 401);
+    const body = (await response.json()) as { error?: string };
+    assert.ok(body.error);
+  });
+});
+
+test("GET /api/auth/me returns email with valid session cookie", async () => {
+  await withAuthServer(async ({ baseUrl, capture }) => {
+    await fetch(`${baseUrl}/api/auth/request-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@example.com" }),
+    });
+
+    const match = capture.text.match(/\b(\d{6})\b/);
+    assert.ok(match);
+
+    const confirmResponse = await fetch(`${baseUrl}/api/auth/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "admin@example.com", code: match![1] }),
+    });
+    const setCookie = confirmResponse.headers.get("set-cookie");
+    assert.ok(setCookie);
+
+    const meResponse = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Cookie: setCookie!.split(";")[0]! },
+    });
+    assert.equal(meResponse.status, 200);
+    assert.deepEqual(await meResponse.json(), {
+      authenticated: true,
+      email: "admin@example.com",
+    });
+  });
+});

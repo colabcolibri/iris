@@ -24,6 +24,8 @@ import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
+import { readAdminSession } from "../domain/auth-session.ts";
+import { shouldGateSpaGet } from "./spa-route-policy.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
@@ -217,6 +219,15 @@ async function handleRequest(
   }
 
   if (req.method === "GET") {
+    if (shouldGateSpaGet(pathname, req.method)) {
+      const session = readAdminSession(req);
+      if (!session.ok) {
+        res.writeHead(302, { Location: "/login" });
+        res.end();
+        return;
+      }
+    }
+
     if (adminVite) {
       await delegateToVite(adminVite, req, res);
       if (res.writableEnded) {

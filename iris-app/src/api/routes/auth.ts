@@ -16,6 +16,8 @@ import {
   appendSessionCookie,
   clearSessionCookie,
   createSessionToken,
+  readSessionToken,
+  verifySessionToken,
 } from "../session.ts";
 
 export async function handleAuthRoute(
@@ -74,6 +76,17 @@ export async function handleAuthRoute(
   if (pathname === "/api/auth/logout" && req.method === "POST") {
     clearSessionCookie(res);
     sendJson(res, 200, { ok: true });
+    return true;
+  }
+
+  if (pathname === "/api/auth/me" && req.method === "GET") {
+    const session = verifySessionToken(readSessionToken(req));
+    if (!session.ok || !session.email) {
+      sendError(res, 401, "not authenticated");
+      return true;
+    }
+
+    sendJson(res, 200, { authenticated: true, email: session.email });
     return true;
   }
 

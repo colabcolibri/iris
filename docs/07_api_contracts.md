@@ -20,7 +20,8 @@ blocks: []
 
 1. `POST /api/auth/request-code` com `{ "email": "..." }` — público
 2. `POST /api/auth/confirm` com `{ "email": "...", "code": "123456" }` — define cookie `iris_session` (HttpOnly)
-3. Chamadas `/api/*` da UI usam cookie (`credentials: include`) — sem header `Authorization`
+3. `GET /api/auth/me` — retorna `{ "authenticated": true, "email": "..." }` com cookie válido; `401` sem sessão (bootstrap da UI)
+4. Chamadas `/api/*` da UI usam cookie (`credentials: include`) — sem header `Authorization`
 
 ### API (agente / scripts)
 
@@ -39,6 +40,7 @@ blocks: []
 | ------ | ---- | ---- | ----------- |
 | POST | `/api/auth/request-code` | public | Envia OTP ao email allowlisted |
 | POST | `/api/auth/confirm` | public | Valida OTP e emite cookie de sessão |
+| GET | `/api/auth/me` | public (cookie) | Bootstrap de sessão para a UI; `200` com email ou `401` |
 | POST | `/api/auth/logout` | public | Limpa cookie de sessão |
 
 ## Error envelope
