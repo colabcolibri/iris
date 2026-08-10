@@ -20,9 +20,16 @@ export type ListRecentMediaOptions = {
   igMediaIds?: string[];
 };
 
+export type RemoteMediaMetadata = {
+  igMediaId: string;
+  caption: string | null;
+  timestamp: string | null;
+};
+
 export type MetaCommentReader = {
   listRecentMediaWithComments(
     since: Date,
     options?: ListRecentMediaOptions,
   ): Promise<RemoteMediaWithComments[]>;
+  fetchMediaMetadata(igMediaId: string): Promise<RemoteMediaMetadata>;
 };

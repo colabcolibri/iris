@@ -27,6 +27,7 @@ const CHIP_STYLES: Record<PostStatus, string> = {
   draft: "border-primary/20 bg-muted text-foreground",
   scheduled: "border-primary/20 bg-primary/10 text-primary",
   published: "border-emerald-600/30 bg-emerald-500/10 text-emerald-800",
+  monitored: "border-amber-600/30 bg-amber-500/10 text-amber-900",
   failed: "border-destructive/20 bg-destructive/10 text-destructive",
   cancelled: "border-border bg-muted text-muted-foreground",
 };

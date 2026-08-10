@@ -4,6 +4,7 @@ export const POST_STATUS_LABELS: Record<PostStatus, string> = {
   draft: "Rascunho",
   scheduled: "Agendado",
   published: "Publicado",
+  monitored: "Monitorado",
   failed: "Falhou",
   cancelled: "Cancelado",
 };

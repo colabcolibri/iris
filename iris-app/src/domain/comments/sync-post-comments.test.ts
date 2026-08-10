@@ -43,14 +43,20 @@ test("listCommentPosts returns published iris posts with local counts", () => {
     });
 
     const result = listCommentPosts({
-      listPublishedPosts: () =>
+      listManagedPosts: () =>
         posts
-          .list({ calendarOnly: true, status: "published" })
+          .list()
+          .filter(
+            (post) =>
+              Boolean(post.igMediaId) &&
+              (post.status === "published" || post.status === "monitored"),
+          )
           .map((post) => ({
             id: post.id,
             caption: post.caption,
             publishedAt: post.publishedAt,
             igMediaId: post.igMediaId,
+            status: post.status,
           })),
       countCommentsByPostId: (postId) => comments.countByPostId(postId),
     });
@@ -87,6 +93,13 @@ test("syncPostComments upserts remote comments for one post", async () => {
               ],
             },
           ];
+        },
+        async fetchMediaMetadata(igMediaId: string) {
+          return {
+            igMediaId,
+            caption: "Legenda",
+            timestamp: new Date().toISOString(),
+          };
         },
       },
       upsertFromWebhook: (input) => ({

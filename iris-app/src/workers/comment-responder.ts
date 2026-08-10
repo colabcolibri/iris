@@ -1,13 +1,7 @@
 import type { AppContext } from "../api/app-context.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
-import { generateReply } from "../agents/reply-agent.ts";
-import { notifyCommentsChanged } from "../adapters/sse/event-bus.ts";
-import { assembleReplyContext } from "../domain/reply-context/reply-context-assembler.ts";
-import {
-  buildReplyAuditSummary,
-  serializeReplyAuditSummary,
-} from "../domain/reply-context/build-reply-audit-summary.ts";
+import { processCommentReply } from "../domain/comments/process-comment-reply.ts";
 
 export type CommentResponderOptions = {
   intervalMs?: number;
@@ -39,53 +33,14 @@ export function startCommentResponder(
     running = true;
 
     try {
-      const pending = ctx.comments.listPendingForAutoReply();
+      const pending = ctx.comments.listPendingForAgentReply();
 
       for (const comment of pending) {
-        const context = await assembleReplyContext(
-          comment.id,
-          ctx.replyContextAssembler,
-        );
-
-        if (!context) {
-          continue;
-        }
-
-        const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
-
-        try {
-          const message = await generateReply(
-            { llm, assembler: ctx.replyContextAssembler },
-            { prebuiltContext: context },
-          );
-
-          await replier.reply(comment.igCommentId, message);
-
-          const run = ctx.agentRuns.create({
-            trigger: "worker",
-            inputSummary,
-            outputSummary: message.slice(0, 500),
-            status: "ok",
-          });
-
-          ctx.comments.createReply(comment.id, message, "sent", run.id);
-          ctx.comments.markReplied(comment.id);
-          notifyCommentsChanged({ post_id: comment.postId });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message.slice(0, 500) : "reply failed";
-
-          const run = ctx.agentRuns.create({
-            trigger: "worker",
-            inputSummary,
-            outputSummary: errorMessage,
-            status: "failed",
-          });
-
-          ctx.comments.createReply(comment.id, "", "failed", run.id);
-          ctx.comments.markFailed(comment.id, errorMessage);
-          notifyCommentsChanged({ post_id: comment.postId });
-        }
+        await processCommentReply(ctx, comment.id, {
+          trigger: "worker",
+          llmCompleter: llm,
+          metaCommentReplier: replier,
+        });
       }
     } catch (error) {
       options.onTickError?.(error);

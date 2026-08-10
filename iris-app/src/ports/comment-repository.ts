@@ -13,15 +13,25 @@ export type SentCommentReply = {
   sentText: string;
 };
 
+export type PendingAgentReplyComment = Comment & {
+  postCaption: string | null;
+  replyMode: string;
+};
+
+export type CreateReplyInput = {
+  commentId: string;
+  status: "sent" | "failed" | "draft";
+  sentText?: string | null;
+  draftText?: string | null;
+  agentRunId?: string | null;
+};
+
 export type CommentReplyRecord = {
   id: string;
   commentId: string;
   sentText: string | null;
+  draftText: string | null;
   status: string;
-};
-
-export type PendingAutoReplyComment = Comment & {
-  postCaption: string | null;
 };
 
 export type CommentRepository = {
@@ -30,14 +40,12 @@ export type CommentRepository = {
   listByPostId(postId: string): Comment[];
   countByPostId(postId: string): { total: number; pending: number };
   listSentRepliesByPostId(postId: string): SentCommentReply[];
-  listPendingForAutoReply(): PendingAutoReplyComment[];
+  listPendingForAgentReply(): PendingAgentReplyComment[];
+  hasReplyRecord(commentId: string): boolean;
+  promoteDraftToSent(commentId: string, sentText: string): boolean;
+  findLatestDraft(commentId: string): CommentReplyRecord | null;
   findById(id: string): Comment | null;
   markReplied(id: string): Comment | null;
   markFailed(id: string, errorMessage: string): Comment | null;
-  createReply(
-    commentId: string,
-    sentText: string,
-    status: CommentStatus | "sent" | "failed",
-    agentRunId?: string | null,
-  ): CommentReplyRecord;
+  createReply(input: CreateReplyInput): CommentReplyRecord;
 };

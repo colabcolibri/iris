@@ -14,7 +14,7 @@ import {
   listAssets,
   replyToComment,
 } from "@/lib/api";
-import type { ReplyInspection, Post } from "@/lib/types";
+import type { ReplyInspection, Post, ReplyMode } from "@/lib/types";
 
 export type PostDialogMode = "create" | "edit";
 
@@ -29,11 +29,11 @@ type PostDialogProps = {
   error: string;
   caption: string;
   scheduledAt: string;
-  autoReply: boolean;
+  replyMode: ReplyMode;
   onOpenChange: (open: boolean) => void;
   onCaptionChange: (value: string) => void;
   onScheduledAtChange: (value: string) => void;
-  onAutoReplyChange: (value: boolean) => void;
+  onReplyModeChange: (value: ReplyMode) => void;
   onFilesChange: (files: FileList | null) => void;
   onSaveDraft: () => void;
   onSchedule: () => void;
@@ -53,11 +53,11 @@ export function PostDialog({
   error,
   caption,
   scheduledAt,
-  autoReply,
+  replyMode,
   onOpenChange,
   onCaptionChange,
   onScheduledAtChange,
-  onAutoReplyChange,
+  onReplyModeChange,
   onFilesChange,
   onSaveDraft,
   onSchedule,
@@ -245,15 +245,22 @@ export function PostDialog({
                     : ""}
                 </p>
               </div>
-              <label className="flex items-center gap-2 pb-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={autoReply}
-                  onChange={(e) => onAutoReplyChange(e.target.checked)}
-                  className="size-4 rounded border-border text-primary"
-                />
-                Resposta automática a comentários
-              </label>
+              <div className="space-y-2 pb-2 sm:pb-0">
+                <Label htmlFor="post-reply-mode" className="text-xs font-semibold tracking-wide uppercase">
+                  Respostas da IA
+                </Label>
+                <select
+                  id="post-reply-mode"
+                  value={replyMode}
+                  onChange={(e) => onReplyModeChange(e.target.value as ReplyMode)}
+                  className="h-10 w-full rounded-md border border-input bg-muted/60 px-3 text-sm"
+                  disabled={isReadOnly}
+                >
+                  <option value="off">Desligado</option>
+                  <option value="auto">Automático (publica na Meta)</option>
+                  <option value="draft">Rascunho (aprovar antes)</option>
+                </select>
+              </div>
             </div>
 
             {post?.id && (
@@ -265,10 +272,14 @@ export function PostDialog({
                     <p className="text-sm wrap-break-word text-muted-foreground">
                       {inspection.post_context.caption_truncated ?? "(sem legenda)"}
                     </p>
-                    {inspection.auto_reply_enabled && (
+                    {(inspection.auto_reply_enabled || replyMode !== "off") && (
                       <p className="text-xs">
                         <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">
-                          Auto-reply ativo
+                          {replyMode === "draft"
+                            ? "Modo rascunho"
+                            : replyMode === "auto"
+                              ? "Auto-reply ativo"
+                              : "Respostas desligadas"}
                         </span>
                         {" · "}
                         <Link

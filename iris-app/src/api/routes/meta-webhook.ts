@@ -8,6 +8,10 @@ import {
   verifySubscribeToken,
 } from "../../domain/meta-webhook.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
+import {
+  scheduleCommentReply,
+  shouldScheduleCommentReply,
+} from "../../domain/comments/process-comment-reply.ts";
 
 const PAYLOAD_PREVIEW_BYTES = 2048;
 
@@ -85,7 +89,7 @@ async function handleMetaWebhookPost(
     let linkedPostId: string | null = null;
 
     for (const entry of entries) {
-      const post = ctx.posts.findByIgMediaId(entry.igMediaId);
+      const post = ctx.posts.findCommentableByIgMediaId(entry.igMediaId);
       if (!post) {
         continue;
       }
@@ -104,6 +108,13 @@ async function handleMetaWebhookPost(
 
       if (result.created) {
         affectedPosts.add(post.id);
+
+        if (
+          shouldScheduleCommentReply(post.replyMode) &&
+          ctx.resolveLlmCompleter()
+        ) {
+          scheduleCommentReply(ctx, result.comment.id);
+        }
       }
     }
 

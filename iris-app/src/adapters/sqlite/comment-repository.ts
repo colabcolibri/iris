@@ -43,14 +43,35 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
   const insertReply = db.prepare(`
     INSERT INTO comment_replies (id, comment_id, draft_text, sent_text, status, agent_run_id)
-    VALUES (?, ?, NULL, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
 
-  const listPendingForAutoReplyStmt = db.prepare(`
-    SELECT c.*, p.caption AS post_caption
+  const hasReplyRecordStmt = db.prepare(`
+    SELECT 1 FROM comment_replies WHERE comment_id = ? LIMIT 1
+  `);
+
+  const promoteDraftToSentStmt = db.prepare(`
+    UPDATE comment_replies
+    SET status = 'sent', sent_text = ?, draft_text = NULL
+    WHERE comment_id = ? AND status = 'draft'
+  `);
+
+  const findLatestDraftStmt = db.prepare(`
+    SELECT * FROM comment_replies
+    WHERE comment_id = ? AND status = 'draft'
+    ORDER BY rowid DESC
+    LIMIT 1
+  `);
+
+  const listPendingForAgentReplyStmt = db.prepare(`
+    SELECT c.*, p.caption AS post_caption, p.reply_mode AS reply_mode
     FROM comments c
     INNER JOIN posts p ON p.id = c.post_id
-    WHERE c.status = 'pending' AND p.auto_reply_enabled = 1
+    WHERE c.status = 'pending'
+      AND p.reply_mode IN ('auto', 'draft')
+      AND NOT EXISTS (
+        SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
+      )
     ORDER BY datetime(c.created_at) ASC
   `);
 
@@ -138,14 +159,47 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       });
     },
 
-    listPendingForAutoReply() {
-      return listPendingForAutoReplyStmt.all().map((row) => {
+    listPendingForAgentReply() {
+      return listPendingForAgentReplyStmt.all().map((row) => {
         const record = row as Record<string, unknown>;
         return {
           ...mapCommentRow(row as never),
           postCaption: typeof record.post_caption === "string" ? record.post_caption : null,
+          replyMode: typeof record.reply_mode === "string" ? record.reply_mode : "off",
         };
       });
+    },
+
+    hasReplyRecord(commentId) {
+      return Boolean(hasReplyRecordStmt.get(commentId));
+    },
+
+    promoteDraftToSent(commentId, sentText) {
+      const result = promoteDraftToSentStmt.run(sentText, commentId);
+      return result.changes > 0;
+    },
+
+    findLatestDraft(commentId) {
+      const row = findLatestDraftStmt.get(commentId);
+      if (!row) {
+        return null;
+      }
+
+      const record = row as {
+        id: string;
+        comment_id: string;
+        draft_text: string | null;
+        sent_text: string | null;
+        status: string;
+      };
+
+      return {
+        id: record.id,
+        commentId: record.comment_id,
+        draftText: record.draft_text,
+        sentText: record.sent_text,
+        status: record.status,
+      };
     },
 
     findById(id) {
@@ -163,14 +217,22 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       return this.findById(id);
     },
 
-    createReply(commentId, sentText, status, agentRunId = null) {
+    createReply(input) {
       const id = randomUUID();
-      insertReply.run(id, commentId, sentText, status, agentRunId);
+      insertReply.run(
+        id,
+        input.commentId,
+        input.draftText ?? null,
+        input.sentText ?? null,
+        input.status,
+        input.agentRunId ?? null,
+      );
       return {
         id,
-        commentId,
-        sentText,
-        status,
+        commentId: input.commentId,
+        draftText: input.draftText ?? null,
+        sentText: input.sentText ?? null,
+        status: input.status,
       };
     },
   };

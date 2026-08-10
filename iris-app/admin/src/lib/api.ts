@@ -105,6 +105,20 @@ export async function fetchComments(postId: string) {
   return payload.comments ?? [];
 }
 
+export function registerMonitoredPost(body: { ig_media_id?: string; permalink?: string }) {
+  return apiFetch<Post>("/api/comments/monitored-posts", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function approveCommentReply(commentId: string, message?: string) {
+  return apiFetch<Comment>(`/api/comments/${commentId}/approve-reply`, {
+    method: "POST",
+    body: JSON.stringify(message ? { message } : {}),
+  });
+}
+
 export function fetchReplyInspection(postId: string) {
   return apiFetch<ReplyInspection>(`/api/posts/${postId}/reply-inspection`);
 }

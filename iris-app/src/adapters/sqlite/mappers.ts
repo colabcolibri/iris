@@ -1,4 +1,5 @@
 import type { Post, PostAsset } from "../../domain/post.ts";
+import type { ReplyMode } from "../../domain/reply-mode.ts";
 import type { Comment } from "../../domain/comment.ts";
 
 type PostRow = {
@@ -12,6 +13,7 @@ type PostRow = {
   source_note: string | null;
   error_message: string | null;
   auto_reply_enabled: number;
+  reply_mode: string;
   created_at: string;
   updated_at: string;
   assets_count?: number | string;
@@ -55,6 +57,7 @@ export function mapPostRow(row: PostRow): Post {
     sourceNote: row.source_note,
     errorMessage: row.error_message,
     autoReplyEnabled: row.auto_reply_enabled === 1,
+    replyMode: (row.reply_mode ?? "off") as ReplyMode,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     assetsCount:
@@ -118,6 +121,7 @@ export function serializePost(post: Post) {
     source_note: post.sourceNote,
     error_message: post.errorMessage,
     auto_reply_enabled: post.autoReplyEnabled,
+    reply_mode: post.replyMode,
     created_at: post.createdAt,
     updated_at: post.updatedAt,
   };

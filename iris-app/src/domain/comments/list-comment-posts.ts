@@ -3,23 +3,25 @@ export type CommentPostSummary = {
   caption: string | null;
   publishedAt: string | null;
   igMediaId: string;
+  status: string;
   commentsCount: number;
   pendingCount: number;
 };
 
 export type ListCommentPostsDeps = {
-  listPublishedPosts: () => Array<{
+  listManagedPosts: () => Array<{
     id: string;
     caption: string | null;
     publishedAt: string | null;
     igMediaId: string | null;
+    status: string;
   }>;
   countCommentsByPostId: (postId: string) => { total: number; pending: number };
 };
 
 export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary[] {
   return deps
-    .listPublishedPosts()
+    .listManagedPosts()
     .filter((post): post is typeof post & { igMediaId: string } => Boolean(post.igMediaId))
     .map((post) => {
       const counts = deps.countCommentsByPostId(post.id);
@@ -28,6 +30,7 @@ export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary
         caption: post.caption,
         publishedAt: post.publishedAt,
         igMediaId: post.igMediaId,
+        status: post.status,
         commentsCount: counts.total,
         pendingCount: counts.pending,
       };

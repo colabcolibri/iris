@@ -7,6 +7,7 @@ const COLUMN_THEME: Record<PostStatus, { headerAccent?: string; muted?: boolean 
   draft: {},
   scheduled: {},
   published: {},
+  monitored: { headerAccent: "text-amber-700" },
   failed: { headerAccent: "text-destructive" },
   cancelled: { muted: true },
 };

@@ -20,7 +20,7 @@ import {
   uploadAsset,
 } from "@/lib/api";
 import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/lib/datetime";
-import type { Post, PostStatus } from "@/lib/types";
+import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 export function DashboardPage() {
   const [searchParams] = useSearchParams();
@@ -37,7 +37,7 @@ export function DashboardPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [caption, setCaption] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [autoReply, setAutoReply] = useState(false);
+  const [replyMode, setReplyMode] = useState<ReplyMode>("off");
   const [files, setFiles] = useState<FileList | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -89,7 +89,7 @@ export function DashboardPage() {
     setDialogMode("create");
     setCaption("");
     setScheduledAt("");
-    setAutoReply(false);
+    setReplyMode("off");
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -100,7 +100,7 @@ export function DashboardPage() {
     setDialogMode("edit");
     setCaption(post.caption ?? "");
     setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
-    setAutoReply(Boolean(post.auto_reply_enabled));
+    setReplyMode(post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "off"));
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -190,7 +190,7 @@ export function DashboardPage() {
         await updatePost(postId, {
           caption,
           scheduled_at: scheduledIso,
-          auto_reply_enabled: autoReply,
+          reply_mode: replyMode,
         });
       }
 
@@ -273,14 +273,14 @@ export function DashboardPage() {
         error={error}
         caption={caption}
         scheduledAt={scheduledAt}
-        autoReply={autoReply}
+        replyMode={replyMode}
         onOpenChange={(open) => {
           if (!open) closeDialog();
           else setDialogOpen(true);
         }}
         onCaptionChange={setCaption}
         onScheduledAtChange={setScheduledAt}
-        onAutoReplyChange={setAutoReply}
+        onReplyModeChange={setReplyMode}
         onFilesChange={setFiles}
         onSaveDraft={() => void savePost(false)}
         onSchedule={() => void savePost(true)}

@@ -19,14 +19,28 @@ import {
   getMetaReadiness,
   metaReadinessMessage,
 } from "../../domain/meta-readiness.ts";
-import { assembleReplyContext } from "../../domain/reply-context/reply-context-assembler.ts";
 import { serializeReplyContext } from "../../domain/reply-context/serialize-reply-context.ts";
+import { assembleReplyContext } from "../../domain/reply-context/reply-context-assembler.ts";
+import { registerMonitoredPost } from "../../domain/comments/register-monitored-post.ts";
+import { serializePost } from "../../adapters/sqlite/mappers.ts";
 
-const MAX_REPLY_LENGTH = 2200;
+function serializeCommentWithDraft(
+  comment: Parameters<typeof serializeComment>[0],
+  ctx: AppContext,
+) {
+  const draft = ctx.comments.findLatestDraft(comment.id);
+  return {
+    ...serializeComment(comment),
+    draft_text: draft?.draftText ?? null,
+    draft_status: draft?.status ?? null,
+  };
+}
 
 function requireAdminOrAgent(auth: AuthContext): boolean {
   return auth.role === "admin" || auth.role === "agent";
 }
+
+const MAX_REPLY_LENGTH = 2200;
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -48,14 +62,19 @@ export async function handleCommentsRoute(
     }
 
     const posts = listCommentPosts({
-      listPublishedPosts: () =>
+      listManagedPosts: () =>
         ctx.posts
-          .list({ calendarOnly: true, status: "published" })
+          .list()
+          .filter((post) =>
+            Boolean(post.igMediaId) &&
+            (post.status === "published" || post.status === "monitored"),
+          )
           .map((post) => ({
             id: post.id,
             caption: post.caption,
             publishedAt: post.publishedAt,
             igMediaId: post.igMediaId,
+            status: post.status,
           })),
       countCommentsByPostId: (postId) => ctx.comments.countByPostId(postId),
     });
@@ -66,10 +85,42 @@ export async function handleCommentsRoute(
         caption: post.caption,
         published_at: post.publishedAt,
         ig_media_id: post.igMediaId,
+        status: post.status,
+        is_external: post.status === "monitored",
         comments_count: post.commentsCount,
         pending_count: post.pendingCount,
       })),
     });
+    return true;
+  }
+
+  if (pathname === "/api/comments/monitored-posts" && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const readiness = getMetaReadiness(ctx);
+    if (!readiness.ready) {
+      sendError(res, 503, metaReadinessMessage(readiness));
+      return true;
+    }
+
+    try {
+      const body = await readJsonBody<{
+        ig_media_id?: unknown;
+        permalink?: unknown;
+      }>(req);
+      const post = await registerMonitoredPost(body, {
+        posts: ctx.posts,
+        metaCommentReader: ctx.metaCommentReader,
+      });
+
+      sendJson(res, 201, serializePost(post));
+    } catch (error) {
+      handleCommentsError(res, error);
+    }
+
     return true;
   }
 
@@ -218,7 +269,9 @@ export async function handleCommentsRoute(
         comments_fetched: result.commentsFetched,
         access_limited: result.accessLimited,
         warning: result.warning,
-        comments: result.comments.map(serializeComment),
+        comments: result.comments.map((comment) =>
+          serializeCommentWithDraft(comment, ctx),
+        ),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "failed to sync comments";
@@ -238,7 +291,9 @@ export async function handleCommentsRoute(
     }
 
     const comments = ctx.comments.listByPostId(postId);
-    sendJson(res, 200, { comments: comments.map(serializeComment) });
+    sendJson(res, 200, {
+      comments: comments.map((comment) => serializeCommentWithDraft(comment, ctx)),
+    });
     return true;
   }
 
@@ -295,6 +350,83 @@ export async function handleCommentsRoute(
     return true;
   }
 
+  const approveReplyMatch = /^\/api\/comments\/([^/]+)\/approve-reply$/.exec(pathname);
+  if (approveReplyMatch && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    try {
+      const commentId = approveReplyMatch[1];
+      const comment = ctx.comments.findById(commentId);
+      if (!comment) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      if (comment.status === "replied") {
+        sendJson(res, 200, serializeCommentWithDraft(comment, ctx));
+        return true;
+      }
+
+      if (comment.status !== "pending") {
+        sendError(res, 422, "only pending comments can be approved");
+        return true;
+      }
+
+      const body = await readJsonBody<{ message?: unknown }>(req);
+      const draft = ctx.comments.findLatestDraft(commentId);
+      const message =
+        typeof body.message === "string" && body.message.trim()
+          ? body.message.trim()
+          : draft?.draftText?.trim() ?? "";
+
+      if (!message) {
+        throw new ValidationError("message or draft is required");
+      }
+
+      if (message.length > MAX_REPLY_LENGTH) {
+        throw new ValidationError(`message must be at most ${MAX_REPLY_LENGTH} characters`);
+      }
+
+      const readiness = getMetaReadiness(ctx);
+      if (!readiness.ready) {
+        sendError(res, 503, metaReadinessMessage(readiness));
+        return true;
+      }
+
+      try {
+        await ctx.metaCommentReplier.reply(comment.igCommentId, message);
+        if (!ctx.comments.promoteDraftToSent(commentId, message)) {
+          ctx.comments.createReply({
+            commentId,
+            sentText: message,
+            status: "sent",
+          });
+        }
+        const updated = ctx.comments.markReplied(commentId);
+        notifyCommentsChanged({ post_id: comment.postId });
+        sendJson(res, 200, serializeCommentWithDraft(updated!, ctx));
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "reply failed";
+        ctx.comments.createReply({
+          commentId,
+          sentText: message,
+          status: "failed",
+        });
+        const updated = ctx.comments.markFailed(commentId, errorMessage);
+        notifyCommentsChanged({ post_id: comment.postId });
+        sendJson(res, 200, serializeCommentWithDraft(updated!, ctx));
+      }
+    } catch (error) {
+      handleCommentsError(res, error);
+    }
+
+    return true;
+  }
+
   const replyMatch = /^\/api\/comments\/([^/]+)\/reply$/.exec(pathname);
   if (replyMatch && req.method === "POST") {
     if (!requireAdmin(auth)) {
@@ -334,17 +466,17 @@ export async function handleCommentsRoute(
 
       try {
         await ctx.metaCommentReplier.reply(comment.igCommentId, message);
-        ctx.comments.createReply(commentId, message, "sent");
+        ctx.comments.createReply({ commentId, sentText: message, status: "sent" });
         const updated = ctx.comments.markReplied(commentId);
         notifyCommentsChanged({ post_id: comment.postId });
-        sendJson(res, 200, serializeComment(updated!));
+        sendJson(res, 200, serializeCommentWithDraft(updated!, ctx));
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "reply failed";
-        ctx.comments.createReply(commentId, message, "failed");
+        ctx.comments.createReply({ commentId, sentText: message, status: "failed" });
         const updated = ctx.comments.markFailed(commentId, errorMessage);
         notifyCommentsChanged({ post_id: comment.postId });
-        sendJson(res, 200, serializeComment(updated!));
+        sendJson(res, 200, serializeCommentWithDraft(updated!, ctx));
       }
     } catch (error) {
       handleCommentsError(res, error);

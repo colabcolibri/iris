@@ -1,7 +1,10 @@
+import type { ReplyMode } from "./reply-mode.ts";
+
 export type PostStatus =
   | "draft"
   | "scheduled"
   | "published"
+  | "monitored"
   | "cancelled"
   | "failed";
 
@@ -16,6 +19,7 @@ export type Post = {
   sourceNote: string | null;
   errorMessage: string | null;
   autoReplyEnabled: boolean;
+  replyMode: ReplyMode;
   createdAt: string;
   updatedAt: string;
   assetsCount?: number;

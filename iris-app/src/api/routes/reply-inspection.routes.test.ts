@@ -52,7 +52,11 @@ test("GET reply-inspection returns post context and thread for admin", async () 
       authorUsername: "fan",
     });
 
-    ctx.comments.createReply(comment.id, "resposta da marca", "sent");
+    ctx.comments.createReply({
+      commentId: comment.id,
+      sentText: "resposta da marca",
+      status: "sent",
+    });
 
     const unauthorized = await fetch(`${baseUrl}/api/posts/${post.id}/reply-inspection`);
     assert.equal(unauthorized.status, 401);

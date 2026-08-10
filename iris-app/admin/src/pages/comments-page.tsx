@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Loader2, MessageCircle, RefreshCw } from "lucide-react";
+import { Loader2, MessageCircle, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useMetaSession } from "@/hooks/use-meta-session";
 import {
   fetchCommentPosts,
   fetchComments,
+  approveCommentReply,
+  registerMonitoredPost,
   subscribeRealtimeEvents,
   syncPostComments,
 } from "@/lib/api";
@@ -91,9 +95,15 @@ function PostListItem({
             {post.published_at
               ? new Date(post.published_at).toLocaleString("pt-BR")
               : "sem data de publicação"}
+            {post.is_external ? " · externo" : ""}
           </p>
         </div>
         <div className="shrink-0 text-right text-xs text-muted-foreground">
+          {post.is_external ? (
+            <p className="mb-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+              gerenciado
+            </p>
+          ) : null}
           <p className="font-medium text-foreground">{post.comments_count}</p>
           <p>coment.</p>
           {post.pending_count > 0 ? (
@@ -117,6 +127,10 @@ export function CommentsPage() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [mediaInput, setMediaInput] = useState("");
+  const [addingPost, setAddingPost] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   const selectedPost = useMemo(
     () => posts.find((post) => post.post_id === selectedPostId) ?? null,
@@ -162,6 +176,52 @@ export function CommentsPage() {
       setLoadingComments(false);
     }
   }, []);
+
+  const handleAddMonitoredPost = useCallback(async () => {
+    const value = mediaInput.trim();
+    if (!value) {
+      toast.error("Informe o ID Meta ou o link do post.");
+      return;
+    }
+
+    setAddingPost(true);
+    try {
+      const payload = /^\d{5,}$/.test(value)
+        ? { ig_media_id: value }
+        : { permalink: value };
+      const post = await registerMonitoredPost(payload);
+      await loadPosts();
+      setSearchParams({ post_id: post.id });
+      setAddDialogOpen(false);
+      setMediaInput("");
+      toast.success("Publicação adicionada para monitoramento.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Falha ao adicionar publicação.";
+      toast.error(message);
+    } finally {
+      setAddingPost(false);
+    }
+  }, [loadPosts, mediaInput, setSearchParams]);
+
+  const handleApproveDraft = useCallback(
+    async (commentId: string, draftText?: string | null) => {
+      setApprovingId(commentId);
+      try {
+        await approveCommentReply(commentId, draftText ?? undefined);
+        if (selectedPostId) {
+          await loadComments(selectedPostId, true);
+          await loadPosts();
+        }
+        toast.success("Resposta publicada na Meta.");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Falha ao aprovar resposta.";
+        toast.error(message);
+      } finally {
+        setApprovingId(null);
+      }
+    },
+    [loadComments, loadPosts, selectedPostId],
+  );
 
   const handleSync = useCallback(async () => {
     if (!selectedPostId) {
@@ -250,23 +310,35 @@ export function CommentsPage() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
             <Card className="space-y-3 border-border/80 bg-card/90 p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold">Postagens publicadas</h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void loadPosts()}
-                  disabled={loadingPosts}
-                >
-                  {loadingPosts ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                </Button>
+                <h2 className="text-sm font-semibold">Postagens gerenciadas</h2>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAddDialogOpen(true)}
+                    disabled={!meta?.connected}
+                  >
+                    <Plus className="mr-1 size-4" />
+                    Adicionar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void loadPosts()}
+                    disabled={loadingPosts}
+                  >
+                    {loadingPosts ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                  </Button>
+                </div>
               </div>
 
               {loadingPosts ? (
                 <p className="text-sm text-muted-foreground">Carregando postagens…</p>
               ) : posts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Nenhuma postagem publicada com ID da Meta ainda.
+                  Nenhuma postagem gerenciada com ID da Meta ainda.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -295,6 +367,11 @@ export function CommentsPage() {
                       <h2 className="text-base font-semibold wrap-break-word">
                         {selectedPost.caption?.trim() || "(sem legenda)"}
                       </h2>
+                      {selectedPost.is_external ? (
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          Publicação externa gerenciada pelo Iris
+                        </p>
+                      ) : null}
                       <p className="text-xs text-muted-foreground break-all">
                         ID Meta: {selectedPost.ig_media_id}
                         {selectedPost.published_at ? (
@@ -361,6 +438,25 @@ export function CommentsPage() {
                             ) : null}
                           </div>
                           <p className="wrap-break-word">{comment.text ?? "(sem texto)"}</p>
+                          {comment.draft_text ? (
+                            <div className="mt-3 space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+                              <p className="text-xs font-semibold text-primary">Rascunho da IA</p>
+                              <p className="wrap-break-word text-sm">{comment.draft_text}</p>
+                              {comment.status === "pending" ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  disabled={approvingId === comment.id}
+                                  onClick={() => void handleApproveDraft(comment.id, comment.draft_text)}
+                                >
+                                  {approvingId === comment.id ? (
+                                    <Loader2 className="mr-2 size-4 animate-spin" />
+                                  ) : null}
+                                  Aprovar e publicar
+                                </Button>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -371,6 +467,41 @@ export function CommentsPage() {
           </div>
         </div>
       </div>
+
+      {addDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-md space-y-4 p-5">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Adicionar publicação</h2>
+              <p className="text-sm text-muted-foreground">
+                Cole o ID numérico do post na Meta ou o link do Instagram.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="monitored-media-input">ID ou link</Label>
+              <Input
+                id="monitored-media-input"
+                value={mediaInput}
+                onChange={(e) => setMediaInput(e.target.value)}
+                placeholder="17841400000000001 ou https://instagram.com/p/..."
+              />
+            </div>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleAddMonitoredPost()}
+                disabled={addingPost}
+              >
+                {addingPost ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                Adicionar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      ) : null}
     </AppShell>
   );
 }

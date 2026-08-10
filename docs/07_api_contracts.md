@@ -139,7 +139,7 @@ Invalid `from`/`to` values return `422` with `{ "error": "from must be a valid I
 
 | GET | `/api/posts/:id` | admin, agent | Post + asset metadata |
 | POST | `/api/posts` | admin, agent | Create post |
-| PATCH | `/api/posts/:id` | admin, agent | Update caption, schedule, status |
+| PATCH | `/api/posts/:id` | admin, agent | Update caption, schedule, status, `reply_mode` (`off` \| `auto` \| `draft`; `auto_reply_enabled` aceito como alias) |
 | DELETE | `/api/posts/:id` | admin | Cancel (`status=cancelled`) |
 
 ### POST /api/posts body
@@ -182,10 +182,12 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post (`parent_ig_comment_id` nullable) |
 | GET | `/api/posts/:id/reply-inspection` | admin | Post context + comment threads for supervision (`thread[].depth`) |
 | GET | `/api/comments/:id/reply-context` | admin, agent | Full reply envelope: target comment, thread, post, images, persona |
-| GET | `/api/comments/posts` | admin | Published Iris posts with local `comments_count` / `pending_count` (no Meta call) |
+| GET | `/api/comments/posts` | admin | Posts gerenciados (`published` + `monitored`) com contagens locais |
+| POST | `/api/comments/monitored-posts` | admin | Registra post externo por `ig_media_id` ou permalink (valida na Graph) |
 | POST | `/api/posts/:id/comments/sync` | admin | Sync comments from Meta for one post (`ig_media_id` required); upserts SQLite |
 | GET | `/api/comments/inbox?days=30` | admin | **Legacy** — inbox sync; prefer per-post sync above |
 | POST | `/api/comments/:id/reply` | admin | Manual reply → Meta |
+| POST | `/api/comments/:id/approve-reply` | admin | Publica rascunho da IA (`draft_text`) na Meta; body `message` opcional para editar |
 
 ## Meta (Instagram connection)
 

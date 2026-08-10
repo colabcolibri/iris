@@ -212,5 +212,27 @@ export function createGraphApiCommentReader(
 
       return results;
     },
+
+    async fetchMediaMetadata(igMediaId: string) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
+      }
+
+      const mediaUrl = new URL(`${base}/${igMediaId}`);
+      mediaUrl.searchParams.set("fields", MEDIA_FIELDS);
+      mediaUrl.searchParams.set("access_token", token);
+
+      const media = await fetchGraph<GraphMedia>(mediaUrl.toString());
+      if (!media.id) {
+        throw new Error("media not found");
+      }
+
+      return {
+        igMediaId: media.id,
+        caption: media.caption ?? null,
+        timestamp: media.timestamp ?? null,
+      };
+    },
   };
 }

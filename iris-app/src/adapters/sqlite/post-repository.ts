@@ -12,8 +12,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
   const insert = db.prepare(`
     INSERT INTO posts (
       id, status, channel, caption, scheduled_at, published_at, ig_media_id,
-      source_note, error_message, auto_reply_enabled, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, NULL, NULL, ?, NULL, 0, ?, ?)
+      source_note, error_message, auto_reply_enabled, reply_mode, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)
   `);
 
   const selectById = db.prepare("SELECT * FROM posts WHERE id = ?");
@@ -35,7 +35,11 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         input.channel,
         input.caption ?? null,
         input.scheduledAt ?? null,
+        input.publishedAt ?? null,
+        input.igMediaId ?? null,
         input.sourceNote ?? null,
+        input.replyMode === "auto" ? 1 : 0,
+        input.replyMode ?? "off",
         now,
         now,
       );
@@ -51,6 +55,15 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
     findByIgMediaId(igMediaId) {
       const row = db
         .prepare("SELECT * FROM posts WHERE ig_media_id = ? LIMIT 1")
+        .get(igMediaId);
+      return row ? mapPostRow(row as never) : null;
+    },
+
+    findCommentableByIgMediaId(igMediaId) {
+      const row = db
+        .prepare(
+          "SELECT * FROM posts WHERE ig_media_id = ? AND status IN ('published', 'monitored') LIMIT 1",
+        )
         .get(igMediaId);
       return row ? mapPostRow(row as never) : null;
     },
@@ -122,15 +135,27 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
           input.autoReplyEnabled !== undefined
             ? input.autoReplyEnabled
             : current.autoReplyEnabled,
+        replyMode:
+          input.replyMode !== undefined ? input.replyMode : current.replyMode,
       };
 
+      if (input.autoReplyEnabled !== undefined && input.replyMode === undefined) {
+        next.replyMode = input.autoReplyEnabled ? "auto" : "off";
+      }
+
       const updatedAt = new Date().toISOString();
+      const autoReplyEnabled =
+        next.replyMode === "auto"
+          ? true
+          : next.replyMode === "off"
+            ? false
+            : next.autoReplyEnabled;
 
       db.prepare(`
         UPDATE posts
         SET caption = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
             published_at = ?, ig_media_id = ?, error_message = ?, auto_reply_enabled = ?,
-            updated_at = ?
+            reply_mode = ?, updated_at = ?
         WHERE id = ?
       `).run(
         next.caption,
@@ -141,7 +166,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.publishedAt,
         next.igMediaId,
         next.errorMessage,
-        next.autoReplyEnabled ? 1 : 0,
+        autoReplyEnabled ? 1 : 0,
+        next.replyMode,
         updatedAt,
         id,
       );

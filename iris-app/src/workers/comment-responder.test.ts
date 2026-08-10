@@ -22,7 +22,7 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     });
 
     const post = ctx.posts.create({ channel: "instagram", caption: "Post caption" });
-    ctx.posts.update(post.id, { autoReplyEnabled: true });
+    ctx.posts.update(post.id, { replyMode: "auto" });
 
     ctx.replyPersonaStore.upsert({
       systemPrompt: "Responda com empatia.",

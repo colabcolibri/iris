@@ -37,7 +37,7 @@ test("buildCommentThreadContext includes branch with brand reply", () => {
       text: "Irrelevante",
     }).comment;
 
-    comments.createReply(first.id, "Resposta da marca", "sent");
+    comments.createReply({ commentId: first.id, sentText: "Resposta da marca", status: "sent" });
 
     const second = comments.findByIgCommentId("ig-2");
     assert.ok(second);

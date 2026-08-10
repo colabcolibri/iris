@@ -2,14 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-test("post dialog includes auto reply toggle", () => {
+test("post dialog includes reply mode selector", () => {
   const dialog = readFileSync("admin/src/components/posts/post-dialog.tsx", "utf8");
-  assert.match(dialog, /autoReply/);
-  assert.match(dialog, /Resposta automática/);
+  assert.match(dialog, /replyMode/);
+  assert.match(dialog, /post-reply-mode/);
 });
 
-test("dashboard persists auto_reply_enabled on update", () => {
+test("dashboard persists reply_mode on update", () => {
   const dashboard = readFileSync("admin/src/pages/dashboard-page.tsx", "utf8");
-  assert.match(dashboard, /auto_reply_enabled/);
+  assert.match(dashboard, /reply_mode/);
   assert.match(dashboard, /PostDialog/);
 });

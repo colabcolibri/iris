@@ -6,6 +6,7 @@ test("comments page includes post-centric sync UI", () => {
   const page = readFileSync("admin/src/pages/comments-page.tsx", "utf8");
   assert.match(page, /fetchCommentPosts/);
   assert.match(page, /syncPostComments/);
+  assert.match(page, /registerMonitoredPost/);
   assert.match(page, /Sincronizar este post/);
   assert.match(page, /comment\.depth/);
 });

@@ -1,4 +1,5 @@
-export type PostStatus = "draft" | "scheduled" | "published" | "failed" | "cancelled";
+export type PostStatus = "draft" | "scheduled" | "published" | "monitored" | "failed" | "cancelled";
+export type ReplyMode = "off" | "auto" | "draft";
 
 export type Post = {
   id: string;
@@ -9,6 +10,7 @@ export type Post = {
   published_at: string | null;
   created_at: string;
   auto_reply_enabled?: boolean;
+  reply_mode?: ReplyMode;
   assets_count?: number;
   error_message?: string | null;
   ig_media_id?: string | null;
@@ -30,6 +32,8 @@ export type Comment = {
   parent_ig_comment_id?: string | null;
   created_at: string;
   error_message?: string | null;
+  draft_text?: string | null;
+  draft_status?: string | null;
 };
 
 export type CommentPostSummary = {
@@ -37,6 +41,8 @@ export type CommentPostSummary = {
   caption: string | null;
   published_at: string | null;
   ig_media_id: string;
+  status?: string;
+  is_external?: boolean;
   comments_count: number;
   pending_count: number;
 };

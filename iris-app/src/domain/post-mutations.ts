@@ -1,4 +1,6 @@
 import type { PostStatus } from "./post.ts";
+import type { ReplyMode } from "./reply-mode.ts";
+import { isReplyMode, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
 import { ValidationError } from "../api/json.ts";
 
 export type CreatePostPayload = {
@@ -41,6 +43,7 @@ export type UpdatePostPayload = {
   source_note?: unknown;
   status?: unknown;
   auto_reply_enabled?: unknown;
+  reply_mode?: unknown;
 };
 
 export type NormalizedUpdatePost = {
@@ -50,6 +53,7 @@ export type NormalizedUpdatePost = {
   sourceNote?: string | null;
   status?: PostStatus;
   autoReplyEnabled?: boolean;
+  replyMode?: ReplyMode;
 };
 
 export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePost {
@@ -97,6 +101,7 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
       "draft",
       "scheduled",
       "published",
+      "monitored",
       "cancelled",
       "failed",
     ];
@@ -106,11 +111,21 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
     update.status = body.status as PostStatus;
   }
 
+  if ("reply_mode" in body) {
+    if (typeof body.reply_mode !== "string" || !isReplyMode(body.reply_mode)) {
+      throw new ValidationError("reply_mode must be off, auto, or draft");
+    }
+    update.replyMode = body.reply_mode;
+  }
+
   if ("auto_reply_enabled" in body) {
     if (typeof body.auto_reply_enabled !== "boolean") {
       throw new ValidationError("auto_reply_enabled must be a boolean");
     }
     update.autoReplyEnabled = body.auto_reply_enabled;
+    if (!("reply_mode" in body)) {
+      update.replyMode = replyModeFromAutoReplyEnabled(body.auto_reply_enabled);
+    }
   }
 
   return update;
