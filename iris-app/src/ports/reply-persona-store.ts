@@ -1,7 +1,6 @@
 export type ReplyPersona = {
-  systemPrompt: string;
-  tone: string;
   brandName: string | null;
+  responseLanguage: string;
   maxChars: number;
   updatedAt: string;
 };

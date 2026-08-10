@@ -26,19 +26,15 @@ export type SerializedReplyContext = {
   post: {
     id: string;
     caption: string | null;
+    carousel_summary: string | null;
     status: string;
     ig_media_id: string | null;
     channel: string;
     published_at: string | null;
   } | null;
-  images: Array<{
-    filename: string;
-    sort_order: number;
-    public_url: string | null;
-    visual_summary: string | null;
-  }>;
+  carousel_summary: string | null;
   persona: {
-    tone: string;
+    response_language: string;
     brand_name: string | null;
     max_chars: number;
   };
@@ -49,7 +45,8 @@ export function serializeReplyContext(
   meta: SerializedReplyContextMeta,
 ): SerializedReplyContext {
   const summaries = context.imageContext.summaries;
-  const assets = context.post?.assets ?? [];
+  const carouselSummary =
+    context.post?.carouselSummary?.trim() ?? summaries[0]?.trim() ?? null;
 
   return {
     target_comment: {
@@ -71,20 +68,16 @@ export function serializeReplyContext(
       ? {
           id: meta.postId,
           caption: context.post.caption,
+          carousel_summary: carouselSummary,
           status: context.post.status,
           ig_media_id: meta.igMediaId,
           channel: context.post.channel,
           published_at: context.post.publishedAt,
         }
       : null,
-    images: assets.map((asset, index) => ({
-      filename: asset.filename,
-      sort_order: asset.sortOrder,
-      public_url: asset.publishUrl,
-      visual_summary: summaries[index] ?? null,
-    })),
+    carousel_summary: carouselSummary,
     persona: {
-      tone: context.persona.tone,
+      response_language: context.persona.responseLanguage,
       brand_name: context.persona.brandName,
       max_chars: context.persona.maxChars,
     },

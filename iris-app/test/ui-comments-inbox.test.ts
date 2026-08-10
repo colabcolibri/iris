@@ -21,8 +21,9 @@ test("app sidebar includes comments in main navigation", () => {
   assert.match(navigation, /VIEW_ITEMS\.map/);
 });
 
-test("mobile nav exposes sidebar links", () => {
-  const mobile = readFileSync("admin/src/components/layout/app-mobile-nav.tsx", "utf8");
-  assert.match(mobile, /AppNavigation/);
-  assert.match(mobile, /Abrir menu/);
+test("sidebar navigation exposes main operation links", () => {
+  const sidebar = readFileSync("admin/src/components/layout/app-sidebar.tsx", "utf8");
+  assert.match(sidebar, /AppNavigation/);
+  const navigation = readFileSync("admin/src/components/layout/app-navigation.tsx", "utf8");
+  assert.match(navigation, /\/agent-runs/);
 });

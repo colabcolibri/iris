@@ -8,13 +8,10 @@ import { Label } from "@/components/ui/label";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { AgentAutoReplyCard } from "@/components/settings/agent-auto-reply-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
-import { MetaReviewCard } from "@/components/settings/meta-review-card";
 import { useAppSettings } from "@/contexts/app-settings-context";
-import { useMetaSession } from "@/contexts/meta-session-context";
 import { formatInTimeZone } from "@/lib/datetime";
 
 export function SettingsPage() {
-  const { meta, handleMetaHealth } = useMetaSession();
   const { timezone, loading, saveTimezone } = useAppSettings();
   const [draft, setDraft] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -48,7 +45,7 @@ export function SettingsPage() {
         <PageContainer.Header
           eyebrow="Preferências"
           title="Configurações"
-          description="Fuso horário editorial, conexão MCP, provedor de IA e testes de revisão Meta."
+          description="Fuso horário editorial, conexão MCP e provedor de IA."
         />
 
         <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
@@ -100,8 +97,6 @@ export function SettingsPage() {
           <McpConnectionCard />
 
         <LlmSettingsCard />
-
-        <MetaReviewCard meta={meta} onMetaHealth={handleMetaHealth} />
       </PageContainer.Content>
     </PageContainer>
   );

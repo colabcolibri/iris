@@ -64,6 +64,17 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
                   </pre>
                 </details>
               ) : null}
+
+              {step.structured ? (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-primary">
+                    Ver JSON estruturado
+                  </summary>
+                  <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-background/80 p-2 text-xs leading-relaxed text-muted-foreground">
+                    {JSON.stringify(step.structured, null, 2)}
+                  </pre>
+                </details>
+              ) : null}
             </li>
           );
         })}

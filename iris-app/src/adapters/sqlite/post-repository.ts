@@ -117,6 +117,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
 
       const next = {
         caption: input.caption !== undefined ? input.caption : current.caption,
+        carouselSummary:
+          input.carouselSummary !== undefined ? input.carouselSummary : current.carouselSummary,
         channel: input.channel !== undefined ? input.channel : current.channel,
         scheduledAt:
           input.scheduledAt !== undefined ? input.scheduledAt : current.scheduledAt,
@@ -153,12 +155,13 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
 
       db.prepare(`
         UPDATE posts
-        SET caption = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
+        SET caption = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
             published_at = ?, ig_media_id = ?, error_message = ?, auto_reply_enabled = ?,
             reply_mode = ?, updated_at = ?
         WHERE id = ?
       `).run(
         next.caption,
+        next.carouselSummary,
         next.channel,
         next.scheduledAt,
         next.sourceNote,

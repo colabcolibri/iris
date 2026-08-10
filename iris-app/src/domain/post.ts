@@ -13,6 +13,7 @@ export type Post = {
   status: PostStatus;
   channel: string;
   caption: string | null;
+  carouselSummary: string | null;
   scheduledAt: string | null;
   publishedAt: string | null;
   igMediaId: string | null;

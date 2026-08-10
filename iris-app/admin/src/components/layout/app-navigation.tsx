@@ -1,4 +1,4 @@
-import { CalendarDays, LayoutGrid, MessageCircle, Settings, Sparkles, Webhook } from "lucide-react";
+import { CalendarDays, Bot, FlaskConical, LayoutGrid, MessageCircle, Settings, Sparkles, Webhook } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import type { AppView } from "@/components/layout/app-sidebar";
 import {
@@ -19,6 +19,8 @@ const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] = 
 const MAIN_ROUTE_ITEMS = [
   { to: "/comments", label: "Comentários", icon: MessageCircle },
   { to: "/webhooks", label: "Webhooks", icon: Webhook },
+  { to: "/agent-simulator", label: "Simulador", icon: FlaskConical },
+  { to: "/agent-runs", label: "Execuções", icon: Bot },
 ] as const;
 
 const FOOTER_ROUTE_ITEMS = [

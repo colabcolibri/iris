@@ -3,14 +3,13 @@ import assert from "node:assert/strict";
 import { buildReplyPrompt } from "./build-reply-prompt.ts";
 import { defaultReplyPersona } from "../reply-persona-defaults.ts";
 
-test("buildReplyPrompt includes persona post thread and target", () => {
+test("buildReplyPrompt includes context and mandatory language", () => {
   const prompt = buildReplyPrompt({
-    persona: { ...defaultReplyPersona(), brandName: "Iris" },
+    persona: { ...defaultReplyPersona(), brandName: "Iris", responseLanguage: "en-US" },
     post: {
-      postId: "p1",
-      caption: "Legenda teste",
       channel: "instagram",
       status: "published",
+      caption: "Test caption",
       scheduledAt: null,
       publishedAt: "2026-08-09T12:00:00.000Z",
       assets: [],
@@ -19,20 +18,20 @@ test("buildReplyPrompt includes persona post thread and target", () => {
       entries: [
         {
           author: "fan",
-          text: "Oi",
+          text: "Hi",
           isBrandReply: false,
           at: "2026-08-09T12:01:00.000Z",
+          depth: 0,
         },
       ],
     },
-    imageContext: { summaries: ["Carrossel com 2 imagem(ns)."], visionEnabled: false },
-    targetComment: { authorUsername: "fan", text: "Oi" },
+    imageContext: { summaries: ["Carousel with 2 image(s)."] },
+    targetComment: { authorUsername: "fan", text: "Hi" },
   });
 
-  assert.match(prompt, /## Persona/);
-  assert.match(prompt, /## Post/);
-  assert.match(prompt, /Legenda teste/);
-  assert.match(prompt, /## Thread/);
-  assert.match(prompt, /## Comentário a responder/);
-  assert.match(prompt, /@fan: Oi/);
+  assert.match(prompt, /Response language \(MANDATORY\)/);
+  assert.match(prompt, /American English/);
+  assert.match(prompt, /Test caption/);
+  assert.match(prompt, /@fan: Hi/);
+  assert.doesNotMatch(prompt, /## Persona/);
 });

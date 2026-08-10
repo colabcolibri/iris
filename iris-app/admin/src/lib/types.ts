@@ -4,11 +4,13 @@ export type ReplyMode = "off" | "auto" | "draft";
 export type Post = {
   id: string;
   caption: string;
+  carousel_summary?: string | null;
   channel: string;
   status: PostStatus;
   scheduled_at: string | null;
   published_at: string | null;
   created_at: string;
+  updated_at?: string;
   auto_reply_enabled?: boolean;
   reply_mode?: ReplyMode;
   assets_count?: number;
@@ -18,9 +20,13 @@ export type Post = {
 
 export type Asset = {
   id: string;
+  post_id: string;
+  sort_order: number;
   storage_path: string;
   original_filename?: string;
   mime?: string;
+  width?: number | null;
+  height?: number | null;
 };
 
 export type Comment = {
@@ -42,6 +48,7 @@ export type Comment = {
 export type CommentPostSummary = {
   post_id: string;
   caption: string | null;
+  carousel_summary?: string | null;
   published_at: string | null;
   ig_media_id: string;
   status?: string;
@@ -182,9 +189,8 @@ export type MetaStatus = {
 };
 
 export type ReplyPersona = {
-  system_prompt: string;
-  tone: string;
   brand_name: string | null;
+  response_language: string;
   max_chars: number;
   updated_at: string;
 };
@@ -203,14 +209,48 @@ export type ReplyAuditStep = {
   reason: string | null;
   reasoning: string | null;
   created_at: string;
+  structured?: Record<string, unknown> | null;
 };
 
 export type ReplyAudit = {
   agent_run_id: string;
   trigger: string;
-  terminal_status: "skipped_triage" | "rejected_verify" | "approved";
+  terminal_status:
+    | "skipped_triage"
+    | "blocked_harmful"
+    | "rejected_verify"
+    | "approved"
+    | "approved_simple";
+  reply_tier?: "none" | "simple" | "full" | null;
   output_summary: string | null;
   steps: ReplyAuditStep[];
+};
+
+export type AgentRunListItem = {
+  id: string;
+  trigger: string;
+  status: "ok" | "failed" | "skipped";
+  output_summary: string | null;
+  created_at: string;
+  comment_id: string | null;
+  post_id: string | null;
+  step_count: number;
+  reply_tier: string | null;
+  terminal_status: string | null;
+  duration_ms: number | null;
+};
+
+export type AgentRunDetail = {
+  run: {
+    id: string;
+    trigger: string;
+    inputSummary: string | null;
+    outputSummary: string | null;
+    status: "ok" | "failed" | "skipped";
+    createdAt: string;
+  };
+  comment_id: string | null;
+  audit: ReplyAudit;
 };
 
 export type AppSettings = {
@@ -293,31 +333,4 @@ export type WebhookEvent = {
   error_message: string | null;
   payload_json: string;
   payload_truncated: boolean;
-};
-
-export type MetaTestInsightMetric = {
-  name: string;
-  period: string;
-  values: Array<{ value: number }>;
-};
-
-export type MetaTestInsightsResult = {
-  ok: boolean;
-  code?: string;
-  message?: string;
-  media_id?: string;
-  insights?: MetaTestInsightMetric[];
-};
-
-export type MetaTestConversation = {
-  id: string;
-  updated_time: string | null;
-};
-
-export type MetaTestConversationsResult = {
-  ok: boolean;
-  code?: string;
-  message?: string;
-  count?: number;
-  conversations?: MetaTestConversation[];
 };

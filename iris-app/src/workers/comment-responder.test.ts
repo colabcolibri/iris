@@ -26,9 +26,8 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     ctx.posts.update(post.id, { replyMode: "auto" });
 
     ctx.replyPersonaStore.upsert({
-      systemPrompt: "Responda com empatia.",
-      tone: "amigável",
       brandName: "Iris",
+      responseLanguage: "pt-BR",
       maxChars: 280,
     });
 
@@ -66,8 +65,8 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     const updated = ctx.comments.findById(comment.id);
     assert.equal(updated?.status, "replied");
     assert.equal(replies.length, 1);
-    assert.match(prompts[0] ?? "", /Restrições da marca/);
-    assert.match(prompts[0] ?? "", /replyTier/);
+    assert.match(prompts[0] ?? "", /Brand restrictions/);
+    assert.match(prompts[0] ?? "", /Response language \(MANDATORY\)/);
     assert.match(prompts[1] ?? "", /## SOUL/);
 
     const run = db

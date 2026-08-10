@@ -99,6 +99,7 @@ export async function handleCommentsRoute(
           .map((post) => ({
             id: post.id,
             caption: post.caption,
+            carouselSummary: post.carouselSummary,
             publishedAt: post.publishedAt,
             igMediaId: post.igMediaId,
             status: post.status,
@@ -112,6 +113,7 @@ export async function handleCommentsRoute(
         return {
           post_id: post.postId,
           caption: post.caption,
+          carousel_summary: post.carouselSummary ?? null,
           published_at: post.publishedAt,
           ig_media_id: post.igMediaId,
           status: post.status,

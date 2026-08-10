@@ -20,6 +20,12 @@ export function createSqliteAssetRepository(db: DatabaseSync): AssetRepository {
     WHERE post_id = ? AND storage_path LIKE ?
   `);
 
+  const findByIdStmt = db.prepare(`SELECT * FROM post_assets WHERE id = ?`);
+  const deleteByIdStmt = db.prepare(`DELETE FROM post_assets WHERE id = ?`);
+  const updateSortOrderStmt = db.prepare(`
+    UPDATE post_assets SET sort_order = ? WHERE id = ? AND post_id = ?
+  `);
+
   return {
     create(input: CreateAssetInput) {
       const id = randomUUID();
@@ -51,6 +57,34 @@ export function createSqliteAssetRepository(db: DatabaseSync): AssetRepository {
     findByPostIdAndFilename(postId, filename) {
       const row = findByFilename.get(postId, `%/${filename}`);
       return row ? mapAssetRow(row as never) : null;
+    },
+
+    findById(id) {
+      const row = findByIdStmt.get(id);
+      return row ? mapAssetRow(row as never) : null;
+    },
+
+    deleteById(id) {
+      const result = deleteByIdStmt.run(id);
+      return result.changes > 0;
+    },
+
+    reorder(postId, orderedAssetIds) {
+      db.exec("BEGIN");
+      try {
+        orderedAssetIds.forEach((assetId, index) => {
+          const result = updateSortOrderStmt.run(index + 1, assetId, postId);
+          if (result.changes === 0) {
+            throw new Error(`asset not found: ${assetId}`);
+          }
+        });
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+
+      return listByPostId.all(postId).map((row) => mapAssetRow(row as never));
     },
   };
 }

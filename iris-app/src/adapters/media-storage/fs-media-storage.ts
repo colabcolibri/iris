@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { MediaFile, MediaStorage } from "../../ports/media-storage.ts";
 
@@ -30,6 +30,16 @@ export function createFsMediaStorage(rootDir: string): MediaStorage {
         };
       } catch {
         return null;
+      }
+    },
+
+    async delete(postId, filename) {
+      const safeName = filename.replace(/[/\\]/g, "");
+      const absolutePath = join(rootDir, postId, safeName);
+      try {
+        await unlink(absolutePath);
+      } catch {
+        // arquivo já removido ou inexistente — segue com delete no banco
       }
     },
   };

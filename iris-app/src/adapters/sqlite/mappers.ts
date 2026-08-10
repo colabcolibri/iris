@@ -7,6 +7,7 @@ type PostRow = {
   status: string;
   channel: string;
   caption: string | null;
+  carousel_summary: string | null;
   scheduled_at: string | null;
   published_at: string | null;
   ig_media_id: string | null;
@@ -52,6 +53,7 @@ export function mapPostRow(row: PostRow): Post {
     status: row.status as Post["status"],
     channel: row.channel,
     caption: row.caption,
+    carouselSummary: row.carousel_summary ?? null,
     scheduledAt: row.scheduled_at,
     publishedAt: row.published_at,
     igMediaId: row.ig_media_id,
@@ -117,6 +119,7 @@ export function serializePost(post: Post) {
     status: post.status,
     channel: post.channel,
     caption: post.caption,
+    carousel_summary: post.carouselSummary,
     scheduled_at: post.scheduledAt,
     published_at: post.publishedAt,
     ig_media_id: post.igMediaId,

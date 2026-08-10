@@ -20,6 +20,7 @@ import { assertMetaReadyForSchedule, MetaNotConnectedError } from "../../domain/
 import type { PostStatus } from "../../domain/post.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
+import { generateCarouselSummaryForPost } from "../../domain/carousel-summary/generate-carousel-summary.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -69,6 +70,30 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
       });
       notifyPostsChanged({ post_id: post.id });
       sendJson(res, 201, serializePost(post));
+    } catch (error) {
+      handlePostsError(res, error);
+    }
+    return true;
+  }
+
+  const carouselMatch = /^\/api\/posts\/([^/]+)\/generate-carousel-summary$/.exec(pathname);
+  if (carouselMatch && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    try {
+      const postId = carouselMatch[1];
+      const summary = await generateCarouselSummaryForPost(postId, {
+        posts: ctx.posts,
+        assets: ctx.assets,
+        publicBaseUrl: ctx.publicBaseUrl,
+        publishUrlSecret: ctx.publishUrlSecret,
+        llm: ctx.resolveLlmCompleter(),
+      });
+      notifyPostsChanged({ post_id: postId });
+      sendJson(res, 200, { carousel_summary: summary });
     } catch (error) {
       handlePostsError(res, error);
     }

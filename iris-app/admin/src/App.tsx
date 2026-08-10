@@ -12,6 +12,8 @@ import { PersonaPage } from "@/pages/persona-page";
 import { CommentsPage } from "@/pages/comments-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { WebhooksPage } from "@/pages/webhooks-page";
+import { AgentRunsPage } from "@/pages/agent-runs-page";
+import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
 
 export function App() {
@@ -33,6 +35,8 @@ export function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/comments" element={<CommentsPage />} />
                 <Route path="/webhooks" element={<WebhooksPage />} />
+                <Route path="/agent-runs" element={<AgentRunsPage />} />
+                <Route path="/agent-simulator" element={<AgentSimulatorPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/persona" element={<PersonaPage />} />
               </Route>

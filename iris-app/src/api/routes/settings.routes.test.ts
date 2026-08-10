@@ -74,8 +74,11 @@ test("GET reply persona returns default when empty", async () => {
       headers: { Cookie: adminCookie },
     });
     assert.equal(response.status, 200);
-    const body = (await response.json()) as { tone: string; max_chars: number };
-    assert.ok(body.tone);
+    const body = (await response.json()) as {
+      response_language: string;
+      max_chars: number;
+    };
+    assert.equal(body.response_language, "pt-BR");
     assert.equal(body.max_chars, 500);
   });
 });
@@ -89,8 +92,7 @@ test("PUT reply persona persists and agent cannot write", async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        system_prompt: "Fale como a marca Iris.",
-        tone: "profissional",
+        response_language: "en-US",
         brand_name: "Iris",
         max_chars: 420,
       }),
@@ -104,8 +106,7 @@ test("PUT reply persona persists and agent cannot write", async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        system_prompt: "hack",
-        tone: "x",
+        response_language: "fr",
         brand_name: null,
         max_chars: 200,
       }),
@@ -116,11 +117,11 @@ test("PUT reply persona persists and agent cannot write", async () => {
       headers: { Cookie: adminCookie },
     });
     const body = (await getResponse.json()) as {
-      system_prompt: string;
+      response_language: string;
       brand_name: string;
       max_chars: number;
     };
-    assert.equal(body.system_prompt, "Fale como a marca Iris.");
+    assert.equal(body.response_language, "en-US");
     assert.equal(body.brand_name, "Iris");
     assert.equal(body.max_chars, 420);
   });

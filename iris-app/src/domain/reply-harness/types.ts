@@ -1,4 +1,5 @@
-import type { ReplyTier } from "./reply-tier.ts";
+import type { AgentDecisionJson } from "./decision-json.ts";
+import type { BlockCategory, ReplyTier } from "./reply-tier.ts";
 
 export type HarnessStageName = "triage" | "draft" | "verify";
 
@@ -6,6 +7,7 @@ export type HarnessVerdict = "pass" | "fail" | "skip";
 
 export type HarnessTerminalStatus =
   | "skipped_triage"
+  | "blocked_harmful"
   | "rejected_verify"
   | "approved"
   | "approved_simple";
@@ -16,8 +18,11 @@ export type StageResult = {
   reason: string;
   reasoning: string;
   replyTier?: ReplyTier;
+  blockCategory?: BlockCategory;
+  contextSummary?: string;
   draftText?: string;
   finalText?: string;
+  structured?: AgentDecisionJson;
 };
 
 export type HarnessRunResult = {
@@ -29,6 +34,8 @@ export type HarnessRunResult = {
 
 export type VerifyStageOutput = {
   approved: boolean;
+  harmful?: boolean;
+  policyViolations?: string[];
   reason: string;
   reasoning: string;
   finalText?: string;

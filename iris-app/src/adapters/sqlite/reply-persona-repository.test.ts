@@ -14,24 +14,24 @@ test("reply persona store upserts and reads single row", () => {
     assert.equal(store.get(), null);
 
     const saved = store.upsert({
-      systemPrompt: "Responda como marca X",
-      tone: "casual",
       brandName: "Marca X",
+      responseLanguage: "pt-BR",
       maxChars: 400,
     });
 
-    assert.equal(saved.systemPrompt, "Responda como marca X");
+    assert.equal(saved.brandName, "Marca X");
+    assert.equal(saved.responseLanguage, "pt-BR");
     assert.equal(saved.maxChars, 400);
 
     const again = store.get();
-    assert.equal(again?.tone, "casual");
+    assert.equal(again?.responseLanguage, "pt-BR");
   } finally {
     db.close();
   }
 });
 
-test("defaultReplyPersona matches env tone fallback", () => {
+test("defaultReplyPersona uses default response language", () => {
   const persona = defaultReplyPersona();
-  assert.ok(persona.systemPrompt.length > 10);
+  assert.equal(persona.responseLanguage, "pt-BR");
   assert.equal(persona.maxChars, 500);
 });

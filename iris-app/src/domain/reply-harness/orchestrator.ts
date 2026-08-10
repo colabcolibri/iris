@@ -2,6 +2,7 @@ import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { runDraftStage } from "./draft-stage.ts";
+import { runLightVerifyStage } from "./light-verify.ts";
 import { simpleReplyMaxChars } from "./reply-tier.ts";
 import { runTriageStage } from "./triage-stage.ts";
 import { runVerifyStage } from "./verify-stage.ts";
@@ -38,7 +39,8 @@ export async function runReplyHarness(input: RunReplyHarnessInput): Promise<Harn
 
   if (triage.replyTier === "none") {
     return {
-      terminalStatus: "skipped_triage",
+      terminalStatus:
+        triage.blockCategory === "harmful" ? "blocked_harmful" : "skipped_triage",
       replyTier: "none",
       steps,
       finalText: null,
@@ -68,11 +70,29 @@ export async function runReplyHarness(input: RunReplyHarnessInput): Promise<Harn
   }
 
   if (triage.replyTier === "simple") {
+    const verify = await runLightVerifyStage({
+      context: input.context,
+      draftText: draft.draftText,
+      maxChars: draftMaxChars,
+      llm: input.llm,
+    });
+    steps.push(verify);
+    await emitStep(input.onStepComplete, verify);
+
+    if (verify.verdict !== "pass" || !verify.finalText) {
+      return {
+        terminalStatus: "rejected_verify",
+        replyTier: "simple",
+        steps,
+        finalText: null,
+      };
+    }
+
     return {
       terminalStatus: "approved_simple",
       replyTier: "simple",
       steps,
-      finalText: draft.draftText,
+      finalText: verify.finalText,
     };
   }
 

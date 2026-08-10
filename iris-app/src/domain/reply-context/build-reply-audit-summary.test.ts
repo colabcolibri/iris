@@ -9,15 +9,15 @@ import type { ReplyContext } from "./types.ts";
 function baseContext(overrides: Partial<ReplyContext> = {}): ReplyContext {
   return {
     persona: {
-      systemPrompt: "Responda com empatia.",
-      tone: "amigável",
       brandName: "Iris",
+      responseLanguage: "pt-BR",
       maxChars: 280,
       updatedAt: "2026-08-09T00:00:00.000Z",
     },
     post: {
       postId: "post-1",
       caption: "Legenda longa do post para teste",
+      carouselSummary: null,
       channel: "instagram",
       status: "published",
       scheduledAt: null,

@@ -157,9 +157,9 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 
 | File | Kind | Scope |
 | ---- | ---- | ----- |
-| `architecture/diagrams/iris-reply-agent-flow.md` | flow | Sequência webhook/worker → gates → harness → draft/Meta → audit UI |
-| `architecture/diagrams/iris-reply-agent-runtime.md` | runtime | Módulos, config editorial, adapters e tabelas SQLite |
-| `architecture/diagrams/iris-reply-agent-harness.md` | flow | Estados terminais do harness e efeito no comentário |
+| `architecture/diagrams/iris-reply-agent-flow.md` | flow | Sequência webhook/worker/simulador → gates → harness v2 → draft/Meta → audit UI |
+| `architecture/diagrams/iris-reply-agent-runtime.md` | runtime | Módulos, carousel_summary, response_language, output_json, simulador e SQLite |
+| `architecture/diagrams/iris-reply-agent-harness.md` | flow | Estados terminais: replyTier, blocked_harmful, light/full verify |
 
 ## Architecture detail files
 

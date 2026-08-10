@@ -39,8 +39,15 @@ test("agent run steps append and list by comment", () => {
         commentId: "comment-1",
         stage: "triage",
         verdict: "pass",
-        reason: "ok",
+        reason: "tier:full · ok",
         reasoning: "legítimo",
+        outputJson: {
+          shouldReply: true,
+          replyTier: "full",
+          blockCategory: "none",
+          reason: "ok",
+          reasoning: "legítimo",
+        },
       },
       {
         agentRunId: run.id,
@@ -64,7 +71,9 @@ test("agent run steps append and list by comment", () => {
     const listed = steps.listByCommentId("comment-1");
     assert.equal(listed.length, 3);
     assert.equal(listed[0]?.stage, "triage");
+    assert.equal(listed[0]?.outputJson?.includes("replyTier"), true);
     assert.equal(listed[2]?.stage, "verify");
+    assert.equal(steps.listByAgentRunId(run.id).length, 3);
     assert.equal(steps.findLatestRunIdByCommentId("comment-1"), run.id);
   } finally {
     db.close();

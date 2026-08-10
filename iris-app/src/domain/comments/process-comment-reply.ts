@@ -26,7 +26,7 @@ function runStatusFromHarness(terminalStatus: string): AgentRunStatus {
   if (terminalStatus === "approved" || terminalStatus === "approved_simple") {
     return "ok";
   }
-  if (terminalStatus === "skipped_triage") {
+  if (terminalStatus === "skipped_triage" || terminalStatus === "blocked_harmful") {
     return "skipped";
   }
   return "failed";
@@ -83,9 +83,7 @@ export async function processCommentReply(
       trigger: options.trigger,
       inputSummary,
       outputSummary:
-        harnessResult.finalText?.slice(0, 500) ??
-        harnessResult.steps.at(-1)?.reason ??
-        harnessResult.terminalStatus,
+        harnessResult.finalText?.slice(0, 500) ?? harnessResult.terminalStatus,
       status: runStatusFromHarness(harnessResult.terminalStatus),
     });
 
@@ -98,11 +96,15 @@ export async function processCommentReply(
           verdict: step.verdict,
           reason: step.reason,
           reasoning: step.reasoning,
+          outputJson: step.structured ?? null,
         })),
       );
     }
 
-    if (harnessResult.terminalStatus === "skipped_triage") {
+    if (
+      harnessResult.terminalStatus === "skipped_triage" ||
+      harnessResult.terminalStatus === "blocked_harmful"
+    ) {
       const reason = harnessResult.steps[0]?.reason ?? "blocked";
       ctx.comments.markSkipped(commentId, guardrailMessage(reason));
       notifyCommentsChanged({ post_id: comment.postId });

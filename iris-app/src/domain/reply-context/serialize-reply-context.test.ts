@@ -6,15 +6,15 @@ import type { ReplyContext } from "./types.ts";
 test("serializeReplyContext exposes target_comment and thread depth", () => {
   const context: ReplyContext = {
     persona: {
-      systemPrompt: "x",
-      tone: "amigável",
       brandName: "Iris",
+      responseLanguage: "pt-BR",
       maxChars: 300,
       updatedAt: "2026-01-01T00:00:00.000Z",
     },
     post: {
       postId: "post-1",
       caption: "Olá",
+      carouselSummary: "Resumo do carrossel",
       channel: "instagram",
       status: "published",
       scheduledAt: null,
@@ -70,7 +70,8 @@ test("serializeReplyContext exposes target_comment and thread depth", () => {
   assert.equal(serialized.target_comment.id, "comment-child");
   assert.equal(serialized.target_comment.ig_comment_id, "ig-child");
   assert.equal(serialized.post?.ig_media_id, "media-1");
-  assert.equal(serialized.images[0]?.visual_summary, "Imagem 1: produto");
+  assert.equal(serialized.post?.carousel_summary, "Resumo do carrossel");
+  assert.equal(serialized.carousel_summary, "Resumo do carrossel");
   assert.equal(serialized.thread[1]?.depth, 1);
   assert.equal(serialized.thread[1]?.parent_ig_comment_id, "ig-parent");
 });

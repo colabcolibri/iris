@@ -9,6 +9,7 @@ test("reply audit UI is wired in comment surfaces", () => {
   );
   assert.match(timeline, /ReplyAuditTimeline/);
   assert.match(timeline, /Ver reasoning/);
+  assert.match(timeline, /Ver JSON estruturado/);
 
   const section = readFileSync("admin/src/components/comments/reply-audit-section.tsx", "utf8");
   assert.match(section, /Ver decisão do agente/);

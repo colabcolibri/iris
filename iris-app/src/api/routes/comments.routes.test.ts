@@ -656,3 +656,52 @@ test("GET reply-audit returns ordered steps for comment", async () => {
     assert.equal(missing.status, 404);
   });
 });
+
+test("GET agent-runs lists recent runs", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post runs",
+      igMediaId: "media-runs",
+      publishedAt: new Date().toISOString(),
+      replyMode: "draft",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-runs-1",
+      postId: post.id,
+      text: "Oi",
+    });
+
+    await processCommentReply(ctx, comment.id, {
+      trigger: "worker",
+      llmCompleter: createHarnessLlmMock({ draftText: "Resposta runs", replyTier: "simple" }),
+    });
+
+    const listResponse = await fetch(`${baseUrl}/api/agent-runs?limit=10`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    assert.equal(listResponse.status, 200);
+    const listBody = (await listResponse.json()) as {
+      items: Array<{ comment_id: string | null; reply_tier: string | null; step_count: number }>;
+    };
+    assert.ok(listBody.items.length >= 1);
+    const item = listBody.items.find((row) => row.comment_id === comment.id);
+    assert.ok(item);
+    assert.equal(item?.reply_tier, "simple");
+    assert.ok((item?.step_count ?? 0) >= 3);
+
+    const runId = (item as { id: string }).id;
+    const detailResponse = await fetch(`${baseUrl}/api/agent-runs/${runId}`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    assert.equal(detailResponse.status, 200);
+    const detailBody = (await detailResponse.json()) as {
+      comment_id: string;
+      audit: { steps: Array<{ structured: unknown }> };
+    };
+    assert.equal(detailBody.comment_id, comment.id);
+    assert.ok(detailBody.audit.steps.some((step) => step.structured));
+  });
+});

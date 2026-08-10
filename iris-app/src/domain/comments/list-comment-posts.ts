@@ -1,6 +1,7 @@
 export type CommentPostSummary = {
   postId: string;
   caption: string | null;
+  carouselSummary: string | null;
   publishedAt: string | null;
   igMediaId: string;
   status: string;
@@ -12,6 +13,7 @@ export type ListCommentPostsDeps = {
   listManagedPosts: () => Array<{
     id: string;
     caption: string | null;
+    carouselSummary: string | null;
     publishedAt: string | null;
     igMediaId: string | null;
     status: string;
@@ -28,6 +30,7 @@ export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary
       return {
         postId: post.id,
         caption: post.caption,
+        carouselSummary: post.carouselSummary,
         publishedAt: post.publishedAt,
         igMediaId: post.igMediaId,
         status: post.status,

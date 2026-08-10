@@ -1,4 +1,4 @@
-import type { AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -87,6 +87,20 @@ export function uploadAsset(postId: string, file: File, sortOrder: number) {
     method: "POST",
     body: form,
   });
+}
+
+export function deletePostAsset(postId: string, assetId: string) {
+  return apiFetch<void>(`/api/posts/${postId}/assets/${assetId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function reorderPostAssets(postId: string, assetIds: string[]) {
+  const payload = await apiFetch<{ assets: Asset[] }>(`/api/posts/${postId}/assets/reorder`, {
+    method: "PUT",
+    body: JSON.stringify({ asset_ids: assetIds }),
+  });
+  return payload.assets ?? [];
 }
 
 export async function fetchCommentPosts() {
@@ -321,8 +335,7 @@ export function fetchReplyPersona() {
 }
 
 export function updateReplyPersona(body: {
-  system_prompt: string;
-  tone: string;
+  response_language: string;
   brand_name: string | null;
   max_chars: number;
 }) {
@@ -427,14 +440,68 @@ export function fetchWebhookEvents(limit = 30) {
   );
 }
 
-export function fetchMetaTestInsights(mediaId?: string) {
-  const query = mediaId?.trim() ? `?media_id=${encodeURIComponent(mediaId.trim())}` : "";
-  return apiFetch<MetaTestInsightsResult>(`/api/meta/test/insights${query}`);
+export function fetchAgentRuns(params: {
+  limit?: number;
+  cursor?: string;
+  terminal_status?: string;
+  reply_tier?: string;
+} = {}) {
+  const search = new URLSearchParams();
+  if (params.limit) {
+    search.set("limit", String(params.limit));
+  }
+  if (params.cursor) {
+    search.set("cursor", params.cursor);
+  }
+  if (params.terminal_status) {
+    search.set("terminal_status", params.terminal_status);
+  }
+  if (params.reply_tier) {
+    search.set("reply_tier", params.reply_tier);
+  }
+  const query = search.toString();
+  return apiFetch<{ items: AgentRunListItem[]; next_cursor: string | null }>(
+    `/api/agent-runs${query ? `?${query}` : ""}`,
+  );
 }
 
-export function fetchMetaTestConversations(limit = 5) {
-  const safeLimit = Math.min(Math.max(limit, 1), 25);
-  return apiFetch<MetaTestConversationsResult>(
-    `/api/meta/test/conversations?limit=${safeLimit}`,
+export function fetchAgentRunDetail(runId: string) {
+  return apiFetch<AgentRunDetail>(`/api/agent-runs/${runId}`);
+}
+
+export type SimulateThreadMessage = {
+  author: string;
+  text: string;
+  is_brand_reply?: boolean;
+  at?: string;
+};
+
+export type SimulateReplyResult = {
+  audit: ReplyAudit;
+  final_text: string | null;
+  terminal_status: ReplyAudit["terminal_status"];
+  reply_tier: ReplyAudit["reply_tier"];
+  response_language: string;
+};
+
+export function simulateAgentReply(body: {
+  caption?: string | null;
+  carousel_summary?: string | null;
+  response_language?: string;
+  brand_name?: string | null;
+  max_chars?: number;
+  thread?: SimulateThreadMessage[];
+  target_comment: { author: string; text: string };
+}) {
+  return apiFetch<SimulateReplyResult>("/api/agent/simulate", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function generatePostCarouselSummary(postId: string) {
+  return apiFetch<{ carousel_summary: string }>(
+    `/api/posts/${postId}/generate-carousel-summary`,
+    { method: "POST" },
   );
 }

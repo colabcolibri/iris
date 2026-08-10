@@ -10,6 +10,7 @@ import {
   ValidationError,
 } from "../json.ts";
 import { defaultReplyPersona } from "../../domain/reply-persona-defaults.ts";
+import { isSupportedResponseLanguage } from "../../domain/reply-language/response-languages.ts";
 import type { ReplyPersona } from "../../ports/reply-persona-store.ts";
 
 type RouteRequest = {
@@ -21,24 +22,19 @@ type RouteRequest = {
 
 function serializePersona(persona: ReplyPersona) {
   return {
-    system_prompt: persona.systemPrompt,
-    tone: persona.tone,
     brand_name: persona.brandName,
+    response_language: persona.responseLanguage,
     max_chars: persona.maxChars,
     updated_at: persona.updatedAt,
   };
 }
 
 function normalizePersonaBody(body: Record<string, unknown>): Omit<ReplyPersona, "updatedAt"> {
-  const systemPrompt =
-    typeof body.system_prompt === "string" ? body.system_prompt.trim() : "";
-  const tone = typeof body.tone === "string" ? body.tone.trim() : "";
+  const responseLanguage =
+    typeof body.response_language === "string" ? body.response_language.trim() : "";
 
-  if (!systemPrompt) {
-    throw new ValidationError("system_prompt is required");
-  }
-  if (!tone) {
-    throw new ValidationError("tone is required");
+  if (!responseLanguage || !isSupportedResponseLanguage(responseLanguage)) {
+    throw new ValidationError("response_language is invalid");
   }
 
   const maxCharsRaw = body.max_chars;
@@ -65,9 +61,8 @@ function normalizePersonaBody(body: Record<string, unknown>): Omit<ReplyPersona,
   }
 
   return {
-    systemPrompt,
-    tone,
     brandName,
+    responseLanguage,
     maxChars,
   };
 }

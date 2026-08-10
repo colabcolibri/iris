@@ -30,7 +30,9 @@ export function createHarnessLlmMock(options: HarnessLlmMockOptions = {}): LlmCo
       step += 1;
       if (step === 1) {
         return JSON.stringify({
+          shouldReply: replyTier !== "none",
           replyTier,
+          blockCategory: replyTier === "none" ? "off_topic" : "none",
           reason: replyTier === "none" ? "blocked" : "ok",
           reasoning: replyTier === "none" ? "fora do escopo" : "classificado",
         });
@@ -40,6 +42,8 @@ export function createHarnessLlmMock(options: HarnessLlmMockOptions = {}): LlmCo
       }
       return JSON.stringify({
         approved,
+        harmful: false,
+        policyViolations: approved ? [] : ["rejected"],
         reason: approved ? "ok" : "rejected",
         reasoning: approved ? "adequado" : "inadequado",
         finalText: approved ? draftText : undefined,

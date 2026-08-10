@@ -14,6 +14,7 @@ export type CreatePostInput = {
 
 export type UpdatePostInput = {
   caption?: string | null;
+  carouselSummary?: string | null;
   channel?: string;
   scheduledAt?: string | null;
   sourceNote?: string | null;

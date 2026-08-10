@@ -1,53 +1,47 @@
 ---
-title: Iris — decisões do harness
-subtitle: Estados terminais e efeitos no comentário (top → bottom)
+title: Iris — estados do harness de resposta
+subtitle: replyTier, blocked_harmful, light verify e terminais
 updated: 2026-08-10
 source_doc: docs/05_architecture.md
 kind: flow
 ---
 
-# Harness — máquina de estados
+# Harness — estados terminais
 
 ```mermaid
 stateDiagram-v2
-  direction TB
+  [*] --> Triage
 
-  [*] --> Triage: runReplyHarness
+  Triage --> blocked_harmful: blockCategory harmful
+  Triage --> skipped_triage: replyTier none
+  Triage --> DraftSimple: replyTier simple
+  Triage --> DraftFull: replyTier full
 
-  Triage --> Skipped: verdict fail
-  Triage --> Draft: verdict pass
+  DraftSimple --> rejected_verify: draft fail
+  DraftFull --> rejected_verify: draft fail
 
-  Draft --> Rejected: texto vazio
-  Draft --> Verify: draft gerado
+  DraftSimple --> LightVerify: draft pass
+  DraftFull --> FullVerify: draft pass
 
-  Verify --> Rejected: approved false
-  Verify --> Approved: approved true
+  LightVerify --> rejected_verify: not approved / harmful / wrong language
+  LightVerify --> approved_simple: approved
 
-  Skipped --> CommentSkipped: markSkipped
-  Rejected --> CommentFailed: markFailed
-  Approved --> ModeDraft: reply_mode draft
-  Approved --> ModeAuto: reply_mode auto
+  FullVerify --> rejected_verify: not approved / harmful / wrong language
+  FullVerify --> approved: approved
 
-  ModeDraft --> DraftSaved: comment_reply draft
-  ModeAuto --> MetaSent: Graph API reply
-
-  CommentSkipped --> [*]
-  CommentFailed --> [*]
-  DraftSaved --> [*]
-  MetaSent --> [*]
+  blocked_harmful --> [*]
+  skipped_triage --> [*]
+  rejected_verify --> [*]
+  approved_simple --> [*]
+  approved --> [*]
 
   note right of Triage
-    LLM JSON: shouldReply
-    reason + reasoning
+    Prompts em inglês;
+    resposta pública em response_language
   end note
 
-  note right of Verify
-    LLM JSON: approved
-    finalText opcional
-  end note
-
-  note right of Skipped
-    agent_run status skipped
-    steps persistidos
+  note right of DraftSimple
+    Contexto inclui carousel_summary
+    (não imagens por chamada)
   end note
 ```

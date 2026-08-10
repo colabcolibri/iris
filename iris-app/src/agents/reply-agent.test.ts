@@ -7,18 +7,19 @@ test("generateReply uses llm completer", async () => {
     {
       llm: {
         async complete(prompt) {
-          assert.match(prompt, /Comentário de @fan/);
-          return "Obrigado pelo comentário!";
+          assert.match(prompt, /@fan: Adorei!/);
+          assert.match(prompt, /Response language \(MANDATORY\)/);
+          return "Thanks for your comment!";
         },
       },
-      tone: "casual",
+      responseLanguage: "en-US",
     },
     {
-      caption: "Novo produto",
+      caption: "New product",
       commentText: "Adorei!",
       authorUsername: "fan",
     },
   );
 
-  assert.equal(reply, "Obrigado pelo comentário!");
+  assert.equal(reply, "Thanks for your comment!");
 });

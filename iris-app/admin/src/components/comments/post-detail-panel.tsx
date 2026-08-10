@@ -16,6 +16,7 @@ import type { LucideIcon } from "lucide-react";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { PostMediaCarousel } from "@/components/comments/post-media-carousel";
 import { CommentThread } from "@/components/comments/comment-thread";
+import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -403,9 +404,15 @@ export function PostDetailPanel({
               )}
             </div>
           ) : (
-            <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
-              {captionPreview || "(sem legenda)"}
-            </p>
+            <div className="space-y-4">
+              <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
+                {captionPreview || "(sem legenda)"}
+              </p>
+              <CarouselSummaryEditor
+                postId={post.post_id}
+                initialSummary={post.carousel_summary}
+              />
+            </div>
           )}
         </div>
       </div>

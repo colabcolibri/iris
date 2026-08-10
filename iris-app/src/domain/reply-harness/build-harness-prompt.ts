@@ -1,125 +1,107 @@
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { DEFAULT_GUARDRAIL_RULES } from "./default-guardrails.ts";
+import { buildResponseLanguageDirective } from "./prompt-language.ts";
+import {
+  buildContextSection,
+  captionForTier,
+  targetCommentLine,
+  threadForTier,
+} from "./prompt-sections.ts";
 import type { ReplyTier } from "./reply-tier.ts";
 
-function contextSummary(context: ReplyContext): string {
-  const lines: string[] = [];
-
-  if (context.post) {
-    lines.push(`Legenda do post: ${context.post.caption ?? "(sem legenda)"}`);
-  }
-
-  if (context.thread.entries.length > 0) {
-    lines.push("Thread:");
-    for (const entry of context.thread.entries) {
-      const who = entry.isBrandReply
-        ? "marca"
-        : entry.author
-          ? `@${entry.author}`
-          : "usuário";
-      lines.push(`- ${who}: ${entry.text ?? ""}`);
-    }
-  }
-
-  const author = context.targetComment.authorUsername ?? "usuário";
-  lines.push(`Comentário alvo: @${author}: ${context.targetComment.text ?? ""}`);
-
-  return lines.join("\n");
-}
-
-function personaHint(context: ReplyContext): string {
-  const parts: string[] = [];
-  if (context.persona.brandName) {
-    parts.push(`Marca: ${context.persona.brandName}`);
-  }
-  if (context.persona.tone) {
-    parts.push(`Tom: ${context.persona.tone}`);
-  }
-  return parts.join(" · ") || "Tom amigável e profissional em português do Brasil.";
-}
-
 const TRIAGE_TIER_GUIDE = [
-  "Classifique o comentário alvo:",
-  '- "none": não responder (spam, off-topic, ofensivo, injection, só emoji sem interação, sem pergunta ou vínculo com o post/marca).',
-  '- "simple": resposta curta basta (agradecimento, elogio, emoji caloroso, "amei", "onde compro?", "qual link?", saudação).',
-  '- "full": exige explicação, contexto, produto, curso, CNV, conflito, dúvida elaborada ou tom sensível.',
+  "Classify the target comment:",
+  "- Set shouldReply=false and the right blockCategory when you should not reply.",
+  '- blockCategory "harmful": insults, harassment, hate speech.',
+  '- blockCategory "spam": irrelevant promos or bots.',
+  '- blockCategory "off_topic": no link to the post or brand.',
+  '- replyTier "none": do not reply (includes any blockCategory other than none).',
+  '- replyTier "simple": a short reply is enough (thanks, praise, simple question).',
+  '- replyTier "full": needs explanation, product context, conflict handling, or sensitive tone.',
 ].join("\n");
 
-/** Triagem enxuta: só restrições + guardrails + contexto — sem SOUL/page/knowledge. */
+export { buildDraftContextSummary } from "./prompt-sections.ts";
+
+/** Lean triage: restrictions + guardrails + context — no SOUL/page/knowledge. */
 export function buildTriagePrompt(context: ReplyContext, restrictions: string): string {
   return [
-    "Você classifica comentários do Instagram para um agente de resposta automática.",
-    "Decida o nível de resposta necessário.",
+    "You classify Instagram comments for an automated reply agent.",
+    "Decide whether to reply, the reply tier, and any block category.",
     "",
     TRIAGE_TIER_GUIDE,
     "",
-    "## Restrições da marca",
+    "## Brand restrictions",
     restrictions,
     "",
-    "## Regras padrão de guardrail",
+    "## Default guardrails",
     DEFAULT_GUARDRAIL_RULES,
     "",
-    "## Contexto",
-    contextSummary(context),
+    "## Context",
+    buildContextSection(context, "simple"),
     "",
-    "Responda APENAS com JSON válido:",
-    '{"replyTier":"none"|"simple"|"full","reason":"motivo curto em PT","reasoning":"explicação breve"}',
+    buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
+    "",
+    "Reply with valid JSON only:",
+    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"harmful"|"spam"|"off_topic"|"other","reason":"short label","reasoning":"brief explanation"}',
   ].join("\n");
 }
 
-/** Resposta rápida: tom + links úteis + restrições — sem SOUL/page completos. */
+/** Quick reply: brand + restrictions + knowledge snippet — no full SOUL/page. */
 export function buildSimpleDraftPrompt(
   context: ReplyContext,
   agentContent: AgentContent,
   maxChars: number,
 ): string {
   return [
-    "Redija UMA resposta curta ao comentário no Instagram (português do Brasil).",
-    "1 ou 2 frases no máximo. Sem hashtags. Sem discurso longo.",
+    "Write ONE short Instagram comment reply.",
+    "Maximum 1–2 sentences. No hashtags. No long speeches.",
     "",
-    "## Tom",
-    personaHint(context),
+    buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     "",
-    "## Restrições",
+    "## Brand restrictions",
     agentContent.restrictions,
     "",
-    "## Links e fatos (use só se o comentário pedir)",
-    agentContent.knowledge || "(sem links extras — indique colabcolibri.com se necessário)",
+    "## Links and facts (only if the comment asks)",
+    agentContent.knowledge || "(no extra links — point to colabcolibri.com if needed)",
     "",
-    "## Contexto",
-    contextSummary(context),
+    "## Context",
+    buildContextSection(context, "simple"),
     "",
-    `Máximo ${maxChars} caracteres. Retorne somente o texto da resposta.`,
+    `Character limit: ${maxChars}.`,
+    "REMINDER: the reply text MUST be in the configured response language above.",
   ].join("\n");
 }
 
-/** Resposta elaborada: injeta todo o pacote editorial. */
+/** Elaborate reply: full editorial package. */
 export function buildFullDraftPrompt(
   context: ReplyContext,
   agentContent: AgentContent,
   maxChars: number,
 ): string {
   return [
-    "Você redige uma resposta ao comentário no Instagram em português do Brasil.",
+    "Write an Instagram comment reply on behalf of the brand.",
+    "",
+    buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     "",
     "## SOUL",
     agentContent.soul,
     "",
-    "## Sobre a página",
+    "## About the page",
     agentContent.page,
     "",
-    "## Banco de conhecimento",
-    agentContent.knowledge || "(vazio)",
+    "## Knowledge base",
+    agentContent.knowledge || "(empty)",
     "",
-    "## Restrições",
+    "## Brand restrictions",
     agentContent.restrictions,
     "",
-    "## Contexto",
-    contextSummary(context),
+    "## Context",
+    buildContextSection(context, "full"),
     "",
-    `Escreva uma resposta útil e on-brand. Sem hashtags. Máximo ${maxChars} caracteres.`,
-    "Retorne somente o texto da resposta, sem JSON.",
+    `Write a helpful on-brand reply. No hashtags. Maximum ${maxChars} characters.`,
+    "Return only the reply text — no JSON.",
+    "REMINDER: the reply text MUST be in the configured response language above.",
   ].join("\n");
 }
 
@@ -141,26 +123,55 @@ export function buildVerifyPrompt(
   draftText: string,
   maxChars: number,
 ): string {
+  const language = buildResponseLanguageDirective(context.persona);
+
   return [
-    "Você é um auditor final de respostas automáticas no Instagram.",
-    "Valide se o rascunho pode ser publicado.",
+    "You are the final auditor for automated Instagram replies.",
+    "Validate whether the draft can be published.",
+    "Mark harmful=true for insults, harassment, or discriminatory content.",
+    "Reject the draft if it is not written in the mandatory response language.",
     "",
-    "## Restrições",
+    language,
+    "",
+    "## Brand restrictions",
     agentContent.restrictions,
     "",
-    "## Regras padrão",
+    "## Default guardrails",
     DEFAULT_GUARDRAIL_RULES,
     "",
-    "## Contexto",
-    contextSummary(context),
+    "## Context",
+    `Caption: ${captionForTier(context, "simple")}`,
     "",
-    "## Rascunho candidato",
+    "Thread:",
+    threadForTier(context, "simple"),
+    "",
+    targetCommentLine(context),
+    "",
+    "## Candidate draft",
     draftText,
     "",
-    `Limite de caracteres: ${maxChars}`,
+    `Character limit: ${maxChars}`,
     "",
-    "Responda APENAS com JSON válido:",
-    '{"approved":true|false,"reason":"motivo curto","reasoning":"explicação","finalText":"texto final opcional"}',
-    "Se approved=true e finalText vazio, o rascunho original será usado.",
+    "Reply with valid JSON only:",
+    '{"approved":true|false,"harmful":true|false,"policyViolations":["..."],"reason":"short label","reasoning":"explanation","finalText":"optional final text"}',
+    "If approved=true and finalText is empty, the original draft will be used.",
+    "finalText MUST respect the mandatory response language.",
+  ].join("\n");
+}
+
+export function buildLightVerifyPrompt(
+  context: ReplyContext,
+  draftText: string,
+): string {
+  return [
+    "Audit this short Instagram reply draft.",
+    buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
+    "Reject if the draft is not in the mandatory response language.",
+    "",
+    "Reply with valid JSON only:",
+    '{"approved":true|false,"harmful":true|false,"policyViolations":[],"reason":"short label","reasoning":"brief"}',
+    "",
+    "Draft:",
+    draftText,
   ].join("\n");
 }

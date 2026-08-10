@@ -1,86 +1,87 @@
+import type { PostAssetContext } from "../../domain/reply-context/post-context.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { ImageContextProvider } from "../../ports/image-context-provider.ts";
 import type { PostReplyContext } from "../../domain/reply-context/post-context.ts";
 
-const VISION_MODEL_PATTERN = /gpt-4o|claude-3|gemini/i;
 const MAX_IMAGES = 10;
 
-function supportsVision(model: string): boolean {
-  if (process.env.LLM_SUPPORTS_VISION === "1") {
-    return true;
+export async function summarizeCarouselImagesWithVision(
+  assets: PostAssetContext[],
+  llm: LlmCompleter,
+): Promise<string> {
+  const slice = assets.slice(0, MAX_IMAGES);
+  const descriptions: string[] = [];
+
+  for (const asset of slice) {
+    if (!asset.publishUrl) {
+      descriptions.push(`Slide ${asset.sortOrder}: image URL unavailable.`);
+      continue;
+    }
+
+    const prompt = [
+      "Describe in one short sentence (English) what appears in this Instagram carousel slide.",
+      `Image URL: ${asset.publishUrl}`,
+    ].join("\n");
+
+    try {
+      const description = await llm.complete(prompt);
+      descriptions.push(`Slide ${asset.sortOrder}: ${description.trim()}`);
+    } catch {
+      descriptions.push(`Slide ${asset.sortOrder}: description unavailable.`);
+    }
   }
-  if (process.env.LLM_SUPPORTS_VISION === "0") {
-    return false;
+
+  if (descriptions.length === 0) {
+    return "";
   }
-  return VISION_MODEL_PATTERN.test(model);
+
+  if (descriptions.length === 1) {
+    return descriptions[0] ?? "";
+  }
+
+  const synthesisPrompt = [
+    "Combine these per-slide descriptions into one concise carousel summary (2–4 sentences, English).",
+    "Focus on what the audience sees across the whole post.",
+    "",
+    descriptions.join("\n"),
+  ].join("\n");
+
+  try {
+    return (await llm.complete(synthesisPrompt)).trim();
+  } catch {
+    return descriptions.join(" ");
+  }
 }
 
 export type EnvImageContextProviderOptions = {
   llm?: LlmCompleter | null;
-  resolveLlm?: () => LlmCompleter | null;
-  model?: string;
-  resolveModel?: () => string;
-  resolveSupportsVision?: () => boolean;
 };
 
 export function createEnvImageContextProvider(
-  options: EnvImageContextProviderOptions = {},
+  _options: EnvImageContextProviderOptions = {},
 ): ImageContextProvider {
-  const resolveModel =
-    options.resolveModel ??
-    (() => options.model ?? process.env.LLM_MODEL ?? "gpt-4o-mini");
-  const resolveSupportsVision =
-    options.resolveSupportsVision ??
-    (() => {
-      if (process.env.LLM_SUPPORTS_VISION === "1") {
-        return true;
-      }
-      if (process.env.LLM_SUPPORTS_VISION === "0") {
-        return false;
-      }
-      return supportsVision(resolveModel());
-    });
-  const resolveLlm = options.resolveLlm ?? (() => options.llm ?? null);
-
   return {
     async build(postContext: PostReplyContext | null) {
-      const llm = resolveLlm();
-      const visionEnabledFlag = resolveSupportsVision();
-
-      if (!postContext || postContext.assets.length === 0) {
+      if (!postContext) {
         return { summaries: [], visionEnabled: false };
       }
 
-      const assets = postContext.assets.slice(0, MAX_IMAGES);
-      const visionEnabled = Boolean(llm) && visionEnabledFlag;
+      const configured = postContext.carouselSummary?.trim();
+      if (configured) {
+        return { summaries: [configured], visionEnabled: false };
+      }
 
-      if (!visionEnabled) {
+      const assetCount = postContext.assets.length;
+      if (assetCount > 0) {
         return {
-          summaries: [`Carrossel com ${assets.length} imagem(ns) no post.`],
+          summaries: [
+            `Carousel with ${assetCount} image(s). No carousel summary configured — add one for richer reply context.`,
+          ],
           visionEnabled: false,
         };
       }
 
-      const summaries: string[] = [];
-
-      for (const asset of assets) {
-        if (!asset.publishUrl) {
-          summaries.push(
-            `Imagem ${asset.sortOrder}: (URL indisponível para análise visual)`,
-          );
-          continue;
-        }
-
-        const prompt = `Descreva em uma frase curta (pt-BR) o que aparece nesta imagem de post Instagram: ${asset.publishUrl}`;
-        try {
-          const description = await llm!.complete(prompt);
-          summaries.push(`Imagem ${asset.sortOrder}: ${description}`);
-        } catch {
-          summaries.push(`Imagem ${asset.sortOrder}: (descrição indisponível)`);
-        }
-      }
-
-      return { summaries, visionEnabled: true };
+      return { summaries: [], visionEnabled: false };
     },
   };
 }

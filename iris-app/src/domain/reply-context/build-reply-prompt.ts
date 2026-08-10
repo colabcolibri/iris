@@ -1,28 +1,28 @@
 import type { ReplyContext } from "./types.ts";
+import { buildResponseLanguageDirective, buildBrandLine } from "../reply-harness/prompt-language.ts";
+import { buildContextSection } from "../reply-harness/prompt-sections.ts";
 
 export function buildReplyPrompt(context: ReplyContext): string {
-  const sections: string[] = [];
-
-  const brandLine = context.persona.brandName
-    ? `Marca: ${context.persona.brandName}`
-    : null;
-
-  sections.push(
-    "## Persona",
-    context.persona.systemPrompt,
-    `Tom: ${context.persona.tone}`,
-    brandLine ?? "",
+  const sections: string[] = [
+    "Write an Instagram comment reply on behalf of the brand.",
     "",
-  );
+    buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
+    "",
+  ];
+
+  const brandLine = buildBrandLine(context.persona);
+  if (brandLine) {
+    sections.push(brandLine, "");
+  }
 
   if (context.post) {
     sections.push(
       "## Post",
-      `Canal: ${context.post.channel}`,
+      `Channel: ${context.post.channel}`,
       `Status: ${context.post.status}`,
-      `Legenda: ${context.post.caption ?? "(sem legenda)"}`,
-      context.post.scheduledAt ? `Agendado: ${context.post.scheduledAt}` : "",
-      context.post.publishedAt ? `Publicado: ${context.post.publishedAt}` : "",
+      `Caption: ${context.post.caption ?? "(no caption)"}`,
+      context.post.scheduledAt ? `Scheduled: ${context.post.scheduledAt}` : "",
+      context.post.publishedAt ? `Published: ${context.post.publishedAt}` : "",
       `Assets: ${context.post.assets.length}`,
       "",
     );
@@ -32,26 +32,12 @@ export function buildReplyPrompt(context: ReplyContext): string {
     sections.push("## Visual", ...context.imageContext.summaries, "");
   }
 
-  if (context.thread.entries.length > 0) {
-    sections.push("## Thread");
-    for (const entry of context.thread.entries) {
-      const who = entry.isBrandReply
-        ? "marca"
-        : entry.author
-          ? `@${entry.author}`
-          : "usuário";
-      sections.push(`${who}: ${entry.text ?? ""}`);
-    }
-    sections.push("");
-  }
+  sections.push("## Context", buildContextSection(context, "full"), "");
 
-  const author = context.targetComment.authorUsername ?? "usuário";
   sections.push(
-    "## Comentário a responder",
-    `@${author}: ${context.targetComment.text ?? ""}`,
-    "",
-    `Escreva uma resposta curta, útil e adequada à marca. Sem hashtags. Máximo ${context.persona.maxChars} caracteres.`,
+    `Write a short, useful, on-brand reply. No hashtags. Maximum ${context.persona.maxChars} characters.`,
+    "REMINDER: the reply text MUST be in the configured response language above.",
   );
 
-  return sections.filter((line) => line !== undefined).join("\n").trim();
+  return sections.filter((line) => line !== "").join("\n").trim();
 }

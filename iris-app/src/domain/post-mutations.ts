@@ -44,6 +44,7 @@ export type UpdatePostPayload = {
   status?: unknown;
   auto_reply_enabled?: unknown;
   reply_mode?: unknown;
+  carousel_summary?: unknown;
 };
 
 export type NormalizedUpdatePost = {
@@ -54,6 +55,7 @@ export type NormalizedUpdatePost = {
   status?: PostStatus;
   autoReplyEnabled?: boolean;
   replyMode?: ReplyMode;
+  carouselSummary?: string | null;
 };
 
 export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePost {
@@ -109,6 +111,19 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
       throw new ValidationError("invalid status");
     }
     update.status = body.status as PostStatus;
+  }
+
+  if ("carousel_summary" in body) {
+    update.carouselSummary =
+      body.carousel_summary === null
+        ? null
+        : typeof body.carousel_summary === "string"
+          ? body.carousel_summary
+          : undefined;
+
+    if (update.carouselSummary === undefined) {
+      throw new ValidationError("carousel_summary must be a string or null");
+    }
   }
 
   if ("reply_mode" in body) {

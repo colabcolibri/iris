@@ -18,22 +18,38 @@ const SIZE_CLASS = {
   xl: "sm:max-w-4xl",
 } as const;
 
+const HEIGHT_CLASS = {
+  default: "max-h-[min(92vh,880px)]",
+  full: "h-[calc(100dvh-0.5rem)] max-h-[calc(100dvh-0.5rem)] sm:h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-1rem)]",
+} as const;
+
 type AppDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   size?: keyof typeof SIZE_CLASS;
+  height?: keyof typeof HEIGHT_CLASS;
+  className?: string;
   children: ReactNode;
 };
 
 /** Template de composição sobre o Dialog do shadcn — não altere `components/ui`. */
-export function AppDialog({ open, onOpenChange, size = "lg", children }: AppDialogProps) {
+export function AppDialog({
+  open,
+  onOpenChange,
+  size = "lg",
+  height = "default",
+  className,
+  children,
+}: AppDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
         className={cn(
           SIZE_CLASS[size],
-          "flex max-h-[min(92vh,880px)] flex-col gap-0 overflow-hidden p-0",
+          HEIGHT_CLASS[height],
+          "flex flex-col gap-0 overflow-hidden p-0",
+          className,
         )}
       >
         {children}
@@ -55,14 +71,16 @@ AppDialog.Header = function AppDialogHeader({
 }: AppDialogHeaderProps) {
   return (
     <div className="flex shrink-0 items-start justify-between gap-4 border-b bg-card px-6 py-4">
-      <DialogHeader className="gap-1.5 text-left">
+      <DialogHeader className="min-w-0 flex-1 gap-1.5 text-left">
         <DialogTitle className="font-display text-xl font-semibold tracking-tight">
           {title}
         </DialogTitle>
         {description ? (
           <DialogDescription className="text-sm leading-relaxed">{description}</DialogDescription>
         ) : null}
-        {children ? <div className="pt-2">{children}</div> : null}
+        {children ? (
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-2">{children}</div>
+        ) : null}
       </DialogHeader>
       <DialogClose
         render={

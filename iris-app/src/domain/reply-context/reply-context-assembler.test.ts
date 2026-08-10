@@ -18,9 +18,8 @@ test("assembleReplyContext builds full context", async () => {
     const personaStore = createSqliteReplyPersonaStore(db);
 
     personaStore.upsert({
-      systemPrompt: "Marca teste",
-      tone: "casual",
       brandName: "Iris",
+      responseLanguage: "pt-BR",
       maxChars: 300,
     });
 

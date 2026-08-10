@@ -286,7 +286,24 @@ export function DashboardPage() {
         onCaptionChange={setCaption}
         onScheduledAtChange={setScheduledAt}
         onReplyModeChange={setReplyMode}
-        onFilesChange={setFiles}
+        onFilesChange={(nextFiles) => {
+          if (!nextFiles) {
+            setFiles(null);
+            return;
+          }
+          setFiles((previous) => {
+            const transfer = new DataTransfer();
+            if (previous) {
+              for (const file of previous) {
+                transfer.items.add(file);
+              }
+            }
+            for (const file of nextFiles) {
+              transfer.items.add(file);
+            }
+            return transfer.files;
+          });
+        }}
         onSaveDraft={() => void savePost(false)}
         onSchedule={() => void savePost(true)}
         onRevertToDraft={

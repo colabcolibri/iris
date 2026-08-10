@@ -16,7 +16,29 @@ export type CreateAgentRunInput = {
   status: AgentRunStatus;
 };
 
+export type AgentRunListItem = {
+  id: string;
+  trigger: string;
+  status: AgentRunStatus;
+  outputSummary: string | null;
+  createdAt: string;
+  commentId: string | null;
+  postId: string | null;
+  stepCount: number;
+  replyTier: string | null;
+  terminalStatus: string | null;
+  durationMs: number | null;
+};
+
+export type ListAgentRunsOptions = {
+  limit?: number;
+  cursor?: string | null;
+  terminalStatus?: string | null;
+  replyTier?: string | null;
+};
+
 export type AgentRunRepository = {
   create(input: CreateAgentRunInput): AgentRun;
   findById(id: string): AgentRun | null;
+  listRecent(options?: ListAgentRunsOptions): { items: AgentRunListItem[]; nextCursor: string | null };
 };

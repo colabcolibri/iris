@@ -10,6 +10,7 @@ export type PostAssetContext = {
 export type PostReplyContext = {
   postId: string;
   caption: string | null;
+  carouselSummary: string | null;
   channel: string;
   status: string;
   scheduledAt: string | null;

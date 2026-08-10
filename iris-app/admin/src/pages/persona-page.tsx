@@ -7,17 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   fetchAgentContent,
   fetchReplyPersona,
   updateAgentContent,
   updateReplyPersona,
 } from "@/lib/api";
 import type { AgentContent, ReplyPersona } from "@/lib/types";
+import {
+  DEFAULT_RESPONSE_LANGUAGE,
+  RESPONSE_LANGUAGE_OPTIONS,
+} from "@iris/domain/reply-language/response-languages";
 
 export function PersonaPage() {
   const [persona, setPersona] = useState<ReplyPersona | null>(null);
-  const [systemPrompt, setSystemPrompt] = useState("");
-  const [tone, setTone] = useState("");
+  const [responseLanguage, setResponseLanguage] = useState(DEFAULT_RESPONSE_LANGUAGE);
   const [brandName, setBrandName] = useState("");
   const [maxChars, setMaxChars] = useState(500);
   const [agentContent, setAgentContent] = useState<AgentContent | null>(null);
@@ -33,8 +43,7 @@ export function PersonaPage() {
     void Promise.all([fetchReplyPersona(), fetchAgentContent()])
       .then(([personaData, contentData]) => {
         setPersona(personaData);
-        setSystemPrompt(personaData.system_prompt);
-        setTone(personaData.tone);
+        setResponseLanguage(personaData.response_language ?? DEFAULT_RESPONSE_LANGUAGE);
         setBrandName(personaData.brand_name ?? "");
         setMaxChars(personaData.max_chars);
         setAgentContent(contentData);
@@ -51,8 +60,7 @@ export function PersonaPage() {
     setSaving(true);
     try {
       const saved = await updateReplyPersona({
-        system_prompt: systemPrompt,
-        tone,
+        response_language: responseLanguage,
         brand_name: brandName.trim() || null,
         max_chars: maxChars,
       });
@@ -83,12 +91,18 @@ export function PersonaPage() {
     }
   }
 
-  const preview = systemPrompt.trim().split("\n").slice(0, 2).join("\n");
+  const selectedLanguage =
+    RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)?.label ??
+    responseLanguage;
 
   return (
     <PageContainer>
       <PageContainer.Content>
-        <PageContainer.Header eyebrow="Respostas automáticas" title="Persona da marca" />
+        <PageContainer.Header
+          eyebrow="Respostas automáticas"
+          title="Persona da marca"
+          description="Idioma das respostas, nome da marca e limites. O tom e a voz vêm do SOUL e das restrições abaixo."
+        />
 
         <Card className="space-y-4 border-border/80 bg-card/90 p-6 shadow-sm">
           {loading ? (
@@ -96,18 +110,23 @@ export function PersonaPage() {
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="system-prompt">Prompt do sistema</Label>
-                <Textarea
-                  id="system-prompt"
-                  rows={6}
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tone">Tom</Label>
-                <Input id="tone" value={tone} onChange={(e) => setTone(e.target.value)} />
+                <Label htmlFor="response-language">Idioma das respostas</Label>
+                <Select value={responseLanguage} onValueChange={setResponseLanguage}>
+                  <SelectTrigger id="response-language" className="w-full bg-background">
+                    <SelectValue placeholder="Selecione o idioma">{selectedLanguage}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    {RESPONSE_LANGUAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option.code} value={option.code}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O agente sempre responderá neste idioma. Os prompts internos ficam em inglês; o
+                  idioma é reforçado em cada estágio do harness.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -131,22 +150,15 @@ export function PersonaPage() {
                 />
               </div>
 
-              {preview && (
-                <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
-                  <p className="mb-1 font-medium text-foreground">Preview</p>
-                  <p className="wrap-break-word whitespace-pre-wrap">{preview}</p>
-                </div>
-              )}
-
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button type="button" onClick={() => void handleSave()} disabled={saving}>
                   Salvar persona
                 </Button>
-                {persona?.updated_at && (
+                {persona?.updated_at ? (
                   <span className="self-center text-xs text-muted-foreground">
                     Atualizado: {new Date(persona.updated_at).toLocaleString("pt-BR")}
                   </span>
-                )}
+                ) : null}
               </div>
             </>
           )}
@@ -157,7 +169,7 @@ export function PersonaPage() {
             <h2 className="text-lg font-semibold text-foreground">Conteúdo do agente</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               SOUL, contexto da página, base de conhecimento e restrições usados pelo harness de
-              respostas automáticas.
+              respostas automáticas. É aqui que você define voz, tom e políticas editoriais.
             </p>
           </div>
 

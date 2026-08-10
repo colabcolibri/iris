@@ -51,6 +51,7 @@ export function buildPostReplyContext(
   return {
     postId: post.id,
     caption: post.caption,
+    carouselSummary: post.carouselSummary,
     channel: post.channel,
     status: post.status,
     scheduledAt: post.scheduledAt,

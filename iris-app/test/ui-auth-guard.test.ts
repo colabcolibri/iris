@@ -9,7 +9,8 @@ test("app routes use protected and guest guards", () => {
   assert.match(app, /AuthSessionProvider/);
   assert.match(app, /ConfirmDialogProvider/);
   assert.match(app, /path="\/comments"/);
-  assert.match(app, /<ProtectedRoute>\s*<CommentsPage/);
+  assert.match(app, /path="\/agent-runs"/);
+  assert.match(app, /<ProtectedRoute>[\s\S]*<CommentsPage/);
 });
 
 test("protected route redirects anonymous users to login with returnUrl", () => {

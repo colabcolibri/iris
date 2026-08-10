@@ -19,7 +19,6 @@ import { handleAuthRoute } from "./routes/auth.ts";
 import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
-import { handleMetaTestRoute } from "./routes/meta-test.ts";
 import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
 import {
@@ -28,6 +27,8 @@ import {
 } from "./routes/settings-llm.ts";
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { handleAgentContentSettingsRoute } from "./routes/settings-agent-content.ts";
+import { handleAgentRunsRoute } from "./routes/agent-runs.ts";
+import { handleAgentSimulatorRoute } from "./routes/agent-simulator.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
@@ -259,7 +260,11 @@ async function handleRequest(
       return;
     }
 
-    if (await handleMetaTestRoute(routeRequest)) {
+    if (await handleAgentSimulatorRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleAgentRunsRoute(routeRequest)) {
       return;
     }
 
