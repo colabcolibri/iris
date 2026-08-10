@@ -40,8 +40,10 @@ test("buildSignatureVerificationBlock guides natural closing without rigid scrip
 
   assert.match(block ?? "", /Closing voice/);
   assert.match(block ?? "", /not a fixed script/i);
-  assert.match(block ?? "", /Wording may vary/i);
-  assert.match(block ?? "", /— Iris/);
+  assert.match(block ?? "", /OPTIONAL/i);
+  assert.match(block ?? "", /Never repeat name, role, or bot identity twice/i);
+  assert.match(block ?? "", /already established who is speaking/i);
+  assert.match(block ?? "", /Always end with — Iris/);
 });
 
 test("buildSignatureVerificationBlock returns null when instruction is empty", () => {

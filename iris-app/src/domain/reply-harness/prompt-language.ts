@@ -90,7 +90,12 @@ export function buildSignatureVerificationBlock(persona: ReplyPersona): string |
     "",
     "Treat this as direction, not a fixed script. Choose the most natural closing for this comment and thread.",
     "Wording may vary — match the spirit and tone, not necessarily the exact phrasing.",
-    "If the draft already closes well, keep it or polish lightly.",
+    "The closing is OPTIONAL: skip it entirely when the reply already sounds complete and on-brand.",
+    "Never repeat name, role, or bot identity twice in the same reply.",
+    "If the draft already established who is speaking or the assistant's role, do NOT add a trailing sign-off that repeats the same information.",
+    "In that case, keep the body as-is or polish lightly — no redundant footer.",
+    "When you do add a closing, separate it from the main reply with a blank line (paragraph break: \\n\\n).",
+    "Never glue the sign-off to the last sentence of the body in the same paragraph.",
     "If the closing feels impersonal or off-brand, refine finalText — do not reject only for that.",
     "A slightly longer, more natural closing may exceed the draft character limit.",
   ].join("\n");
