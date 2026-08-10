@@ -45,13 +45,15 @@ export function buildSignatureVerificationBlock(persona: ReplyPersona): string |
   }
 
   return [
-    "## Signature",
-    "Brand signature rule:",
+    "## Closing voice",
+    "Editorial guidance for how the assistant should sound when wrapping up:",
     signature,
     "",
-    "If the draft is missing this signature, do NOT reject for that reason alone.",
-    "When approved=true, rewrite finalText so the signature is included.",
-    "The character limit does not apply to adding the signature — finalText may be longer than the draft.",
+    "Treat this as direction, not a fixed script. Choose the most natural closing for this comment and thread.",
+    "Wording may vary — match the spirit and tone, not necessarily the exact phrasing.",
+    "If the draft already closes well, keep it or polish lightly.",
+    "If the closing feels impersonal or off-brand, refine finalText — do not reject only for that.",
+    "A slightly longer, more natural closing may exceed the draft character limit.",
   ].join("\n");
 }
 

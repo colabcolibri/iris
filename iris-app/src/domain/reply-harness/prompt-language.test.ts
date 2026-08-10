@@ -20,15 +20,15 @@ test("buildBrandBlock returns null when brand is empty", () => {
   assert.equal(buildBrandBlock(defaultReplyPersona()), null);
 });
 
-test("buildSignatureVerificationBlock instructs rewrite not rejection", () => {
+test("buildSignatureVerificationBlock guides natural closing without rigid script", () => {
   const block = buildSignatureVerificationBlock({
     ...defaultReplyPersona(),
     signatureInstruction: "Always end with — Iris",
   });
 
-  assert.match(block ?? "", /Signature/);
-  assert.match(block ?? "", /do NOT reject/i);
-  assert.match(block ?? "", /rewrite finalText/i);
+  assert.match(block ?? "", /Closing voice/);
+  assert.match(block ?? "", /not a fixed script/i);
+  assert.match(block ?? "", /Wording may vary/i);
   assert.match(block ?? "", /— Iris/);
 });
 
