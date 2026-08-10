@@ -279,6 +279,67 @@ test("GET comments posts returns published posts with counts", async () => {
   });
 });
 
+test("GET post insights returns metrics for managed post", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(typeof input === "string" ? input : input.toString());
+    if (url.hostname === "graph.instagram.com" && url.pathname.endsWith("/insights")) {
+      return new Response(
+        JSON.stringify({
+          data: [{ name: "reach", period: "lifetime", values: [{ value: 9 }] }],
+        }),
+        { status: 200 },
+      );
+    }
+    if (url.hostname === "graph.instagram.com") {
+      return new Response(
+        JSON.stringify({
+          id: "media-insights-post",
+          caption: "Post insights",
+          permalink: "https://www.instagram.com/p/abc/",
+          media_type: "IMAGE",
+          media_url: "https://cdn.example/full.jpg",
+          thumbnail_url: "https://cdn.example/thumb.jpg",
+        }),
+        { status: 200 },
+      );
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
+
+  try {
+    await withServer(async (baseUrl, ctx) => {
+      const post = ctx.posts.create({
+        channel: "instagram",
+        status: "monitored",
+        caption: "Post insights",
+      });
+      ctx.posts.update(post.id, {
+        igMediaId: "media-insights-post",
+        publishedAt: new Date().toISOString(),
+      });
+
+      const response = await fetch(`${baseUrl}/api/posts/${post.id}/insights`, {
+        headers: { Authorization: `Bearer ${ADMIN}` },
+      });
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as {
+        ok: boolean;
+        insights: Array<{ name: string }>;
+        media: { source: string; items: Array<{ url: string }> };
+      };
+
+      assert.equal(body.ok, true);
+      assert.equal(body.insights[0]?.name, "reach");
+      assert.equal(body.media.source, "meta");
+      assert.equal(body.media.items[0]?.url, "https://cdn.example/full.jpg");
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("POST comments sync upserts comments for one post", async () => {
   await withServer(async (baseUrl, ctx) => {
     const post = ctx.posts.create({

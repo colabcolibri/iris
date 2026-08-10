@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -103,6 +103,10 @@ export function syncPostComments(postId: string) {
 export async function fetchComments(postId: string) {
   const payload = await apiFetch<{ comments: Comment[] }>(`/api/posts/${postId}/comments`);
   return payload.comments ?? [];
+}
+
+export function fetchPostInsights(postId: string) {
+  return apiFetch<PostInsightsResult>(`/api/posts/${postId}/insights`);
 }
 
 export function registerMonitoredPost(body: { ig_media_id?: string; permalink?: string }) {

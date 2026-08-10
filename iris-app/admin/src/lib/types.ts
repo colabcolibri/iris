@@ -45,6 +45,45 @@ export type CommentPostSummary = {
   is_external?: boolean;
   comments_count: number;
   pending_count: number;
+  preview_filename?: string | null;
+  preview_mime?: string | null;
+};
+
+export type PostInsightMetric = {
+  name: string;
+  period: string;
+  values: Array<{ value: number }>;
+};
+
+export type PostMediaSlide =
+  | {
+      source: "local";
+      preview_filename: string;
+      preview_mime: string;
+    }
+  | {
+      source: "meta";
+      url: string;
+      media_type?: string | null;
+      thumbnail_url?: string | null;
+    };
+
+export type PostInsightsMedia = {
+  source: "local" | "meta";
+  permalink?: string | null;
+  media_type?: string | null;
+  items: PostMediaSlide[];
+};
+
+export type PostInsightsResult = {
+  ok: boolean;
+  code?: string;
+  message?: string;
+  post_id?: string;
+  ig_media_id?: string;
+  fetched_at?: string;
+  insights?: PostInsightMetric[];
+  media?: PostInsightsMedia;
 };
 
 export type SyncPostCommentsResult = {

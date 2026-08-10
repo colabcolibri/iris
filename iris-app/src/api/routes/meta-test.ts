@@ -4,6 +4,7 @@ import { requireAdmin } from "../auth.ts";
 import type { AppContext } from "../app-context.ts";
 import { sendError, sendJson } from "../json.ts";
 import { resolveLatestInspectableMediaId } from "../../domain/meta/resolve-latest-inspectable-media.ts";
+import { STANDARD_MEDIA_INSIGHT_METRICS } from "../../domain/meta/media-insight-metrics.ts";
 import { MetaConversationsUnsupportedError } from "../../adapters/meta/graph-api-conversations-reader.ts";
 
 type RouteRequest = {
@@ -55,13 +56,10 @@ export async function handleMetaTestRoute(request: RouteRequest): Promise<boolea
     }
 
     try {
-      const insights = await ctx.metaInsightsReader.getMediaInsights(mediaId, [
-        "impressions",
-        "reach",
-        "likes",
-        "comments",
-        "saved",
-      ]);
+      const insights = await ctx.metaInsightsReader.getMediaInsights(
+        mediaId,
+        [...STANDARD_MEDIA_INSIGHT_METRICS],
+      );
       sendJson(res, 200, { ok: true, media_id: mediaId, insights });
     } catch (error) {
       sendJson(res, 200, {

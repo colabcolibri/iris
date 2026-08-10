@@ -80,16 +80,98 @@ export async function handleCommentsRoute(
     });
 
     sendJson(res, 200, {
-      posts: posts.map((post) => ({
-        post_id: post.postId,
-        caption: post.caption,
-        published_at: post.publishedAt,
-        ig_media_id: post.igMediaId,
-        status: post.status,
-        is_external: post.status === "monitored",
-        comments_count: post.commentsCount,
-        pending_count: post.pendingCount,
-      })),
+      posts: posts.map((post) => {
+        const firstAsset = ctx.assets.listByPostId(post.postId)[0];
+        return {
+          post_id: post.postId,
+          caption: post.caption,
+          published_at: post.publishedAt,
+          ig_media_id: post.igMediaId,
+          status: post.status,
+          is_external: post.status === "monitored",
+          comments_count: post.commentsCount,
+          pending_count: post.pendingCount,
+          preview_filename: firstAsset?.storagePath ?? null,
+          preview_mime: firstAsset?.mime ?? null,
+        };
+      }),
+    });
+    return true;
+  }
+
+  const insightsMatch = /^\/api\/posts\/([^/]+)\/insights$/.exec(pathname);
+  if (insightsMatch && req.method === "GET") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const readiness = getMetaReadiness(ctx);
+    if (!readiness.ready) {
+      sendError(res, 503, metaReadinessMessage(readiness));
+      return true;
+    }
+
+    const postId = insightsMatch[1];
+    const post = ctx.posts.findById(postId);
+    if (!post) {
+      sendError(res, 404, "post not found");
+      return true;
+    }
+
+    if (!post.igMediaId) {
+      sendError(res, 422, "post has no ig_media_id");
+      return true;
+    }
+
+    let insights: Awaited<ReturnType<typeof ctx.metaInsightsReader.getMediaInsights>> = [];
+    let insightsMessage: string | null = null;
+
+    try {
+      insights = await ctx.metaInsightsReader.getMediaInsights(post.igMediaId);
+    } catch (error) {
+      insightsMessage =
+        error instanceof Error ? error.message : "Falha ao consultar insights.";
+    }
+
+    const assets = ctx.assets.listByPostId(postId);
+    let media: Record<string, unknown> | null = null;
+
+    if (assets.length > 0) {
+      media = {
+        source: "local",
+        items: assets.map((asset) => ({
+          preview_filename: asset.storagePath,
+          preview_mime: asset.mime,
+        })),
+      };
+    } else {
+      try {
+        const remote = await ctx.metaCommentReader.fetchMediaPreview(post.igMediaId);
+        media = {
+          source: "meta",
+          permalink: remote.permalink ?? null,
+          media_type: remote.mediaType ?? null,
+          items: remote.slides.map((slide) => ({
+            url: slide.url,
+            media_type: slide.mediaType,
+            thumbnail_url: slide.thumbnailUrl,
+          })),
+        };
+      } catch {
+        media = { source: "meta", permalink: null, media_type: null, items: [] };
+      }
+    }
+
+    sendJson(res, 200, {
+      ok: insightsMessage === null,
+      code: insightsMessage ? "insights_failed" : undefined,
+      message: insightsMessage ?? undefined,
+      post_id: postId,
+      ig_media_id: post.igMediaId,
+      fetched_at: new Date().toISOString(),
+      insights,
+      media,
     });
     return true;
   }

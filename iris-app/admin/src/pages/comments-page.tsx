@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Loader2, MessageCircle, Plus, RefreshCw } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
+import { PostDetailPanel } from "@/components/comments/post-detail-panel";
+import { PostInboxList } from "@/components/comments/post-inbox-list";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMetaSession } from "@/hooks/use-meta-session";
+import { firstMediaSlideSrc } from "@/hooks/use-post-preview";
 import {
+  approveCommentReply,
   fetchCommentPosts,
   fetchComments,
-  approveCommentReply,
+  fetchPostInsights,
   registerMonitoredPost,
   subscribeRealtimeEvents,
   syncPostComments,
 } from "@/lib/api";
-import type { Comment, CommentPostSummary } from "@/lib/types";
+import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
 
 type DisplayComment = Comment & {
   depth: number;
@@ -67,54 +71,6 @@ function buildDisplayComments(comments: Comment[]): DisplayComment[] {
   return ordered;
 }
 
-function PostListItem({
-  post,
-  selected,
-  onSelect,
-}: {
-  post: CommentPostSummary;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`w-full rounded-lg border px-3 py-3 text-left transition-colors ${
-        selected
-          ? "border-primary/40 bg-primary/5"
-          : "border-border/70 bg-card/80 hover:bg-muted/40"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="line-clamp-2 text-sm font-medium">
-            {post.caption?.trim() || "(sem legenda)"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {post.published_at
-              ? new Date(post.published_at).toLocaleString("pt-BR")
-              : "sem data de publicação"}
-            {post.is_external ? " · externo" : ""}
-          </p>
-        </div>
-        <div className="shrink-0 text-right text-xs text-muted-foreground">
-          {post.is_external ? (
-            <p className="mb-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
-              gerenciado
-            </p>
-          ) : null}
-          <p className="font-medium text-foreground">{post.comments_count}</p>
-          <p>coment.</p>
-          {post.pending_count > 0 ? (
-            <p className="mt-1 text-amber-700 dark:text-amber-300">{post.pending_count} pend.</p>
-          ) : null}
-        </div>
-      </div>
-    </button>
-  );
-}
-
 export function CommentsPage() {
   const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -122,16 +78,20 @@ export function CommentsPage() {
 
   const [posts, setPosts] = useState<CommentPostSummary[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [insights, setInsights] = useState<PostInsightsResult | null>(null);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [loadingInsights, setLoadingInsights] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [mediaInput, setMediaInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [addingPost, setAddingPost] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [liveConnected, setLiveConnected] = useState(true);
+  const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
 
   const POLL_MS = 20_000;
 
@@ -139,6 +99,19 @@ export function CommentsPage() {
     () => posts.find((post) => post.post_id === selectedPostId) ?? null,
     [posts, selectedPostId],
   );
+
+  const filteredPosts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return posts;
+    }
+
+    return posts.filter((post) => {
+      const caption = post.caption?.toLowerCase() ?? "";
+      const mediaId = post.ig_media_id.toLowerCase();
+      return caption.includes(query) || mediaId.includes(query);
+    });
+  }, [posts, searchQuery]);
 
   const displayComments = useMemo(() => buildDisplayComments(comments), [comments]);
 
@@ -179,6 +152,41 @@ export function CommentsPage() {
       setLoadingComments(false);
     }
   }, []);
+
+  const loadInsights = useCallback(async (postId: string, silent = false) => {
+    if (!postId || !meta?.connected) {
+      setInsights(null);
+      return;
+    }
+
+    if (!silent) {
+      setLoadingInsights(true);
+    }
+
+    try {
+      const result = await fetchPostInsights(postId);
+      setInsights(result);
+
+      const previewUrl = firstMediaSlideSrc(postId, result.media);
+      if (previewUrl) {
+        setThumbnailOverrides((current) =>
+          current[postId] === previewUrl ? current : { ...current, [postId]: previewUrl },
+        );
+      }
+
+      if (!result.ok && result.message && !silent && !result.insights?.length) {
+        toast.error(result.message);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Falha ao carregar insights.";
+      setInsights({ ok: false, message, post_id: postId });
+      if (!silent) {
+        toast.error(message);
+      }
+    } finally {
+      setLoadingInsights(false);
+    }
+  }, [meta?.connected]);
 
   const handleAddMonitoredPost = useCallback(async () => {
     const value = mediaInput.trim();
@@ -240,6 +248,7 @@ export function CommentsPage() {
       setComments(result.comments);
       setSyncWarning(result.warning);
       await loadPosts();
+      await loadInsights(selectedPostId, true);
       toast.success(
         result.comments_fetched > 0
           ? `${result.comments_fetched} comentário${result.comments_fetched === 1 ? "" : "s"} sincronizado${result.comments_fetched === 1 ? "" : "s"}.`
@@ -252,7 +261,7 @@ export function CommentsPage() {
     } finally {
       setSyncing(false);
     }
-  }, [loadPosts, selectedPostId]);
+  }, [loadInsights, loadPosts, selectedPostId]);
 
   useEffect(() => {
     void loadPosts();
@@ -266,7 +275,8 @@ export function CommentsPage() {
 
   useEffect(() => {
     void loadComments(selectedPostId);
-  }, [loadComments, selectedPostId]);
+    void loadInsights(selectedPostId);
+  }, [loadComments, loadInsights, selectedPostId]);
 
   useEffect(() => {
     return subscribeRealtimeEvents({
@@ -310,200 +320,130 @@ export function CommentsPage() {
 
   return (
     <AppShell meta={meta} onDisconnectMeta={handleDisconnect} onMetaHealth={handleMetaHealth}>
-      <div className="flex-1 overflow-auto px-4 py-6 sm:px-6 md:px-10">
-        <div className="mx-auto w-full max-w-6xl space-y-6">
-          <header className="space-y-1">
-            <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-              Instagram
-            </p>
-            <h1 className="font-display text-3xl font-semibold tracking-tight">Comentários</h1>
-            <p className="text-sm text-muted-foreground">
-              Selecione uma postagem publicada pelo Iris. Novos comentários chegam via webhook;
-              sincronize com a Meta só quando precisar de histórico.
-            </p>
-          </header>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6 md:px-8">
+        <header className="mb-4 shrink-0">
+          <h1 className="font-display text-2xl font-semibold tracking-tight">
+            Publicações
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Insights, comentários e respostas da IA por publicação.
+          </p>
+        </header>
 
-          {!meta?.connected && (
-            <Card className="border-dashed p-4 text-sm text-muted-foreground">
-              Conecte o Instagram em{" "}
-              <Link to="/settings" className="text-primary underline-offset-4 hover:underline">
-                configurações
-              </Link>{" "}
-              para sincronizar comentários.
-            </Card>
-          )}
+        {!meta?.connected && (
+          <Card className="mb-4 border-dashed p-4 text-sm text-muted-foreground">
+            Conecte o Instagram em{" "}
+            <Link to="/settings" className="text-primary underline-offset-4 hover:underline">
+              configurações
+            </Link>{" "}
+            para sincronizar comentários e atualizar insights.
+          </Card>
+        )}
 
-          {error ? (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
+        {error ? (
+          <p className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
 
-          {!liveConnected ? (
-            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-              Atualização em tempo real indisponível — a lista é atualizada automaticamente a cada
-              20 segundos enquanto esta página estiver aberta.
-            </p>
-          ) : null}
+        {!liveConnected ? (
+          <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+            Atualização em tempo real indisponível — comentários são atualizados a cada 20 segundos
+            com a página aberta.
+          </p>
+        ) : null}
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-            <Card className="space-y-3 border-border/80 bg-card/90 p-4 shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold">Postagens gerenciadas</h2>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAddDialogOpen(true)}
-                    disabled={!meta?.connected}
-                  >
-                    <Plus className="mr-1 size-4" />
-                    Adicionar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void loadPosts()}
-                    disabled={loadingPosts}
-                  >
-                    {loadingPosts ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                  </Button>
-                </div>
+        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+          <aside className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
+            <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+              <div>
+                <h2 className="text-sm font-semibold">Inbox</h2>
+                <p className="text-xs text-muted-foreground">
+                  {posts.length} publicação{posts.length === 1 ? "" : "ões"}
+                </p>
               </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddDialogOpen(true)}
+                  disabled={!meta?.connected}
+                >
+                  <Plus className="mr-1 size-4" />
+                  Adicionar
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => void loadPosts()}
+                  disabled={loadingPosts}
+                  aria-label="Recarregar lista"
+                >
+                  {loadingPosts ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="size-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
 
+            <div className="space-y-3 border-b p-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Buscar legenda ou ID…"
+                  className="h-9 pl-9"
+                />
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto p-2">
               {loadingPosts ? (
-                <p className="text-sm text-muted-foreground">Carregando postagens…</p>
-              ) : posts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma postagem gerenciada com ID da Meta ainda.
+                <p className="px-2 py-4 text-sm text-muted-foreground">Carregando…</p>
+              ) : filteredPosts.length === 0 ? (
+                <p className="px-2 py-4 text-sm text-muted-foreground">
+                  {posts.length === 0
+                    ? "Nenhuma publicação gerenciada ainda."
+                    : "Nada encontrado na busca."}
                 </p>
               ) : (
-                <div className="space-y-2">
-                  {posts.map((post) => (
-                    <PostListItem
-                      key={post.post_id}
-                      post={post}
-                      selected={post.post_id === selectedPostId}
-                      onSelect={() => setSearchParams({ post_id: post.post_id })}
-                    />
-                  ))}
-                </div>
+                <PostInboxList
+                  posts={filteredPosts}
+                  selectedPostId={selectedPostId}
+                  thumbnailOverrides={thumbnailOverrides}
+                  onSelect={(postId) => setSearchParams({ post_id: postId })}
+                />
               )}
-            </Card>
+            </div>
+          </aside>
 
-            <Card className="space-y-4 border-border/80 bg-card/90 p-4 shadow-sm sm:p-5">
-              {!selectedPost ? (
-                <div className="flex min-h-48 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <MessageCircle className="size-8 opacity-40" />
-                  <p>Selecione uma postagem para ver os comentários.</p>
-                </div>
-              ) : (
-                <>
-                  <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 space-y-1">
-                      <h2 className="text-base font-semibold wrap-break-word">
-                        {selectedPost.caption?.trim() || "(sem legenda)"}
-                      </h2>
-                      {selectedPost.is_external ? (
-                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                          Publicação externa gerenciada pelo Iris
-                        </p>
-                      ) : null}
-                      <p className="text-xs text-muted-foreground break-all">
-                        ID Meta: {selectedPost.ig_media_id}
-                        {selectedPost.published_at ? (
-                          <>
-                            {" · "}
-                            {new Date(selectedPost.published_at).toLocaleString("pt-BR")}
-                          </>
-                        ) : null}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedPost.comments_count} salvo
-                        {selectedPost.comments_count === 1 ? "" : "s"} localmente
-                        {selectedPost.pending_count > 0
-                          ? ` · ${selectedPost.pending_count} pendente${selectedPost.pending_count === 1 ? "" : "s"}`
-                          : ""}
-                      </p>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => void handleSync()}
-                      disabled={!meta?.connected || syncing || loadingComments}
-                    >
-                      {syncing ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="mr-2 size-4" />
-                      )}
-                      Sincronizar este post
-                    </Button>
-                  </header>
-
-                  {syncWarning ? (
-                    <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-                      {syncWarning}
-                    </p>
-                  ) : null}
-
-                  {loadingComments ? (
-                    <p className="text-sm text-muted-foreground">Carregando comentários…</p>
-                  ) : displayComments.length === 0 ? (
-                    <p className="rounded-lg border border-dashed px-3 py-6 text-sm text-muted-foreground">
-                      Nenhum comentário salvo para este post. Novos comentários chegam via webhook
-                      ou use sincronizar para buscar histórico na Meta.
-                    </p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {displayComments.map((comment) => (
-                        <li
-                          key={comment.id}
-                          className="rounded-lg border bg-muted/40 p-3 text-sm"
-                          style={{ marginLeft: `${Math.min(comment.depth, 4) * 12}px` }}
-                        >
-                          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <strong className="text-foreground">
-                              {comment.author_username ?? "usuário"}
-                            </strong>
-                            <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
-                            {comment.status ? (
-                              <span className="rounded bg-background px-1.5 py-0.5">
-                                {comment.status}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="wrap-break-word">{comment.text ?? "(sem texto)"}</p>
-                          {comment.draft_text ? (
-                            <div className="mt-3 space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
-                              <p className="text-xs font-semibold text-primary">Rascunho da IA</p>
-                              <p className="wrap-break-word text-sm">{comment.draft_text}</p>
-                              {comment.status === "pending" ? (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  disabled={approvingId === comment.id}
-                                  onClick={() => void handleApproveDraft(comment.id, comment.draft_text)}
-                                >
-                                  {approvingId === comment.id ? (
-                                    <Loader2 className="mr-2 size-4 animate-spin" />
-                                  ) : null}
-                                  Aprovar e publicar
-                                </Button>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-            </Card>
-          </div>
+          {selectedPost ? (
+            <PostDetailPanel
+              post={selectedPost}
+              comments={displayComments}
+              insights={insights}
+              loadingComments={loadingComments}
+              loadingInsights={loadingInsights}
+              syncing={syncing}
+              syncWarning={syncWarning}
+              metaConnected={Boolean(meta?.connected)}
+              approvingId={approvingId}
+              onSync={() => void handleSync()}
+              onRefreshInsights={() => void loadInsights(selectedPostId)}
+              onApproveDraft={(commentId, draftText) =>
+                void handleApproveDraft(commentId, draftText)
+              }
+            />
+          ) : (
+            <div className="flex min-h-80 items-center justify-center rounded-xl border border-dashed bg-muted/10 p-8 text-sm text-muted-foreground">
+              Selecione uma publicação na lista.
+            </div>
+          )}
         </div>
       </div>
 

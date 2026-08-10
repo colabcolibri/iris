@@ -29,6 +29,10 @@ type GraphMedia = {
   timestamp?: string;
   comments_count?: number;
   permalink?: string;
+  media_type?: string;
+  media_url?: string;
+  thumbnail_url?: string;
+  children?: GraphPaging<GraphMedia>;
 };
 
 type GraphComment = {
@@ -43,6 +47,10 @@ type GraphComment = {
 
 const MEDIA_FIELDS = "id,caption,timestamp,comments_count";
 const MEDIA_LOOKUP_FIELDS = "id,caption,timestamp,permalink";
+const MEDIA_PREVIEW_FIELDS =
+  "id,caption,timestamp,permalink,media_type,media_url,thumbnail_url";
+const MEDIA_CAROUSEL_FIELDS =
+  "id,permalink,media_type,media_url,thumbnail_url,children{media_type,media_url,thumbnail_url}";
 const COMMENT_FIELDS =
   "id,text,from{username},timestamp,parent_id,replies{id,text,from{username},timestamp,parent_id}";
 
@@ -135,6 +143,59 @@ export function createGraphApiCommentReader(
     };
   }
 
+  function mapMediaMetadata(media: GraphMedia) {
+    return {
+      igMediaId: media.id!,
+      caption: media.caption ?? null,
+      timestamp: media.timestamp ?? null,
+      permalink: media.permalink ?? null,
+      mediaType: media.media_type ?? null,
+      mediaUrl: media.media_url ?? null,
+      thumbnailUrl: media.thumbnail_url ?? null,
+    };
+  }
+
+  function mapMediaSlide(media: GraphMedia) {
+    const url = media.media_url ?? media.thumbnail_url;
+    if (!url) {
+      return null;
+    }
+
+    return {
+      url,
+      mediaType: media.media_type ?? null,
+      thumbnailUrl: media.thumbnail_url ?? null,
+    };
+  }
+
+  function extractMediaSlides(media: GraphMedia) {
+    const childSlides = (media.children?.data ?? [])
+      .map((child) => mapMediaSlide(child))
+      .filter((slide): slide is NonNullable<typeof slide> => Boolean(slide));
+
+    if (childSlides.length > 0) {
+      return childSlides;
+    }
+
+    const rootSlide = mapMediaSlide(media);
+    return rootSlide ? [rootSlide] : [];
+  }
+
+  function mapMediaPreview(media: GraphMedia) {
+    return {
+      permalink: media.permalink ?? null,
+      mediaType: media.media_type ?? null,
+      slides: extractMediaSlides(media),
+    };
+  }
+
+  async function fetchMediaNode(igMediaId: string, fields: string, token: string) {
+    const mediaUrl = new URL(`${base}/${igMediaId}`);
+    mediaUrl.searchParams.set("fields", fields);
+    mediaUrl.searchParams.set("access_token", token);
+    return fetchGraph<GraphMedia>(mediaUrl.toString());
+  }
+
   return {
     async listRecentMediaWithComments(
       since: Date,
@@ -222,20 +283,48 @@ export function createGraphApiCommentReader(
         throw new Error("Meta access token not configured");
       }
 
-      const mediaUrl = new URL(`${base}/${igMediaId}`);
-      mediaUrl.searchParams.set("fields", MEDIA_FIELDS);
-      mediaUrl.searchParams.set("access_token", token);
+      try {
+        const media = await fetchMediaNode(igMediaId, MEDIA_PREVIEW_FIELDS, token);
+        if (!media.id) {
+          throw new Error("media not found");
+        }
+        return mapMediaMetadata(media);
+      } catch {
+        const media = await fetchMediaNode(
+          igMediaId,
+          "id,caption,timestamp,permalink,media_url,media_type",
+          token,
+        );
+        if (!media.id) {
+          throw new Error("media not found");
+        }
+        return mapMediaMetadata(media);
+      }
+    },
 
-      const media = await fetchGraph<GraphMedia>(mediaUrl.toString());
-      if (!media.id) {
-        throw new Error("media not found");
+    async fetchMediaPreview(igMediaId: string) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
       }
 
-      return {
-        igMediaId: media.id,
-        caption: media.caption ?? null,
-        timestamp: media.timestamp ?? null,
-      };
+      try {
+        const media = await fetchMediaNode(igMediaId, MEDIA_CAROUSEL_FIELDS, token);
+        if (!media.id) {
+          throw new Error("media not found");
+        }
+        return mapMediaPreview(media);
+      } catch {
+        const media = await fetchMediaNode(
+          igMediaId,
+          "id,permalink,media_type,media_url,thumbnail_url",
+          token,
+        );
+        if (!media.id) {
+          throw new Error("media not found");
+        }
+        return mapMediaPreview(media);
+      }
     },
 
     async findMediaByPermalink(permalink: string) {
