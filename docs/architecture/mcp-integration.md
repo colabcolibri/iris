@@ -184,7 +184,7 @@ Ver também `docs/02_security.md` — § MCP.
 | `401` no `/mcp` | Header `Authorization: Bearer` ausente ou incorreto |
 | `406` no `/mcp` | Client sem header `Accept: application/json, text/event-stream` |
 | Connection refused | `pnpm dev` não está rodando |
-| ChatGPT não conecta | URL deve ser HTTPS público; não `localhost` |
+| ChatGPT não conecta | URL HTTPS público; reinicie o Iris após deploy; em dev o Host via ngrok era bloqueado (corrigido) |
 | Tools vazias | Reiniciar client após mudar config; conferir `tools/list` com curl |
 
 ---

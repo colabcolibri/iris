@@ -95,6 +95,60 @@ test("POST /mcp completes initialize with valid bearer", async () => {
   });
 });
 
+test("POST /mcp accepts tunnel host header in development", async () => {
+  const prevNodeEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = "development";
+  try {
+    await withMcpServer(async (baseUrl) => {
+      const address = new URL(baseUrl);
+      const body = JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "ngrok-test", version: "1.0.0" },
+        },
+      });
+
+      const status = await new Promise<number>((resolve, reject) => {
+        import("node:http").then(({ request }) => {
+          const req = request(
+            {
+              hostname: address.hostname,
+              port: address.port,
+              path: "/mcp",
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json, text/event-stream",
+                Authorization: `Bearer ${MCP_CODE}`,
+                Host: "example.ngrok-free.app",
+              },
+            },
+            (res) => {
+              res.on("data", () => undefined);
+              res.on("end", () => resolve(res.statusCode ?? 0));
+            },
+          );
+          req.on("error", reject);
+          req.write(body);
+          req.end();
+        });
+      });
+
+      assert.equal(status, 200);
+    });
+  } finally {
+    if (prevNodeEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = prevNodeEnv;
+    }
+  }
+});
+
 test("POST /mcp lists registered tools", async () => {
   await withMcpServer(async (baseUrl) => {
     const headers = MCP_HEADERS;

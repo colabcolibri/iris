@@ -3,16 +3,12 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import type { AppContext } from "../api/app-context.ts";
 import { createIrisMcpServer } from "./create-iris-mcp-server.ts";
 
-const LOCALHOST_HOSTS = ["127.0.0.1", "localhost", "[::1]", "::1"];
-
-export function isAllowedMcpHost(req: IncomingMessage, isProduction: boolean): boolean {
-  if (isProduction) {
-    return true;
-  }
-
-  const hostHeader = req.headers.host ?? "";
-  const hostname = hostHeader.split(":")[0]?.toLowerCase() ?? "";
-  return LOCALHOST_HOSTS.includes(hostname);
+/**
+ * MCP is gated by Bearer token — not by Host. In dev, ngrok/ChatGPT send a public
+ * Host header, so a localhost-only allowlist returned 403 and broke remote clients.
+ */
+export function isAllowedMcpHost(_req: IncomingMessage, _isProduction: boolean): boolean {
+  return true;
 }
 
 export class IrisMcpGateway {
