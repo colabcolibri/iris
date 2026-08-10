@@ -6,10 +6,11 @@
 
 <p align="center">
   <strong>O gestor editorial do Instagram feito para humanos e agentes de IA.</strong><br />
-  Calendário, agendamento, publicação automática e inbox de comentários — com API REST e MCP nativos.
+  Calendário, agendamento, publicação automática e inbox de comentários — MCP e REST para operar o editorial; o worker publica no Instagram.
 </p>
 
 <p align="center">
+  <a href="README.en.md">English</a> ·
   <a href="#interface">Interface</a> ·
   <a href="#o-problema">O problema</a> ·
   <a href="#por-que-iris">Por que Iris</a> ·
@@ -73,7 +74,7 @@ Gerenciar Instagram hoje costuma ser um Frankenstein:
 | Agendar post = abrir app manualmente | Worker publica no horário via Graph API |
 | Imagens espalhadas em pastas locais | Mídia no servidor, otimizada e pronta para publicar |
 | Comentários perdidos na notificação do IG | Inbox sincronizada com hierarquia e auto-reply |
-| Agentes de IA sem API segura para postar | REST + MCP — Cursor, Claude e ChatGPT operam o calendário |
+| Agentes de IA sem API segura para o editorial | REST + MCP — Cursor, Claude e ChatGPT criam, editam e agendam; o servidor publica |
 
 **Iris** é um mini-server Node com interface web que resolve isso de ponta a ponta. E o melhor: é **agnóstico de ferramenta de criação**. Não importa se o conteúdo veio do Canva, de um export manual ou de outro agente — você monta `post.md` + imagens e o Iris cuida do resto.
 
@@ -87,15 +88,14 @@ A maioria das ferramentas de social media foi pensada para cliques humanos. Iris
 
 - **Servidor MCP** com tools editoriais (`iris_create_post`, `iris_list_posts`, `iris_upload_post_asset`, …)
 - **API REST** com Bearer token para automação em lote
-- **Skill `push-publication`** — o agente lê `publications/`, valida e envia tudo via API
-- **SSE em tempo real** — a UI atualiza quando o agente ou o worker faz algo
+- **SSE em tempo real** — a UI atualiza quando alguém edita via admin, API ou worker
 
 ### Um servidor, responsabilidade clara
 
 ```txt
-Agente local  →  monta conteúdo (qualquer fonte)
-Iris server   →  armazena, agenda, publica, sincroniza comentários
-Instagram     →  destino final via Graph API oficial
+Operador / agente MCP  →  cria, edita, agenda, sobe mídia (API ou admin)
+Iris server + worker   →  armazena, dispara publicação no horário, sincroniza comentários
+Instagram              →  destino final via Graph API oficial
 ```
 
 Sem acoplamento a Casper, Canva ou qualquer criador. O Iris não precisa saber de onde veio o conteúdo — só precisa da legenda, das imagens e do horário.
@@ -156,10 +156,10 @@ flowchart TB
 4. **Acompanhar** — calendário mensal ou kanban por status (`draft` → `scheduled` → `published`)
 5. **Comentários** — webhook Meta sincroniza; inbox na UI com auto-reply contextual (LLM opcional)
 
-### Pacote local do agente
+### Pacote local de conteúdo
 
 ```txt
-iris-agent/publications/lancamento-produto-x/
+publications/lancamento-produto-x/    # na sua máquina — gitignored
   post.md          # frontmatter YAML + legenda
   01.png
   02.png
@@ -178,7 +178,7 @@ Legenda da publicação.
 #produto #lançamento
 ```
 
-O agente faz push → Iris cria o post, sobe as imagens, agenda e atualiza o `post.md` com `iris_post_id`.
+A API recebe o pacote → Iris cria o post, sobe as imagens e agenda; o **worker** publica no Instagram no horário.
 
 Detalhes: [`docs/architecture/local-publications.md`](docs/architecture/local-publications.md).
 
@@ -196,7 +196,6 @@ Detalhes: [`docs/architecture/local-publications.md`](docs/architecture/local-pu
 | **Auth** | Login OTP por email, sessão HttpOnly, rotas protegidas |
 | **Tempo real** | SSE — a UI reage sem polling |
 | **MCP** | Tools editoriais para Cursor, Claude Desktop e ChatGPT |
-| **Agente local** | Kit portável `iris-agent/` — push em lote de `publications/` |
 
 ---
 
@@ -206,8 +205,8 @@ Iris expõe **duas portas** para automação:
 
 | Porta | Token | Melhor para |
 | ----- | ----- | ----------- |
-| **REST** (`/api/*`) | `IRIS_AGENT_TOKEN` | Push em lote de `publications/`, scripts, CI |
-| **MCP** (`POST /mcp`) | `IRIS_MCP_CONNECTION_CODE` | Criar/editar posts ad hoc no chat, perguntar sobre o calendário |
+| **REST** (`/api/*`) | `IRIS_AGENT_TOKEN` | Automação, scripts, CI — criar posts, subir mídia, agendar |
+| **MCP** (`POST /mcp`) | `IRIS_MCP_CONNECTION_CODE` | Criar/editar posts no chat, consultar calendário e comentários |
 
 ### Tools MCP disponíveis
 
@@ -222,29 +221,18 @@ Iris expõe **duas portas** para automação:
 
 Setup por client: [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md).
 
-### Kit agente local
-
-O pacote [`iris-agent/`](iris-agent/) é portável — copie a pasta, configure credenciais e use:
-
-```bash
-cd iris-agent
-cp iris.credentials.example.json iris.credentials.json
-# apiUrl + agentToken (mesmo IRIS_AGENT_TOKEN do server)
-```
-
-No Cursor: invoque `@iris-local` ou a skill `push-publication` para enviar `publications/` ao servidor.
-
 ---
 
 ## Repositório
 
-Monorepo em três áreas:
+Monorepo em duas áreas de produto:
 
 | Caminho | Descrição |
 | ------- | --------- |
 | [`iris-app/`](iris-app/) | Servidor Node, API, admin React (Vite), workers e migrations SQLite |
-| [`iris-agent/`](iris-agent/) | Kit portável do agente local — `publications/` + credenciais + skills Meridian |
 | [`docs/`](docs/) | Documentação de produto, arquitetura, API e design system |
+
+> Pacotes locais (`publications/`, credenciais de automação) ficam na sua máquina — não entram no git. Ver [`docs/architecture/local-publications.md`](docs/architecture/local-publications.md).
 
 ---
 
@@ -328,16 +316,15 @@ Guia completo: [`docs/08_environments.md`](docs/08_environments.md).
 | [`docs/08_environments.md`](docs/08_environments.md) | Variáveis e ambientes |
 | [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md) | MCP — Cursor, ChatGPT, Claude |
 | [`iris-app/README.md`](iris-app/README.md) | Detalhes do pacote da aplicação |
-| [`iris-agent/README.md`](iris-agent/README.md) | Kit agente local |
 
 ---
 
-## Desenvolvimento com Meridian
+## Desenvolvimento com Meridian (opcional)
 
-Este repositório usa o protocolo [Meridian](https://github.com/colabcolibri/meridian) para backlog, user stories e phase docs. O kit vive em `.agent/`; o backlog em `.meridian/` (SQLite, gitignored).
+Este repositório usa o protocolo [Meridian](https://github.com/colabcolibri/meridian) para backlog e phase docs. O kit em `.agent/` inclui scripts **Python só para governança do projeto** — não fazem parte do runtime do Iris (que é 100% Node/TypeScript).
 
 ```bash
-python3 .agent/scripts/validate_meridian.py .
+python3 .agent/scripts/validate_meridian.py .   # só para quem mantém o backlog Meridian
 ```
 
 ---
@@ -347,7 +334,7 @@ python3 .agent/scripts/validate_meridian.py .
 - Tokens Meta, LLM e chaves de sessão **somente no servidor**
 - `.env`, `iris.credentials.json` e `data/` estão no `.gitignore`
 - Admin protegido por OTP + cookie HttpOnly + gate server-side nas rotas SPA
-- Agente REST e MCP usam tokens distintos com escopo limitado
+- Tokens REST (automação) e MCP usam credenciais distintas com escopo limitado
 
 Reporte vulnerabilidades pelo canal privado do mantenedor — não abra issue pública com detalhes de exploit.
 

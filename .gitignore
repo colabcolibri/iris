@@ -8,11 +8,9 @@ iris-app/.env.*
 !iris-app/.env.example
 !iris-app/.env.railway.example
 
-# Local agent package (Meridian kit — portável, sem Node)
-iris-agent/iris.credentials.json
-iris-agent/publications/*
-!iris-agent/publications/_example/
-!iris-agent/publications/_example/**
+# Local agent workspace (portável — cópia local, não faz parte do produto)
+iris-agent/
+publications/
 
 # Dependencies
 node_modules/
