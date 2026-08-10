@@ -21,3 +21,31 @@ export const MOVE_STATUS_OPTIONS: { value: PostStatus; label: string }[] = [
   { value: "scheduled", label: "Agendado" },
   { value: "cancelled", label: "Cancelado" },
 ];
+
+type PostAction = {
+  status: PostStatus;
+  label: string;
+  variant?: "default" | "destructive";
+};
+
+/** Ações contextuais por status — labels claros para o menu do kanban. */
+export function getKanbanActions(status: PostStatus): PostAction[] {
+  switch (status) {
+    case "draft":
+      return [{ status: "cancelled", label: "Cancelar postagem", variant: "destructive" }];
+    case "scheduled":
+      return [
+        { status: "draft", label: "Desagendar (voltar a rascunho)" },
+        { status: "cancelled", label: "Cancelar postagem", variant: "destructive" },
+      ];
+    case "failed":
+      return [
+        { status: "draft", label: "Voltar a rascunho" },
+        { status: "cancelled", label: "Cancelar postagem", variant: "destructive" },
+      ];
+    case "cancelled":
+      return [{ status: "draft", label: "Restaurar como rascunho" }];
+    default:
+      return [];
+  }
+}

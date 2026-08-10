@@ -4,7 +4,11 @@ export const ADMIN_OTP_MAX_ATTEMPTS = 5;
 export const ADMIN_OTP_RESEND_SECONDS = 60;
 
 export function otpPepper(): string {
-  return process.env.IRIS_OTP_PEPPER?.trim() || "dev-otp-pepper-only";
+  const pepper = process.env.IRIS_OTP_PEPPER?.trim();
+  if (!pepper) {
+    throw new Error("IRIS_OTP_PEPPER is not configured");
+  }
+  return pepper;
 }
 
 export function generateOtpCode(): string {

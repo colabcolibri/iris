@@ -14,7 +14,7 @@ test("admin includes kanban board", () => {
 test("kanban card supports status changes", () => {
   const card = readFileSync(`${ADMIN}/components/kanban/kanban-card.tsx`, "utf8");
   assert.match(card, /DropdownMenuGroup/);
-  assert.match(card, /MOVE_STATUS_OPTIONS/);
+  assert.match(card, /getKanbanActions/);
   assert.match(card, /onStatusChange/);
   assert.match(card, /KanbanColumnShell\.Card/);
 });

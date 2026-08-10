@@ -7,6 +7,7 @@ test("post dialog includes reply inspection UI", () => {
   assert.match(dialog, /Contexto do post/);
   assert.match(dialog, /Ver conversa/);
   assert.match(dialog, /fetchReplyInspection/);
+  assert.match(dialog, /entry\.depth/);
   assert.match(dialog, /Editar persona/);
   assert.match(dialog, /to="\/persona"/);
 });

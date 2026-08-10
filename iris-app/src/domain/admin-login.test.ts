@@ -68,15 +68,33 @@ test("non-allowlisted email returns generic response without sending", async () 
   }
 });
 
+test("allowlisted login fails closed when OTP pepper is missing", async () => {
+  process.env.IRIS_ADMIN_EMAIL = "admin@example.com";
+  delete process.env.IRIS_OTP_PEPPER;
+  const { db, challenges, emailSender } = createMemoryDeps({});
+
+  try {
+    await assert.rejects(
+      () => requestAdminLoginCode("admin@example.com", { challenges, emailSender }),
+      (error: unknown) =>
+        error instanceof AdminLoginError && error.code === "security_not_configured",
+    );
+  } finally {
+    db.close();
+    delete process.env.IRIS_ADMIN_EMAIL;
+  }
+});
+
 test("confirm rejects expired code", async () => {
   process.env.IRIS_ADMIN_EMAIL = "admin@example.com";
+  process.env.IRIS_OTP_PEPPER = "test-pepper";
   const { db, challenges, emailSender } = createMemoryDeps({});
   const code = "123456";
 
   try {
     challenges.upsert({
       email: "admin@example.com",
-      codeHash: hashOtpCode(code, "dev-otp-pepper-only"),
+      codeHash: hashOtpCode(code, "test-pepper"),
       expiresAt: new Date(Date.now() - 1_000).toISOString(),
       attempts: 0,
       lastRequestAt: new Date().toISOString(),
@@ -94,5 +112,6 @@ test("confirm rejects expired code", async () => {
   } finally {
     db.close();
     delete process.env.IRIS_ADMIN_EMAIL;
+    delete process.env.IRIS_OTP_PEPPER;
   }
 });

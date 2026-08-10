@@ -4,7 +4,7 @@ import { checkMetaConnection } from "./meta-health-check.ts";
 
 test("checkMetaConnection returns ok for valid graph response", async () => {
   const fetchImpl = async () =>
-    new Response(JSON.stringify({ id: "ig-1", username: "brand" }), {
+    new Response(JSON.stringify({ user_id: "ig-1", username: "brand" }), {
       status: 200,
     });
 

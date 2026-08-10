@@ -1,26 +1,22 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+
+const adminDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@iris/domain": path.resolve(__dirname, "../src/domain"),
-    },
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      "/api": "http://127.0.0.1:8792",
-      "/auth": "http://127.0.0.1:8792",
-      "/health": "http://127.0.0.1:8792",
+      "@": path.resolve(adminDir, "./src"),
+      "@iris/domain": path.resolve(adminDir, "../src/domain"),
     },
   },
   build: {
     outDir: "../public",
-    copyPublicDir: false,
+    emptyOutDir: false,
+    copyPublicDir: true,
   },
 });

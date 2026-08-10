@@ -7,6 +7,7 @@ export type ReplyInspectionThreadEntry = {
   text: string | null;
   is_brand_reply: boolean;
   at: string;
+  depth: number;
 };
 
 export type ReplyInspectionComment = {
@@ -15,6 +16,7 @@ export type ReplyInspectionComment = {
   text: string | null;
   status: string;
   created_at: string;
+  parent_ig_comment_id: string | null;
   thread: ReplyInspectionThreadEntry[];
 };
 
@@ -67,11 +69,13 @@ export function buildReplyInspection(
         text: comment.text,
         status: comment.status,
         created_at: comment.createdAt,
+        parent_ig_comment_id: comment.parentIgCommentId,
         thread: thread.map((entry) => ({
           author: entry.isBrandReply ? "marca" : entry.author,
           text: entry.text,
           is_brand_reply: entry.isBrandReply,
           at: entry.at,
+          depth: entry.depth,
         })),
       };
     }),

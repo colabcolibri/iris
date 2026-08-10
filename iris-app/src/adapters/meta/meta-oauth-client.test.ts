@@ -12,42 +12,38 @@ const config = {
   graphApiVersion: "v21.0",
 };
 
-test("buildMetaAuthorizeUrl includes scopes and state", () => {
+test("buildMetaAuthorizeUrl uses Instagram OAuth and business scopes", () => {
   const url = buildMetaAuthorizeUrl(config, "signed-state");
-  assert.match(url, /facebook\.com\/v21\.0\/dialog\/oauth/);
+  assert.match(url, /instagram\.com\/oauth\/authorize/);
   assert.match(url, /client_id=app-123/);
   assert.match(url, /state=signed-state/);
-  assert.match(url, /instagram_basic/);
+  assert.match(url, /instagram_business_basic/);
+  assert.doesNotMatch(url, /pages_show_list/);
 });
 
-test("completeFromCode stores page token and ig account", async () => {
-  const fetchImpl = async (input: string | URL | Request) => {
+test("completeFromCode stores Instagram user token and profile", async () => {
+  const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === "string" ? input : input.toString());
 
-    if (url.pathname.endsWith("/oauth/access_token")) {
-      if (url.searchParams.get("grant_type") === "fb_exchange_token") {
-        return new Response(
-          JSON.stringify({ access_token: "long-user", expires_in: 3600 }),
-          { status: 200 },
-        );
-      }
-      return new Response(JSON.stringify({ access_token: "short-user" }), {
-        status: 200,
-      });
-    }
-
-    if (url.pathname.endsWith("/me/accounts")) {
+    if (url.hostname === "api.instagram.com" && url.pathname === "/oauth/access_token") {
       return new Response(
         JSON.stringify({
-          data: [
-            {
-              id: "page-1",
-              name: "Brand Page",
-              access_token: "page-token-abc",
-              instagram_business_account: { id: "ig-99", username: "brand" },
-            },
-          ],
+          data: [{ access_token: "short-user", user_id: "ig-99" }],
         }),
+        { status: 200 },
+      );
+    }
+
+    if (url.hostname === "graph.instagram.com" && url.pathname === "/access_token") {
+      return new Response(
+        JSON.stringify({ access_token: "long-user", expires_in: 3600 }),
+        { status: 200 },
+      );
+    }
+
+    if (url.hostname === "graph.instagram.com" && url.pathname.endsWith("/me")) {
+      return new Response(
+        JSON.stringify({ user_id: "ig-99", username: "brand" }),
         { status: 200 },
       );
     }
@@ -65,8 +61,8 @@ test("completeFromCode stores page token and ig account", async () => {
   const result = await client.completeFromCode("oauth-code");
   assert.equal(result.ok, true);
   if (result.ok) {
-    assert.equal(result.pageAccessToken, "page-token-abc");
-    assert.equal(result.page.igUserId, "ig-99");
-    assert.equal(result.page.igUsername, "brand");
+    assert.equal(result.accessToken, "long-user");
+    assert.equal(result.account.igUserId, "ig-99");
+    assert.equal(result.account.igUsername, "brand");
   }
 });

@@ -14,6 +14,7 @@ import { createSharpImageOptimizer } from "../adapters/image-optimizer/sharp-opt
 import { createFsMediaStorage } from "../adapters/media-storage/fs-media-storage.ts";
 import { createGraphApiPublisher } from "../adapters/meta/graph-api-publisher.ts";
 import { createGraphApiCommentReplier } from "../adapters/meta/graph-api-comment-replier.ts";
+import { createGraphApiCommentReader } from "../adapters/meta/graph-api-comment-reader.ts";
 import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-repository.ts";
 import { createEnvLlmCompleter } from "../adapters/llm/env-llm-completer.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
@@ -32,6 +33,7 @@ import type { CommentRepository } from "../ports/comment-repository.ts";
 import type { ImageOptimizer } from "../ports/image-optimizer.ts";
 import type { MediaStorage } from "../ports/media-storage.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
+import type { MetaCommentReader } from "../ports/meta-comment-reader.ts";
 import type { MetaConnectionStore } from "../ports/meta-connection-store.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../ports/meta-token-store.ts";
@@ -55,6 +57,7 @@ export type AppContext = {
   metaConnectionStore: MetaConnectionStore;
   metaPublisher: MetaPublisher | null;
   metaCommentReplier: MetaCommentReplier | null;
+  metaCommentReader: MetaCommentReader | null;
   agentRuns: AgentRunRepository;
   llmCompleter: LlmCompleter | null;
   publishUrlSecret: string | null;
@@ -153,6 +156,16 @@ export function createAppContext(options: AppContextOptions): AppContext {
       })
     : null;
 
+  const metaCommentReader = metaTokenStore.getActiveToken()
+    ? createGraphApiCommentReader({
+        metaTokenStore,
+        config: {
+          resolveIgUserId,
+          graphApiVersion,
+        },
+      })
+    : null;
+
   const llmApiKey = process.env.LLM_API_KEY ?? "";
   const llmCompleter = llmApiKey ? createEnvLlmCompleter() : null;
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
@@ -186,6 +199,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     metaConnectionStore,
     metaPublisher,
     metaCommentReplier,
+    metaCommentReader,
     agentRuns: createSqliteAgentRunRepository(options.db),
     llmCompleter,
     publishUrlSecret: publishUrlSecret || null,

@@ -8,7 +8,15 @@ pnpm install
 pnpm dev
 ```
 
-UI: http://127.0.0.1:8792/ — faça login em `/login.html` com o email configurado em `IRIS_ADMIN_EMAIL`.
+Abra **http://127.0.0.1:8792** — um único servidor com API, UI e hot reload (Vite embutido em dev).
+
+**Produção local:** `pnpm build:admin` e `NODE_ENV=production pnpm start`.
+
+**Railway:** deploy a partir de `iris-app/` (Dockerfile + `railway.toml`). Monte volume em `/app/data`. Variáveis: ver `.env.railway.example`.
+
+O diretório `public/` contém só o output do Vite + assets estáticos (`admin/public/`). O desk vanilla foi removido.
+
+Login em `/login` com o email configurado em `IRIS_ADMIN_EMAIL`.
 
 **Dev (email):** suba o Mailpit (`mailpit` — SMTP `:1025`, UI `:8025`) e rode `pnpm dev`. Em dev o provider default é `smtp`; os OTP aparecem no Mailpit.
 

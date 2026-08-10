@@ -3,13 +3,15 @@
 ## Prerequisites
 
 - Instagram Business ou Creator account
-- Facebook Page linked to IG account
-- Meta Developers app with permissions:
-  - `instagram_basic`
-  - `instagram_content_publish`
-  - `instagram_manage_comments`
-  - `pages_read_engagement`
-- Long-lived Page access token stored server-side (`meta_tokens` table)
+- Meta Developers app com **Instagram API** (Instagram Login)
+- **Instagram App ID** e **Instagram App Secret** (em Dashboard → Instagram → API setup with Instagram login → Business login settings) — **não** use o App ID de Configurações → Básico
+- Redirect URI cadastrado em **Business login settings → OAuth redirect URIs**
+- OAuth scopes:
+  - `instagram_business_basic`
+  - `instagram_business_content_publish`
+  - `instagram_business_manage_comments`
+- Long-lived Instagram user access token stored server-side (`meta_tokens` table)
+- **Não** exige Página do Facebook
 
 ## Publishing flow (carousel)
 
@@ -21,9 +23,10 @@
 ## Comments
 
 - Subscribe webhook field: `comments`
-- On event: extract `media_id`, `comment_id`, `text`, `username`
+- On event: extract `media_id`, `comment_id`, `text`, `username`, `parent_id`
 - Match `posts.ig_media_id` → link `comments.post_id`
 - Reply: `POST /{comment-id}/replies?message=...`
+- Inbox sync: `GET /api/comments/inbox?days=30` pulls media + comments from Graph API (`/{ig-user-id}/media`, `/{media-id}/comments`) and upserts into SQLite when the media matches an Iris post
 
 ## Webhook verification
 

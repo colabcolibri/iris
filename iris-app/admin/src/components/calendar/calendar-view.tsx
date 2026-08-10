@@ -6,12 +6,13 @@ import {
   addMonths,
   calendarCells,
   formatMonthLabel,
-  postDisplayDate,
+  postCalendarDate,
   sameDay,
   truncate,
 } from "@/lib/date-utils";
 import { formatChipTime, sameZonedCalendarDay } from "@/lib/datetime";
-import type { Post } from "@/lib/types";
+import { POST_STATUS_LABELS } from "@/lib/status";
+import type { Post, PostStatus } from "@/lib/types";
 
 type CalendarViewProps = {
   posts: Post[];
@@ -22,13 +23,15 @@ type CalendarViewProps = {
   onSelect: (post: Post) => void;
 };
 
-const CHIP_STYLES: Record<string, string> = {
+const CHIP_STYLES: Record<PostStatus, string> = {
   draft: "border-primary/20 bg-muted text-foreground",
   scheduled: "border-primary/20 bg-primary/10 text-primary",
   published: "border-emerald-600/30 bg-emerald-500/10 text-emerald-800",
   failed: "border-destructive/20 bg-destructive/10 text-destructive",
   cancelled: "border-border bg-muted text-muted-foreground",
 };
+
+const CALENDAR_LEGEND: PostStatus[] = ["scheduled", "published", "failed"];
 
 export function CalendarView({
   posts,
@@ -62,7 +65,7 @@ export function CalendarView({
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <h2 className="min-w-[180px] text-center font-display text-2xl font-semibold">
+            <h2 className="min-w-45 text-center font-display text-2xl font-semibold">
               {formatMonthLabel(year, month)}
             </h2>
             <Button
@@ -76,6 +79,27 @@ export function CalendarView({
               <ChevronRight className="size-4" />
             </Button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {CALENDAR_LEGEND.map((status) => (
+            <span
+              key={status}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
+                CHIP_STYLES[status],
+              )}
+            >
+              {status === "scheduled" ? (
+                <Clock className="size-3" />
+              ) : status === "failed" ? (
+                <AlertCircle className="size-3" />
+              ) : (
+                <span className="size-1.5 rounded-full bg-current" />
+              )}
+              {POST_STATUS_LABELS[status]}
+            </span>
+          ))}
         </div>
       </header>
 
@@ -96,7 +120,7 @@ export function CalendarView({
       >
         {cells.map((day) => {
           const dayPosts = posts.filter((post) => {
-            const raw = postDisplayDate(post);
+            const raw = postCalendarDate(post);
             if (!raw) return false;
             return sameZonedCalendarDay(raw, day, timeZone);
           });
@@ -123,31 +147,35 @@ export function CalendarView({
               </span>
 
               {dayPosts.slice(0, 3).map((post) => {
-                const time = post.scheduled_at ? formatChipTime(post.scheduled_at, timeZone) : "";
-                const label = truncate(post.caption, 22);
+                const calendarDate = postCalendarDate(post);
+                const time = calendarDate ? formatChipTime(calendarDate, timeZone) : "";
+                const label = truncate(post.caption, 18);
+                const statusLabel = POST_STATUS_LABELS[post.status];
 
                 return (
                   <button
                     key={post.id}
                     type="button"
                     onClick={() => onSelect(post)}
-                    title={post.error_message ?? post.caption ?? undefined}
+                    title={`${statusLabel}${time ? ` · ${time}` : ""} — ${post.caption ?? ""}`}
                     className={cn(
-                      "flex w-full items-center gap-1 truncate rounded-sm border px-2 py-1 text-left text-[10px] font-semibold",
+                      "flex w-full flex-col gap-0.5 truncate rounded-sm border px-2 py-1 text-left text-[10px] font-semibold",
                       CHIP_STYLES[post.status],
                       selectedId === post.id && "ring-2 ring-primary",
                     )}
                   >
-                    {post.status === "failed" ? (
-                      <AlertCircle className="size-3 shrink-0" />
-                    ) : post.status === "scheduled" ? (
-                      <Clock className="size-3 shrink-0" />
-                    ) : (
-                      <span className="size-1.5 shrink-0 rounded-full bg-current opacity-70" />
-                    )}
-                    <span className="truncate">
-                      {time ? `${time} ${label}` : label}
+                    <span className="flex items-center gap-1 truncate">
+                      {post.status === "failed" ? (
+                        <AlertCircle className="size-3 shrink-0" />
+                      ) : post.status === "scheduled" ? (
+                        <Clock className="size-3 shrink-0" />
+                      ) : (
+                        <span className="size-1.5 shrink-0 rounded-full bg-current opacity-70" />
+                      )}
+                      <span className="truncate opacity-80">{statusLabel}</span>
+                      {time && <span className="shrink-0 opacity-70">{time}</span>}
                     </span>
+                    <span className="truncate font-normal opacity-90">{label}</span>
                   </button>
                 );
               })}

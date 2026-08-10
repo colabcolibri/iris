@@ -14,7 +14,7 @@ const SIZE_CLASS = {
 export function BrandLogo({ className, size = "md" }: BrandLogoProps) {
   return (
     <img
-      src="/assets/iris-logo-concept.png"
+      src="/assets/iris-logo.png"
       alt="Iris"
       className={cn("rounded-lg object-cover shadow-sm ring-1 ring-white/10", SIZE_CLASS[size], className)}
     />

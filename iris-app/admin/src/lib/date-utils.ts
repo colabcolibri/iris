@@ -25,6 +25,17 @@ export function postDisplayDate(post: Post) {
   return post.scheduled_at ?? post.published_at ?? post.created_at;
 }
 
+/** Data usada no calendário — só agendamentos e publicações reais, nunca created_at. */
+export function postCalendarDate(post: Post): string | null {
+  if (post.status === "published") {
+    return post.published_at ?? post.scheduled_at;
+  }
+  if (post.status === "scheduled" || post.status === "failed") {
+    return post.scheduled_at;
+  }
+  return null;
+}
+
 export function truncate(text: string | null | undefined, max = 48) {
   const value = (text ?? "").trim();
   if (value.length <= max) return value || "(sem legenda)";

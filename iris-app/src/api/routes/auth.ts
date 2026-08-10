@@ -88,8 +88,10 @@ function handleAuthError(res: ServerResponse, error: unknown): void {
         ? 429
         : error.code === "too_many_attempts"
           ? 429
-          : error.code === "email_not_configured"
+        : error.code === "email_not_configured"
             ? 503
+            : error.code === "security_not_configured"
+              ? 503
             : error.code === "email_failed"
               ? 502
               : 401;

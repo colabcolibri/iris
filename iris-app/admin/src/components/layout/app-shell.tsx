@@ -29,6 +29,8 @@ export function AppShell({
         onNewPost={onNewPost ?? (() => undefined)}
         onLogout={onLogout}
         onMetaHealth={onMetaHealth}
+        sidebarView={sidebarView}
+        onSidebarViewChange={onSidebarViewChange}
       />
 
       <div className="flex min-h-0 flex-1">

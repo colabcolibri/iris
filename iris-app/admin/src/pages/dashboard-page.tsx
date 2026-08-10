@@ -44,7 +44,7 @@ export function DashboardPage() {
   const loadPosts = useCallback(async () => {
     const data =
       view === "calendar"
-        ? await fetchPosts(monthRange(cursor, timezone))
+        ? await fetchPosts({ ...monthRange(cursor, timezone), calendarOnly: true })
         : await fetchPosts();
     setPosts(data);
   }, [view, cursor, timezone]);
@@ -125,12 +125,42 @@ export function DashboardPage() {
       if (selectedPost?.id === post.id) {
         const updated = await fetchPost(post.id);
         setSelectedPost(updated);
+        setScheduledAt(toDatetimeLocalFromIso(updated.scheduled_at, timezone));
       }
-      toast.success("Status atualizado.");
+      const message =
+        status === "draft" && post.status === "scheduled"
+          ? "Postagem desagendada."
+          : status === "draft"
+            ? "Postagem voltou para rascunho."
+            : "Status atualizado.";
+      toast.success(message);
     } catch (err) {
       if (!handleAuthError(err)) {
         toast.error(err instanceof Error ? err.message : "Falha ao atualizar status.");
       }
+    }
+  }
+
+  async function revertToDraft() {
+    if (!selectedPost) return;
+    setSaving(true);
+    setError("");
+    try {
+      await updatePost(selectedPost.id, { status: "draft" });
+      await loadPosts();
+      const updated = await fetchPost(selectedPost.id);
+      setSelectedPost(updated);
+      toast.success(
+        selectedPost.status === "scheduled"
+          ? "Postagem desagendada."
+          : "Postagem restaurada como rascunho.",
+      );
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        setError(err instanceof Error ? err.message : "Falha ao atualizar.");
+      }
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -246,6 +276,11 @@ export function DashboardPage() {
         onFilesChange={setFiles}
         onSaveDraft={() => void savePost(false)}
         onSchedule={() => void savePost(true)}
+        onRevertToDraft={
+          selectedPost?.status === "scheduled" || selectedPost?.status === "cancelled"
+            ? () => void revertToDraft()
+            : undefined
+        }
         onRetryDraft={
           selectedPost?.status === "failed"
             ? () => {

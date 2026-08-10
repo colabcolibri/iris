@@ -30,17 +30,17 @@ export async function checkMetaConnection(
 ): Promise<MetaHealthResult> {
   const version = options.graphApiVersion ?? "v21.0";
   const fetchFn = options.fetchImpl ?? fetch;
-  const url = new URL(
-    `https://graph.facebook.com/${version}/${options.igUserId}`,
-  );
-  url.searchParams.set("fields", "id,username");
+  const url = new URL(`https://graph.instagram.com/${version}/me`);
+  url.searchParams.set("fields", "user_id,username");
   url.searchParams.set("access_token", options.token);
 
   try {
     const response = await fetchFn(url.toString());
-    const json = (await response.json()) as GraphUserResponse;
+    const json = (await response.json()) as GraphUserResponse & {
+      user_id?: string;
+    };
 
-    if (response.ok && json.id) {
+    if (response.ok && (json.user_id || json.id)) {
       return { ok: true, code: "ok" };
     }
 

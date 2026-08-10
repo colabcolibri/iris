@@ -123,12 +123,12 @@ test("meta status reports connected account", async () => {
 test("meta health returns ok when graph responds", async () => {
   const originalFetch = globalThis.fetch;
   const graphFetchImpl = async () =>
-    new Response(JSON.stringify({ id: "ig-7", username: "brand" }), {
+    new Response(JSON.stringify({ user_id: "ig-7", username: "brand" }), {
       status: 200,
     });
   const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === "string" ? input : input.toString());
-    if (url.hostname === "graph.facebook.com") {
+    if (url.hostname === "graph.instagram.com") {
       return graphFetchImpl();
     }
     return originalFetch(input, init);

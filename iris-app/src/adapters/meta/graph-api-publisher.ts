@@ -31,7 +31,7 @@ export function createGraphApiPublisher(
 ): MetaPublisher {
   const fetchFn = deps.config.fetchImpl ?? fetch;
   const version = deps.config.graphApiVersion ?? "v21.0";
-  const base = `https://graph.facebook.com/${version}`;
+  const base = `https://graph.instagram.com/${version}`;
 
   async function graphPost(
     path: string,

@@ -1,19 +1,25 @@
 import type { MetaOAuthConfig } from "./meta-oauth-config.ts";
 import { META_OAUTH_SCOPES } from "./meta-oauth-config.ts";
 
-type GraphTokenResponse = {
+type ShortTokenResponse = {
+  access_token?: string;
+  user_id?: string | number;
+  data?: Array<{
+    access_token?: string;
+    user_id?: string | number;
+  }>;
+  error_message?: string;
+};
+
+type LongTokenResponse = {
   access_token?: string;
   expires_in?: number;
   error?: { message?: string; code?: number };
 };
 
-type GraphAccountsResponse = {
-  data?: Array<{
-    id?: string;
-    name?: string;
-    access_token?: string;
-    instagram_business_account?: { id?: string; username?: string };
-  }>;
+type IgProfileResponse = {
+  user_id?: string;
+  username?: string;
   error?: { message?: string; code?: number };
 };
 
@@ -22,22 +28,20 @@ export type MetaOAuthClientOptions = {
   fetchImpl?: typeof fetch;
 };
 
-export type MetaPageAccount = {
-  pageId: string;
-  pageName: string | null;
-  pageAccessToken: string;
-  igUserId: string | null;
+export type MetaInstagramAccount = {
+  igUserId: string;
   igUsername: string | null;
+  accessToken: string;
 };
 
 export type MetaOAuthExchangeResult =
   | {
       ok: true;
-      pageAccessToken: string;
+      accessToken: string;
       expiresAt: string | null;
-      page: MetaPageAccount;
+      account: MetaInstagramAccount;
     }
-  | { ok: false; code: "exchange_failed" | "no_pages" | "no_ig_linked" };
+  | { ok: false; code: "exchange_failed" | "profile_failed" };
 
 export function buildMetaAuthorizeUrl(
   config: MetaOAuthConfig,
@@ -51,45 +55,72 @@ export function buildMetaAuthorizeUrl(
     response_type: "code",
   });
 
-  return `https://www.facebook.com/${config.graphApiVersion}/dialog/oauth?${params.toString()}`;
+  return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+}
+
+function parseShortTokenResponse(json: ShortTokenResponse): {
+  accessToken: string;
+  userId: string | null;
+} | null {
+  const row = json.data?.[0];
+  const accessToken = row?.access_token ?? json.access_token;
+  const userIdRaw = row?.user_id ?? json.user_id;
+
+  if (!accessToken) {
+    return null;
+  }
+
+  return {
+    accessToken,
+    userId: userIdRaw != null ? String(userIdRaw) : null,
+  };
 }
 
 export function createMetaOAuthClient(options: MetaOAuthClientOptions) {
   const fetchFn = options.fetchImpl ?? fetch;
   const { config } = options;
-  const graphBase = `https://graph.facebook.com/${config.graphApiVersion}`;
+  const graphBase = `https://graph.instagram.com/${config.graphApiVersion}`;
 
-  async function graphGet<T>(path: string, params: Record<string, string>): Promise<T> {
-    const search = new URLSearchParams(params);
-    const response = await fetchFn(`${graphBase}${path}?${search.toString()}`);
-    return (await response.json()) as T;
-  }
-
-  async function exchangeCodeForUserToken(code: string): Promise<string | null> {
-    const json = await graphGet<GraphTokenResponse>("/oauth/access_token", {
+  async function exchangeCodeForShortToken(code: string): Promise<{
+    accessToken: string;
+    userId: string | null;
+  } | null> {
+    const body = new URLSearchParams({
       client_id: config.appId,
       client_secret: config.appSecret,
+      grant_type: "authorization_code",
       redirect_uri: config.redirectUri,
       code,
     });
 
-    if (!json.access_token) {
+    const response = await fetchFn("https://api.instagram.com/oauth/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+
+    const json = (await response.json()) as ShortTokenResponse;
+    if (!response.ok) {
       return null;
     }
 
-    return json.access_token;
+    return parseShortTokenResponse(json);
   }
 
-  async function exchangeLongLivedUserToken(shortToken: string): Promise<{
+  async function exchangeLongLivedToken(shortToken: string): Promise<{
     token: string;
     expiresAt: string | null;
   } | null> {
-    const json = await graphGet<GraphTokenResponse>("/oauth/access_token", {
-      grant_type: "fb_exchange_token",
-      client_id: config.appId,
+    const params = new URLSearchParams({
+      grant_type: "ig_exchange_token",
       client_secret: config.appSecret,
-      fb_exchange_token: shortToken,
+      access_token: shortToken,
     });
+
+    const response = await fetchFn(
+      `https://graph.instagram.com/access_token?${params.toString()}`,
+    );
+    const json = (await response.json()) as LongTokenResponse;
 
     if (!json.access_token) {
       return null;
@@ -103,54 +134,55 @@ export function createMetaOAuthClient(options: MetaOAuthClientOptions) {
     return { token: json.access_token, expiresAt };
   }
 
-  async function fetchPageAccounts(userToken: string): Promise<MetaPageAccount[]> {
-    const json = await graphGet<GraphAccountsResponse>("/me/accounts", {
-      access_token: userToken,
-      fields: "id,name,access_token,instagram_business_account{id,username}",
+  async function fetchIgProfile(
+    token: string,
+  ): Promise<{ igUserId: string; igUsername: string | null } | null> {
+    const params = new URLSearchParams({
+      fields: "user_id,username",
+      access_token: token,
     });
 
-    if (!json.data?.length) {
-      return [];
+    const response = await fetchFn(`${graphBase}/me?${params.toString()}`);
+    const json = (await response.json()) as IgProfileResponse;
+
+    const igUserId = json.user_id;
+    if (!response.ok || !igUserId) {
+      return null;
     }
 
-    return json.data
-      .filter((row) => row.id && row.access_token)
-      .map((row) => ({
-        pageId: row.id!,
-        pageName: row.name ?? null,
-        pageAccessToken: row.access_token!,
-        igUserId: row.instagram_business_account?.id ?? null,
-        igUsername: row.instagram_business_account?.username ?? null,
-      }));
+    return {
+      igUserId,
+      igUsername: json.username ?? null,
+    };
   }
 
   return {
     async completeFromCode(code: string): Promise<MetaOAuthExchangeResult> {
-      const shortToken = await exchangeCodeForUserToken(code);
-      if (!shortToken) {
+      const short = await exchangeCodeForShortToken(code);
+      if (!short) {
         return { ok: false, code: "exchange_failed" };
       }
 
-      const longLived = await exchangeLongLivedUserToken(shortToken);
+      const longLived = await exchangeLongLivedToken(short.accessToken);
       if (!longLived) {
         return { ok: false, code: "exchange_failed" };
       }
 
-      const pages = await fetchPageAccounts(longLived.token);
-      if (pages.length === 0) {
-        return { ok: false, code: "no_pages" };
-      }
-
-      const pageWithIg = pages.find((page) => page.igUserId);
-      if (!pageWithIg) {
-        return { ok: false, code: "no_ig_linked" };
+      const profile = await fetchIgProfile(longLived.token);
+      const igUserId = profile?.igUserId ?? short.userId;
+      if (!igUserId) {
+        return { ok: false, code: "profile_failed" };
       }
 
       return {
         ok: true,
-        pageAccessToken: pageWithIg.pageAccessToken,
+        accessToken: longLived.token,
         expiresAt: longLived.expiresAt,
-        page: pageWithIg,
+        account: {
+          igUserId,
+          igUsername: profile?.igUsername ?? null,
+          accessToken: longLived.token,
+        },
       };
     },
   };

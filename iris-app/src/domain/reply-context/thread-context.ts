@@ -4,6 +4,7 @@ export type CommentThreadEntry = {
   isBrandReply: boolean;
   at: string;
   igCommentId?: string | null;
+  depth: number;
 };
 
 export type CommentThreadContext = {

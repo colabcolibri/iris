@@ -54,12 +54,35 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     WHERE c.post_id = ? AND cr.status = 'sent' AND cr.sent_text IS NOT NULL
   `);
 
+  const updateFromWebhookStmt = db.prepare(`
+    UPDATE comments
+    SET parent_ig_comment_id = ?, text = ?, author_username = COALESCE(?, author_username)
+    WHERE ig_comment_id = ?
+  `);
+
   return {
     upsertFromWebhook(input: UpsertCommentInput) {
       const existing = selectByIgCommentId.get(input.igCommentId);
 
       if (existing) {
-        return { comment: mapCommentRow(existing as never), created: false };
+        const current = mapCommentRow(existing as never);
+        const nextParent = input.parentIgCommentId ?? null;
+        const nextText = input.text ?? null;
+        const parentChanged = nextParent !== current.parentIgCommentId;
+        const textChanged = nextText !== current.text;
+
+        if (parentChanged || textChanged) {
+          updateFromWebhookStmt.run(
+            nextParent,
+            nextText,
+            input.authorUsername ?? null,
+            input.igCommentId,
+          );
+          const updated = selectByIgCommentId.get(input.igCommentId);
+          return { comment: mapCommentRow(updated as never), created: false };
+        }
+
+        return { comment: current, created: false };
       }
 
       const now = new Date().toISOString();

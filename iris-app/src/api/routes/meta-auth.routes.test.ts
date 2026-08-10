@@ -106,39 +106,34 @@ test("meta auth redirect requires session", async () => {
   await withMetaServer(async ({ baseUrl }) => {
     const response = await fetch(`${baseUrl}/auth/meta`, { redirect: "manual" });
     assert.equal(response.status, 302);
-    assert.equal(response.headers.get("location"), "/login.html");
+    assert.equal(response.headers.get("location"), "/login");
   });
 });
 
 test("meta oauth callback stores token and connection", async () => {
   const originalFetch = globalThis.fetch;
-  const graphFetchImpl = async (input: string | URL | Request) => {
+  const graphFetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === "string" ? input : input.toString());
 
-    if (url.pathname.endsWith("/oauth/access_token")) {
-      if (url.searchParams.get("grant_type") === "fb_exchange_token") {
-        return new Response(
-          JSON.stringify({ access_token: "long-user", expires_in: 3600 }),
-          { status: 200 },
-        );
-      }
-      return new Response(JSON.stringify({ access_token: "short-user" }), {
-        status: 200,
-      });
-    }
-
-    if (url.pathname.endsWith("/me/accounts")) {
+    if (url.hostname === "api.instagram.com" && url.pathname === "/oauth/access_token") {
       return new Response(
         JSON.stringify({
-          data: [
-            {
-              id: "page-1",
-              name: "Brand",
-              access_token: "page-token",
-              instagram_business_account: { id: "ig-42", username: "brandig" },
-            },
-          ],
+          data: [{ access_token: "short-user", user_id: "ig-42" }],
         }),
+        { status: 200 },
+      );
+    }
+
+    if (url.hostname === "graph.instagram.com" && url.pathname === "/access_token") {
+      return new Response(
+        JSON.stringify({ access_token: "long-user", expires_in: 3600 }),
+        { status: 200 },
+      );
+    }
+
+    if (url.hostname === "graph.instagram.com" && url.pathname.endsWith("/me")) {
+      return new Response(
+        JSON.stringify({ user_id: "ig-42", username: "brandig" }),
         { status: 200 },
       );
     }
@@ -150,8 +145,12 @@ test("meta oauth callback stores token and connection", async () => {
 
   const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === "string" ? input : input.toString());
-    if (url.hostname === "graph.facebook.com" || url.hostname === "www.facebook.com") {
-      return graphFetchImpl(input);
+    if (
+      url.hostname === "graph.instagram.com" ||
+      url.hostname === "api.instagram.com" ||
+      url.hostname === "www.instagram.com"
+    ) {
+      return graphFetchImpl(input, init);
     }
     return originalFetch(input, init);
   };

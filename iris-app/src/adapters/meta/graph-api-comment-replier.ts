@@ -21,7 +21,7 @@ export function createGraphApiCommentReplier(
 ): MetaCommentReplier {
   const fetchFn = deps.config?.fetchImpl ?? fetch;
   const version = deps.config?.graphApiVersion ?? "v21.0";
-  const base = `https://graph.facebook.com/${version}`;
+  const base = `https://graph.instagram.com/${version}`;
 
   return {
     async reply(igCommentId, message) {

@@ -10,6 +10,7 @@ import {
   isEmailAllowlisted,
   normalizeAdminEmail,
   normalizeOtpCodeInput,
+  otpPepper,
   resolveOtpTtlMs,
   verifyOtpCode,
 } from "./admin-otp-code.ts";
@@ -20,7 +21,8 @@ export type AdminLoginErrorCode =
   | "rate_limited"
   | "too_many_attempts"
   | "email_failed"
-  | "email_not_configured";
+  | "email_not_configured"
+  | "security_not_configured";
 
 export class AdminLoginError extends Error {
   readonly code: AdminLoginErrorCode;
@@ -52,6 +54,16 @@ export async function requestAdminLoginCode(
 
   if (!isEmailAllowlisted(email)) {
     return { sent: true, message: GENERIC_MESSAGE };
+  }
+
+  try {
+    // Fail closed: never issue or send an OTP without the production pepper.
+    otpPepper();
+  } catch {
+    throw new AdminLoginError(
+      "security_not_configured",
+      "Login temporariamente indisponível: configuração de segurança ausente.",
+    );
   }
 
   const existing = deps.challenges.find(email);
@@ -100,6 +112,15 @@ export async function confirmAdminLoginCode(
 ): Promise<{ email: string }> {
   const email = normalizeAdminEmail(rawEmail);
   let code: string;
+
+  try {
+    otpPepper();
+  } catch {
+    throw new AdminLoginError(
+      "security_not_configured",
+      "Login temporariamente indisponível: configuração de segurança ausente.",
+    );
+  }
 
   try {
     code = normalizeOtpCodeInput(rawCode);

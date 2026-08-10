@@ -234,6 +234,16 @@ test("list posts filters by from/to and includes assets_count", async () => {
     });
     const draft = (await draftResponse.json()) as { id: string };
 
+    const publishResponse = await fetch(`${baseUrl}/api/posts/${inRange.id}`, {
+      method: "PATCH",
+      headers: authHeaders(ADMIN),
+      body: JSON.stringify({
+        status: "published",
+        published_at: inRangeAt,
+      }),
+    });
+    assert.equal(publishResponse.status, 200);
+
     const listResponse = await fetch(
       `${baseUrl}/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z`,
       { headers: { Authorization: `Bearer ${AGENT}` } },
@@ -248,6 +258,19 @@ test("list posts filters by from/to and includes assets_count", async () => {
     assert.ok(ids.includes(draft.id));
     assert.ok(!ids.includes(outRange.id));
     assert.ok(payload.posts.every((post) => typeof post.assets_count === "number"));
+
+    const calendarResponse = await fetch(
+      `${baseUrl}/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z&calendar_only=1`,
+      { headers: { Authorization: `Bearer ${AGENT}` } },
+    );
+    assert.equal(calendarResponse.status, 200);
+    const calendarPayload = (await calendarResponse.json()) as {
+      posts: Array<{ id: string }>;
+    };
+    const calendarIds = calendarPayload.posts.map((post) => post.id);
+    assert.ok(calendarIds.includes(inRange.id));
+    assert.ok(!calendarIds.includes(draft.id));
+    assert.ok(!calendarIds.includes(outRange.id));
 
     const emptyResponse = await fetch(
       `${baseUrl}/api/posts?from=2099-01-01T00:00:00.000Z&to=2099-01-31T23:59:59.999Z`,

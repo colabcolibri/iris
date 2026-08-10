@@ -81,6 +81,7 @@ export function serializeComment(comment: Comment) {
     id: comment.id,
     ig_comment_id: comment.igCommentId,
     post_id: comment.postId,
+    parent_ig_comment_id: comment.parentIgCommentId,
     author_username: comment.authorUsername,
     text: comment.text,
     status: comment.status,

@@ -108,7 +108,7 @@ export function PersonaPage() {
                 {preview && (
                   <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
                     <p className="mb-1 font-medium text-foreground">Preview</p>
-                    <p className="break-words whitespace-pre-wrap">{preview}</p>
+                    <p className="wrap-break-word whitespace-pre-wrap">{preview}</p>
                   </div>
                 )}
 

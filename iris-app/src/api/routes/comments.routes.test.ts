@@ -115,6 +115,139 @@ test("meta webhook POST persists comment and lists via API", async () => {
   });
 });
 
+test("meta webhook POST persists parent_id and re-upsert updates parent", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+    });
+    ctx.posts.update(post.id, { igMediaId: "media-parent" });
+
+    const initialPayload = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "ig-comment-parent",
+                text: "top level",
+                from: { username: "fan" },
+                media: { id: "media-parent" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const initial = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signBody(initialPayload),
+      },
+      body: initialPayload,
+    });
+    assert.equal(initial.status, 200);
+
+    const updatedPayload = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "ig-comment-parent",
+                text: "top level corrigido",
+                parent_id: "ig-root",
+                from: { username: "fan" },
+                media: { id: "media-parent" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const updated = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signBody(updatedPayload),
+      },
+      body: updatedPayload,
+    });
+    assert.equal(updated.status, 200);
+
+    const listResponse = await fetch(`${baseUrl}/api/posts/${post.id}/comments`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    const body = (await listResponse.json()) as {
+      comments: Array<{
+        parent_ig_comment_id: string | null;
+        text: string;
+      }>;
+    };
+
+    assert.equal(body.comments.length, 1);
+    assert.equal(body.comments[0]?.parent_ig_comment_id, "ig-root");
+    assert.equal(body.comments[0]?.text, "top level corrigido");
+  });
+});
+
+test("GET comments inbox returns synced media", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post inbox",
+    });
+    ctx.posts.update(post.id, { igMediaId: "media-inbox" });
+
+    ctx.metaCommentReader = {
+      async listRecentMediaWithComments() {
+        return [
+          {
+            igMediaId: "media-inbox",
+            caption: "Post inbox",
+            timestamp: new Date().toISOString(),
+            reportedCommentsCount: 1,
+            comments: [
+              {
+                igCommentId: "ig-inbox-1",
+                parentIgCommentId: null,
+                authorUsername: "fan",
+                text: "comentário inbox",
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          },
+        ];
+      },
+    };
+
+    const response = await fetch(`${baseUrl}/api/comments/inbox?days=30`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      media: Array<{
+        post_id: string;
+        comments: Array<{ iris_comment_id: string; text: string }>;
+      }>;
+    };
+
+    assert.equal(body.media.length, 1);
+    assert.equal(body.media[0]?.post_id, post.id);
+    assert.equal(body.media[0]?.comments[0]?.text, "comentário inbox");
+    assert.ok(body.media[0]?.comments[0]?.iris_comment_id);
+  });
+});
+
 test("POST comment reply marks comment replied with mock replier", async () => {
   await withServer(async (baseUrl, ctx) => {
     const post = ctx.posts.create({ channel: "instagram" });

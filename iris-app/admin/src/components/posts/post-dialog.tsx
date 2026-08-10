@@ -37,6 +37,7 @@ type PostDialogProps = {
   onFilesChange: (files: FileList | null) => void;
   onSaveDraft: () => void;
   onSchedule: () => void;
+  onRevertToDraft?: () => void;
   onRetryDraft?: () => void;
   onRetrySchedule?: () => void;
 };
@@ -60,6 +61,7 @@ export function PostDialog({
   onFilesChange,
   onSaveDraft,
   onSchedule,
+  onRevertToDraft,
   onRetryDraft,
   onRetrySchedule,
 }: PostDialogProps) {
@@ -117,6 +119,32 @@ export function PostDialog({
 
   const title = mode === "create" ? "Nova postagem" : "Editar postagem";
   const comments = inspection?.comments ?? [];
+  const status = post?.status;
+  const isReadOnly = status === "published";
+  const isScheduled = status === "scheduled";
+  const isFailed = status === "failed";
+  const isCancelled = status === "cancelled";
+  const isDraft = !status || status === "draft";
+
+  const statusHint = (() => {
+    if (mode === "create") {
+      return "Preencha legenda e mídia. Use “Agendar” para entrar no calendário editorial.";
+    }
+    switch (status) {
+      case "draft":
+        return "Rascunho — não aparece no calendário até ser agendado.";
+      case "scheduled":
+        return "Agendado — aparece no calendário e será publicado automaticamente.";
+      case "published":
+        return "Publicado — já está no Instagram.";
+      case "failed":
+        return "Falhou na publicação — revise mídia, legenda ou conexão Meta.";
+      case "cancelled":
+        return "Cancelado — restaure como rascunho para editar novamente.";
+      default:
+        return null;
+    }
+  })();
 
   return (
     <AppDialog open={open} onOpenChange={onOpenChange} size="xl">
@@ -125,15 +153,21 @@ export function PostDialog({
       </AppDialog.Header>
 
       <AppDialog.Body>
+        {statusHint && (
+          <p className="mb-6 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            {statusHint}
+          </p>
+        )}
+
         <div className="grid min-w-0 gap-8 lg:grid-cols-12">
           <div className="flex min-w-0 flex-col gap-6 lg:col-span-7">
-            {post?.status === "failed" && post.error_message && (
+            {isFailed && post?.error_message && (
               <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 Causa da falha: {post.error_message}
               </p>
             )}
 
-            {post?.status === "published" && post.ig_media_id && (
+            {status === "published" && post?.ig_media_id && (
               <p className="text-sm text-muted-foreground">
                 ID na Meta: {post.ig_media_id}
                 {metaIgUsername && (
@@ -152,7 +186,7 @@ export function PostDialog({
               </p>
             )}
 
-            {post?.status === "failed" && (onRetryDraft || onRetrySchedule) && (
+            {isFailed && (onRetryDraft || onRetrySchedule) && (
               <div className="flex flex-wrap gap-2">
                 {onRetryDraft && (
                   <Button type="button" variant="outline" size="sm" onClick={onRetryDraft}>
@@ -167,6 +201,14 @@ export function PostDialog({
               </div>
             )}
 
+            {(isScheduled || isCancelled) && onRevertToDraft && (
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={onRevertToDraft}>
+                  {isScheduled ? "Desagendar (voltar a rascunho)" : "Restaurar como rascunho"}
+                </Button>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="post-caption" className="text-xs font-semibold tracking-wide uppercase">
                 Legenda
@@ -178,13 +220,15 @@ export function PostDialog({
                 rows={5}
                 className="min-h-32 resize-none border-0 border-b bg-muted/60 focus-visible:ring-0"
                 required
+                readOnly={isReadOnly}
+                disabled={isReadOnly}
               />
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <div className="flex-1 space-y-2">
                 <Label htmlFor="post-scheduled-at" className="text-xs font-semibold tracking-wide uppercase">
-                  Agendar para
+                  {isScheduled ? "Publicação agendada para" : "Agendar para"}
                 </Label>
                 <Input
                   id="post-scheduled-at"
@@ -192,8 +236,14 @@ export function PostDialog({
                   value={scheduledAt}
                   onChange={(e) => onScheduledAtChange(e.target.value)}
                   className="border-0 border-b bg-muted/60 focus-visible:ring-0"
+                  disabled={isReadOnly || isCancelled}
                 />
-                <p className="text-xs text-muted-foreground">Horário no fuso editorial: {timeZone}</p>
+                <p className="text-xs text-muted-foreground">
+                  Horário no fuso editorial: {timeZone}
+                  {isDraft && scheduledAt
+                    ? " · a data só entra no calendário após agendar"
+                    : ""}
+                </p>
               </div>
               <label className="flex items-center gap-2 pb-2 text-sm">
                 <input
@@ -212,7 +262,7 @@ export function PostDialog({
                 {inspection && (
                   <section className="space-y-3 rounded-lg border bg-muted/40 p-3">
                     <h3 className="text-sm font-semibold">Contexto do post</h3>
-                    <p className="text-sm break-words text-muted-foreground">
+                    <p className="text-sm wrap-break-word text-muted-foreground">
                       {inspection.post_context.caption_truncated ?? "(sem legenda)"}
                     </p>
                     {inspection.auto_reply_enabled && (
@@ -252,15 +302,22 @@ export function PostDialog({
                             </strong>
                             <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
                           </div>
-                          <p className="break-words">{comment.text}</p>
+                          <p className="wrap-break-word">{comment.text}</p>
                           {comment.thread.length > 0 && (
                             <details className="mt-2">
                               <summary className="cursor-pointer text-xs text-primary">
                                 Ver conversa
                               </summary>
-                              <ul className="mt-2 space-y-2 border-l-2 border-muted pl-3 text-xs">
+                              <ul className="mt-2 space-y-2 border-l-2 border-muted text-xs">
                                 {comment.thread.map((entry, index) => (
-                                  <li key={`${comment.id}-${index}`} className="break-words">
+                                  <li
+                                    key={`${comment.id}-${index}`}
+                                    className="wrap-break-word"
+                                    style={{
+                                      marginLeft: `${Math.min(entry.depth, 4) * 12}px`,
+                                      paddingLeft: "0.75rem",
+                                    }}
+                                  >
                                     <span className="font-medium text-foreground">
                                       {entry.is_brand_reply
                                         ? "marca"
@@ -367,19 +424,36 @@ export function PostDialog({
           Fechar
         </Button>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="border-primary text-primary"
-            onClick={onSchedule}
-            disabled={saving || !metaConnected}
-          >
-            Agendar
-          </Button>
-          <Button type="button" onClick={onSaveDraft} disabled={saving}>
-            {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Salvar rascunho
-          </Button>
+          {!isReadOnly && !isCancelled && (
+            <>
+              {(isDraft || mode === "create") && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-primary text-primary"
+                  onClick={onSchedule}
+                  disabled={saving || !metaConnected || !scheduledAt}
+                >
+                  Agendar publicação
+                </Button>
+              )}
+              {isScheduled && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-primary text-primary"
+                  onClick={onSchedule}
+                  disabled={saving || !metaConnected}
+                >
+                  Atualizar agendamento
+                </Button>
+              )}
+              <Button type="button" onClick={onSaveDraft} disabled={saving}>
+                {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {isScheduled ? "Salvar alterações" : "Salvar rascunho"}
+              </Button>
+            </>
+          )}
         </div>
       </AppDialog.Footer>
     </AppDialog>

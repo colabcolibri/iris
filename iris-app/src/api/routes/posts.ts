@@ -41,10 +41,13 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
       const from = fromRaw ? parseIsoDateParam(fromRaw, "from") : undefined;
       const to = toRaw ? parseIsoDateParam(toRaw, "to") : undefined;
 
+      const calendarOnly = searchParams.get("calendar_only") === "1";
+
       const posts = ctx.posts.list({
         status: status ?? undefined,
         from,
         to,
+        calendarOnly,
       });
       sendJson(res, 200, { posts: posts.map(serializePost) });
     } catch (error) {

@@ -6,7 +6,7 @@ import { createSqlitePostRepository } from "../../adapters/sqlite/post-repositor
 import { createSqliteCommentRepository } from "../../adapters/sqlite/comment-repository.ts";
 import { buildCommentThreadContext } from "./build-thread-context.ts";
 
-test("buildCommentThreadContext includes comments and brand replies", () => {
+test("buildCommentThreadContext includes branch with brand reply", () => {
   const db = openDatabase(":memory:");
   try {
     runMigrations(db);
@@ -22,19 +22,31 @@ test("buildCommentThreadContext includes comments and brand replies", () => {
       text: "Primeiro",
     }).comment;
 
-    const second = comments.upsertFromWebhook({
+    comments.upsertFromWebhook({
       igCommentId: "ig-2",
       postId: post.id,
+      parentIgCommentId: "ig-1",
       authorUsername: "fan2",
       text: "Segundo",
     }).comment;
 
+    comments.upsertFromWebhook({
+      igCommentId: "ig-3",
+      postId: post.id,
+      authorUsername: "outro",
+      text: "Irrelevante",
+    }).comment;
+
     comments.createReply(first.id, "Resposta da marca", "sent");
 
-    const thread = buildCommentThreadContext(second.id, { comments });
+    const second = comments.findByIgCommentId("ig-2");
+    assert.ok(second);
+
+    const thread = buildCommentThreadContext(second!.id, { comments });
     assert.ok(thread);
-    assert.ok(thread!.entries.length >= 3);
-    assert.ok(thread!.entries.some((e) => e.isBrandReply && e.text === "Resposta da marca"));
+    assert.equal(thread!.entries.some((entry) => entry.text === "Irrelevante"), false);
+    assert.ok(thread!.entries.some((entry) => entry.isBrandReply && entry.text === "Resposta da marca"));
+    assert.ok(thread!.entries.some((entry) => entry.text === "Segundo" && entry.depth === 1));
   } finally {
     db.close();
   }

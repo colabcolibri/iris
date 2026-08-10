@@ -56,7 +56,9 @@ pnpm install
 pnpm dev
 ```
 
-UI: `http://127.0.0.1:8792/` — login em `/login.html` com OTP enviado ao `IRIS_ADMIN_EMAIL`.
+UI (dev): `http://127.0.0.1:8792/` — servidor único com Vite embutido (HMR). `pnpm dev` define `NODE_ENV=development`.
+
+UI (produção): `pnpm build:admin` + `pnpm start` — bundle em `public/`; login em `/login` com OTP enviado ao `IRIS_ADMIN_EMAIL`.
 
 ## Production
 

@@ -61,6 +61,16 @@ test("spa routes fall back to index.html", async () => {
   });
 });
 
+test("redirects legacy /login.html to /login", async () => {
+  await withServer(async (port) => {
+    const response = await fetch(`http://127.0.0.1:${port}/login.html`, {
+      redirect: "manual",
+    });
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get("location"), "/login");
+  });
+});
+
 test("api requires authorization", async () => {
   await withServer(async (port) => {
     const response = await fetch(`http://127.0.0.1:${port}/api/posts`);

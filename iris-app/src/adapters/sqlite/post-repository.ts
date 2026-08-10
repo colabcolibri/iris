@@ -64,13 +64,22 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         params.push(filter.status);
       }
 
+      const editorialDate = filter.calendarOnly
+        ? "COALESCE(published_at, scheduled_at)"
+        : "COALESCE(scheduled_at, created_at)";
+
+      if (filter.calendarOnly) {
+        clauses.push(`${editorialDate} IS NOT NULL`);
+        clauses.push("status NOT IN ('draft', 'cancelled')");
+      }
+
       if (filter.from) {
-        clauses.push("datetime(COALESCE(scheduled_at, created_at)) >= datetime(?)");
+        clauses.push(`datetime(${editorialDate}) >= datetime(?)`);
         params.push(filter.from);
       }
 
       if (filter.to) {
-        clauses.push("datetime(COALESCE(scheduled_at, created_at)) <= datetime(?)");
+        clauses.push(`datetime(${editorialDate}) <= datetime(?)`);
         params.push(filter.to);
       }
 

@@ -12,6 +12,7 @@ import {
 import { serializeComment } from "../../adapters/sqlite/mappers.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { buildReplyInspection } from "../../domain/reply-context/build-reply-inspection.ts";
+import { buildCommentsInbox } from "../../domain/comments/build-comments-inbox.ts";
 
 const MAX_REPLY_LENGTH = 2200;
 
@@ -27,6 +28,58 @@ export async function handleCommentsRoute(
 ): Promise<boolean> {
   const { req, res, ctx, auth } = request;
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
+
+  if (pathname === "/api/comments/inbox" && req.method === "GET") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    if (!ctx.metaCommentReader) {
+      sendError(res, 503, "Meta comment reader not configured");
+      return true;
+    }
+
+    const url = new URL(req.url ?? "/", "http://localhost");
+    const daysRaw = Number(url.searchParams.get("days") ?? "30");
+    const days = Number.isFinite(daysRaw) ? Math.min(Math.max(daysRaw, 1), 90) : 30;
+
+    try {
+      const inbox = await buildCommentsInbox(days, {
+        metaCommentReader: ctx.metaCommentReader,
+        findPostIdByIgMediaId: (igMediaId) => ctx.posts.findByIgMediaId(igMediaId)?.id ?? null,
+        upsertFromWebhook: (input) => ctx.comments.upsertFromWebhook(input),
+        findByIgCommentId: (igCommentId) => ctx.comments.findByIgCommentId(igCommentId),
+      });
+
+      sendJson(res, 200, {
+        synced_at: inbox.syncedAt,
+        days: inbox.days,
+        summary: inbox.summary,
+        media: inbox.media.map((item) => ({
+          ig_media_id: item.igMediaId,
+          post_id: item.postId,
+          caption: item.caption,
+          media_timestamp: item.mediaTimestamp,
+          reported_comments_count: item.reportedCommentsCount,
+          comments: item.comments.map((comment) => ({
+            ig_comment_id: comment.igCommentId,
+            parent_ig_comment_id: comment.parentIgCommentId,
+            author_username: comment.authorUsername,
+            text: comment.text,
+            timestamp: comment.timestamp,
+            iris_comment_id: comment.irisCommentId,
+            status: comment.status,
+          })),
+        })),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "failed to sync comments";
+      sendError(res, 502, message);
+    }
+
+    return true;
+  }
 
   const listMatch = /^\/api\/posts\/([^/]+)\/comments$/.exec(pathname);
   if (listMatch && req.method === "GET") {

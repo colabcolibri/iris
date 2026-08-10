@@ -48,7 +48,7 @@ export async function handleMetaAuthRoute(
 
   if (pathname === "/auth/meta") {
     if (!requireAdminSession(req)) {
-      redirect(res, "/login.html");
+      redirect(res, "/login");
       return true;
     }
 
@@ -89,16 +89,14 @@ export async function handleMetaAuthRoute(
     return true;
   }
 
-  ctx.metaTokenStore.upsertToken(result.pageAccessToken, result.expiresAt);
+  ctx.metaTokenStore.upsertToken(result.accessToken, result.expiresAt);
 
-  if (result.page.igUserId) {
-    ctx.metaConnectionStore.upsert({
-      igUserId: result.page.igUserId,
-      igUsername: result.page.igUsername,
-      pageId: result.page.pageId,
-      pageName: result.page.pageName,
-    });
-  }
+  ctx.metaConnectionStore.upsert({
+    igUserId: result.account.igUserId,
+    igUsername: result.account.igUsername,
+    pageId: "instagram-login",
+    pageName: null,
+  });
 
   redirect(res, "/?meta_connected=1");
   return true;

@@ -1,0 +1,14 @@
+node_modules
+admin/node_modules
+data
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+.git
+.gitignore
+README.md
+tmp-test-media
+**/*.test.ts
+test

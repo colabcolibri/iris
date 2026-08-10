@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, MetaStatus, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
+import type { AppSettings, Asset, Comment, CommentsInbox, MetaStatus, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -41,11 +41,14 @@ async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): P
   return response as T;
 }
 
-export async function fetchPosts(params: { from?: string; to?: string; status?: string } = {}) {
+export async function fetchPosts(
+  params: { from?: string; to?: string; status?: string; calendarOnly?: boolean } = {},
+) {
   const query = new URLSearchParams();
   if (params.from) query.set("from", params.from);
   if (params.to) query.set("to", params.to);
   if (params.status) query.set("status", params.status);
+  if (params.calendarOnly) query.set("calendar_only", "1");
   const suffix = query.toString() ? `?${query}` : "";
   const payload = await apiFetch<{ posts: Post[] }>(`/api/posts${suffix}`);
   return payload.posts ?? [];
@@ -91,6 +94,10 @@ export async function fetchComments(postId: string) {
 
 export function fetchReplyInspection(postId: string) {
   return apiFetch<ReplyInspection>(`/api/posts/${postId}/reply-inspection`);
+}
+
+export function fetchCommentsInbox(days = 30) {
+  return apiFetch<CommentsInbox>(`/api/comments/inbox?days=${days}`);
 }
 
 export function replyToComment(commentId: string, message: string) {

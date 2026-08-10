@@ -1,9 +1,8 @@
+/** Instagram API with Instagram Login — business scopes (no Facebook Page). */
 export const META_OAUTH_SCOPES = [
-  "instagram_basic",
-  "instagram_content_publish",
-  "instagram_manage_comments",
-  "pages_show_list",
-  "pages_read_engagement",
+  "instagram_business_basic",
+  "instagram_business_content_publish",
+  "instagram_business_manage_comments",
 ] as const;
 
 export type MetaOAuthConfig = {
@@ -14,8 +13,16 @@ export type MetaOAuthConfig = {
 };
 
 export function readMetaOAuthConfig(publicBaseUrl?: string): MetaOAuthConfig | null {
-  const appId = process.env.META_APP_ID?.trim() ?? "";
-  const appSecret = process.env.META_APP_SECRET?.trim() ?? "";
+  // Instagram Login uses Instagram App ID/Secret from
+  // Dashboard → Instagram → API setup with Instagram login → Business login settings
+  const appId =
+    process.env.META_INSTAGRAM_APP_ID?.trim() ||
+    process.env.META_APP_ID?.trim() ||
+    "";
+  const appSecret =
+    process.env.META_INSTAGRAM_APP_SECRET?.trim() ||
+    process.env.META_APP_SECRET?.trim() ||
+    "";
   const graphApiVersion = process.env.META_GRAPH_API_VERSION?.trim() || "v21.0";
   const redirectUri =
     process.env.META_OAUTH_REDIRECT_URI?.trim() ||
@@ -26,4 +33,8 @@ export function readMetaOAuthConfig(publicBaseUrl?: string): MetaOAuthConfig | n
   }
 
   return { appId, appSecret, redirectUri, graphApiVersion };
+}
+
+export function instagramGraphBase(version: string): string {
+  return `https://graph.instagram.com/${version}`;
 }

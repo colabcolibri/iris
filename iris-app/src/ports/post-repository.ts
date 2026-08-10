@@ -24,6 +24,8 @@ export type ListPostsFilter = {
   status?: PostStatus;
   from?: string;
   to?: string;
+  /** Exclui rascunhos sem data editorial; usa published_at ou scheduled_at no range. */
+  calendarOnly?: boolean;
 };
 
 export type PostRepository = {

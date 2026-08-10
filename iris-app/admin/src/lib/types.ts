@@ -26,8 +26,39 @@ export type Comment = {
   text: string;
   status: string;
   author_username?: string;
+  parent_ig_comment_id?: string | null;
   created_at: string;
   error_message?: string | null;
+};
+
+export type CommentsInboxMedia = {
+  ig_media_id: string;
+  post_id: string | null;
+  caption: string | null;
+  media_timestamp: string;
+  reported_comments_count?: number;
+  comments: Array<{
+    ig_comment_id: string;
+    parent_ig_comment_id: string | null;
+    author_username: string | null;
+    text: string | null;
+    timestamp: string;
+    iris_comment_id: string | null;
+    status: string | null;
+  }>;
+};
+
+export type CommentsInbox = {
+  synced_at: string;
+  days: number;
+  summary?: {
+    media_scanned: number;
+    comments_reported: number;
+    comments_fetched: number;
+    access_limited: boolean;
+    warning: string | null;
+  };
+  media: CommentsInboxMedia[];
 };
 
 export type MetaStatus = {
@@ -54,6 +85,7 @@ export type ReplyInspectionThreadEntry = {
   text: string | null;
   is_brand_reply: boolean;
   at: string;
+  depth: number;
 };
 
 export type ReplyInspectionComment = {
@@ -62,6 +94,7 @@ export type ReplyInspectionComment = {
   text: string | null;
   status: string;
   created_at: string;
+  parent_ig_comment_id?: string | null;
   thread: ReplyInspectionThreadEntry[];
 };
 

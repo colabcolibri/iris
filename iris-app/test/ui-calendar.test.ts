@@ -14,6 +14,7 @@ test("admin includes calendar view", () => {
 test("calendar utilities and api filtering exist", () => {
   const dateUtils = readFileSync(`${ADMIN}/lib/date-utils.ts`, "utf8");
   assert.match(dateUtils, /postDisplayDate/);
+  assert.match(dateUtils, /postCalendarDate/);
 
   const datetime = readFileSync(`${ADMIN}/lib/datetime.ts`, "utf8");
   assert.match(datetime, /monthRange/);
@@ -21,14 +22,14 @@ test("calendar utilities and api filtering exist", () => {
   const api = readFileSync(`${ADMIN}/lib/api.ts`, "utf8");
   assert.match(api, /fetchPosts/);
   assert.match(api, /from/);
-  assert.match(api, /to/);
+  assert.match(api, /calendarOnly/);
 });
 
 test("dashboard wires calendar and realtime", () => {
   const dashboard = readFileSync(`${ADMIN}/pages/dashboard-page.tsx`, "utf8");
   assert.match(dashboard, /CalendarView/);
   assert.match(dashboard, /monthRange/);
-  assert.match(dashboard, /subscribeRealtimeEvents/);
+  assert.match(dashboard, /calendarOnly: true/);
 });
 
 test("built index serves react shell", () => {

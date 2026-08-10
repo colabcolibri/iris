@@ -21,6 +21,7 @@ import { handleMetaRoute } from "./routes/meta.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
+import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 
@@ -65,6 +66,8 @@ export type HttpServerHandle = {
   db: DatabaseSync;
   ctx: AppContext;
   stopScheduler: () => void;
+  setAdminVite: (vite: ViteDevServer) => void;
+  closeAdminVite: () => Promise<void>;
 };
 
 function resolvePublicPath(pathname: string): string | null {
@@ -110,10 +113,27 @@ function reqAcceptsSpa(pathname: string): boolean {
   return !pathname.startsWith("/api/") && !pathname.startsWith("/auth/meta");
 }
 
+function delegateToVite(
+  vite: ViteDevServer,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    vite.middlewares(req, res, (error?: unknown) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
   ctx: AppContext,
+  adminVite?: ViteDevServer,
 ): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const { pathname } = url;
@@ -190,7 +210,20 @@ async function handleRequest(
     return;
   }
 
+  if (req.method === "GET" && pathname === "/login.html") {
+    res.writeHead(302, { Location: "/login" });
+    res.end();
+    return;
+  }
+
   if (req.method === "GET") {
+    if (adminVite) {
+      await delegateToVite(adminVite, req, res);
+      if (res.writableEnded) {
+        return;
+      }
+    }
+
     serveStatic(pathname, res);
     return;
   }
@@ -238,13 +271,27 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     stopCommentResponder();
   };
 
+  let adminVite: ViteDevServer | undefined;
+
   const server = createHttpServer((req, res) => {
-    void handleRequest(req, res, ctx).catch(() => {
+    void handleRequest(req, res, ctx, adminVite).catch(() => {
       sendError(res, 500, "internal server error");
     });
   });
 
-  return { server, db, ctx, stopScheduler };
+  return {
+    server,
+    db,
+    ctx,
+    stopScheduler,
+    setAdminVite(vite: ViteDevServer) {
+      adminVite = vite;
+    },
+    async closeAdminVite() {
+      await adminVite?.close();
+      adminVite = undefined;
+    },
+  };
 }
 
 export function getPublicDirectory(): string {
