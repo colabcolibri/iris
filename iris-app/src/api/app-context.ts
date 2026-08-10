@@ -69,8 +69,8 @@ export type AppContext = {
   metaTokenStore: MetaTokenStore;
   metaConnectionStore: MetaConnectionStore;
   metaPublisher: MetaPublisher | null;
-  metaCommentReplier: MetaCommentReplier | null;
-  metaCommentReader: MetaCommentReader | null;
+  metaCommentReplier: MetaCommentReplier;
+  metaCommentReader: MetaCommentReader;
   agentRuns: AgentRunRepository;
   llmCompleter: LlmCompleter | null;
   publishUrlSecret: string | null;
@@ -163,22 +163,18 @@ export function createAppContext(options: AppContextOptions): AppContext {
         })
       : null;
 
-  const metaCommentReplier = metaTokenStore.getActiveToken()
-    ? createGraphApiCommentReplier({
-        metaTokenStore,
-        config: { graphApiVersion },
-      })
-    : null;
+  const metaCommentReplier = createGraphApiCommentReplier({
+    metaTokenStore,
+    config: { graphApiVersion },
+  });
 
-  const metaCommentReader = metaTokenStore.getActiveToken()
-    ? createGraphApiCommentReader({
-        metaTokenStore,
-        config: {
-          resolveIgUserId,
-          graphApiVersion,
-        },
-      })
-    : null;
+  const metaCommentReader = createGraphApiCommentReader({
+    metaTokenStore,
+    config: {
+      resolveIgUserId,
+      graphApiVersion,
+    },
+  });
 
   const llmApiKey = process.env.LLM_API_KEY ?? "";
   const llmCompleter = llmApiKey ? createEnvLlmCompleter() : null;

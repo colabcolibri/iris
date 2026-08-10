@@ -54,9 +54,22 @@ export class MetaNotConnectedError extends Error {
   }
 }
 
+export function metaReadinessMessage(result: MetaReadinessResult): string {
+  switch (result.reason) {
+    case "no_token":
+      return "Instagram não conectado. Conecte em configurações.";
+    case "no_ig_user":
+      return "Conta Instagram não vinculada. Reconecte em configurações.";
+    case "token_expired":
+      return "Token do Instagram expirou. Reconecte em configurações.";
+    default:
+      return "Instagram não está pronto para sincronizar comentários.";
+  }
+}
+
 export function assertMetaReadyForSchedule(ctx: AppContext): void {
   const result = getMetaReadiness(ctx);
   if (!result.ready) {
-    throw new MetaNotConnectedError();
+    throw new MetaNotConnectedError(metaReadinessMessage(result));
   }
 }

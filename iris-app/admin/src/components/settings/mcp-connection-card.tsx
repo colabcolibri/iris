@@ -4,7 +4,6 @@ import { McpSetupGuide } from "@/components/settings/mcp-setup-guide";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import {
   fetchMcpSettings,

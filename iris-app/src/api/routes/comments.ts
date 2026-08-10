@@ -13,6 +13,10 @@ import { serializeComment } from "../../adapters/sqlite/mappers.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { buildReplyInspection } from "../../domain/reply-context/build-reply-inspection.ts";
 import { buildCommentsInbox } from "../../domain/comments/build-comments-inbox.ts";
+import {
+  getMetaReadiness,
+  metaReadinessMessage,
+} from "../../domain/meta-readiness.ts";
 
 const MAX_REPLY_LENGTH = 2200;
 
@@ -35,8 +39,9 @@ export async function handleCommentsRoute(
       return true;
     }
 
-    if (!ctx.metaCommentReader) {
-      sendError(res, 503, "Meta comment reader not configured");
+    const readiness = getMetaReadiness(ctx);
+    if (!readiness.ready) {
+      sendError(res, 503, metaReadinessMessage(readiness));
       return true;
     }
 
@@ -145,8 +150,9 @@ export async function handleCommentsRoute(
         throw new ValidationError(`message must be at most ${MAX_REPLY_LENGTH} characters`);
       }
 
-      if (!ctx.metaCommentReplier) {
-        sendError(res, 503, "Meta comment replier not configured");
+      const readiness = getMetaReadiness(ctx);
+      if (!readiness.ready) {
+        sendError(res, 503, metaReadinessMessage(readiness));
         return true;
       }
 

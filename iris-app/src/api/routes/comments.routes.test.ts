@@ -23,6 +23,7 @@ async function withServer(
     metaAppSecret: APP_SECRET,
     metaWebhookVerifyToken: VERIFY_TOKEN,
     metaAccessToken: "meta-token",
+    igUserId: "test-ig-user",
     encryptionKey: "d".repeat(64),
   });
 

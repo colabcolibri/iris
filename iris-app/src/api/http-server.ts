@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import { openDatabase } from "../adapters/sqlite/connection.ts";
-import { runMigrations } from "../adapters/sqlite/migrate.ts";
+import { runMigrations, countAppliedMigrations } from "../adapters/sqlite/migrate.ts";
 import { authenticateRequest, extractBearerToken } from "./auth.ts";
 import { createAppContext, type AppContext } from "./app-context.ts";
 import { sendError, readRawBody } from "./json.ts";
@@ -311,7 +311,15 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
   const db = openDatabase(options.dbPath);
 
   if (!options.skipMigrations) {
-    runMigrations(db);
+    const applied = runMigrations(db);
+    const total = countAppliedMigrations(db);
+    if (applied.length > 0) {
+      console.log(
+        `[iris] migrations applied: ${applied.join(", ")} (total ${total})`,
+      );
+    } else {
+      console.log(`[iris] migrations up to date (${total})`);
+    }
   }
 
   const ctx = createAppContext({

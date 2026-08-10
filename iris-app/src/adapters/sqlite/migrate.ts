@@ -32,8 +32,10 @@ function listPendingMigrations(db: DatabaseSync): string[] {
   return files.filter((file) => !applied.has(file.replace(/\.sql$/, "")));
 }
 
-export function runMigrations(db: DatabaseSync): void {
+export function runMigrations(db: DatabaseSync): string[] {
   ensureMigrationsTable(db);
+
+  const appliedNow: string[] = [];
 
   for (const file of listPendingMigrations(db)) {
     const version = file.replace(/\.sql$/, "");
@@ -46,11 +48,22 @@ export function runMigrations(db: DatabaseSync): void {
         "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
       ).run(version, new Date().toISOString());
       db.exec("COMMIT");
+      appliedNow.push(version);
     } catch (error) {
       db.exec("ROLLBACK");
       throw error;
     }
   }
+
+  return appliedNow;
+}
+
+export function countAppliedMigrations(db: DatabaseSync): number {
+  ensureMigrationsTable(db);
+  const row = db
+    .prepare("SELECT COUNT(*) AS total FROM schema_migrations")
+    .get() as { total: number };
+  return row.total;
 }
 
 export function migrationsDirectory(): string {
