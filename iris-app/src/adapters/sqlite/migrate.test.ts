@@ -48,6 +48,8 @@ test("runMigrations creates posts and post_assets without legacy columns", () =>
       "reply_persona",
       "app_settings",
       "mcp_connection_settings",
+      "meta_webhook_events",
+      "llm_settings",
       "admin_login_challenges",
       "schema_migrations",
     ]) {
@@ -69,7 +71,7 @@ test("runMigrations is idempotent", () => {
       .prepare("SELECT COUNT(*) AS total FROM schema_migrations")
       .get() as { total: number };
 
-  assert.equal(count.total, 8);
+  assert.equal(count.total, 10);
   } finally {
     db.close();
   }

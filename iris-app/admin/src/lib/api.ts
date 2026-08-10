@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, CommentsInbox, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
+import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona, SyncPostCommentsResult } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -306,5 +306,23 @@ export function generateMcpConnection() {
 export function revokeMcpConnection() {
   return apiFetch<McpSettings>("/api/settings/mcp", {
     method: "DELETE",
+  });
+}
+
+export type { LlmSettings };
+
+export function fetchLlmSettings() {
+  return apiFetch<LlmSettings>("/api/settings/llm");
+}
+
+export function updateLlmSettings(body: {
+  api_url: string;
+  model: string;
+  supports_vision: boolean;
+  api_key?: string;
+}) {
+  return apiFetch<LlmSettings>("/api/settings/llm", {
+    method: "PUT",
+    body: JSON.stringify(body),
   });
 }

@@ -143,3 +143,39 @@ export function parseCommentEntries(payload: unknown): ParsedCommentEntry[] {
 
   return parsed;
 }
+
+export function readWebhookEnvelope(payload: unknown): {
+  object: string | null;
+  field: string | null;
+} {
+  if (!payload || typeof payload !== "object") {
+    return { object: null, field: null };
+  }
+
+  const root = payload as Record<string, unknown>;
+  const object = typeof root.object === "string" ? root.object : null;
+  const entries = Array.isArray(root.entry) ? root.entry : [];
+
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+
+    const changes = Array.isArray((entry as { changes?: unknown }).changes)
+      ? (entry as { changes: unknown[] }).changes
+      : [];
+
+    for (const change of changes) {
+      if (!change || typeof change !== "object") {
+        continue;
+      }
+
+      const field = (change as { field?: unknown }).field;
+      if (typeof field === "string") {
+        return { object, field };
+      }
+    }
+  }
+
+  return { object, field: null };
+}

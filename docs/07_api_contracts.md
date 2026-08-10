@@ -181,6 +181,7 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post (`parent_ig_comment_id` nullable) |
 | GET | `/api/posts/:id/reply-inspection` | admin | Post context + comment threads for supervision (`thread[].depth`) |
+| GET | `/api/comments/:id/reply-context` | admin, agent | Full reply envelope: target comment, thread, post, images, persona |
 | GET | `/api/comments/posts` | admin | Published Iris posts with local `comments_count` / `pending_count` (no Meta call) |
 | POST | `/api/posts/:id/comments/sync` | admin | Sync comments from Meta for one post (`ig_media_id` required); upserts SQLite |
 | GET | `/api/comments/inbox?days=30` | admin | **Legacy** — inbox sync; prefer per-post sync above |
@@ -202,6 +203,9 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/settings/reply-persona` | admin | Read global reply persona (defaults if unset) |
 | PUT | `/api/settings/reply-persona` | admin | Update `system_prompt`, `tone`, `brand_name`, `max_chars` (100–1000) |
+| GET | `/api/settings/llm` | admin | LLM provider status (`configured`, `api_url`, `model`, `key_hint`, `source`) |
+| PUT | `/api/settings/llm` | admin | Set `api_key` (optional on rotate), `api_url`, `model`, `supports_vision` |
+| GET | `/api/settings/webhook-events?limit=50` | admin | Recent Meta webhook payloads (truncated JSON) for audit |
 
 ## Events (SSE)
 

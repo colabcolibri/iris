@@ -47,14 +47,15 @@ test("comment responder replies to pending comments with auto_reply enabled", as
       },
     };
 
-    ctx.llmCompleter = {
-      async complete(prompt) {
-        capturedPrompt = prompt;
-        return "Obrigado pelo interesse!";
+    const stop = startCommentResponder(ctx, {
+      intervalMs: 50,
+      llmCompleter: {
+        async complete(prompt) {
+          capturedPrompt = prompt;
+          return "Obrigado pelo interesse!";
+        },
       },
-    };
-
-    const stop = startCommentResponder(ctx, { intervalMs: 50 });
+    });
     await new Promise((resolve) => setTimeout(resolve, 120));
     stop();
 
@@ -107,13 +108,14 @@ test("comment responder ignores posts without auto_reply", async () => {
         called = true;
       },
     };
-    ctx.llmCompleter = {
-      async complete() {
-        return "ok";
+    const stop = startCommentResponder(ctx, {
+      intervalMs: 50,
+      llmCompleter: {
+        async complete() {
+          return "ok";
+        },
       },
-    };
-
-    const stop = startCommentResponder(ctx, { intervalMs: 50 });
+    });
     await new Promise((resolve) => setTimeout(resolve, 120));
     stop();
 

@@ -21,7 +21,7 @@ export function startCommentResponder(
   options: CommentResponderOptions = {},
 ): () => void {
   const replier = options.metaCommentReplier ?? ctx.metaCommentReplier;
-  const llm = options.llmCompleter ?? ctx.llmCompleter;
+  const llm = options.llmCompleter ?? ctx.resolveLlmCompleter();
 
   if (!replier || !llm) {
     return () => undefined;

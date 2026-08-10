@@ -19,8 +19,14 @@ import {
   getMetaReadiness,
   metaReadinessMessage,
 } from "../../domain/meta-readiness.ts";
+import { assembleReplyContext } from "../../domain/reply-context/reply-context-assembler.ts";
+import { serializeReplyContext } from "../../domain/reply-context/serialize-reply-context.ts";
 
 const MAX_REPLY_LENGTH = 2200;
+
+function requireAdminOrAgent(auth: AuthContext): boolean {
+  return auth.role === "admin" || auth.role === "agent";
+}
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -252,6 +258,40 @@ export async function handleCommentsRoute(
     }
 
     sendJson(res, 200, inspection);
+    return true;
+  }
+
+  const replyContextMatch = /^\/api\/comments\/([^/]+)\/reply-context$/.exec(pathname);
+  if (replyContextMatch && req.method === "GET") {
+    if (!requireAdminOrAgent(auth)) {
+      sendError(res, 403, "admin or agent token required");
+      return true;
+    }
+
+    const commentId = replyContextMatch[1];
+    const comment = ctx.comments.findById(commentId);
+    if (!comment) {
+      sendError(res, 404, "comment not found");
+      return true;
+    }
+
+    const context = await assembleReplyContext(commentId, ctx.replyContextAssembler);
+    if (!context) {
+      sendError(res, 404, "comment not found");
+      return true;
+    }
+
+    const post = ctx.posts.findById(comment.postId);
+    sendJson(
+      res,
+      200,
+      serializeReplyContext(context, {
+        commentId: comment.id,
+        igCommentId: comment.igCommentId,
+        postId: comment.postId,
+        igMediaId: post?.igMediaId ?? null,
+      }),
+    );
     return true;
   }
 

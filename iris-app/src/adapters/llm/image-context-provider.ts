@@ -17,23 +17,42 @@ function supportsVision(model: string): boolean {
 
 export type EnvImageContextProviderOptions = {
   llm?: LlmCompleter | null;
+  resolveLlm?: () => LlmCompleter | null;
   model?: string;
+  resolveModel?: () => string;
+  resolveSupportsVision?: () => boolean;
 };
 
 export function createEnvImageContextProvider(
   options: EnvImageContextProviderOptions = {},
 ): ImageContextProvider {
-  const model = options.model ?? process.env.LLM_MODEL ?? "gpt-4o-mini";
-  const llm = options.llm;
+  const resolveModel =
+    options.resolveModel ??
+    (() => options.model ?? process.env.LLM_MODEL ?? "gpt-4o-mini");
+  const resolveSupportsVision =
+    options.resolveSupportsVision ??
+    (() => {
+      if (process.env.LLM_SUPPORTS_VISION === "1") {
+        return true;
+      }
+      if (process.env.LLM_SUPPORTS_VISION === "0") {
+        return false;
+      }
+      return supportsVision(resolveModel());
+    });
+  const resolveLlm = options.resolveLlm ?? (() => options.llm ?? null);
 
   return {
     async build(postContext: PostReplyContext | null) {
+      const llm = resolveLlm();
+      const visionEnabledFlag = resolveSupportsVision();
+
       if (!postContext || postContext.assets.length === 0) {
         return { summaries: [], visionEnabled: false };
       }
 
       const assets = postContext.assets.slice(0, MAX_IMAGES);
-      const visionEnabled = Boolean(llm) && supportsVision(model);
+      const visionEnabled = Boolean(llm) && visionEnabledFlag;
 
       if (!visionEnabled) {
         return {

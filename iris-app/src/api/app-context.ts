@@ -16,12 +16,17 @@ import { createGraphApiPublisher } from "../adapters/meta/graph-api-publisher.ts
 import { createGraphApiCommentReplier } from "../adapters/meta/graph-api-comment-replier.ts";
 import { createGraphApiCommentReader } from "../adapters/meta/graph-api-comment-reader.ts";
 import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-repository.ts";
-import { createEnvLlmCompleter } from "../adapters/llm/env-llm-completer.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
 import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
 import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-repository.ts";
 import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connection-repository.ts";
+import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-event-repository.ts";
+import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
 import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
+import {
+  createLlmConfigResolver,
+  type LlmConfigResolver,
+} from "../domain/llm/resolve-llm-config.ts";
 import {
   createSqliteAdminLoginChallengeRepository,
   type AdminLoginChallengeRepository,
@@ -43,6 +48,8 @@ import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
 import type { AppSettingsStore } from "../ports/app-settings-store.ts";
 import type { McpConnectionStore } from "../ports/mcp-connection-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
+import type { LlmSettingsStore } from "../ports/llm-settings-store.ts";
+import type { WebhookEventRepository } from "../ports/webhook-event-repository.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 import {
   loadMcpConnectionCodeFromEnv,
@@ -73,6 +80,10 @@ export type AppContext = {
   metaCommentReader: MetaCommentReader;
   agentRuns: AgentRunRepository;
   llmCompleter: LlmCompleter | null;
+  llmSettingsStore: LlmSettingsStore;
+  llmConfigResolver: LlmConfigResolver;
+  webhookEvents: WebhookEventRepository;
+  resolveLlmCompleter(): LlmCompleter | null;
   publishUrlSecret: string | null;
   metaAppSecret: string | null;
   metaWebhookVerifyToken: string | null;
@@ -176,13 +187,17 @@ export function createAppContext(options: AppContextOptions): AppContext {
     },
   });
 
-  const llmApiKey = process.env.LLM_API_KEY ?? "";
-  const llmCompleter = llmApiKey ? createEnvLlmCompleter() : null;
+  const llmSettingsStore = createSqliteLlmSettingsStore(options.db, {
+    encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
+  });
+  const llmConfigResolver = createLlmConfigResolver(llmSettingsStore);
+  const llmCompleter = llmConfigResolver.createCompleter();
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
   const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
+  const webhookEvents = createSqliteWebhookEventRepository(options.db);
   const nodeEnv = process.env.NODE_ENV ?? "development";
   const envMcpCode = (
     options.mcpConnectionCode ?? process.env.IRIS_MCP_CONNECTION_CODE ?? ""
@@ -193,8 +208,11 @@ export function createAppContext(options: AppContextOptions): AppContext {
     getStoredHash: () => mcpConnectionStore.get()?.codeHash ?? null,
   });
   const imageContextProvider = createEnvImageContextProvider({
-    llm: llmCompleter,
-    model: process.env.LLM_MODEL,
+    resolveLlm: () => llmConfigResolver.createCompleter(),
+    resolveModel: () =>
+      llmConfigResolver.resolve()?.model ?? process.env.LLM_MODEL ?? "gpt-4o-mini",
+    resolveSupportsVision: () =>
+      llmConfigResolver.resolve()?.supportsVision ?? false,
   });
 
   const replyContextAssembler: ReplyContextAssemblerDeps = {
@@ -227,6 +245,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
     metaCommentReader,
     agentRuns: createSqliteAgentRunRepository(options.db),
     llmCompleter,
+    llmSettingsStore,
+    llmConfigResolver,
+    webhookEvents,
+    resolveLlmCompleter: () => llmConfigResolver.createCompleter(),
     publishUrlSecret: publishUrlSecret || null,
     metaAppSecret: metaAppSecret || null,
     metaWebhookVerifyToken: metaWebhookVerifyToken || null,

@@ -3,10 +3,13 @@ import type { AppContext } from "../app-context.ts";
 import { BodyTooLargeError, readRawBody, sendError } from "../json.ts";
 import {
   parseCommentEntries,
+  readWebhookEnvelope,
   verifyHubSignature,
   verifySubscribeToken,
 } from "../../domain/meta-webhook.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
+
+const PAYLOAD_PREVIEW_BYTES = 2048;
 
 export function handleMetaWebhookRoute(
   req: IncomingMessage,
@@ -68,8 +71,18 @@ async function handleMetaWebhookPost(
     }
 
     const payload = JSON.parse(rawBody.toString("utf8")) as unknown;
+    const envelope = readWebhookEnvelope(payload);
+    const event = ctx.webhookEvents.insert({
+      object: envelope.object,
+      field: envelope.field,
+      payloadJson: rawBody.toString("utf8"),
+    });
+
     const entries = parseCommentEntries(payload);
     const affectedPosts = new Set<string>();
+    let processed = false;
+    let linkedCommentId: string | null = null;
+    let linkedPostId: string | null = null;
 
     for (const entry of entries) {
       const post = ctx.posts.findByIgMediaId(entry.igMediaId);
@@ -85,10 +98,20 @@ async function handleMetaWebhookPost(
         text: entry.text,
       });
 
+      processed = true;
+      linkedCommentId = result.comment.id;
+      linkedPostId = post.id;
+
       if (result.created) {
         affectedPosts.add(post.id);
       }
     }
+
+    ctx.webhookEvents.update(event.id, {
+      processingStatus: processed ? "processed" : entries.length > 0 ? "ignored" : "received",
+      commentId: linkedCommentId,
+      postId: linkedPostId,
+    });
 
     for (const postId of affectedPosts) {
       notifyCommentsChanged({ post_id: postId });
@@ -106,4 +129,12 @@ async function handleMetaWebhookPost(
     sendError(res, 500, "internal server error");
     return true;
   }
+}
+
+export function truncateWebhookPayload(payloadJson: string): string {
+  if (payloadJson.length <= PAYLOAD_PREVIEW_BYTES) {
+    return payloadJson;
+  }
+
+  return `${payloadJson.slice(0, PAYLOAD_PREVIEW_BYTES)}…`;
 }

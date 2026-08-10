@@ -21,6 +21,10 @@ import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
 import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
+import {
+  handleLlmSettingsRoute,
+  handleWebhookEventsSettingsRoute,
+} from "./routes/settings-llm.ts";
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
@@ -258,6 +262,14 @@ async function handleRequest(
     }
 
     if (await handleSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleLlmSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleWebhookEventsSettingsRoute(routeRequest)) {
       return;
     }
 

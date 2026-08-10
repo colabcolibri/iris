@@ -113,6 +113,54 @@ test("meta webhook POST persists comment and lists via API", async () => {
     assert.equal(body.comments[0]?.ig_comment_id, "ig-comment-1");
     assert.equal(body.comments[0]?.text, "muito bom");
     assert.equal(body.comments[0]?.status, "pending");
+    assert.equal(ctx.webhookEvents.count(), 1);
+
+    const eventsResponse = await fetch(`${baseUrl}/api/settings/webhook-events?limit=5`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    assert.equal(eventsResponse.status, 200);
+    const eventsBody = (await eventsResponse.json()) as {
+      events: Array<{ processing_status: string; post_id: string }>;
+    };
+    assert.equal(eventsBody.events.length, 1);
+    assert.equal(eventsBody.events[0]?.processing_status, "processed");
+    assert.equal(eventsBody.events[0]?.post_id, post.id);
+  });
+});
+
+test("meta webhook POST persists ignored event when media is unknown", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const payload = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "ig-comment-unknown",
+                text: "oi",
+                media: { id: "media-missing" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signBody(payload),
+      },
+      body: payload,
+    });
+    assert.equal(response.status, 200);
+    assert.equal(ctx.webhookEvents.count(), 1);
+
+    const events = ctx.webhookEvents.listRecent(1);
+    assert.equal(events[0]?.processingStatus, "ignored");
   });
 });
 
@@ -439,5 +487,51 @@ test("POST comment reply marks failed when meta replier throws", async () => {
     };
     assert.equal(updated.status, "failed");
     assert.match(updated.error_message, /rate limit/);
+  });
+});
+
+test("GET reply-context returns target comment and thread for agent", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Legenda do post",
+    });
+    ctx.posts.update(post.id, { igMediaId: "media-context" });
+
+    const root = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-root",
+      postId: post.id,
+      text: "pergunta raiz",
+      authorUsername: "fan",
+    }).comment;
+
+    const child = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-child",
+      postId: post.id,
+      parentIgCommentId: "ig-root",
+      text: "resposta encadeada",
+      authorUsername: "fan2",
+    }).comment;
+
+    const response = await fetch(`${baseUrl}/api/comments/${child.id}/reply-context`, {
+      headers: { Authorization: `Bearer ${AGENT}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      target_comment: { id: string; text: string | null };
+      thread: Array<{ depth: number }>;
+      post: { caption: string | null; ig_media_id: string | null } | null;
+      persona: { max_chars: number };
+    };
+
+    assert.equal(body.target_comment.id, child.id);
+    assert.equal(body.target_comment.text, "resposta encadeada");
+    assert.ok(body.thread.some((entry) => entry.depth > 0));
+    assert.equal(body.post?.caption, "Legenda do post");
+    assert.equal(body.post?.ig_media_id, "media-context");
+    assert.ok(body.persona.max_chars > 0);
+    assert.ok(root.id);
   });
 });

@@ -166,3 +166,57 @@ test("PUT app settings persists timezone and rejects invalid zone", async () => 
     assert.equal(body.timezone, "Europe/Lisbon");
   });
 });
+
+test("PUT and GET llm settings persist encrypted api key", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const putResponse = await fetch(`${baseUrl}/api/settings/llm`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: "sk-test-key-1234",
+        api_url: "https://api.example.com/v1/chat/completions",
+        model: "gpt-test",
+        supports_vision: true,
+      }),
+    });
+    assert.equal(putResponse.status, 200);
+
+    const putBody = (await putResponse.json()) as {
+      configured: boolean;
+      key_hint: string;
+      source: string;
+      model: string;
+    };
+    assert.equal(putBody.configured, true);
+    assert.equal(putBody.key_hint, "1234");
+    assert.equal(putBody.source, "database");
+    assert.equal(putBody.model, "gpt-test");
+
+    const getResponse = await fetch(`${baseUrl}/api/settings/llm`, {
+      headers: { Cookie: adminCookie },
+    });
+    const getBody = (await getResponse.json()) as { key_hint: string };
+    assert.equal(getBody.key_hint, "1234");
+  });
+});
+
+test("agent cannot update llm settings", async () => {
+  await withSettingsServer(async ({ baseUrl }) => {
+    const response = await fetch(`${baseUrl}/api/settings/llm`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${AGENT}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: "sk-hack",
+        api_url: "https://api.example.com/v1/chat/completions",
+        model: "gpt-test",
+      }),
+    });
+    assert.equal(response.status, 403);
+  });
+});

@@ -150,3 +150,14 @@ export type ReplyInspection = {
   comments: ReplyInspectionComment[];
   auto_reply_enabled: boolean;
 };
+
+export type LlmSettings = {
+  configured: boolean;
+  api_url: string;
+  model: string;
+  supports_vision: boolean;
+  key_hint: string | null;
+  source: "database" | "environment" | null;
+  env_override: boolean;
+  updated_at: string | null;
+};
