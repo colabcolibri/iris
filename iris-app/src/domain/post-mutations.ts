@@ -1,6 +1,6 @@
 import type { PostStatus } from "./post.ts";
-import type { ReplyMode } from "./reply-mode.ts";
-import { isReplyMode, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
+import type { PostReplyModeSetting } from "./reply-mode.ts";
+import { isPostReplyModeSetting, isReplyMode, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
 import { ValidationError } from "../api/json.ts";
 
 export type CreatePostPayload = {
@@ -54,7 +54,7 @@ export type NormalizedUpdatePost = {
   sourceNote?: string | null;
   status?: PostStatus;
   autoReplyEnabled?: boolean;
-  replyMode?: ReplyMode;
+  replyMode?: PostReplyModeSetting;
   carouselSummary?: string | null;
 };
 
@@ -127,8 +127,11 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
   }
 
   if ("reply_mode" in body) {
-    if (typeof body.reply_mode !== "string" || !isReplyMode(body.reply_mode)) {
-      throw new ValidationError("reply_mode must be off, auto, or draft");
+    if (
+      typeof body.reply_mode !== "string" ||
+      !isPostReplyModeSetting(body.reply_mode)
+    ) {
+      throw new ValidationError("reply_mode must be inherit, off, auto, or draft");
     }
     update.replyMode = body.reply_mode;
   }

@@ -5,32 +5,54 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { replyModeOption, REPLY_MODE_OPTIONS } from "@/lib/reply-mode-options";
-import type { ReplyMode } from "@/lib/types";
+import {
+  GLOBAL_REPLY_MODE_OPTIONS,
+  POST_REPLY_MODE_OPTIONS,
+  postReplyModeOption,
+  replyModeOption,
+} from "@/lib/reply-mode-options";
+import type { PostReplyModeSetting, ReplyMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type ReplyModeSelectProps = {
-  value: ReplyMode;
-  onChange: (value: ReplyMode) => void;
+type ReplyModeSelectBaseProps = {
   disabled?: boolean;
   id?: string;
   className?: string;
 };
 
-export function ReplyModeSelect({
-  value,
-  onChange,
-  disabled,
-  id,
-  className,
-}: ReplyModeSelectProps) {
-  const selected = replyModeOption(value);
+type GlobalReplyModeSelectProps = ReplyModeSelectBaseProps & {
+  variant: "global";
+  value: ReplyMode;
+  onChange: (value: ReplyMode) => void;
+};
+
+type PostReplyModeSelectProps = ReplyModeSelectBaseProps & {
+  variant: "post";
+  value: PostReplyModeSetting;
+  onChange: (value: PostReplyModeSetting) => void;
+};
+
+export type ReplyModeSelectProps = GlobalReplyModeSelectProps | PostReplyModeSelectProps;
+
+export function ReplyModeSelect(props: ReplyModeSelectProps) {
+  const { disabled, id, className, variant } = props;
+  const options = variant === "global" ? GLOBAL_REPLY_MODE_OPTIONS : POST_REPLY_MODE_OPTIONS;
+  const selected =
+    variant === "global"
+      ? replyModeOption(props.value)
+      : postReplyModeOption(props.value);
   const SelectedIcon = selected.icon;
 
   return (
     <Select
-      value={value}
-      onValueChange={(next) => onChange(next as ReplyMode)}
+      value={props.value}
+      onValueChange={(next) => {
+        if (variant === "global") {
+          props.onChange(next as ReplyMode);
+          return;
+        }
+        props.onChange(next as PostReplyModeSetting);
+      }}
       disabled={disabled}
     >
       <div className={cn("relative w-full", className)}>
@@ -46,7 +68,7 @@ export function ReplyModeSelect({
         </SelectTrigger>
       </div>
       <SelectContent align="start" className="min-w-[var(--anchor-width)]">
-        {REPLY_MODE_OPTIONS.map((option) => {
+        {options.map((option) => {
           const Icon = option.icon;
           return (
             <SelectItem key={option.value} value={option.value} className="py-2.5 pl-3 pr-8">

@@ -1,5 +1,6 @@
 import type { Post, PostAsset } from "../../domain/post.ts";
-import type { ReplyMode } from "../../domain/reply-mode.ts";
+import type { PostReplyModeSetting } from "../../domain/reply-mode.ts";
+import { isPostReplyModeSetting } from "../../domain/reply-mode.ts";
 import type { Comment } from "../../domain/comment.ts";
 
 type PostRow = {
@@ -60,7 +61,9 @@ export function mapPostRow(row: PostRow): Post {
     sourceNote: row.source_note,
     errorMessage: row.error_message,
     autoReplyEnabled: row.auto_reply_enabled === 1,
-    replyMode: (row.reply_mode ?? "off") as ReplyMode,
+    replyMode: isPostReplyModeSetting(row.reply_mode)
+      ? row.reply_mode
+      : "off",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     assetsCount:

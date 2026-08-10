@@ -1,6 +1,6 @@
 import { KanbanCard } from "@/components/kanban/kanban-card";
 import { KanbanColumnShell } from "@/components/templates/kanban-column-shell";
-import type { Post, PostStatus } from "@/lib/types";
+import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 const EMPTY_MESSAGES: Partial<Record<PostStatus, string>> = {
   cancelled: "Solte aqui para cancelar",
@@ -10,7 +10,7 @@ type KanbanColumnProps = {
   column: { id: PostStatus; label: string };
   posts: Post[];
   timeZone: string;
-  globalAutoReplyEnabled: boolean;
+  globalReplyMode: ReplyMode;
   onOpenPost: (post: Post) => void;
   onStatusChange: (post: Post, status: PostStatus) => void;
 };
@@ -19,7 +19,7 @@ export function KanbanColumn({
   column,
   posts,
   timeZone,
-  globalAutoReplyEnabled,
+  globalReplyMode,
   onOpenPost,
   onStatusChange,
 }: KanbanColumnProps) {
@@ -33,7 +33,7 @@ export function KanbanColumn({
             key={post.id}
             post={post}
             timeZone={timeZone}
-            globalAutoReplyEnabled={globalAutoReplyEnabled}
+            globalReplyMode={globalReplyMode}
             onOpen={() => onOpenPost(post)}
             onStatusChange={(status) => onStatusChange(post, status)}
           />

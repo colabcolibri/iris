@@ -1,5 +1,9 @@
+import type { ReplyMode } from "./reply-mode.ts";
+
 export type AppSettings = {
   timezone: string;
+  replyMode: ReplyMode;
+  /** Derivado de replyMode para compatibilidade com API legada. */
   autoReplyEnabled: boolean;
   updatedAt: string;
 };

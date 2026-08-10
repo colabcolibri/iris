@@ -1,11 +1,11 @@
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { KANBAN_COLUMNS } from "@/lib/status";
-import type { Post, PostStatus } from "@/lib/types";
+import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 type KanbanBoardProps = {
   posts: Post[];
   timeZone: string;
-  globalAutoReplyEnabled: boolean;
+  globalReplyMode: ReplyMode;
   onOpenPost: (post: Post) => void;
   onStatusChange: (post: Post, status: PostStatus) => void;
 };
@@ -13,7 +13,7 @@ type KanbanBoardProps = {
 export function KanbanBoard({
   posts,
   timeZone,
-  globalAutoReplyEnabled,
+  globalReplyMode,
   onOpenPost,
   onStatusChange,
 }: KanbanBoardProps) {
@@ -25,7 +25,7 @@ export function KanbanBoard({
           column={column}
           posts={posts.filter((post) => post.status === column.id)}
           timeZone={timeZone}
-          globalAutoReplyEnabled={globalAutoReplyEnabled}
+          globalReplyMode={globalReplyMode}
           onOpenPost={onOpenPost}
           onStatusChange={onStatusChange}
         />

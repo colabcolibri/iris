@@ -99,7 +99,7 @@ test("comment responder ignores posts without auto_reply", async () => {
       metaAccessToken: "meta",
     });
 
-    const post = ctx.posts.create({ channel: "instagram" });
+    const post = ctx.posts.create({ channel: "instagram", replyMode: "off" });
     const { comment } = ctx.comments.upsertFromWebhook({
       igCommentId: "ig-c-2",
       postId: post.id,

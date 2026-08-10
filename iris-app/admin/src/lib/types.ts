@@ -1,5 +1,6 @@
 export type PostStatus = "draft" | "scheduled" | "published" | "monitored" | "failed" | "cancelled";
 export type ReplyMode = "off" | "auto" | "draft";
+export type PostReplyModeSetting = ReplyMode | "inherit";
 
 export type Post = {
   id: string;
@@ -12,7 +13,7 @@ export type Post = {
   created_at: string;
   updated_at?: string;
   auto_reply_enabled?: boolean;
-  reply_mode?: ReplyMode;
+  reply_mode?: PostReplyModeSetting;
   assets_count?: number;
   error_message?: string | null;
   ig_media_id?: string | null;
@@ -255,6 +256,7 @@ export type AgentRunDetail = {
 
 export type AppSettings = {
   timezone: string;
+  reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
   updated_at: string;
 };

@@ -1,4 +1,4 @@
-import { AlertCircle, Bot, ChevronLeft, ChevronRight, Clock, PauseCircle, Plus } from "lucide-react";
+import { AlertCircle, Bot, ChevronLeft, ChevronRight, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -16,14 +16,14 @@ import {
 } from "@/lib/date-utils";
 import { formatChipTime, sameZonedCalendarDay } from "@/lib/datetime";
 import { POST_STATUS_LABELS } from "@/lib/status";
-import type { Post, PostStatus } from "@/lib/types";
+import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 type CalendarViewProps = {
   posts: Post[];
   cursor: Date;
   selectedId: string | null;
   timeZone: string;
-  globalAutoReplyEnabled: boolean;
+  globalReplyMode: ReplyMode;
   onCursorChange: (date: Date) => void;
   onSelect: (post: Post) => void;
   onCreatePost: () => void;
@@ -45,7 +45,7 @@ export function CalendarView({
   cursor,
   selectedId,
   timeZone,
-  globalAutoReplyEnabled,
+  globalReplyMode,
   onCursorChange,
   onSelect,
   onCreatePost,
@@ -170,16 +170,11 @@ export function CalendarView({
                 const label = truncate(post.caption, 18);
                 const statusLabel = POST_STATUS_LABELS[post.status];
                 const replyStatus = resolveEffectivePostReplyStatusFromPost(
-                  globalAutoReplyEnabled,
+                  globalReplyMode,
                   post,
                 );
                 const replyCopy = replyStatusPresentation(replyStatus);
-                const ReplyIcon =
-                  replyStatus.kind === "paused"
-                    ? PauseCircle
-                    : replyStatus.kind === "off"
-                      ? null
-                      : Bot;
+                const ReplyIcon = replyStatus.kind === "off" ? null : Bot;
 
                 return (
                   <button

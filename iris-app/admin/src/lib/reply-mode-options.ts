@@ -1,15 +1,42 @@
 import type { LucideIcon } from "lucide-react";
-import { BotOff, ClipboardCheck, Zap } from "lucide-react";
-import type { ReplyMode } from "@/lib/types";
+import { BotOff, ClipboardCheck, Globe2, Zap } from "lucide-react";
+import type { PostReplyModeSetting, ReplyMode } from "@/lib/types";
 
-export type ReplyModeOption = {
-  value: ReplyMode;
+export type ReplyModeOption<T extends string = ReplyMode> = {
+  value: T;
   label: string;
   description: string;
   icon: LucideIcon;
 };
 
-export const REPLY_MODE_OPTIONS: ReplyModeOption[] = [
+export const GLOBAL_REPLY_MODE_OPTIONS: ReplyModeOption<ReplyMode>[] = [
+  {
+    value: "off",
+    label: "Desligado",
+    description: "A Iris não responde comentários em nenhum post que siga o global.",
+    icon: BotOff,
+  },
+  {
+    value: "auto",
+    label: "Automático",
+    description: "A Iris responde e publica no Instagram sem revisão.",
+    icon: Zap,
+  },
+  {
+    value: "draft",
+    label: "Com aprovação",
+    description: "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
+    icon: ClipboardCheck,
+  },
+];
+
+export const POST_REPLY_MODE_OPTIONS: ReplyModeOption<PostReplyModeSetting>[] = [
+  {
+    value: "inherit",
+    label: "Seguir global",
+    description: "Usa o modo definido nas configurações do agente de comentários.",
+    icon: Globe2,
+  },
   {
     value: "off",
     label: "Desligado neste post",
@@ -30,6 +57,18 @@ export const REPLY_MODE_OPTIONS: ReplyModeOption[] = [
   },
 ];
 
-export function replyModeOption(value: ReplyMode): ReplyModeOption {
-  return REPLY_MODE_OPTIONS.find((option) => option.value === value) ?? REPLY_MODE_OPTIONS[0];
+export function replyModeOption(value: ReplyMode): ReplyModeOption<ReplyMode> {
+  return (
+    GLOBAL_REPLY_MODE_OPTIONS.find((option) => option.value === value) ??
+    GLOBAL_REPLY_MODE_OPTIONS[0]
+  );
+}
+
+export function postReplyModeOption(
+  value: PostReplyModeSetting,
+): ReplyModeOption<PostReplyModeSetting> {
+  return (
+    POST_REPLY_MODE_OPTIONS.find((option) => option.value === value) ??
+    POST_REPLY_MODE_OPTIONS[0]
+  );
 }

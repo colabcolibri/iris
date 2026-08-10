@@ -1,4 +1,4 @@
-import type { ReplyMode } from "./reply-mode.ts";
+import type { PostReplyModeSetting } from "./reply-mode.ts";
 
 export type PostStatus =
   | "draft"
@@ -20,7 +20,7 @@ export type Post = {
   sourceNote: string | null;
   errorMessage: string | null;
   autoReplyEnabled: boolean;
-  replyMode: ReplyMode;
+  replyMode: PostReplyModeSetting;
   createdAt: string;
   updatedAt: string;
   assetsCount?: number;

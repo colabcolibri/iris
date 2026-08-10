@@ -1,7 +1,6 @@
 import type { AppContext } from "../api/app-context.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
-import { getAppSettingsOrDefault } from "../adapters/sqlite/app-settings-repository.ts";
 import { processCommentReply } from "../domain/comments/process-comment-reply.ts";
 
 export type CommentResponderOptions = {
@@ -34,11 +33,6 @@ export function startCommentResponder(
     running = true;
 
     try {
-      const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
-      if (!appSettings.autoReplyEnabled) {
-        return;
-      }
-
       const pending = ctx.comments.listPendingForAgentReply();
 
       for (const comment of pending) {

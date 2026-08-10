@@ -19,12 +19,12 @@ import {
 import { formatWhen } from "@/lib/datetime";
 import { postDisplayDate, truncate } from "@/lib/date-utils";
 import { getKanbanActions } from "@/lib/status";
-import type { Post, PostStatus } from "@/lib/types";
+import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 type KanbanCardProps = {
   post: Post;
   timeZone: string;
-  globalAutoReplyEnabled: boolean;
+  globalReplyMode: ReplyMode;
   onOpen: () => void;
   onStatusChange: (status: PostStatus) => void;
 };
@@ -56,7 +56,7 @@ function dateMeta(post: Post, timeZone: string) {
 export function KanbanCard({
   post,
   timeZone,
-  globalAutoReplyEnabled,
+  globalReplyMode,
   onOpen,
   onStatusChange,
 }: KanbanCardProps) {
@@ -156,7 +156,7 @@ export function KanbanCard({
         )}
         <PostReplyStatusBadge
           post={post}
-          globalAutoReplyEnabled={globalAutoReplyEnabled}
+          globalReplyMode={globalReplyMode}
         />
       </div>
     </KanbanColumnShell.Card>

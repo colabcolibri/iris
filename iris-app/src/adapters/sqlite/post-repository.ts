@@ -38,8 +38,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         input.publishedAt ?? null,
         input.igMediaId ?? null,
         input.sourceNote ?? null,
-        input.replyMode === "auto" ? 1 : 0,
-        input.replyMode ?? "off",
+        input.replyMode === "auto" || input.replyMode === "draft" ? 1 : 0,
+        input.replyMode ?? "inherit",
         now,
         now,
       );
@@ -147,7 +147,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
 
       const updatedAt = new Date().toISOString();
       const autoReplyEnabled =
-        next.replyMode === "auto"
+        next.replyMode === "auto" || next.replyMode === "draft"
           ? true
           : next.replyMode === "off"
             ? false

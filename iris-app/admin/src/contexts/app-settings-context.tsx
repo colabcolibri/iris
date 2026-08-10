@@ -2,14 +2,17 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { DEFAULT_TIMEZONE } from "@iris/domain/timezone";
 import { useAuthSession } from "@/contexts/auth-session-context";
 import { fetchAppSettings, updateAppSettings } from "@/lib/api";
+import type { ReplyMode } from "@/lib/types";
 
 type AppSettingsContextValue = {
   timezone: string;
+  replyMode: ReplyMode;
+  /** Compatibilidade com API legada. */
   autoReplyEnabled: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
   saveTimezone: (timezone: string) => Promise<void>;
-  saveAutoReplyEnabled: (enabled: boolean) => Promise<void>;
+  saveReplyMode: (mode: ReplyMode) => Promise<void>;
 };
 
 const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
@@ -17,7 +20,7 @@ const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
 export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
   const { status } = useAuthSession();
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
-  const [autoReplyEnabled, setAutoReplyEnabled] = useState(true);
+  const [replyMode, setReplyMode] = useState<ReplyMode>("auto");
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -25,7 +28,7 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
     try {
       const settings = await fetchAppSettings();
       setTimezone(settings.timezone);
-      setAutoReplyEnabled(settings.auto_reply_enabled);
+      setReplyMode(settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"));
     } catch {
       // mantém default — 401 já invalida sessão autenticada via barramento
     } finally {
@@ -43,23 +46,24 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
   const saveTimezone = useCallback(async (next: string) => {
     const saved = await updateAppSettings({ timezone: next });
     setTimezone(saved.timezone);
-    setAutoReplyEnabled(saved.auto_reply_enabled);
+    setReplyMode(saved.reply_mode ?? (saved.auto_reply_enabled ? "auto" : "off"));
   }, []);
 
-  const saveAutoReplyEnabled = useCallback(async (enabled: boolean) => {
-    const saved = await updateAppSettings({ auto_reply_enabled: enabled });
-    setAutoReplyEnabled(saved.auto_reply_enabled);
+  const saveReplyMode = useCallback(async (mode: ReplyMode) => {
+    const saved = await updateAppSettings({ reply_mode: mode });
+    setReplyMode(saved.reply_mode ?? (saved.auto_reply_enabled ? "auto" : "off"));
   }, []);
 
   return (
     <AppSettingsContext.Provider
       value={{
         timezone,
-        autoReplyEnabled,
+        replyMode,
+        autoReplyEnabled: replyMode !== "off",
         loading,
         refresh,
         saveTimezone,
-        saveAutoReplyEnabled,
+        saveReplyMode,
       }}
     >
       {children}

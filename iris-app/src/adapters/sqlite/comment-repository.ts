@@ -84,8 +84,14 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     SELECT c.*, p.caption AS post_caption, p.reply_mode AS reply_mode
     FROM comments c
     INNER JOIN posts p ON p.id = c.post_id
+    LEFT JOIN app_settings s ON s.id = 'primary'
     WHERE c.status = 'pending'
-      AND p.reply_mode IN ('auto', 'draft')
+      AND (
+        CASE
+          WHEN p.reply_mode = 'inherit' THEN COALESCE(s.reply_mode, 'auto')
+          ELSE p.reply_mode
+        END
+      ) IN ('auto', 'draft')
       AND NOT EXISTS (
         SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
       )

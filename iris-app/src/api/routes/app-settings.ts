@@ -12,6 +12,11 @@ import {
 import { defaultAppSettings } from "../../domain/app-settings-defaults.ts";
 import { isValidIanaTimeZone } from "../../domain/timezone.ts";
 import type { AppSettings } from "../../ports/app-settings-store.ts";
+import {
+  autoReplyEnabledFromReplyMode,
+  isReplyMode,
+  replyModeFromAutoReplyEnabled,
+} from "../../domain/reply-mode.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -23,6 +28,7 @@ type RouteRequest = {
 function serializeAppSettings(settings: AppSettings) {
   return {
     timezone: settings.timezone,
+    reply_mode: settings.replyMode,
     auto_reply_enabled: settings.autoReplyEnabled,
     updated_at: settings.updatedAt,
   };
@@ -34,9 +40,12 @@ function normalizeAppSettingsBody(
 ): Omit<AppSettings, "updatedAt"> {
   const hasTimezone = "timezone" in body;
   const hasAutoReply = "auto_reply_enabled" in body;
+  const hasReplyMode = "reply_mode" in body;
 
-  if (!hasTimezone && !hasAutoReply) {
-    throw new ValidationError("at least one of timezone or auto_reply_enabled is required");
+  if (!hasTimezone && !hasAutoReply && !hasReplyMode) {
+    throw new ValidationError(
+      "at least one of timezone, reply_mode, or auto_reply_enabled is required",
+    );
   }
 
   let timezone = current.timezone;
@@ -50,15 +59,24 @@ function normalizeAppSettingsBody(
     }
   }
 
-  let autoReplyEnabled = current.autoReplyEnabled;
-  if (hasAutoReply) {
+  let replyMode = current.replyMode;
+  if (hasReplyMode) {
+    if (typeof body.reply_mode !== "string" || !isReplyMode(body.reply_mode)) {
+      throw new ValidationError("reply_mode must be off, auto, or draft");
+    }
+    replyMode = body.reply_mode;
+  } else if (hasAutoReply) {
     if (typeof body.auto_reply_enabled !== "boolean") {
       throw new ValidationError("auto_reply_enabled must be a boolean");
     }
-    autoReplyEnabled = body.auto_reply_enabled;
+    replyMode = replyModeFromAutoReplyEnabled(body.auto_reply_enabled);
   }
 
-  return { timezone, autoReplyEnabled };
+  return {
+    timezone,
+    replyMode,
+    autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
+  };
 }
 
 export async function handleAppSettingsRoute(request: RouteRequest): Promise<boolean> {

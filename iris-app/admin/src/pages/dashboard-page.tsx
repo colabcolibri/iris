@@ -21,10 +21,10 @@ import {
   uploadAsset,
 } from "@/lib/api";
 import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/lib/datetime";
-import type { Post, PostStatus, ReplyMode } from "@/lib/types";
+import type { Post, PostStatus, PostReplyModeSetting } from "@/lib/types";
 
 export function DashboardPage() {
-  const { timezone, autoReplyEnabled } = useAppSettings();
+  const { timezone, replyMode: globalReplyMode } = useAppSettings();
   const { meta } = useMetaSession();
   const { view } = useDashboardView();
   const { confirm } = useConfirmDialog();
@@ -35,7 +35,7 @@ export function DashboardPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [caption, setCaption] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [replyMode, setReplyMode] = useState<ReplyMode>("off");
+  const [replyMode, setReplyMode] = useState<PostReplyModeSetting>("inherit");
   const [files, setFiles] = useState<FileList | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -87,7 +87,7 @@ export function DashboardPage() {
     setDialogMode("create");
     setCaption("");
     setScheduledAt("");
-    setReplyMode("off");
+    setReplyMode("inherit");
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -98,7 +98,7 @@ export function DashboardPage() {
     setDialogMode("edit");
     setCaption(post.caption ?? "");
     setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
-    setReplyMode(post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "off"));
+    setReplyMode(post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "inherit"));
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -174,22 +174,14 @@ export function DashboardPage() {
     setSaving(true);
     setError("");
     try {
-      const scheduledIso = toIsoFromDatetimeLocal(scheduledAt, timezone);
       let postId = selectedPost?.id;
 
       if (!postId) {
         const created = await createPost({
           caption,
           channel: "instagram",
-          scheduled_at: scheduledIso,
         });
         postId = created.id;
-      } else {
-        await updatePost(postId, {
-          caption,
-          scheduled_at: scheduledIso,
-          reply_mode: replyMode,
-        });
       }
 
       if (files && files.length > 0) {
@@ -202,15 +194,35 @@ export function DashboardPage() {
 
       if (schedule) {
         if (!meta?.connected) throw new Error("Conecte Instagram antes de agendar.");
+        const scheduledIso = toIsoFromDatetimeLocal(scheduledAt, timezone);
         if (!scheduledIso) throw new Error("Informe data e hora para agendar.");
-        await updatePost(postId, { status: "scheduled", scheduled_at: scheduledIso });
+        await updatePost(postId, {
+          caption,
+          reply_mode: replyMode,
+          status: "scheduled",
+          scheduled_at: scheduledIso,
+        });
+        toast.success("Postagem agendada.");
+      } else {
+        const updateBody: Record<string, unknown> = {
+          caption,
+          reply_mode: replyMode,
+        };
+        const isDraftSave = !selectedPost || selectedPost.status === "draft";
+        if (!scheduledAt.trim() && isDraftSave) {
+          updateBody.scheduled_at = null;
+        }
+        await updatePost(postId, updateBody);
+        toast.success(
+          selectedPost?.status === "scheduled" ? "Alterações salvas." : "Rascunho salvo.",
+        );
       }
 
       await loadPosts();
       const post = await fetchPost(postId);
       setSelectedPost(post);
+      setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
       setDialogMode("edit");
-      toast.success(schedule ? "Postagem agendada." : "Rascunho salvo.");
     } catch (err) {
       if (!handleAuthError(err)) {
         setError(err instanceof Error ? err.message : "Falha ao salvar.");
@@ -249,7 +261,7 @@ export function DashboardPage() {
           <KanbanBoard
             posts={posts}
             timeZone={timezone}
-            globalAutoReplyEnabled={autoReplyEnabled}
+            globalReplyMode={globalReplyMode}
             onOpenPost={openPost}
             onStatusChange={(post, status) => void changeStatus(post, status)}
           />
@@ -259,7 +271,7 @@ export function DashboardPage() {
             cursor={cursor}
             selectedId={selectedPost?.id ?? null}
             timeZone={timezone}
-            globalAutoReplyEnabled={autoReplyEnabled}
+            globalReplyMode={globalReplyMode}
             onCursorChange={setCursor}
             onSelect={openPost}
             onCreatePost={openCreate}

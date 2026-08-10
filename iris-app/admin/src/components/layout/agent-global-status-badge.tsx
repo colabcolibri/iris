@@ -1,48 +1,51 @@
 import { Link } from "react-router-dom";
-import { Bot, PauseCircle } from "lucide-react";
+import { Bot, BotOff, ClipboardCheck } from "lucide-react";
+import { replyModeOption } from "@/lib/reply-mode-options";
+import type { ReplyMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type AgentGlobalStatusBadgeProps = {
-  enabled: boolean;
+  replyMode: ReplyMode;
   loading?: boolean;
   className?: string;
 };
 
+const BADGE_STYLES: Record<ReplyMode, string> = {
+  auto: "border-emerald-400/35 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25",
+  draft: "border-sky-400/35 bg-sky-500/15 text-sky-50 hover:bg-sky-500/25",
+  off: "border-amber-400/35 bg-amber-500/15 text-amber-50 hover:bg-amber-500/25",
+};
+
+const ICONS = {
+  auto: Bot,
+  draft: ClipboardCheck,
+  off: BotOff,
+} as const;
+
 export function AgentGlobalStatusBadge({
-  enabled,
+  replyMode,
   loading = false,
   className,
 }: AgentGlobalStatusBadgeProps) {
-  const Icon = enabled ? Bot : PauseCircle;
+  const Icon = ICONS[replyMode];
+  const label = replyModeOption(replyMode).label;
 
   return (
     <Link
       to="/settings"
-      title={
-        enabled
-          ? "Agente de comentários ativo globalmente. Clique para abrir configurações."
-          : "Agente de comentários pausado globalmente. Clique para reativar nas configurações."
-      }
+      title={`Agente global: ${label}. Clique para abrir configurações.`}
       className={cn(
         "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-        enabled
-          ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25"
-          : "border-amber-400/35 bg-amber-500/15 text-amber-50 hover:bg-amber-500/25",
+        BADGE_STYLES[replyMode],
         loading && "opacity-60",
         className,
       )}
     >
       <Icon className="size-3.5 shrink-0" />
       <span className="hidden truncate sm:inline">
-        {loading ? "Agente…" : enabled ? "Agente ativo" : "Agente pausado"}
+        {loading ? "Agente…" : `Agente: ${label.toLowerCase()}`}
       </span>
-      <span
-        className={cn(
-          "size-2 shrink-0 rounded-full",
-          enabled ? "bg-emerald-300" : "bg-amber-300",
-        )}
-        aria-hidden
-      />
+      <span className="size-2 shrink-0 rounded-full bg-current opacity-70" aria-hidden />
     </Link>
   );
 }

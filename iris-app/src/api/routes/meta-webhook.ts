@@ -8,10 +8,12 @@ import {
   verifySubscribeToken,
 } from "../../domain/meta-webhook.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
+import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
+import { scheduleCommentReply } from "../../domain/comments/process-comment-reply.ts";
 import {
-  scheduleCommentReply,
+  resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
-} from "../../domain/comments/process-comment-reply.ts";
+} from "../../domain/reply-mode.ts";
 import { isBrandAuthor } from "../../domain/comments/is-brand-author.ts";
 
 const PAYLOAD_PREVIEW_BYTES = 2048;
@@ -156,11 +158,16 @@ async function handleMetaWebhookPost(
           if (result.comment.status === "pending") {
             ctx.comments.markSkipped(result.comment.id);
           }
-        } else if (
-          shouldScheduleCommentReply(post.replyMode) &&
-          ctx.resolveLlmCompleter()
-        ) {
-          scheduleCommentReply(ctx, result.comment.id);
+        } else {
+          const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
+          const effectiveReplyMode = resolveEffectiveReplyMode(
+            appSettings.replyMode,
+            post.replyMode,
+          );
+
+          if (shouldScheduleCommentReply(effectiveReplyMode) && ctx.resolveLlmCompleter()) {
+            scheduleCommentReply(ctx, result.comment.id);
+          }
         }
       }
     }

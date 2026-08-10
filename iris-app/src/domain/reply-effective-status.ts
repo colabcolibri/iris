@@ -1,51 +1,87 @@
-import type { ReplyMode } from "./reply-mode.ts";
+import type { PostReplyModeSetting, ReplyMode } from "./reply-mode.ts";
+import {
+  isPostReplyModeSetting,
+  isReplyMode,
+  replyModeFromAutoReplyEnabled,
+  resolveEffectiveReplyMode,
+} from "./reply-mode.ts";
 
 export type PostReplyModeInput = {
-  reply_mode?: ReplyMode | null;
+  reply_mode?: PostReplyModeSetting | ReplyMode | null;
   auto_reply_enabled?: boolean | null;
 };
 
-export type EffectivePostReplyStatus =
-  | { kind: "auto" }
-  | { kind: "draft" }
-  | { kind: "off" }
-  | { kind: "paused"; configuredMode: Exclude<ReplyMode, "off"> | null };
+export type ResolvedReplyPolicy = {
+  globalMode: ReplyMode;
+  postSetting: PostReplyModeSetting;
+  effectiveMode: ReplyMode;
+};
 
-export function resolvePostReplyMode(post: PostReplyModeInput): ReplyMode {
+export function resolvePostReplyModeSetting(
+  post: PostReplyModeInput,
+): PostReplyModeSetting {
   if (post.reply_mode) {
-    return post.reply_mode;
+    if (isPostReplyModeSetting(post.reply_mode)) {
+      return post.reply_mode;
+    }
+    if (isReplyMode(post.reply_mode)) {
+      return post.reply_mode;
+    }
   }
-  return post.auto_reply_enabled ? "auto" : "off";
+
+  if (post.auto_reply_enabled) {
+    return "auto";
+  }
+
+  return "off";
 }
 
-/** Global desligado impera sobre o modo do post. */
-export function resolveEffectivePostReplyStatus(
-  globalAutoReplyEnabled: boolean,
-  postReplyMode: ReplyMode,
-): EffectivePostReplyStatus {
-  if (!globalAutoReplyEnabled) {
-    return {
-      kind: "paused",
-      configuredMode: postReplyMode === "off" ? null : postReplyMode,
-    };
-  }
+export function resolveReplyPolicy(
+  globalMode: ReplyMode,
+  post: PostReplyModeInput,
+): ResolvedReplyPolicy {
+  const postSetting = resolvePostReplyModeSetting(post);
 
-  if (postReplyMode === "auto") {
-    return { kind: "auto" };
-  }
-  if (postReplyMode === "draft") {
-    return { kind: "draft" };
-  }
-  return { kind: "off" };
+  return {
+    globalMode,
+    postSetting,
+    effectiveMode: resolveEffectiveReplyMode(globalMode, postSetting),
+  };
+}
+
+export type EffectivePostReplyStatus = {
+  kind: ReplyMode;
+  inherited: boolean;
+};
+
+export function resolveEffectivePostReplyStatus(
+  globalMode: ReplyMode,
+  postSetting: PostReplyModeSetting,
+): EffectivePostReplyStatus {
+  return {
+    kind: resolveEffectiveReplyMode(globalMode, postSetting),
+    inherited: postSetting === "inherit",
+  };
 }
 
 export function resolveEffectivePostReplyStatusFromPost(
-  globalAutoReplyEnabled: boolean,
+  globalMode: ReplyMode,
   post: PostReplyModeInput,
 ): EffectivePostReplyStatus {
   return resolveEffectivePostReplyStatus(
-    globalAutoReplyEnabled,
-    resolvePostReplyMode(post),
+    globalMode,
+    resolvePostReplyModeSetting(post),
+  );
+}
+
+/** @deprecated Use global reply_mode. Mantido para transição da API legada. */
+export function resolveEffectivePostReplyStatusFromLegacyBoolean(
+  globalAutoReplyEnabled: boolean,
+  post: PostReplyModeInput,
+): EffectivePostReplyStatus {
+  return resolveEffectivePostReplyStatusFromPost(
+    replyModeFromAutoReplyEnabled(globalAutoReplyEnabled),
+    post,
   );
 }
 
@@ -58,33 +94,32 @@ export type ReplyStatusPresentation = {
 export function replyStatusPresentation(
   status: EffectivePostReplyStatus,
 ): ReplyStatusPresentation {
+  const inheritedSuffix = status.inherited ? " (global)" : "";
+
   switch (status.kind) {
     case "auto":
       return {
-        label: "IA automática",
-        shortLabel: "Auto",
+        label: `IA automática${inheritedSuffix}`,
+        shortLabel: status.inherited ? "Auto (global)" : "Auto",
+        hint: status.inherited
+          ? "Este post segue o modo automático definido nas configurações globais."
+          : undefined,
       };
     case "draft":
       return {
-        label: "Aprovação manual",
-        shortLabel: "Aprovação",
-        hint: "A Iris sugere respostas; você aprova antes de publicar no Instagram.",
+        label: `Aprovação manual${inheritedSuffix}`,
+        shortLabel: status.inherited ? "Aprovação (global)" : "Aprovação",
+        hint: status.inherited
+          ? "Este post segue o modo de aprovação definido nas configurações globais."
+          : "A Iris sugere respostas; você aprova antes de publicar no Instagram.",
       };
     case "off":
       return {
-        label: "IA desligada",
-        shortLabel: "Off",
-      };
-    case "paused":
-      return {
-        label: "IA pausada (global)",
-        shortLabel: "Pausada",
-        hint:
-          status.configuredMode === "auto"
-            ? "Post configurado para automático — retoma quando o agente global voltar."
-            : status.configuredMode === "draft"
-              ? "Post configurado para aprovação manual — retoma quando o agente global voltar."
-              : "Agente global desligado nas configurações.",
+        label: `IA desligada${inheritedSuffix}`,
+        shortLabel: status.inherited ? "Off (global)" : "Off",
+        hint: status.inherited
+          ? "Este post segue o agente desligado nas configurações globais."
+          : undefined,
       };
   }
 }

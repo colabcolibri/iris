@@ -1,7 +1,6 @@
 import type { AppContext } from "../../api/app-context.ts";
 import type { MetaCommentReplier } from "../../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
-import type { ReplyMode } from "../reply-mode.ts";
 import type { AgentRunStatus } from "../../ports/agent-run-repository.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
@@ -11,6 +10,10 @@ import {
   serializeReplyAuditSummary,
 } from "../reply-context/build-reply-audit-summary.ts";
 import { runReplyHarness } from "../reply-harness/orchestrator.ts";
+import {
+  resolveEffectiveReplyMode,
+  shouldScheduleCommentReply,
+} from "../reply-mode.ts";
 
 export type ProcessCommentReplyOptions = {
   trigger: "worker" | "webhook";
@@ -47,12 +50,17 @@ export async function processCommentReply(
   }
 
   const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
-  if (!appSettings.autoReplyEnabled) {
+  const post = ctx.posts.findById(comment.postId);
+  if (!post) {
     return false;
   }
 
-  const post = ctx.posts.findById(comment.postId);
-  if (!post || post.replyMode === "off") {
+  const effectiveReplyMode = resolveEffectiveReplyMode(
+    appSettings.replyMode,
+    post.replyMode,
+  );
+
+  if (!shouldScheduleCommentReply(effectiveReplyMode)) {
     return false;
   }
 
@@ -120,7 +128,7 @@ export async function processCommentReply(
 
     const message = harnessResult.finalText;
 
-    if (post.replyMode === "draft") {
+    if (effectiveReplyMode === "draft") {
       ctx.comments.createReply({
         commentId,
         draftText: message,
@@ -169,10 +177,6 @@ export async function processCommentReply(
     notifyCommentsChanged({ post_id: comment.postId });
     return false;
   }
-}
-
-export function shouldScheduleCommentReply(replyMode: ReplyMode): boolean {
-  return replyMode === "auto" || replyMode === "draft";
 }
 
 export function scheduleCommentReply(

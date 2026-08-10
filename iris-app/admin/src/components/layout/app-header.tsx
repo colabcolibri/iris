@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 export function AppHeader() {
   const navigate = useNavigate();
   const { signOut } = useAuthSession();
-  const { autoReplyEnabled, loading: settingsLoading } = useAppSettings();
+  const { replyMode, loading: settingsLoading } = useAppSettings();
   const { confirm } = useConfirmDialog();
   const { meta, handleDisconnect, handleMetaHealth } = useMetaSession();
   const connected = Boolean(meta?.connected);
@@ -89,7 +89,7 @@ export function AppHeader() {
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-        <AgentGlobalStatusBadge enabled={autoReplyEnabled} loading={settingsLoading} />
+        <AgentGlobalStatusBadge replyMode={replyMode} loading={settingsLoading} />
 
         {!connected ? (
           <a

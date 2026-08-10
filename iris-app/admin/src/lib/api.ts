@@ -389,6 +389,7 @@ export function fetchAppSettings() {
 
 export function updateAppSettings(body: {
   timezone?: string;
+  reply_mode?: ReplyMode;
   auto_reply_enabled?: boolean;
 }) {
   return apiFetch<AppSettings>("/api/settings/app", {

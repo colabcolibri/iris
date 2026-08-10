@@ -23,7 +23,7 @@ import {
   fetchReplyInspection,
   replyToComment,
 } from "@/lib/api";
-import type { ReplyInspection, Post, ReplyMode } from "@/lib/types";
+import type { ReplyInspection, Post, PostReplyModeSetting } from "@/lib/types";
 
 export type PostDialogMode = "create" | "edit";
 
@@ -38,11 +38,11 @@ type PostDialogProps = {
   error: string;
   caption: string;
   scheduledAt: string;
-  replyMode: ReplyMode;
+  replyMode: PostReplyModeSetting;
   onOpenChange: (open: boolean) => void;
   onCaptionChange: (value: string) => void;
   onScheduledAtChange: (value: string) => void;
-  onReplyModeChange: (value: ReplyMode) => void;
+  onReplyModeChange: (value: PostReplyModeSetting) => void;
   onFilesChange: (files: FileList | null) => void;
   onSaveDraft: () => void;
   onSchedule: () => void;
@@ -74,7 +74,7 @@ export function PostDialog({
   onRetryDraft,
   onRetrySchedule,
 }: PostDialogProps) {
-  const { autoReplyEnabled: globalAutoReplyEnabled } = useAppSettings();
+  const { replyMode: globalReplyMode } = useAppSettings();
   const [inspection, setInspection] = useState<ReplyInspection | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
@@ -108,7 +108,7 @@ export function PostDialog({
   const isFailed = status === "failed";
   const isCancelled = status === "cancelled";
   const isDraft = !status || status === "draft";
-  const effectiveReply = resolveEffectivePostReplyStatus(globalAutoReplyEnabled, replyMode);
+  const effectiveReply = resolveEffectivePostReplyStatus(globalReplyMode, replyMode);
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
 
   const statusHint = (() => {
@@ -146,41 +146,9 @@ export function PostDialog({
       <StatusBadge status={post.status} variant="signal" className="pl-5" />
     );
 
-  const headerActions = (
-    <div className="flex flex-wrap items-center justify-end gap-2">
-      {(isScheduled || isCancelled) && onRevertToDraft ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-muted-foreground hover:text-foreground"
-          onClick={onRevertToDraft}
-        >
-          {isScheduled ? "Desagendar" : "Restaurar rascunho"}
-        </Button>
-      ) : null}
-      {isFailed && onRetryDraft ? (
-        <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={onRetryDraft}>
-          Voltar a rascunho
-        </Button>
-      ) : null}
-      {isFailed && onRetrySchedule ? (
-        <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={onRetrySchedule}>
-          Reagendar
-        </Button>
-      ) : null}
-    </div>
-  );
-
-  const hasHeaderActions =
-    ((isScheduled || isCancelled) && onRevertToDraft) ||
-    (isFailed && (onRetryDraft || onRetrySchedule));
-
   return (
     <AppDialog open={open} onOpenChange={onOpenChange} size="xl" height="full">
-      <AppDialog.Header title={title} description={statusHint}>
-        {hasHeaderActions ? headerActions : null}
-      </AppDialog.Header>
+      <AppDialog.Header title={title} description={statusHint} />
 
       <AppDialog.Body>
         {isFailed && post?.error_message ? (
@@ -265,19 +233,10 @@ export function PostDialog({
                 </div>
                 <PostReplyStatusBadge
                   post={{ reply_mode: replyMode }}
-                  globalAutoReplyEnabled={globalAutoReplyEnabled}
+                  globalReplyMode={globalReplyMode}
                   size="md"
                 />
               </div>
-
-              {!globalAutoReplyEnabled ? (
-                <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-950 dark:text-amber-100">
-                  Agente pausado globalmente.{" "}
-                  <Link to="/settings" className="font-medium underline underline-offset-4">
-                    Reativar em configurações
-                  </Link>
-                </p>
-              ) : null}
 
               <div className="max-w-xl space-y-2">
                 <Label htmlFor="post-reply-mode" className="text-sm font-medium">
@@ -285,6 +244,7 @@ export function PostDialog({
                 </Label>
                 <ReplyModeSelect
                   id="post-reply-mode"
+                  variant="post"
                   value={replyMode}
                   onChange={onReplyModeChange}
                   disabled={isReadOnly}
@@ -411,28 +371,43 @@ export function PostDialog({
           <AppAccordion.Item value="schedule">
             <AppAccordion.Trigger>Agendamento</AppAccordion.Trigger>
             <AppAccordion.Content>
-              <div className="max-w-md space-y-2">
-                <Label htmlFor="post-scheduled-at" className="text-sm font-medium">
-                  {isScheduled ? "Publicação agendada para" : "Agendar para"}
-                </Label>
-                <Input
-                  id="post-scheduled-at"
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => onScheduledAtChange(e.target.value)}
-                  className="bg-background"
-                  disabled={isReadOnly || isCancelled}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Fuso editorial: {timeZone}
-                  {isDraft && scheduledAt ? " · entra no calendário ao agendar" : ""}
-                </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+                <div className="space-y-2 shrink-0">
+                  <Label htmlFor="post-scheduled-at" className="text-sm font-medium">
+                    {isScheduled ? "Publicação agendada para" : "Agendar para"}
+                  </Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      id="post-scheduled-at"
+                      type="datetime-local"
+                      value={scheduledAt}
+                      onChange={(e) => onScheduledAtChange(e.target.value)}
+                      className="h-11 w-[17.5rem] max-w-full shrink-0 bg-background text-base sm:text-sm"
+                      disabled={isReadOnly || isCancelled}
+                    />
+                    {scheduledAt && !isReadOnly && !isCancelled && (isDraft || mode === "create") ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 text-muted-foreground"
+                        onClick={() => onScheduledAtChange("")}
+                      >
+                        Limpar data
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-0.5 text-right text-sm leading-snug text-muted-foreground sm:max-w-md">
+                  <span>Fuso editorial: {timeZone}</span>
+                  {isDraft && scheduledAt ? (
+                    <span>Confirme com “Agendar publicação”.</span>
+                  ) : null}
+                  {!metaConnected ? (
+                    <span>Conecte o Instagram em configurações para agendar publicações.</span>
+                  ) : null}
+                </div>
               </div>
-              {!metaConnected ? (
-                <p className="text-xs text-muted-foreground">
-                  Conecte o Instagram em configurações para agendar publicações.
-                </p>
-              ) : null}
             </AppAccordion.Content>
           </AppAccordion.Item>
         </AppAccordion>
@@ -449,6 +424,27 @@ export function PostDialog({
           Fechar
         </Button>
         <div className="flex flex-wrap items-center gap-2">
+          {(isScheduled || isCancelled) && onRevertToDraft ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={onRevertToDraft}
+              disabled={saving}
+            >
+              {isScheduled ? "Desagendar" : "Restaurar rascunho"}
+            </Button>
+          ) : null}
+          {isFailed && onRetryDraft ? (
+            <Button type="button" variant="ghost" onClick={onRetryDraft} disabled={saving}>
+              Voltar a rascunho
+            </Button>
+          ) : null}
+          {isFailed && onRetrySchedule ? (
+            <Button type="button" variant="ghost" onClick={onRetrySchedule} disabled={saving}>
+              Reagendar
+            </Button>
+          ) : null}
           {!isReadOnly && !isCancelled ? (
             <>
               {(isDraft || mode === "create") ? (

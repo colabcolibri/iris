@@ -116,6 +116,7 @@ test("processCommentReply skips posts with reply_mode off", async () => {
       status: "published",
       igMediaId: "media-off",
       publishedAt: new Date().toISOString(),
+      replyMode: "off",
     });
 
     const { comment } = ctx.comments.upsertFromWebhook({
@@ -142,7 +143,7 @@ test("processCommentReply skips posts with reply_mode off", async () => {
   }
 });
 
-test("processCommentReply skips when global auto_reply is disabled", async () => {
+test("processCommentReply skips when global is off and post inherits", async () => {
   const db = openDatabase(":memory:");
 
   try {
@@ -156,6 +157,7 @@ test("processCommentReply skips when global auto_reply is disabled", async () =>
 
     ctx.appSettingsStore.upsert({
       timezone: "America/Sao_Paulo",
+      replyMode: "off",
       autoReplyEnabled: false,
     });
 
@@ -165,7 +167,7 @@ test("processCommentReply skips when global auto_reply is disabled", async () =>
       caption: "Post",
       igMediaId: "media-global-off",
       publishedAt: new Date().toISOString(),
-      replyMode: "auto",
+      replyMode: "inherit",
     });
 
     const { comment } = ctx.comments.upsertFromWebhook({
@@ -187,6 +189,64 @@ test("processCommentReply skips when global auto_reply is disabled", async () =>
 
     assert.equal(processed, false);
     assert.equal(llmCalled, false);
+  } finally {
+    db.close();
+  }
+});
+
+test("processCommentReply honors explicit post auto when global is off", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      encryptionKey: "e".repeat(64),
+      metaAccessToken: "meta",
+    });
+
+    ctx.appSettingsStore.upsert({
+      timezone: "America/Sao_Paulo",
+      replyMode: "off",
+      autoReplyEnabled: false,
+    });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post",
+      igMediaId: "media-post-auto",
+      publishedAt: new Date().toISOString(),
+      replyMode: "auto",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-post-auto-1",
+      postId: post.id,
+      text: "oi",
+    });
+
+    let llmCalled = false;
+    const llm = createHarnessLlmMock({ draftText: "Resposta" });
+    const originalComplete = llm.complete.bind(llm);
+    llm.complete = async (...args) => {
+      llmCalled = true;
+      return originalComplete(...args);
+    };
+
+    await processCommentReply(ctx, comment.id, {
+      trigger: "worker",
+      llmCompleter: llm,
+      metaCommentReplier: {
+        async reply() {
+          return { publishedIgCommentId: "reply-1" };
+        },
+      },
+    });
+
+    assert.equal(llmCalled, true);
+    assert.equal(ctx.comments.findById(comment.id)?.status, "replied");
   } finally {
     db.close();
   }
