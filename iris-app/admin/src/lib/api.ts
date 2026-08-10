@@ -1,4 +1,5 @@
 import type { AppSettings, Asset, Comment, CommentsInbox, MetaStatus, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
+import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -21,6 +22,7 @@ async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): P
   });
 
   if (response.status === 401) {
+    notifyUnauthorized();
     throw new UnauthorizedError();
   }
 
@@ -133,11 +135,18 @@ export function fetchMetaHealth() {
   return apiFetch<{ ok: boolean; message?: string }>("/api/meta/health");
 }
 
+export function disconnectMeta() {
+  return apiFetch<{ ok: true }>("/api/meta/disconnect", { method: "POST" });
+}
+
 export async function fetchAssetBlob(postId: string, filename: string) {
   const response = await fetch(`/api/posts/${postId}/assets/${filename}`, {
     credentials: "include",
   });
-  if (response.status === 401) throw new UnauthorizedError();
+  if (response.status === 401) {
+    notifyUnauthorized();
+    throw new UnauthorizedError();
+  }
   if (!response.ok) throw new Error(`Failed to load asset (${response.status})`);
   return response.blob();
 }

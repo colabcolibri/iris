@@ -145,7 +145,7 @@ function MediaCommentsCard({ item }: { item: CommentsInboxMedia }) {
 }
 
 export function CommentsPage() {
-  const { meta, handleLogout, handleMetaHealth } = useMetaSession();
+  const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
   const [inbox, setInbox] = useState<CommentsInbox | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -185,7 +185,7 @@ export function CommentsPage() {
   const totalReported = summary?.comments_reported ?? 0;
 
   return (
-    <AppShell meta={meta} onLogout={handleLogout} onMetaHealth={handleMetaHealth}>
+    <AppShell meta={meta} onDisconnectMeta={handleDisconnect} onMetaHealth={handleMetaHealth}>
       <div className="flex-1 overflow-auto px-4 py-6 sm:px-6 md:px-10">
         <div className="mx-auto w-full max-w-4xl space-y-6">
           <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="iris-app/public/assets/iris-logo-192.png" alt="Iris" width="96" height="96" />
+  <img src="iris-app/admin/public/assets/iris-logo.png" alt="Iris" width="96" height="96" />
 </p>
 
 <h1 align="center">Iris</h1>
@@ -226,6 +226,6 @@ Código proprietário — **Colab Colibri**. Uso, cópia e distribuição apenas
 ---
 
 <p align="center">
-  <img src="iris-app/public/assets/iris-logo-32.png" alt="" width="20" height="20" />
+  <img src="iris-app/admin/public/assets/iris-logo-32.png" alt="" width="20" height="20" />
   <sub>Iris — gestor editorial para Instagram</sub>
 </p>

@@ -8,6 +8,10 @@ import { ImageOptimizationError } from "../../ports/image-optimizer.ts";
 import { serializeAsset } from "../../adapters/sqlite/mappers.ts";
 import { sendJson } from "../json.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
+import {
+  AssetIngestError,
+  ingestPostAsset,
+} from "../../domain/asset-ingest.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -38,12 +42,6 @@ export async function handleAssetsRoute(request: RouteRequest): Promise<boolean>
 
     if (req.method === "POST") {
       try {
-        const post = ctx.posts.findById(postId);
-        if (!post) {
-          sendError(res, 404, "post not found");
-          return true;
-        }
-
         const limits = getImageLimits();
         const parsed = await parseMultipart(req, limits.uploadMaxBytes);
         const file = parsed.files.find((item) => item.fieldName === "file");
@@ -54,29 +52,21 @@ export async function handleAssetsRoute(request: RouteRequest): Promise<boolean>
         }
 
         const sortOrder = Number.parseInt(parsed.fields.sort_order ?? "1", 10);
-        if (!Number.isFinite(sortOrder) || sortOrder < 1) {
-          sendError(res, 422, "sort_order must be a positive integer");
-          return true;
-        }
 
-        const optimized = await ctx.imageOptimizer.optimize(file.data, file.filename);
-        const storagePath = await ctx.mediaStorage.write(
-          postId,
-          sortOrder,
-          optimized.buffer,
+        const asset = await ingestPostAsset(
+          {
+            posts: ctx.posts,
+            assets: ctx.assets,
+            mediaStorage: ctx.mediaStorage,
+            imageOptimizer: ctx.imageOptimizer,
+          },
+          {
+            postId,
+            buffer: file.data,
+            filename: file.filename,
+            sortOrder,
+          },
         );
-
-        const asset = ctx.assets.create({
-          postId,
-          sortOrder,
-          storagePath,
-          originalFilename: file.filename,
-          mime: optimized.mime,
-          width: optimized.width,
-          height: optimized.height,
-          originalSizeBytes: optimized.originalSizeBytes,
-          optimizedSizeBytes: optimized.optimizedSizeBytes,
-        });
 
         notifyPostsChanged({ post_id: postId });
         sendJson(res, 201, serializeAsset(asset));
@@ -121,6 +111,11 @@ export async function handleAssetsRoute(request: RouteRequest): Promise<boolean>
 }
 
 function handleAssetsError(res: ServerResponse, error: unknown): void {
+  if (error instanceof AssetIngestError) {
+    sendError(res, error.status, error.message);
+    return;
+  }
+
   if (error instanceof ImageOptimizationError) {
     sendError(res, error.status, error.message);
     return;

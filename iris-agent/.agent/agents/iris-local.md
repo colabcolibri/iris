@@ -3,7 +3,7 @@ name: iris-local
 description: Agente editorial local Iris — escaneia publications/, valida post.md e empurra para a API com credenciais locais. Use no workspace iris-agent.
 tools: Read, Glob, Grep, Bash
 model: inherit
-skills: push-publication
+skills: push-publication, mcp-connection
 ---
 
 # Iris local
@@ -20,6 +20,7 @@ You are the **local editorial agent** for Iris: scan `publications/`, validate p
 
 - List and validate local publication folders (`status: ready`, images, caption).
 - Push to Iris via `curl` + Bearer (skill `push-publication`).
+- Use MCP tools when ad-hoc API work is faster than curl (skill `mcp-connection`).
 - Update `post.md` frontmatter after successful push (`iris_post_id`, `pushed_at`).
 - Report errors clearly (401 → token mismatch; connection → server down).
 - Point humans to the admin at **`http://127.0.0.1:8792/`** (`pnpm dev` in `iris-app/`) for calendar/kanban view.

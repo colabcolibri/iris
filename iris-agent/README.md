@@ -42,6 +42,17 @@ Isso cria symlinks em `.cursor/skills/`, `.cursor/agents/`, etc. — padrão Mer
 
 Não há `pnpm`, `node` nem processo rodando neste pacote.
 
+## MCP (Cursor)
+
+O Iris expõe um servidor MCP em `/mcp` autenticado por código de conexão (`IRIS_MCP_CONNECTION_CODE` no `iris-app/.env`).
+
+1. Gere o código: `openssl rand -hex 32` → coloque em `iris-app/.env`
+2. Espelhe em `iris.credentials.json` (`mcpUrl`, `mcpConnectionCode`)
+3. Configure `.cursor/mcp.json` na raiz do workspace (ver skill `mcp-connection`)
+4. Valide: `./scripts/iris-mcp-check.sh`
+
+**REST vs MCP:** `push-publication` continua via REST Bearer; MCP é para tools editoriais interativas no Cursor.
+
 ## Admin (UI)
 
 Calendário, kanban e edição de postagens ficam no **admin online** servido pelo `iris-app`:

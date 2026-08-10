@@ -1,8 +1,8 @@
 ---
 title: Environments
 status: approved
-version: 1.0
-updated: 2026-08-09
+version: 1.1
+updated: 2026-08-10
 depends_on: [01_tech_stack.md, 05_architecture.md]
 blocks: []
 ---
@@ -25,6 +25,7 @@ blocks: []
 | `IRIS_SMTP_HOST` | `127.0.0.1` | Host SMTP (dev: Mailpit) |
 | `IRIS_SMTP_PORT` | `1025` | Porta SMTP (Mailpit) |
 | `IRIS_AGENT_TOKEN` | required | Agent Bearer token (espelhar em `agent/iris.credentials.json`) |
+| `IRIS_MCP_CONNECTION_CODE` | required (prod) | Código de conexão MCP (Cursor, ChatGPT, Claude, etc.) — **distinto** de `IRIS_AGENT_TOKEN`; gerar com `openssl rand -hex 32` |
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
 
@@ -36,6 +37,8 @@ Pacote **portável** na raiz do repo: `iris-agent/`. Kit Meridian em `.agent/` �
 | ----- | ----------- | --------- |
 | `apiUrl` | sim | Base da API Iris (`http://127.0.0.1:8792` em dev) |
 | `agentToken` | sim | Mesmo valor de `IRIS_AGENT_TOKEN` no `iris-app/.env` |
+| `mcpUrl` | não | Base MCP (`http://127.0.0.1:8792` em dev) — URL do server sem `/mcp` |
+| `mcpConnectionCode` | não | Mesmo valor de `IRIS_MCP_CONNECTION_CODE` no `iris-app/.env` |
 | `insecureAllowHttp` | dev | `true` só para localhost em HTTP |
 | `publicationsDir` | não | Default `./publications` |
 
@@ -46,6 +49,41 @@ cp iris.credentials.example.json iris.credentials.json
 ```
 
 Push via agente `@iris-local` / skill `push-publication` (`curl` + Bearer). Ver `iris-agent/README.md`.
+
+### MCP (clientes de IA)
+
+Guia canônico: `docs/architecture/mcp-integration.md`.
+
+Em dev, se `IRIS_MCP_CONNECTION_CODE` não estiver no `.env`, o server usa o default documentado `dev-mcp-connection-code-change-me` — **nunca** em produção.
+
+| Client | Config | URL |
+| ------ | ------ | --- |
+| Cursor | `.cursor/mcp.json` na raiz do workspace | `http://127.0.0.1:8792/mcp` (dev) |
+| ChatGPT | Settings → Apps & connectors → custom connector (Token) | `https://<domínio>/mcp` (HTTPS obrigatório) |
+| Claude Desktop | `claude_desktop_config.json` → `mcpServers` | `http://127.0.0.1:8792/mcp` (dev) ou HTTPS em prod |
+
+Exemplo `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "iris": {
+      "url": "http://127.0.0.1:8792/mcp",
+      "headers": {
+        "Authorization": "Bearer SEU_IRIS_MCP_CONNECTION_CODE"
+      }
+    }
+  }
+}
+```
+
+Check antes de configurar qualquer client:
+
+```bash
+cd iris-agent && ./scripts/iris-mcp-check.sh
+```
+
+**ChatGPT em dev local:** o connector remoto não alcança `127.0.0.1` — use túnel HTTPS (ngrok, Cloudflare Tunnel, etc.).
 
 **Risco aceito:** arquivo só local; nunca commitar. Produção: `apiUrl` HTTPS.
 

@@ -120,6 +120,35 @@ test("meta status reports connected account", async () => {
   });
 });
 
+test("meta disconnect clears token and connection", async () => {
+  await withMetaApiServer(async ({ baseUrl, cookie, db }) => {
+    const tokenStore = createSqliteMetaTokenStore(db, { encryptionKey: TEST_KEY });
+    tokenStore.upsertToken("page-token", new Date(Date.now() + 3600_000).toISOString());
+
+    const connectionStore = createSqliteMetaConnectionStore(db);
+    connectionStore.upsert({
+      igUserId: "ig-7",
+      igUsername: "brand",
+      pageId: "page-1",
+      pageName: "Brand",
+    });
+
+    const disconnect = await fetch(`${baseUrl}/api/meta/disconnect`, {
+      method: "POST",
+      headers: { Cookie: cookie },
+    });
+    assert.equal(disconnect.status, 200);
+
+    const status = await fetch(`${baseUrl}/api/meta/status`, {
+      headers: { Cookie: cookie },
+    });
+    const json = (await status.json()) as { connected: boolean };
+    assert.equal(json.connected, false);
+    assert.equal(tokenStore.getActiveToken(), null);
+    assert.equal(connectionStore.get(), null);
+  });
+});
+
 test("meta health returns ok when graph responds", async () => {
   const originalFetch = globalThis.fetch;
   const graphFetchImpl = async () =>

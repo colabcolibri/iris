@@ -10,7 +10,10 @@ test("graph api comment reader fetches recent media and comments", async () => {
       getActiveToken() {
         return "token-123";
       },
-      save() {
+      upsertToken() {
+        return undefined;
+      },
+      clear() {
         return undefined;
       },
     },

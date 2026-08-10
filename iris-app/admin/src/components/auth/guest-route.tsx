@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { AuthLoadingScreen } from "@/components/auth/auth-loading-screen";
 import { useAuthSession } from "@/contexts/auth-session-context";
 
 type GuestRouteProps = {
@@ -9,7 +10,7 @@ export function GuestRoute({ children }: GuestRouteProps) {
   const { status } = useAuthSession();
 
   if (status === "loading") {
-    return null;
+    return <AuthLoadingScreen />;
   }
 
   if (status === "authenticated") {

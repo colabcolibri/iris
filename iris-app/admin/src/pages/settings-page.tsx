@@ -10,7 +10,7 @@ import { useMetaSession } from "@/hooks/use-meta-session";
 import { formatInTimeZone } from "@/lib/datetime";
 
 export function SettingsPage() {
-  const { meta, handleLogout, handleMetaHealth } = useMetaSession();
+  const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
   const { timezone, loading, saveTimezone } = useAppSettings();
   const [draft, setDraft] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -39,7 +39,7 @@ export function SettingsPage() {
   });
 
   return (
-    <AppShell meta={meta} onLogout={handleLogout} onMetaHealth={handleMetaHealth}>
+    <AppShell meta={meta} onDisconnectMeta={handleDisconnect} onMetaHealth={handleMetaHealth}>
       <div className="flex-1 overflow-auto px-6 py-8 md:px-10">
         <div className="mx-auto w-full max-w-xl space-y-6">
           <header className="space-y-1">

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { DEFAULT_TIMEZONE } from "@iris/domain/timezone";
+import { useAuthSession } from "@/contexts/auth-session-context";
 import { fetchAppSettings, updateAppSettings } from "@/lib/api";
 
 type AppSettingsContextValue = {
@@ -12,23 +13,28 @@ type AppSettingsContextValue = {
 const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
 
 export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
+  const { status } = useAuthSession();
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     try {
       const settings = await fetchAppSettings();
       setTimezone(settings.timezone);
     } catch {
-      // login and public routes keep default
+      // mantém default — 401 já invalida sessão autenticada via barramento
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [status, refresh]);
 
   const saveTimezone = useCallback(async (next: string) => {
     const saved = await updateAppSettings({ timezone: next });

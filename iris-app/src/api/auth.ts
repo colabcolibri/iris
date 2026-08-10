@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage } from "node:http";
+import { timingSafeStringEqual } from "../domain/secret-compare.ts";
 import { readSessionToken, verifySessionToken } from "./session.ts";
 
 export type AuthRole = "admin" | "agent";
@@ -19,19 +19,7 @@ export type AuthResult =
   | { ok: true; context: AuthContext }
   | { ok: false; status: 401 | 403; message: string };
 
-function safeEqual(expected: string, provided: string): boolean {
-  const expectedBuffer = Buffer.from(expected);
-  const providedBuffer = Buffer.from(provided);
-
-  if (expectedBuffer.length !== providedBuffer.length) {
-    timingSafeEqual(expectedBuffer, expectedBuffer);
-    return false;
-  }
-
-  return timingSafeEqual(expectedBuffer, providedBuffer);
-}
-
-function extractBearerToken(req: IncomingMessage): string | null {
+export function extractBearerToken(req: IncomingMessage): string | null {
   const header = req.headers.authorization;
   if (!header) {
     return null;
@@ -64,11 +52,11 @@ export function authenticateRequest(
     return { ok: false, status: 401, message: "Authorization required" };
   }
 
-  if (config.adminToken && safeEqual(config.adminToken, token)) {
+  if (config.adminToken && timingSafeStringEqual(config.adminToken, token)) {
     return { ok: true, context: { role: "admin", token } };
   }
 
-  if (config.agentToken && safeEqual(config.agentToken, token)) {
+  if (config.agentToken && timingSafeStringEqual(config.agentToken, token)) {
     return { ok: true, context: { role: "agent", token } };
   }
 

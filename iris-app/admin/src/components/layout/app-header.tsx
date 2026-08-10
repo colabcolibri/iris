@@ -1,15 +1,18 @@
 import { LogOut, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { AppMobileNav } from "@/components/layout/app-mobile-nav";
 import type { AppView } from "@/components/layout/app-sidebar";
 import { Button } from "@/components/ui/button";
+import { useAuthSession } from "@/contexts/auth-session-context";
+import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { cn } from "@/lib/utils";
 import type { MetaStatus } from "@/lib/types";
 
 type AppHeaderProps = {
   meta: MetaStatus | null;
-  onLogout: () => void;
+  onDisconnectMeta?: () => Promise<boolean>;
   onNewPost: () => void;
   onMetaHealth?: () => void;
   sidebarView?: AppView;
@@ -18,15 +21,54 @@ type AppHeaderProps = {
 
 export function AppHeader({
   meta,
-  onLogout,
+  onDisconnectMeta,
   onNewPost,
   onMetaHealth,
   sidebarView,
   onSidebarViewChange,
 }: AppHeaderProps) {
+  const navigate = useNavigate();
+  const { signOut } = useAuthSession();
+  const { confirm } = useConfirmDialog();
   const connected = Boolean(meta?.connected);
   const handle = meta?.igUsername ? `@${meta.igUsername}` : null;
   const tokenExpired = Boolean(meta?.tokenExpired);
+
+  async function handleLogout() {
+    const ok = await confirm({
+      title: "Sair do Iris?",
+      description: "Você precisará de um novo código por email para entrar novamente.",
+      confirmLabel: "Sair",
+      variant: "destructive",
+    });
+    if (!ok) return;
+    await signOut();
+    navigate("/login", { replace: true });
+  }
+
+  async function handleDisconnect() {
+    if (!onDisconnectMeta) return;
+    const ok = await confirm({
+      title: "Desconectar Instagram?",
+      description:
+        "O Iris deixa de publicar e sincronizar comentários até você conectar de novo.",
+      confirmLabel: "Desconectar",
+      variant: "destructive",
+    });
+    if (!ok) return;
+    await onDisconnectMeta();
+  }
+
+  async function handleSwitchAccount() {
+    const ok = await confirm({
+      title: "Trocar conta do Instagram?",
+      description:
+        "Você será redirecionado ao login da Meta. A conta atual permanece até a nova conexão ser concluída.",
+      confirmLabel: "Continuar",
+    });
+    if (!ok) return;
+    window.location.href = "/auth/meta";
+  }
 
   return (
     <header className="flex h-20 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-black/20 bg-[#1f1d1b] px-4 text-white shadow-sm sm:gap-4 sm:px-6">
@@ -67,13 +109,25 @@ export function AppHeader({
             {tokenExpired ? "Reconectar Instagram" : "Conectar Instagram"}
           </a>
         ) : (
-          <a
-            href="/auth/meta"
-            className="hidden items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white lg:inline-flex"
-          >
-            <InstagramIcon className="size-4" />
-            Trocar conta
-          </a>
+          <>
+            <button
+              type="button"
+              onClick={() => void handleSwitchAccount()}
+              className="hidden items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white lg:inline-flex"
+            >
+              <InstagramIcon className="size-4" />
+              Trocar conta
+            </button>
+            {onDisconnectMeta && (
+              <button
+                type="button"
+                onClick={() => void handleDisconnect()}
+                className="hidden text-sm text-white/60 transition-colors hover:text-white lg:inline"
+              >
+                Desconectar
+              </button>
+            )}
+          </>
         )}
 
         {connected && onMetaHealth && (
@@ -89,7 +143,7 @@ export function AppHeader({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onLogout}
+          onClick={() => void handleLogout()}
           className="hidden text-white/70 hover:bg-white/10 hover:text-white md:inline-flex"
         >
           <LogOut className="mr-2 size-4" />

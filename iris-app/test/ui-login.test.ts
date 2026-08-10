@@ -14,5 +14,5 @@ test("login page uses auth api", () => {
 test("dashboard gates unauthenticated users via api client", () => {
   const dashboard = readFileSync(`${ADMIN}/pages/dashboard-page.tsx`, "utf8");
   assert.match(dashboard, /UnauthorizedError/);
-  assert.match(dashboard, /navigate\("\/login"/);
+  assert.match(dashboard, /handleAuthError/);
 });

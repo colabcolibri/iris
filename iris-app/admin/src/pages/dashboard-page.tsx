@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import type { AppView } from "@/components/layout/app-sidebar";
@@ -7,6 +7,7 @@ import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { PostDialog, type PostDialogMode } from "@/components/posts/post-dialog";
 import { useAppSettings } from "@/contexts/app-settings-context";
+import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/hooks/use-meta-session";
 import {
   createPost,
@@ -22,10 +23,10 @@ import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/li
 import type { Post, PostStatus } from "@/lib/types";
 
 export function DashboardPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { timezone } = useAppSettings();
-  const { meta, handleLogout, handleMetaHealth } = useMetaSession();
+  const { meta, handleMetaHealth, handleDisconnect } = useMetaSession();
+  const { confirm } = useConfirmDialog();
   const [view, setView] = useState<AppView>(
     searchParams.get("view") === "kanban" ? "kanban" : "calendar",
   );
@@ -49,16 +50,10 @@ export function DashboardPage() {
     setPosts(data);
   }, [view, cursor, timezone]);
 
-  const handleAuthError = useCallback(
-    (err: unknown) => {
-      if (err instanceof UnauthorizedError) {
-        navigate("/login", { replace: true });
-        return true;
-      }
-      return false;
-    },
-    [navigate],
-  );
+  const handleAuthError = useCallback((err: unknown) => {
+    // 401 invalida a sessão no AuthSessionProvider; ProtectedRoute redireciona.
+    return err instanceof UnauthorizedError;
+  }, []);
 
   useEffect(() => {
     void loadPosts().catch((err) => {
@@ -119,6 +114,17 @@ export function DashboardPage() {
   }
 
   async function changeStatus(post: Post, status: PostStatus) {
+    if (status === "cancelled") {
+      const ok = await confirm({
+        title: "Cancelar postagem?",
+        description: "A postagem sai do fluxo editorial ativo. Você poderá restaurá-la como rascunho depois.",
+        confirmLabel: "Cancelar postagem",
+        confirmPhrase: "CANCELAR",
+        variant: "destructive",
+      });
+      if (!ok) return;
+    }
+
     try {
       await updatePost(post.id, { status });
       await loadPosts();
@@ -128,11 +134,13 @@ export function DashboardPage() {
         setScheduledAt(toDatetimeLocalFromIso(updated.scheduled_at, timezone));
       }
       const message =
-        status === "draft" && post.status === "scheduled"
-          ? "Postagem desagendada."
-          : status === "draft"
-            ? "Postagem voltou para rascunho."
-            : "Status atualizado.";
+        status === "cancelled"
+          ? "Postagem cancelada."
+          : status === "draft" && post.status === "scheduled"
+            ? "Postagem desagendada."
+            : status === "draft"
+              ? "Postagem voltou para rascunho."
+              : "Status atualizado.";
       toast.success(message);
     } catch (err) {
       if (!handleAuthError(err)) {
@@ -218,7 +226,7 @@ export function DashboardPage() {
     <AppShell
       meta={meta}
       onNewPost={openCreate}
-      onLogout={handleLogout}
+      onDisconnectMeta={handleDisconnect}
       onMetaHealth={handleMetaHealth}
       sidebarView={view}
       onSidebarViewChange={setView}

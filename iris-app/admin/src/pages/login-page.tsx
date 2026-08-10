@@ -51,9 +51,20 @@ export function LoginPage() {
     setFeedback("");
     try {
       await confirmLoginCode(email.trim(), code.trim());
-      await refresh();
+      const ok = await refresh({ silent: true });
+      if (!ok) {
+        setFeedback("Sessão não foi criada. Tente novamente.");
+        return;
+      }
       const returnUrl = searchParams.get("returnUrl");
-      navigate(returnUrl && returnUrl.startsWith("/") ? returnUrl : "/", { replace: true });
+      const safeReturn =
+        returnUrl &&
+        returnUrl.startsWith("/") &&
+        !returnUrl.startsWith("//") &&
+        !returnUrl.startsWith("/login")
+          ? returnUrl
+          : "/";
+      navigate(safeReturn, { replace: true });
     } catch (err) {
       setFeedback(err instanceof Error ? err.message : "Código inválido ou expirado.");
     } finally {

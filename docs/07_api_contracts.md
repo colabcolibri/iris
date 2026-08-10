@@ -1,8 +1,8 @@
 ---
 title: API contracts
 status: approved
-version: 1.1
-updated: 2026-08-09
+version: 1.2
+updated: 2026-08-10
 depends_on: [05_architecture.md, 06_database.md, 02_security.md]
 blocks: []
 ---
@@ -42,6 +42,52 @@ blocks: []
 | POST | `/api/auth/confirm` | public | Valida OTP e emite cookie de sessão |
 | GET | `/api/auth/me` | public (cookie) | Bootstrap de sessão para a UI; `200` com email ou `401` |
 | POST | `/api/auth/logout` | public | Limpa cookie de sessão |
+
+### MCP (clientes de IA — Cursor, ChatGPT, Claude, etc.)
+
+Guia completo de setup: `docs/architecture/mcp-integration.md`.
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| POST | `/api/mcp/validate` | public | Valida `{ "connectionCode": "..." }` — `200` `{ "valid": true, "server": "iris", "mcpPath": "/mcp" }` ou `401` |
+| POST | `/mcp` | `Bearer <IRIS_MCP_CONNECTION_CODE>` | Transport Streamable HTTP do protocolo MCP (tools editoriais) |
+
+O código MCP é **distinto** de `IRIS_AGENT_TOKEN`. Gerar com `openssl rand -hex 32` e configurar em `IRIS_MCP_CONNECTION_CODE`.
+
+**Headers do transporte MCP:** clientes devem enviar `Accept: application/json, text/event-stream` em `POST /mcp`. Ausência pode resultar em `406`.
+
+**Escopo:** equivalente ao token agent REST — posts, assets, comentários. Sem rotas admin-only nem tokens Meta.
+
+#### MCP tools
+
+| Tool | Equivalente REST | Descrição |
+| ---- | ---------------- | --------- |
+| `iris_list_posts` | `GET /api/posts` | Lista com filtros opcionais (`status`, `from`, `to`) |
+| `iris_get_post` | `GET /api/posts/:id` | Post + metadados de assets |
+| `iris_create_post` | `POST /api/posts` | Cria rascunho (`caption`, `channel`, `scheduledAt`) |
+| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, agenda ou status |
+| `iris_upload_post_asset` | `POST /api/posts/:id/assets` | Upload de imagem via base64 |
+| `iris_list_post_comments` | `GET /api/posts/:id/comments` | Comentários sincronizados |
+
+#### POST /api/mcp/validate
+
+```bash
+curl -s -X POST http://127.0.0.1:8792/api/mcp/validate \
+  -H 'Content-Type: application/json' \
+  -d '{"connectionCode":"SEU_CODIGO"}'
+```
+
+Resposta `200`:
+
+```json
+{ "valid": true, "server": "iris", "mcpPath": "/mcp" }
+```
+
+Resposta `401`:
+
+```json
+{ "error": "invalid connection code" }
+```
 
 ## Error envelope
 
@@ -136,6 +182,7 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | GET | `/auth/meta/callback` | signed `state` | OAuth callback; stores Page token + IG account |
 | GET | `/api/meta/status` | admin | Connection status (`connected`, `@handle`, expiry) |
 | GET | `/api/meta/health` | admin | Probe Graph API (`ok` / error code) |
+| POST | `/api/meta/disconnect` | admin | Remove stored Instagram token + connection |
 
 ## Settings (reply persona)
 

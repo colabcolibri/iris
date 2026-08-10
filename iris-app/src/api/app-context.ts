@@ -42,12 +42,17 @@ import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
 import type { AppSettingsStore } from "../ports/app-settings-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
+import {
+  loadMcpConnectionCodeFromEnv,
+  type McpConfig,
+} from "../domain/mcp-connection.ts";
 
 const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export type AppContext = {
   db: DatabaseSync;
   auth: AuthConfig;
+  mcp: McpConfig;
   posts: PostRepository;
   assets: AssetRepository;
   comments: CommentRepository;
@@ -87,6 +92,7 @@ export type AppContextOptions = {
   metaAppSecret?: string;
   metaWebhookVerifyToken?: string;
   emailSender?: EmailSender;
+  mcpConnectionCode?: string;
 };
 
 export function createAppContext(options: AppContextOptions): AppContext {
@@ -190,6 +196,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
   return {
     db: options.db,
     auth,
+    mcp: {
+      connectionCode:
+        options.mcpConnectionCode ?? loadMcpConnectionCodeFromEnv(),
+    },
     posts: replyContextAssembler.posts,
     assets,
     comments: replyContextAssembler.comments,

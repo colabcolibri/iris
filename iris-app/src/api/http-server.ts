@@ -6,9 +6,9 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import { openDatabase } from "../adapters/sqlite/connection.ts";
 import { runMigrations } from "../adapters/sqlite/migrate.ts";
-import { authenticateRequest } from "./auth.ts";
+import { authenticateRequest, extractBearerToken } from "./auth.ts";
 import { createAppContext, type AppContext } from "./app-context.ts";
-import { sendError } from "./json.ts";
+import { sendError, readRawBody } from "./json.ts";
 import { handlePostsRoute } from "./routes/posts.ts";
 import { handleAssetsRoute } from "./routes/assets.ts";
 import { handleEventsRoute } from "./routes/events.ts";
@@ -16,6 +16,7 @@ import { handlePublishMediaRoute } from "./routes/publish-media.ts";
 import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments.ts";
 import { handleAuthRoute } from "./routes/auth.ts";
+import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
@@ -26,6 +27,8 @@ import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 import { readAdminSession } from "../domain/auth-session.ts";
 import { shouldGateSpaGet } from "./spa-route-policy.ts";
+import { validateMcpConnectionCode } from "../domain/mcp-connection.ts";
+import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const PUBLIC_DIR = join(PROJECT_ROOT, "public");
@@ -61,7 +64,10 @@ export type HttpServerOptions = {
   startScheduler?: boolean;
   publishTickMs?: number;
   replyTickMs?: number;
+  mcpConnectionCode?: string;
 };
+
+const MCP_BODY_LIMIT = 20 * 1024 * 1024;
 
 export type HttpServerHandle = {
   server: Server;
@@ -131,11 +137,53 @@ function delegateToVite(
   });
 }
 
+async function handleMcpRoute(
+  req: IncomingMessage,
+  res: ServerResponse,
+  ctx: AppContext,
+  pathname: string,
+  gateway: IrisMcpGateway,
+): Promise<boolean> {
+  if (pathname !== "/mcp") {
+    return false;
+  }
+
+  if (!isAllowedMcpHost(req, process.env.NODE_ENV === "production")) {
+    sendError(res, 403, "Forbidden");
+    return true;
+  }
+
+  const token = extractBearerToken(req);
+  if (!validateMcpConnectionCode(token, ctx.mcp.connectionCode)) {
+    res.writeHead(401, {
+      "Content-Type": "application/json",
+      "WWW-Authenticate": 'Bearer realm="iris-mcp"',
+    });
+    res.end(JSON.stringify({ error: "Authorization required" }));
+    return true;
+  }
+
+  let parsedBody: unknown;
+  if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
+    try {
+      const raw = await readRawBody(req, MCP_BODY_LIMIT);
+      parsedBody = raw.length > 0 ? JSON.parse(raw.toString("utf8")) : undefined;
+    } catch {
+      sendError(res, 400, "Invalid request body");
+      return true;
+    }
+  }
+
+  await gateway.handleRequest(req, res, parsedBody);
+  return true;
+}
+
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
   ctx: AppContext,
-  adminVite?: ViteDevServer,
+  adminVite: ViteDevServer | undefined,
+  mcpGateway: IrisMcpGateway,
 ): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const { pathname } = url;
@@ -158,12 +206,20 @@ async function handleRequest(
     return;
   }
 
+  if (await handleMcpRoute(req, res, ctx, pathname, mcpGateway)) {
+    return;
+  }
+
   if (pathname.startsWith("/api/")) {
     if (applyCorsIfNeeded(req, res)) {
       return;
     }
 
     if (await handleAuthRoute(req, res, ctx, pathname)) {
+      return;
+    }
+
+    if (await handleMcpAuthRoute(req, res, ctx, pathname)) {
       return;
     }
 
@@ -263,7 +319,10 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     metaAppSecret: options.metaAppSecret,
     metaWebhookVerifyToken: options.metaWebhookVerifyToken,
     emailSender: options.emailSender,
+    mcpConnectionCode: options.mcpConnectionCode,
   });
+
+  const mcpGateway = new IrisMcpGateway(ctx);
 
   const stopPublishScheduler = options.startScheduler
     ? startPublishScheduler(ctx, {
@@ -285,7 +344,7 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
   let adminVite: ViteDevServer | undefined;
 
   const server = createHttpServer((req, res) => {
-    void handleRequest(req, res, ctx, adminVite).catch(() => {
+    void handleRequest(req, res, ctx, adminVite, mcpGateway).catch(() => {
       sendError(res, 500, "internal server error");
     });
   });

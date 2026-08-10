@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 import { loadEnvFile } from "node:process";
 import { createServer, getPublicDirectory } from "./api/http-server.ts";
 import { createAdminViteDevServer } from "./dev/admin-vite.ts";
+import {
+  assertMcpConnectionCodeConfigured,
+  McpConnectionConfigError,
+} from "./domain/mcp-connection.ts";
 
 const envPath = resolve(dirname(fileURLToPath(import.meta.url)), "../.env");
 if (existsSync(envPath)) {
@@ -14,6 +18,16 @@ const port = Number(process.env.PORT ?? 8792);
 const host = process.env.HOST ?? "0.0.0.0";
 const isDev = process.env.NODE_ENV !== "production";
 const projectRoot = dirname(getPublicDirectory());
+
+try {
+  assertMcpConnectionCodeConfigured(process.env.NODE_ENV);
+} catch (error) {
+  if (error instanceof McpConnectionConfigError) {
+    console.error(error.message);
+    process.exit(1);
+  }
+  throw error;
+}
 
 const { server, stopScheduler, setAdminVite, closeAdminVite } = createServer({
   startScheduler: true,

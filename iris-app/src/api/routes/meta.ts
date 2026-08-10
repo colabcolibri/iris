@@ -25,6 +25,13 @@ export async function handleMetaRoute(request: RouteRequest): Promise<boolean> {
     return true;
   }
 
+  if (req.method === "POST" && pathname === "/api/meta/disconnect") {
+    ctx.metaTokenStore.clear();
+    ctx.metaConnectionStore.clear();
+    sendJson(res, 200, { ok: true });
+    return true;
+  }
+
   if (req.method !== "GET") {
     sendError(res, 405, "Method not allowed");
     return true;

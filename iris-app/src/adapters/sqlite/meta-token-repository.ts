@@ -51,6 +51,10 @@ export function createSqliteMetaTokenStore(
       deleteAll.run();
       upsert.run(randomUUID(), vault, expiresAt, now);
     },
+
+    clear() {
+      deleteAll.run();
+    },
   };
 }
 

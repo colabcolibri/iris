@@ -1,17 +1,9 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { timingSafeStringEqual } from "../domain/secret-compare.ts";
 
 export const SESSION_COOKIE = "iris_session";
 const SESSION_VERSION = "v1";
-
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) {
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
-}
 
 export function sessionSecret(): string | null {
   const secret = process.env.IRIS_SESSION_SECRET?.trim();
