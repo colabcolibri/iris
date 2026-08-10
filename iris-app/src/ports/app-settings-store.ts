@@ -5,6 +5,8 @@ export type AppSettings = {
   replyMode: ReplyMode;
   /** Derivado de replyMode para compatibilidade com API legada. */
   autoReplyEnabled: boolean;
+  /** 0 = resposta imediata no próximo tick; 30–600 = fila com delay em segundos. */
+  replyDelaySeconds: number;
   updatedAt: string;
 };
 

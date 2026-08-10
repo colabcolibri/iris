@@ -53,6 +53,8 @@ export function startCommentResponder(
     void tick();
   }, intervalMs);
 
+  void tick();
+
   if (typeof timer.unref === "function") {
     timer.unref();
   }

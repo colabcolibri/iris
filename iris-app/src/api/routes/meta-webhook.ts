@@ -9,7 +9,7 @@ import {
 } from "../../domain/meta-webhook.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
-import { scheduleCommentReply } from "../../domain/comments/process-comment-reply.ts";
+import { enqueueCommentReply } from "../../domain/comments/enqueue-comment-reply.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
@@ -165,7 +165,7 @@ async function handleMetaWebhookPost(
           );
 
           if (shouldScheduleCommentReply(effectiveReplyMode) && ctx.resolveLlmCompleter()) {
-            scheduleCommentReply(ctx, result.comment.id);
+            enqueueCommentReply(ctx, result.comment.id);
           }
         }
       }

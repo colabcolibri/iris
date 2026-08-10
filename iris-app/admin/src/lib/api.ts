@@ -392,6 +392,7 @@ export function updateAppSettings(body: {
   timezone?: string;
   reply_mode?: ReplyMode;
   auto_reply_enabled?: boolean;
+  reply_delay_seconds?: number;
 }) {
   return apiFetch<AppSettings>("/api/settings/app", {
     method: "PUT",

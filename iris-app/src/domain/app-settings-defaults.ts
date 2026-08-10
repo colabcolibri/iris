@@ -6,6 +6,7 @@ export function defaultAppSettings(): AppSettings {
     timezone: resolveTimeZone(null),
     replyMode: "auto",
     autoReplyEnabled: true,
+    replyDelaySeconds: 0,
     updatedAt: new Date().toISOString(),
   };
 }

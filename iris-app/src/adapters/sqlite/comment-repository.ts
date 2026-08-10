@@ -47,6 +47,14 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     WHERE id = ?
   `);
 
+  const scheduleAgentReplyStmt = db.prepare(`
+    UPDATE comments
+    SET agent_reply_not_before = ?
+    WHERE id = ?
+      AND status = 'pending'
+      AND agent_reply_not_before IS NULL
+  `);
+
   const insertReply = db.prepare(`
     INSERT INTO comment_replies (id, comment_id, draft_text, sent_text, status, agent_run_id, source_ig_comment_id, reply_to_ig_comment_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -94,6 +102,10 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       ) IN ('auto', 'draft')
       AND NOT EXISTS (
         SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
+      )
+      AND (
+        c.agent_reply_not_before IS NULL
+        OR datetime(c.agent_reply_not_before) <= datetime('now')
       )
       AND (
         c.author_username IS NULL
@@ -294,6 +306,11 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     markFailed(id, errorMessage) {
       markFailedStmt.run(errorMessage.slice(0, 500), id);
       return this.findById(id);
+    },
+
+    scheduleAgentReply(commentId, notBeforeIso) {
+      const result = scheduleAgentReplyStmt.run(notBeforeIso, commentId);
+      return (result.changes ?? 0) > 0;
     },
 
     createReply(input) {

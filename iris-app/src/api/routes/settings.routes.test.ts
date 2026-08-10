@@ -138,9 +138,11 @@ test("GET app settings returns default timezone", async () => {
     const body = (await response.json()) as {
       timezone: string;
       auto_reply_enabled: boolean;
+      reply_delay_seconds: number;
     };
     assert.equal(body.timezone, "America/Sao_Paulo");
     assert.equal(body.auto_reply_enabled, true);
+    assert.equal(body.reply_delay_seconds, 0);
   });
 });
 
@@ -171,6 +173,32 @@ test("PUT app settings persists timezone and rejects invalid zone", async () => 
     });
     const body = (await getResponse.json()) as { timezone: string };
     assert.equal(body.timezone, "Europe/Lisbon");
+  });
+});
+
+test("PUT app settings persists reply_delay_seconds", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const putResponse = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ reply_delay_seconds: 90 }),
+    });
+    assert.equal(putResponse.status, 200);
+    const body = (await putResponse.json()) as { reply_delay_seconds: number };
+    assert.equal(body.reply_delay_seconds, 90);
+
+    const invalid = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ reply_delay_seconds: 15 }),
+    });
+    assert.equal(invalid.status, 422);
   });
 });
 

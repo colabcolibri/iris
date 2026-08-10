@@ -9,6 +9,7 @@ type AppSettingsRow = {
   timezone: string;
   auto_reply_enabled: number;
   reply_mode: string | null;
+  reply_delay_seconds: number;
   updated_at: string;
 };
 
@@ -23,24 +24,26 @@ function mapRow(row: AppSettingsRow): AppSettings {
     timezone: row.timezone,
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
+    replyDelaySeconds: Number(row.reply_delay_seconds ?? 0),
     updatedAt: row.updated_at,
   };
 }
 
 export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore {
   const selectOne = db.prepare(`
-    SELECT timezone, auto_reply_enabled, reply_mode, updated_at
+    SELECT timezone, auto_reply_enabled, reply_mode, reply_delay_seconds, updated_at
     FROM app_settings
     WHERE id = ?
   `);
 
   const upsertStmt = db.prepare(`
-    INSERT INTO app_settings (id, timezone, auto_reply_enabled, reply_mode, updated_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO app_settings (id, timezone, auto_reply_enabled, reply_mode, reply_delay_seconds, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       timezone = excluded.timezone,
       auto_reply_enabled = excluded.auto_reply_enabled,
       reply_mode = excluded.reply_mode,
+      reply_delay_seconds = excluded.reply_delay_seconds,
       updated_at = excluded.updated_at
   `);
 
@@ -65,6 +68,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
         input.timezone,
         autoReplyEnabled ? 1 : 0,
         replyMode,
+        input.replyDelaySeconds,
         updatedAt,
       );
 

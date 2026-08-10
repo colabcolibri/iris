@@ -275,6 +275,7 @@ export type AppSettings = {
   timezone: string;
   reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
+  reply_delay_seconds: number;
   updated_at: string;
 };
 

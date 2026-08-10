@@ -17,6 +17,7 @@ import {
   isReplyMode,
   replyModeFromAutoReplyEnabled,
 } from "../../domain/reply-mode.ts";
+import { isValidReplyDelaySeconds } from "../../domain/comments/compute-agent-reply-not-before.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -30,6 +31,7 @@ function serializeAppSettings(settings: AppSettings) {
     timezone: settings.timezone,
     reply_mode: settings.replyMode,
     auto_reply_enabled: settings.autoReplyEnabled,
+    reply_delay_seconds: settings.replyDelaySeconds,
     updated_at: settings.updatedAt,
   };
 }
@@ -41,10 +43,11 @@ function normalizeAppSettingsBody(
   const hasTimezone = "timezone" in body;
   const hasAutoReply = "auto_reply_enabled" in body;
   const hasReplyMode = "reply_mode" in body;
+  const hasReplyDelay = "reply_delay_seconds" in body;
 
-  if (!hasTimezone && !hasAutoReply && !hasReplyMode) {
+  if (!hasTimezone && !hasAutoReply && !hasReplyMode && !hasReplyDelay) {
     throw new ValidationError(
-      "at least one of timezone, reply_mode, or auto_reply_enabled is required",
+      "at least one of timezone, reply_mode, reply_delay_seconds, or auto_reply_enabled is required",
     );
   }
 
@@ -72,10 +75,24 @@ function normalizeAppSettingsBody(
     replyMode = replyModeFromAutoReplyEnabled(body.auto_reply_enabled);
   }
 
+  let replyDelaySeconds = current.replyDelaySeconds;
+  if (hasReplyDelay) {
+    if (typeof body.reply_delay_seconds !== "number") {
+      throw new ValidationError("reply_delay_seconds must be a number");
+    }
+    if (!isValidReplyDelaySeconds(body.reply_delay_seconds)) {
+      throw new ValidationError(
+        "reply_delay_seconds must be 0 (immediate) or between 30 and 600",
+      );
+    }
+    replyDelaySeconds = Math.round(body.reply_delay_seconds);
+  }
+
   return {
     timezone,
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
+    replyDelaySeconds,
   };
 }
 

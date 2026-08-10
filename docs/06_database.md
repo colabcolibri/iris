@@ -60,6 +60,7 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | author_username | TEXT | |
 | text | TEXT | |
 | status | TEXT | `pending`, `replied`, `skipped`, `failed` |
+| agent_reply_not_before | TEXT ISO | Nullable — fila durável; elegível quando `<= now` ou `NULL` |
 | created_at | TEXT | |
 
 ### `comment_replies`

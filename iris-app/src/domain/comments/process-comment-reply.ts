@@ -198,13 +198,3 @@ export async function processCommentReply(
     }),
   );
 }
-
-export function scheduleCommentReply(
-  ctx: AppContext,
-  commentId: string,
-  options: Omit<ProcessCommentReplyOptions, "trigger"> = {},
-): void {
-  setImmediate(() => {
-    void processCommentReply(ctx, commentId, { ...options, trigger: "webhook" });
-  });
-}

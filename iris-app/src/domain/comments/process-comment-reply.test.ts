@@ -160,6 +160,7 @@ test("processCommentReply skips when global is off and post inherits", async () 
       timezone: "America/Sao_Paulo",
       replyMode: "off",
       autoReplyEnabled: false,
+      replyDelaySeconds: 0,
     });
 
     const post = ctx.posts.create({
@@ -211,6 +212,7 @@ test("processCommentReply honors explicit post auto when global is off", async (
       timezone: "America/Sao_Paulo",
       replyMode: "off",
       autoReplyEnabled: false,
+      replyDelaySeconds: 0,
     });
 
     const post = ctx.posts.create({
