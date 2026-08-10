@@ -474,7 +474,7 @@ export function CommentsPage() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Adicionar publicação</h2>
               <p className="text-sm text-muted-foreground">
-                Cole o ID numérico do post na Meta ou o link do Instagram.
+                Cole o link do post no Instagram (ex.: instagram.com/p/…) ou o ID numérico da Meta.
               </p>
             </div>
             <div className="space-y-2">
@@ -483,7 +483,7 @@ export function CommentsPage() {
                 id="monitored-media-input"
                 value={mediaInput}
                 onChange={(e) => setMediaInput(e.target.value)}
-                placeholder="17841400000000001 ou https://instagram.com/p/..."
+                placeholder="https://www.instagram.com/p/… ou 17841400000000001"
               />
             </div>
             <div className="flex flex-wrap justify-end gap-2">
