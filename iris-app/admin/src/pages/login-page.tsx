@@ -91,7 +91,7 @@ export function LoginPage() {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="editor@iris.studio"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="border-0 border-b bg-muted/80 focus-visible:ring-0"

@@ -62,10 +62,18 @@ UI (produção): `pnpm build:admin` + `pnpm start` — bundle em `public/`; logi
 
 ## Production
 
+Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar valores reais** — use variáveis de ambiente no provedor.
+
 | Variable | Notes |
 | -------- | ----- |
 | `NODE_ENV` | `production` |
-| `IRIS_DB_PATH` | Persistent volume path |
+| `IRIS_DB_PATH` | Persistent volume path (ex.: `/app/data/iris.db`) |
+| `IRIS_PUBLIC_BASE_URL` | URL pública HTTPS (ex.: `https://iris.example.com`) |
+| `META_OAUTH_REDIRECT_URI` | `{IRIS_PUBLIC_BASE_URL}/auth/meta/callback` |
+| `IRIS_EMAIL_PROVIDER` | `resend` |
+| `IRIS_FROM_EMAIL` | Remetente verificado no Resend |
+| `RESEND_API_KEY` | API key Resend (somente no provedor) |
+| `IRIS_ADMIN_EMAIL` | Email allowlisted para OTP |
 | `META_*` | App credentials + access token |
 | `LLM_API_KEY` | For comment responder (v1-S6) |
 
@@ -76,9 +84,9 @@ Requirements:
 
 ## Meta webhook URL
 
-Production: `https://<host>/webhooks/meta`
+Production: `https://<your-public-host>/webhooks/meta`
 
-Configure in Meta Developers → Webhooks → Instagram.
+Configure in Meta Developers → Webhooks → Instagram. OAuth callback: `https://<your-public-host>/auth/meta/callback`.
 
 ## Ports
 

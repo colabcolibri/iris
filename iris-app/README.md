@@ -12,7 +12,7 @@ Abra **http://127.0.0.1:8792** — um único servidor com API, UI e hot reload (
 
 **Produção local:** `pnpm build:admin` e `NODE_ENV=production pnpm start`.
 
-**Railway:** deploy a partir de `iris-app/` (Dockerfile + `railway.toml`). Monte volume em `/app/data`. Variáveis: ver `.env.railway.example`.
+**Railway (monorepo):** deploy na **raiz do repositório** — `Dockerfile` + `railway.toml` na raiz constroem `iris-app/`. Monte volume em `/app/data`. Variáveis: ver `.env.railway.example` (somente placeholders; valores reais só no painel Railway).
 
 O diretório `public/` contém só o output do Vite + assets estáticos (`admin/public/`). O desk vanilla foi removido.
 

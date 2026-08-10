@@ -12,7 +12,7 @@ blocks: []
 ## Base URL
 
 - Dev: `http://127.0.0.1:8792`
-- Prod: `https://iris.<domain>` (TBD)
+- Prod: `https://iris.<your-domain>`
 
 ## Authentication
 
