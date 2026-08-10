@@ -43,3 +43,37 @@ test("buildThreadBlock limits entries for simple tier usage", () => {
   assert.match(block, /msg 7/);
   assert.doesNotMatch(block, /msg 2/);
 });
+
+test("buildThreadBlock marks depth and target comment for triage", () => {
+  const block = buildThreadBlock(
+    {
+      entries: [
+        {
+          author: "mother",
+          text: "post root",
+          isBrandReply: false,
+          at: "2026-08-10T11:00:00.000Z",
+          depth: 0,
+          igCommentId: "root",
+        },
+        {
+          author: "fan",
+          text: "@other_user concordo",
+          isBrandReply: false,
+          at: "2026-08-10T11:02:00.000Z",
+          depth: 1,
+          igCommentId: "target",
+        },
+      ],
+    },
+    {
+      brandUsername: "colabcolibri",
+      showDepth: true,
+      targetIgCommentId: "target",
+    },
+  );
+
+  assert.match(block, /\[depth=1\]/);
+  assert.match(block, />>> TARGET/);
+  assert.match(block, /@fan: @other_user concordo/);
+});

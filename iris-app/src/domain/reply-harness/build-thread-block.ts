@@ -4,6 +4,9 @@ export type BuildThreadBlockOptions = {
   maxEntries?: number;
   truncateCommentChars?: number;
   brandName?: string | null;
+  brandUsername?: string | null;
+  showDepth?: boolean;
+  targetIgCommentId?: string | null;
 };
 
 function truncateText(text: string, maxChars: number): string {
@@ -21,16 +24,29 @@ function formatTimestamp(at: string): string {
   return date.toISOString();
 }
 
+function normalizeHandle(value: string): string {
+  return value.trim().replace(/^@+/, "").toLowerCase();
+}
+
 function authorLabel(
   entry: CommentThreadContext["entries"][number],
-  brandName: string | null | undefined,
+  options: BuildThreadBlockOptions,
 ): string {
   if (entry.isBrandReply) {
-    return brandName ? `brand (${brandName})` : "brand";
+    return options.brandName ? `brand (${options.brandName})` : "brand";
   }
-  if (entry.author) {
-    return `@${entry.author}`;
+
+  const author = entry.author?.trim();
+  if (author && options.brandUsername) {
+    if (normalizeHandle(author) === normalizeHandle(options.brandUsername)) {
+      return `brand (@${normalizeHandle(author)})`;
+    }
   }
+
+  if (author) {
+    return `@${author.replace(/^@+/, "")}`;
+  }
+
   return "public";
 }
 
@@ -49,9 +65,19 @@ export function buildThreadBlock(
 
   return slice
     .map((entry) => {
-      const who = authorLabel(entry, options.brandName);
+      const who = authorLabel(entry, options);
       const text = truncateText(entry.text ?? "", truncateCommentChars);
-      return `[${formatTimestamp(entry.at)}] ${who}: ${text}`;
+      const depth =
+        options.showDepth && typeof entry.depth === "number"
+          ? `[depth=${entry.depth}] `
+          : "";
+      const target =
+        options.targetIgCommentId &&
+        entry.igCommentId &&
+        entry.igCommentId === options.targetIgCommentId
+          ? ">>> TARGET "
+          : "";
+      return `${target}${depth}[${formatTimestamp(entry.at)}] ${who}: ${text}`;
     })
     .join("\n");
 }

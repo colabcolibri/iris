@@ -4,6 +4,7 @@ import { DEFAULT_GUARDRAIL_RULES } from "./default-guardrails.ts";
 import { buildBrandBlock, buildMentionDirective, buildMentionVerifyNote, buildResponseLanguageDirective, buildSignatureVerificationBlock } from "./prompt-language.ts";
 import {
   buildContextSection,
+  buildTriageContextSection,
   captionForTier,
   targetCommentLine,
   threadForTier,
@@ -16,6 +17,7 @@ const TRIAGE_TIER_GUIDE = [
   '- blockCategory "harmful": insults, harassment, hate speech.',
   '- blockCategory "spam": irrelevant promos or bots.',
   '- blockCategory "off_topic": no link to the post or brand.',
+  '- blockCategory "not_for_brand": users talking to each other; target is not directed at the brand (see Reply audience).',
   '- replyTier "none": do not reply (includes any blockCategory other than none).',
   '- replyTier "simple": a short reply is enough (thanks, praise, simple question).',
   '- replyTier "full": needs explanation, product context, conflict handling, or sensitive tone.',
@@ -38,12 +40,12 @@ export function buildTriagePrompt(context: ReplyContext, restrictions: string): 
     DEFAULT_GUARDRAIL_RULES,
     "",
     "## Context",
-    buildContextSection(context, "simple"),
+    buildTriageContextSection(context),
     "",
     buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
     "",
     "Reply with valid JSON only:",
-    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"harmful"|"spam"|"off_topic"|"other","reason":"short label","reasoning":"brief explanation"}',
+    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"harmful"|"spam"|"off_topic"|"not_for_brand"|"other","reason":"short label","reasoning":"brief explanation"}',
   ].join("\n");
 }
 

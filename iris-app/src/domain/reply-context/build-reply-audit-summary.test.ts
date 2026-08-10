@@ -47,9 +47,11 @@ function baseContext(overrides: Partial<ReplyContext> = {}): ReplyContext {
       summaries: ["carrossel com 1 imagem"],
       visionEnabled: false,
     },
+    brandUsername: null,
     targetComment: {
       authorUsername: "verylongusername_that_exceeds_limit_12345",
       text: "texto sensível do comentário",
+      igCommentId: null,
     },
     ...overrides,
   };

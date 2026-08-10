@@ -30,6 +30,7 @@ export type SimulateReplyInput = {
   carousel_summary?: string | null;
   response_language?: string;
   brand_name?: string | null;
+  brand_username?: string | null;
   max_chars?: number;
   thread?: SimulateThreadMessage[];
   target_comment: {
@@ -86,6 +87,13 @@ function buildSimulatedContext(input: SimulateReplyInput, deps: SimulateReplyDep
         ? input.brand_name.trim()
         : storedPersona.brandName;
 
+  const brandUsername =
+    input.brand_username === null
+      ? null
+      : typeof input.brand_username === "string" && input.brand_username.trim()
+        ? input.brand_username.trim().replace(/^@+/, "")
+        : null;
+
   const persona = {
     brandName,
     signatureInstruction: storedPersona.signatureInstruction,
@@ -111,9 +119,11 @@ function buildSimulatedContext(input: SimulateReplyInput, deps: SimulateReplyDep
     post,
     thread: buildThread(input.thread),
     imageContext: { summaries: [], visionEnabled: false },
+    brandUsername,
     targetComment: {
       authorUsername: input.target_comment.author.trim() || "user",
       text: input.target_comment.text,
+      igCommentId: "sim-target",
     },
   };
 }

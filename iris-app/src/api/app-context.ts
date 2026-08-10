@@ -250,6 +250,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     imageContextProvider,
     publicBaseUrl: publicBaseUrl || null,
     publishUrlSecret: publishUrlSecret || null,
+    resolveBrandUsername: () => metaConnectionStore.get()?.igUsername ?? null,
   };
 
   return {

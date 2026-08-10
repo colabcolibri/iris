@@ -54,9 +54,11 @@ test("serializeReplyContext exposes target_comment and thread depth", () => {
       summaries: ["Imagem 1: produto"],
       visionEnabled: true,
     },
+    brandUsername: "colabcolibri",
     targetComment: {
       authorUsername: "fan2",
       text: "e agora?",
+      igCommentId: "ig-child",
     },
   };
 

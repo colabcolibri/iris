@@ -26,7 +26,8 @@ test("buildReplyPrompt includes context and mandatory language", () => {
       ],
     },
     imageContext: { summaries: ["Carousel with 2 image(s)."] },
-    targetComment: { authorUsername: "fan", text: "Hi" },
+    brandUsername: null,
+    targetComment: { authorUsername: "fan", text: "Hi", igCommentId: null },
   });
 
   assert.match(prompt, /Response language \(MANDATORY\)/);

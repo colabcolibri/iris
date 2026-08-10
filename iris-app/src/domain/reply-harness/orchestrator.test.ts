@@ -26,9 +26,11 @@ function mockContext(): ReplyContext {
     },
     thread: { entries: [] },
     imageContext: { summaries: [] },
+    brandUsername: null,
     targetComment: {
       authorUsername: "fan",
       text: "Qual o preço?",
+      igCommentId: null,
     },
   };
 }
@@ -250,4 +252,30 @@ test("runReplyHarness simple tier rejects harmful draft via code guard", async (
   assert.equal(result.terminalStatus, "rejected_verify");
   assert.equal(result.steps.length, 3);
   assert.equal(result.steps[2]?.stage, "verify");
+});
+
+test("runReplyHarness skips triage when comment is not for the brand", async () => {
+  const llm: LlmCompleter = {
+    async complete() {
+      return createTestLlmCompletion(
+        JSON.stringify({
+          shouldReply: false,
+          replyTier: "none",
+          blockCategory: "not_for_brand",
+          reason: "peer_conversation",
+          reasoning: "Target replied to another user, not the brand.",
+        }),
+      );
+    },
+  };
+
+  const result = await runReplyHarness({
+    context: mockContext(),
+    agentContent: defaultAgentContent(),
+    llm,
+  });
+
+  assert.equal(result.terminalStatus, "skipped_triage");
+  assert.equal(result.replyTier, "none");
+  assert.equal(result.steps[0]?.blockCategory, "not_for_brand");
 });

@@ -10,6 +10,7 @@ export type ReplyContextAssemblerDeps = BuildPostReplyContextDeps & {
   comments: CommentRepository;
   personaStore: ReplyPersonaStore;
   imageContextProvider: ImageContextProvider;
+  resolveBrandUsername?: () => string | null;
 };
 
 export async function assembleReplyContext(
@@ -34,9 +35,11 @@ export async function assembleReplyContext(
     post,
     thread,
     imageContext,
+    brandUsername: deps.resolveBrandUsername?.() ?? null,
     targetComment: {
       authorUsername: comment.authorUsername,
       text: comment.text,
+      igCommentId: comment.igCommentId,
     },
   };
 }

@@ -17,6 +17,7 @@ test("reply audit UI is wired in comment surfaces", () => {
 
   const thread = readFileSync("admin/src/components/comments/comment-thread.tsx", "utf8");
   assert.match(thread, /ReplyAuditSection/);
+  assert.match(thread, /border-l-2/);
 
   const dialog = readFileSync("admin/src/components/posts/post-dialog.tsx", "utf8");
   assert.match(dialog, /ReplyAuditSection/);

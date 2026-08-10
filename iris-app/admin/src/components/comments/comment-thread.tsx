@@ -126,6 +126,27 @@ function hasChildWithIgId(node: CommentTreeNode, igCommentId: string | null | un
   return node.children.some((child) => hasChildWithIgId(child, igCommentId));
 }
 
+function threadBranchClass(depth: number): string | null {
+  if (depth <= 0) {
+    return null;
+  }
+
+  return cn(
+    "border-l-2 border-border/60 ps-3 ms-2 sm:ms-3 pt-3",
+    depth > 1 && "border-border/45",
+  );
+}
+
+function avatarSizeClass(depth: number): string {
+  if (depth <= 0) {
+    return "size-9";
+  }
+  if (depth === 1) {
+    return "size-8";
+  }
+  return "size-7";
+}
+
 type CommentThreadProps = {
   roots: CommentTreeNode[];
   allComments: Comment[];
@@ -165,14 +186,15 @@ function CommentItem({
   const descendantCount = countDescendants(node);
   const isCollapsed = collapsedIds.has(node.id);
   const brandHandle = formatHandle(brandUsername ?? "marca");
+  const branchClass = threadBranchClass(depth);
 
-  return (
-    <div className={cn(depth > 0 && "mt-3")}>
+  const body = (
+    <>
       <div className="flex gap-2.5">
         <Avatar
           className={cn(
             "shrink-0 border border-border/30",
-            depth > 0 ? "size-7" : "size-9",
+            avatarSizeClass(depth),
           )}
         >
           <AvatarFallback className="text-[10px] font-semibold">
@@ -297,21 +319,23 @@ function CommentItem({
           ) : null}
 
           {showLinkedReply ? (
-            <div className="mt-2 flex gap-2.5">
-              <Avatar className="size-7 shrink-0 border border-border/30">
-                <AvatarFallback className="text-[9px] font-semibold">
-                  {initials(brandUsername ?? "marca")}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 rounded-2xl bg-muted/55 px-3 py-2">
-                <p className="text-xs font-semibold text-foreground">{brandHandle}</p>
-                <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
-                  {node.linked_reply_text}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Em resposta a{" "}
-                  <span className="font-medium text-foreground/80">{linkedReplyTarget}</span>
-                </p>
+            <div className="mt-2 border-l-2 border-primary/30 ps-3 ms-1">
+              <div className="flex gap-2.5">
+                <Avatar className="size-7 shrink-0 border border-border/30">
+                  <AvatarFallback className="text-[9px] font-semibold">
+                    {initials(brandUsername ?? "marca")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 rounded-2xl bg-muted/55 px-3 py-2">
+                  <p className="text-xs font-semibold text-foreground">{brandHandle}</p>
+                  <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
+                    {node.linked_reply_text}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Em resposta a{" "}
+                    <span className="font-medium text-foreground/80">{linkedReplyTarget}</span>
+                  </p>
+                </div>
               </div>
             </div>
           ) : null}
@@ -327,7 +351,7 @@ function CommentItem({
           ) : null}
 
           {node.children.length > 0 && !isCollapsed ? (
-            <div className={cn("space-y-0", depth === 0 ? "mt-2" : "mt-1")}>
+            <div className={cn(depth === 0 ? "mt-3" : "mt-2")}>
               {node.children.map((child) => (
                 <CommentItem
                   key={child.id}
@@ -345,6 +369,20 @@ function CommentItem({
           ) : null}
         </div>
       </div>
+    </>
+  );
+
+  if (branchClass) {
+    return (
+      <div className={branchClass} role="listitem" aria-level={depth + 1}>
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <div role="listitem" aria-level={depth + 1}>
+      {body}
     </div>
   );
 }
@@ -376,9 +414,9 @@ export function CommentThread({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6" role="list">
       {roots.map((root) => (
-        <article key={root.id} className="min-w-0">
+        <article key={root.id} className="min-w-0 border-b border-border/40 pb-6 last:border-b-0 last:pb-0">
           <CommentItem
             node={root}
             depth={0}

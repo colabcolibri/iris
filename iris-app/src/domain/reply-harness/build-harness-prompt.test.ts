@@ -18,7 +18,8 @@ function mockContext(responseLanguage = "pt-BR"): ReplyContext {
     },
     thread: { entries: [] },
     imageContext: { summaries: [] },
-    targetComment: { authorUsername: "fan", text: "How much?" },
+    brandUsername: null,
+    targetComment: { authorUsername: "fan", text: "How much?", igCommentId: null },
   };
 }
 
@@ -33,4 +34,49 @@ test("harness prompts inject mandatory response language", () => {
   const prompt = buildTriagePrompt(mockContext("fr"), defaultAgentContent().restrictions);
   assert.match(prompt, /Response language \(MANDATORY\)/);
   assert.match(prompt, /French/);
+});
+
+test("triage prompt includes thread audience rules and not_for_brand category", () => {
+  const context = mockContext();
+  context.brandUsername = "colabcolibri";
+  context.thread = {
+    entries: [
+      {
+        author: "sergiolucianojr",
+        text: "valeu!",
+        isBrandReply: false,
+        at: "2026-08-10T11:00:00.000Z",
+        depth: 0,
+        igCommentId: "c-1",
+      },
+      {
+        author: "colabcolibri",
+        text: "obrigado!",
+        isBrandReply: true,
+        at: "2026-08-10T11:01:00.000Z",
+        depth: 1,
+        igCommentId: "c-2",
+      },
+      {
+        author: "fan",
+        text: "@sergiolucianojr concordo",
+        isBrandReply: false,
+        at: "2026-08-10T11:02:00.000Z",
+        depth: 2,
+        igCommentId: "c-target",
+      },
+    ],
+  };
+  context.targetComment = {
+    authorUsername: "fan",
+    text: "@sergiolucianojr concordo",
+    igCommentId: "c-target",
+  };
+
+  const prompt = buildTriagePrompt(context, defaultAgentContent().restrictions);
+  assert.match(prompt, /Reply audience \(MANDATORY\)/);
+  assert.match(prompt, /@colabcolibri/);
+  assert.match(prompt, /not_for_brand/);
+  assert.match(prompt, />>> TARGET/);
+  assert.match(prompt, /\[depth=2\]/);
 });

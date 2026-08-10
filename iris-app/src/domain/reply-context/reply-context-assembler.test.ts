@@ -44,12 +44,15 @@ test("assembleReplyContext builds full context", async () => {
       },
       publicBaseUrl: null,
       publishUrlSecret: null,
+      resolveBrandUsername: () => "colabcolibri",
     });
 
     assert.ok(context);
     assert.equal(context!.persona.brandName, "Iris");
+    assert.equal(context!.brandUsername, "colabcolibri");
     assert.equal(context!.post?.caption, "Legenda");
     assert.equal(context!.targetComment.text, "Quero saber mais");
+    assert.equal(context!.targetComment.igCommentId, "ig-c1");
   } finally {
     db.close();
   }

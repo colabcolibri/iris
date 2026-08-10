@@ -55,9 +55,11 @@ export async function generateReply(
       : null,
     thread: { entries: [] },
     imageContext: { summaries: [] },
+    brandUsername: null,
     targetComment: {
       authorUsername: legacy.authorUsername,
       text: legacy.commentText,
+      igCommentId: null,
     },
   };
 

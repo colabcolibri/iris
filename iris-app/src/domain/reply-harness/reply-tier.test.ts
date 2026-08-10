@@ -31,6 +31,20 @@ test("normalizeTriageOutput forces none when blockCategory is set", () => {
   assert.equal(triage.blockCategory, "harmful");
 });
 
+test("normalizeTriageOutput accepts not_for_brand", () => {
+  const triage = normalizeTriageOutput({
+    shouldReply: false,
+    replyTier: "none",
+    blockCategory: "not_for_brand",
+    reason: "peer_conversation",
+    reasoning: "User replied to another follower, not the brand.",
+  });
+
+  assert.equal(triage.blockCategory, "not_for_brand");
+  assert.equal(triage.shouldReply, false);
+  assert.equal(triage.replyTier, "none");
+});
+
 test("formatTriageReason includes block and tier prefixes", () => {
   const formatted = formatTriageReason({
     shouldReply: false,

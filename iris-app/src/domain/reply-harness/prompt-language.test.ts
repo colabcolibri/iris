@@ -14,7 +14,8 @@ function mockContext(authorUsername = "maria_escuta"): ReplyContext {
     post: null,
     thread: { entries: [] },
     imageContext: { summaries: [] },
-    targetComment: { authorUsername, text: "Adorei o post!" },
+    brandUsername: null,
+    targetComment: { authorUsername, text: "Adorei o post!", igCommentId: null },
   };
 }
 

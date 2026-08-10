@@ -1,7 +1,7 @@
 import type { ReplyContext } from "../reply-context/types.ts";
 import { buildThreadBlock } from "./build-thread-block.ts";
 import type { ReplyTier } from "./reply-tier.ts";
-import { buildBrandLine } from "./prompt-language.ts";
+import { buildBrandLine, buildTriageAudienceDirective } from "./prompt-language.ts";
 
 const SIMPLE_THREAD_MAX = 5;
 const SIMPLE_CAPTION_MAX = 500;
@@ -45,6 +45,36 @@ export function buildContextSection(context: ReplyContext, tier: ReplyTier): str
     "",
     "Thread (chronological):",
     threadForTier(context, tier),
+    "",
+    targetCommentLine(context),
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
+}
+
+export function buildTriageContextSection(context: ReplyContext): string {
+  const brandLine = buildBrandLine(context.persona);
+  const brandAccount = context.brandUsername?.trim()
+    ? `Brand Instagram account: @${context.brandUsername.trim().replace(/^@+/, "")}`
+    : null;
+  const carouselLine = carouselSummaryLine(context);
+
+  return [
+    brandLine,
+    brandAccount,
+    `Post caption: ${captionForTier(context, "simple")}`,
+    carouselLine,
+    "",
+    buildTriageAudienceDirective(context),
+    "",
+    "Thread (chronological, nested — depth shows reply chain):",
+    buildThreadBlock(context.thread, {
+      maxEntries: SIMPLE_THREAD_MAX,
+      brandName: context.persona.brandName,
+      brandUsername: context.brandUsername,
+      showDepth: true,
+      targetIgCommentId: context.targetComment.igCommentId,
+    }),
     "",
     targetCommentLine(context),
   ]

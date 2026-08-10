@@ -77,6 +77,34 @@ export function buildMentionVerifyNote(context: ReplyContext): string | null {
   ].join(" ");
 }
 
+export function buildTriageAudienceDirective(context: ReplyContext): string {
+  const brandHandle = context.brandUsername?.trim().replace(/^@+/, "");
+  const brandLabel = context.persona.brandName?.trim();
+
+  const lines = [
+    "## Reply audience (MANDATORY)",
+    "Decide whether the TARGET comment expects a reply from the brand account.",
+    "Read the thread structure: depth shows nesting, @mentions show who each message addresses.",
+  ];
+
+  if (brandHandle) {
+    lines.push(`Brand Instagram handle: @${brandHandle}`);
+  }
+  if (brandLabel) {
+    lines.push(`Brand display name: ${brandLabel}`);
+  }
+
+  lines.push(
+    "Reply ONLY when the target comment is directed at the brand — e.g. question to the brand, thanks aimed at the brand, or a reply to the brand's message in the thread.",
+    "Do NOT reply when users are talking to each other and the brand is not addressed.",
+    "Brand IS addressed: @mention of the brand handle, direct question to the brand, praise/thanks clearly aimed at the brand voice, or continuing a exchange where the brand spoke last.",
+    "Brand is NOT addressed: @mention of another user without the brand, side conversation between followers, answer meant for another commenter, banter that does not invite the brand.",
+    'If not for the brand: shouldReply=false, replyTier="none", blockCategory="not_for_brand".',
+  );
+
+  return lines.join("\n");
+}
+
 export function buildSignatureVerificationBlock(persona: ReplyPersona): string | null {
   const signature = persona.signatureInstruction?.trim();
   if (!signature) {

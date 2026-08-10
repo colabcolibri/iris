@@ -8,8 +8,11 @@ export type ReplyContext = {
   post: PostReplyContext | null;
   thread: CommentThreadContext;
   imageContext: ImageReplyContext;
+  /** Connected Instagram handle for the brand account, when known. */
+  brandUsername: string | null;
   targetComment: {
     authorUsername: string | null;
     text: string | null;
+    igCommentId: string | null;
   };
 };

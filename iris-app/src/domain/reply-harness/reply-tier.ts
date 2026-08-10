@@ -1,6 +1,12 @@
 export type ReplyTier = "none" | "simple" | "full";
 
-export type BlockCategory = "none" | "harmful" | "spam" | "off_topic" | "other";
+export type BlockCategory =
+  | "none"
+  | "harmful"
+  | "spam"
+  | "off_topic"
+  | "not_for_brand"
+  | "other";
 
 export const SIMPLE_REPLY_MAX_CHARS = 180;
 
@@ -20,7 +26,14 @@ export type NormalizedTriageOutput = {
   reasoning: string;
 };
 
-const BLOCK_CATEGORIES: BlockCategory[] = ["none", "harmful", "spam", "off_topic", "other"];
+const BLOCK_CATEGORIES: BlockCategory[] = [
+  "none",
+  "harmful",
+  "spam",
+  "off_topic",
+  "not_for_brand",
+  "other",
+];
 
 export function normalizeBlockCategory(value: unknown): BlockCategory {
   if (typeof value === "string" && BLOCK_CATEGORIES.includes(value as BlockCategory)) {
