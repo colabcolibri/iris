@@ -131,6 +131,9 @@ export function CommentsPage() {
   const [mediaInput, setMediaInput] = useState("");
   const [addingPost, setAddingPost] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [liveConnected, setLiveConnected] = useState(true);
+
+  const POLL_MS = 20_000;
 
   const selectedPost = useMemo(
     () => posts.find((post) => post.post_id === selectedPostId) ?? null,
@@ -267,6 +270,7 @@ export function CommentsPage() {
 
   useEffect(() => {
     return subscribeRealtimeEvents({
+      onConnectionChange: setLiveConnected,
       onCommentsChanged: (data) => {
         if (data.post_id && data.post_id === selectedPostId) {
           void loadComments(selectedPostId, true);
@@ -274,6 +278,34 @@ export function CommentsPage() {
         }
       },
     });
+  }, [loadComments, loadPosts, selectedPostId]);
+
+  useEffect(() => {
+    if (!selectedPostId) {
+      return;
+    }
+
+    const poll = () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      void loadComments(selectedPostId, true);
+    };
+
+    const intervalId = window.setInterval(poll, POLL_MS);
+    const onFocus = () => {
+      void loadComments(selectedPostId, true);
+      void loadPosts();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
   }, [loadComments, loadPosts, selectedPostId]);
 
   return (
@@ -304,6 +336,13 @@ export function CommentsPage() {
           {error ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
+            </p>
+          ) : null}
+
+          {!liveConnected ? (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+              Atualização em tempo real indisponível — a lista é atualizada automaticamente a cada
+              20 segundos enquanto esta página estiver aberta.
             </p>
           ) : null}
 

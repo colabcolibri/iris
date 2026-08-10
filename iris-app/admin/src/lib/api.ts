@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona, SyncPostCommentsResult } from "@/lib/types";
+import type { AppSettings, Asset, Comment, CommentPostSummary, CommentsInbox, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -210,71 +210,74 @@ export function confirmLoginCode(email: string, code: string) {
   });
 }
 
-function parseSseChunk(
-  chunk: string,
-  onEvent: (eventName: string, data: unknown) => void,
-) {
-  const blocks = chunk.split("\n\n");
-  const remainder = blocks.pop() ?? "";
-
-  for (const block of blocks) {
-    const lines = block.split("\n");
-    let eventName = "message";
-    let data = "";
-
-    for (const line of lines) {
-      if (line.startsWith("event:")) eventName = line.slice(6).trim();
-      else if (line.startsWith("data:")) data += line.slice(5).trim();
-    }
-
-    if (data) onEvent(eventName, JSON.parse(data));
-  }
-
-  return remainder;
-}
-
 export function subscribeRealtimeEvents(handlers: {
   onPostsChanged?: (data: unknown) => void;
   onCommentsChanged?: (data: { post_id?: string }) => void;
+  onConnectionChange?: (connected: boolean) => void;
 }) {
   let aborted = false;
   let retryMs = 1000;
-  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let source: EventSource | null = null;
 
-  const connect = async () => {
-    while (!aborted) {
-      try {
-        const response = await fetch("/api/events", { credentials: "include" });
-        if (!response.ok || !response.body) throw new Error("sse connection failed");
-
-        reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        retryMs = 1000;
-
-        while (!aborted) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          buffer = parseSseChunk(buffer, (eventName, data) => {
-            if (eventName === "posts-changed") handlers.onPostsChanged?.(data);
-            if (eventName === "comments-changed")
-              handlers.onCommentsChanged?.(data as { post_id?: string });
-          });
-        }
-      } catch {
-        if (aborted) return;
-        await new Promise((r) => setTimeout(r, retryMs));
-        retryMs = Math.min(retryMs * 2, 30_000);
-      }
+  const scheduleReconnect = () => {
+    if (aborted) {
+      return;
     }
+
+    handlers.onConnectionChange?.(false);
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      connect();
+    }, retryMs);
+    retryMs = Math.min(retryMs * 2, 30_000);
   };
 
-  void connect();
+  const connect = () => {
+    if (aborted) {
+      return;
+    }
+
+    source?.close();
+    source = new EventSource("/api/events");
+
+    source.onopen = () => {
+      retryMs = 1000;
+      handlers.onConnectionChange?.(true);
+    };
+
+    source.addEventListener("posts-changed", (event) => {
+      try {
+        handlers.onPostsChanged?.(JSON.parse(event.data));
+      } catch {
+        // ignore malformed frames
+      }
+    });
+
+    source.addEventListener("comments-changed", (event) => {
+      try {
+        handlers.onCommentsChanged?.(JSON.parse(event.data) as { post_id?: string });
+      } catch {
+        // ignore malformed frames
+      }
+    });
+
+    source.onerror = () => {
+      source?.close();
+      source = null;
+      scheduleReconnect();
+    };
+  };
+
+  connect();
 
   return () => {
     aborted = true;
-    reader?.cancel().catch(() => undefined);
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+    }
+    source?.close();
+    handlers.onConnectionChange?.(false);
   };
 }
 
@@ -339,4 +342,11 @@ export function updateLlmSettings(body: {
     method: "PUT",
     body: JSON.stringify(body),
   });
+}
+
+export function fetchWebhookEvents(limit = 30) {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  return apiFetch<{ events: WebhookEvent[] }>(`/api/settings/webhook-events?limit=${safeLimit}`).then(
+    (payload) => payload.events,
+  );
 }

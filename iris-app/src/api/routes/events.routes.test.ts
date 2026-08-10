@@ -31,6 +31,11 @@ test("POST post emits posts-changed SSE event", async () => {
       eventsResponse.headers.get("content-type") ?? "",
       /text\/event-stream/,
     );
+    assert.equal(eventsResponse.headers.get("x-accel-buffering"), "no");
+    assert.match(
+      eventsResponse.headers.get("cache-control") ?? "",
+      /no-cache/,
+    );
 
     const reader = eventsResponse.body?.getReader();
     assert.ok(reader);

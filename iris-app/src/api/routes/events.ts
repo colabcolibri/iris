@@ -5,6 +5,8 @@ import type { AppContext } from "../app-context.ts";
 import { sendError } from "../json.ts";
 import { eventBus } from "../../adapters/sse/event-bus.ts";
 
+const HEARTBEAT_MS = 25_000;
+
 type RouteRequest = {
   req: IncomingMessage;
   res: ServerResponse;
@@ -26,11 +28,34 @@ export function handleEventsRoute(request: RouteRequest): boolean {
   }
 
   res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
   });
+
+  if (typeof res.flushHeaders === "function") {
+    res.flushHeaders();
+  }
+
   res.write(": connected\n\n");
   eventBus.subscribe(res);
+
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(": ping\n\n");
+    } catch {
+      clearInterval(heartbeat);
+    }
+  }, HEARTBEAT_MS);
+
+  if (typeof heartbeat.unref === "function") {
+    heartbeat.unref();
+  }
+
+  res.on("close", () => {
+    clearInterval(heartbeat);
+  });
+
   return true;
 }

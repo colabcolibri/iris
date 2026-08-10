@@ -167,3 +167,19 @@ export type LlmSettings = {
   env_override: boolean;
   updated_at: string | null;
 };
+
+export type WebhookProcessingStatus = "received" | "processed" | "ignored" | "failed";
+
+export type WebhookEvent = {
+  id: string;
+  received_at: string;
+  signature_valid: boolean;
+  object: string | null;
+  field: string | null;
+  processing_status: WebhookProcessingStatus;
+  comment_id: string | null;
+  post_id: string | null;
+  error_message: string | null;
+  payload_json: string;
+  payload_truncated: boolean;
+};
