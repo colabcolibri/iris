@@ -42,7 +42,7 @@ export function SettingsPage() {
   return (
     <AppShell meta={meta} onDisconnectMeta={handleDisconnect} onMetaHealth={handleMetaHealth}>
       <div className="flex-1 overflow-auto px-6 py-8 md:px-10">
-        <div className="mx-auto w-full max-w-xl space-y-6">
+        <div className="mx-auto w-full max-w-2xl space-y-6">
           <header className="space-y-1">
             <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
               Preferências

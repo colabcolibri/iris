@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { McpSetupGuide } from "@/components/settings/mcp-setup-guide";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import {
   fetchMcpSettings,
   generateMcpConnection,
@@ -13,6 +15,7 @@ import {
 } from "@/lib/api";
 
 export function McpConnectionCard() {
+  const { confirm } = useConfirmDialog();
   const [settings, setSettings] = useState<McpSettings | null>(null);
   const [generated, setGenerated] = useState<McpSettingsGenerateResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +37,22 @@ export function McpConnectionCard() {
     void load();
   }, [load]);
 
-  async function handleGenerate() {
+  async function handleGenerateClick() {
+    const isRotation = settings?.configured && settings.source === "database";
+
+    if (isRotation) {
+      const ok = await confirm({
+        title: "Rotacionar código MCP?",
+        description:
+          "O código atual deixará de funcionar. Atualize Cursor, ChatGPT ou Claude com o novo valor.",
+        confirmLabel: "Rotacionar",
+        variant: "destructive",
+      });
+      if (!ok) {
+        return;
+      }
+    }
+
     setWorking(true);
     try {
       const result = await generateMcpConnection();
@@ -48,7 +66,11 @@ export function McpConnectionCard() {
         updated_at: result.updated_at,
         env_override: settings?.env_override ?? false,
       });
-      toast.success("Código MCP gerado. Copie agora — não será exibido de novo.");
+      toast.success(
+        isRotation
+          ? "Código rotacionado. Copie os campos abaixo agora — o código não será exibido de novo."
+          : "Código MCP gerado. Copie os campos abaixo agora — o código não será exibido de novo.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao gerar código.");
     } finally {
@@ -56,7 +78,18 @@ export function McpConnectionCard() {
     }
   }
 
-  async function handleRevoke() {
+  async function handleRevokeClick() {
+    const ok = await confirm({
+      title: "Revogar código MCP?",
+      description:
+        "Clientes conectados deixarão de autenticar até você gerar um novo código na interface.",
+      confirmLabel: "Revogar",
+      variant: "destructive",
+    });
+    if (!ok) {
+      return;
+    }
+
     setWorking(true);
     try {
       const data = await revokeMcpConnection();
@@ -80,29 +113,15 @@ export function McpConnectionCard() {
   }
 
   const displayCode = generated?.connection_code ?? null;
-  const cursorSnippet = displayCode
-    ? JSON.stringify(
-        {
-          mcpServers: {
-            iris: {
-              url: generated.mcp_url,
-              headers: {
-                Authorization: `Bearer ${generated.connection_code}`,
-              },
-            },
-          },
-        },
-        null,
-        2,
-      )
-    : null;
+  const mcpUrl = generated?.mcp_url ?? settings?.mcp_url ?? "";
 
   return (
     <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">Conexão MCP</h2>
         <p className="text-sm text-muted-foreground">
-          Gere um código para conectar Cursor, ChatGPT ou Claude ao Iris via protocolo MCP.
+          Gere um código e copie os campos para Cursor, ChatGPT ou Claude — cada client no formato que
+          aceita.
         </p>
       </div>
 
@@ -134,9 +153,6 @@ export function McpConnectionCard() {
                   Termina em <span className="font-mono text-foreground">{settings.code_hint}</span>
                 </p>
               )}
-              <p className="break-all text-muted-foreground">
-                URL: <span className="font-mono text-foreground">{settings.mcp_url}</span>
-              </p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -147,47 +163,26 @@ export function McpConnectionCard() {
           {displayCode && (
             <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
               <p className="text-xs font-semibold tracking-wide text-primary uppercase">
-                Copie agora — exibido uma única vez
+                Código de conexão — copie agora (exibido uma única vez)
               </p>
-              <div className="space-y-2">
-                <Label htmlFor="mcp-code">Código de conexão</Label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input id="mcp-code" readOnly value={displayCode} className="font-mono text-xs" />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="shrink-0"
-                    onClick={() => void copyText("Código", displayCode)}
-                  >
-                    Copiar código
-                  </Button>
-                </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input readOnly value={displayCode} className="font-mono text-xs" />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="shrink-0"
+                  onClick={() => void copyText("Código", displayCode)}
+                >
+                  Copiar código
+                </Button>
               </div>
-              {cursorSnippet && (
-                <div className="space-y-2">
-                  <Label htmlFor="mcp-cursor">Exemplo Cursor (.cursor/mcp.json)</Label>
-                  <textarea
-                    id="mcp-cursor"
-                    readOnly
-                    rows={10}
-                    value={cursorSnippet}
-                    className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs shadow-xs outline-none"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void copyText("Configuração", cursorSnippet)}
-                  >
-                    Copiar JSON
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
+          {mcpUrl ? <McpSetupGuide mcpUrl={mcpUrl} connectionCode={displayCode} /> : null}
+
           <div className="flex flex-wrap gap-3">
-            <Button type="button" onClick={() => void handleGenerate()} disabled={working}>
+            <Button type="button" onClick={() => void handleGenerateClick()} disabled={working}>
               {settings?.configured && settings.source === "database"
                 ? "Rotacionar código"
                 : "Gerar código"}
@@ -196,18 +191,14 @@ export function McpConnectionCard() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => void handleRevoke()}
+                onClick={() => void handleRevokeClick()}
                 disabled={working}
               >
                 Revogar
               </Button>
             )}
-            {settings?.mcp_url && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => void copyText("URL MCP", settings.mcp_url)}
-              >
+            {mcpUrl && (
+              <Button type="button" variant="ghost" onClick={() => void copyText("URL MCP", mcpUrl)}>
                 Copiar URL
               </Button>
             )}
