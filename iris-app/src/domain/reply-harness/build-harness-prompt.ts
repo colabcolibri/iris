@@ -1,7 +1,7 @@
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { DEFAULT_GUARDRAIL_RULES } from "./default-guardrails.ts";
-import { buildBrandBlock, buildResponseLanguageDirective, buildSignatureVerificationBlock } from "./prompt-language.ts";
+import { buildBrandBlock, buildMentionDirective, buildMentionVerifyNote, buildResponseLanguageDirective, buildSignatureVerificationBlock } from "./prompt-language.ts";
 import {
   buildContextSection,
   captionForTier,
@@ -54,6 +54,7 @@ export function buildSimpleDraftPrompt(
   maxChars: number,
 ): string {
   const brandBlock = buildBrandBlock(context.persona);
+  const mentionBlock = buildMentionDirective(context);
 
   return [
     "Write ONE short Instagram comment reply.",
@@ -61,6 +62,7 @@ export function buildSimpleDraftPrompt(
     "",
     buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     ...(brandBlock ? ["", brandBlock] : []),
+    ...(mentionBlock ? ["", mentionBlock] : []),
     "",
     "## Brand restrictions",
     agentContent.restrictions,
@@ -83,12 +85,14 @@ export function buildFullDraftPrompt(
   maxChars: number,
 ): string {
   const brandBlock = buildBrandBlock(context.persona);
+  const mentionBlock = buildMentionDirective(context);
 
   return [
     "Write an Instagram comment reply on behalf of the brand.",
     "",
     buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     ...(brandBlock ? ["", brandBlock] : []),
+    ...(mentionBlock ? ["", mentionBlock] : []),
     "",
     "## SOUL",
     agentContent.soul,
@@ -131,6 +135,7 @@ export function buildVerifyPrompt(
 ): string {
   const language = buildResponseLanguageDirective(context.persona);
   const signatureBlock = buildSignatureVerificationBlock(context.persona);
+  const mentionNote = buildMentionVerifyNote(context);
   const hasSignature = Boolean(signatureBlock);
 
   return [
@@ -140,6 +145,7 @@ export function buildVerifyPrompt(
     "Reject the draft if it is not written in the mandatory response language.",
     "",
     language,
+    ...(mentionNote ? ["", mentionNote] : []),
     ...(signatureBlock ? ["", signatureBlock] : []),
     "",
     "## Brand restrictions",
@@ -180,6 +186,7 @@ export function buildLightVerifyPrompt(
   maxChars: number,
 ): string {
   const signatureBlock = buildSignatureVerificationBlock(context.persona);
+  const mentionNote = buildMentionVerifyNote(context);
   const hasSignature = Boolean(signatureBlock);
 
   return [
@@ -187,6 +194,7 @@ export function buildLightVerifyPrompt(
     "Set harmful=true for insults, harassment, or discriminatory content — in that case set approved=false.",
     buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
     "Reject if the draft is not in the mandatory response language.",
+    ...(mentionNote ? ["", mentionNote] : []),
     ...(signatureBlock ? ["", signatureBlock] : []),
     "",
     `Draft character limit (body only): ${maxChars}`,
