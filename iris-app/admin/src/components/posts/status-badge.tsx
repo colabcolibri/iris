@@ -47,7 +47,7 @@ type StatusBadgeProps = {
 export function StatusBadge({
   status,
   className,
-  size = "sm",
+  size: _size = "sm",
   variant = "badge",
 }: StatusBadgeProps) {
   const meta = STATUS_META[status];

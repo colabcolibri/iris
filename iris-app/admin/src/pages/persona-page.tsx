@@ -122,7 +122,14 @@ export function PersonaPage() {
             <>
               <div className="space-y-2">
                 <Label htmlFor="response-language">Idioma das respostas</Label>
-                <Select value={responseLanguage} onValueChange={setResponseLanguage}>
+                <Select
+                  value={responseLanguage}
+                  onValueChange={(value) => {
+                    if (value) {
+                      setResponseLanguage(value);
+                    }
+                  }}
+                >
                   <SelectTrigger id="response-language" className="w-full bg-background">
                     <SelectValue placeholder="Selecione o idioma">{selectedLanguage}</SelectValue>
                   </SelectTrigger>

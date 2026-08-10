@@ -206,7 +206,7 @@ export function CalendarView({
                           "inline-flex items-center gap-1 truncate font-medium",
                           replyStatus.kind === "auto" && "text-emerald-800",
                           replyStatus.kind === "draft" && "text-sky-900",
-                          replyStatus.kind === "paused" && "text-amber-900",
+                          replyStatus.kind === "off" && "text-amber-900",
                         )}
                       >
                         <ReplyIcon className="size-2.5 shrink-0" />

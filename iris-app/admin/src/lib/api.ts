@@ -1,4 +1,4 @@
-import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyMode, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {

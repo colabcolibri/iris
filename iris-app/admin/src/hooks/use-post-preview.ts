@@ -14,8 +14,12 @@ export function postPreviewUrl(post: CommentPostSummary): string | null {
   return localAssetUrl(post.post_id, post.preview_filename);
 }
 
+function isLocalSlide(slide: PostMediaSlide): slide is Extract<PostMediaSlide, { source: "local" }> {
+  return slide.source === "local";
+}
+
 export function resolveMediaSlideSrc(postId: string, slide: PostMediaSlide): string {
-  if (slide.source === "local" || "preview_filename" in slide) {
+  if (isLocalSlide(slide)) {
     return localAssetUrl(postId, slide.preview_filename);
   }
   return slide.url;
@@ -31,12 +35,11 @@ export function resolveMediaSlides(
 
   return media.items.map((slide) => ({
     src: resolveMediaSlideSrc(postId, slide),
-    mediaType:
-      slide.source === "local" || "preview_filename" in slide
-        ? slide.preview_mime?.startsWith("video/")
-          ? "VIDEO"
-          : "IMAGE"
-        : slide.media_type ?? null,
+    mediaType: isLocalSlide(slide)
+      ? slide.preview_mime.startsWith("video/")
+        ? "VIDEO"
+        : "IMAGE"
+      : slide.media_type ?? null,
   }));
 }
 
