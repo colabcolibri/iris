@@ -1,4 +1,8 @@
-import type { LlmCompleter } from "../../ports/llm-completer.ts";
+import type {
+  LlmCompleteOptions,
+  LlmCompleter,
+  LlmImageInput,
+} from "../../ports/llm-completer.ts";
 import type { ChatResponse } from "./openai-chat-response.ts";
 
 export type EnvLlmCompleterConfig = {
@@ -7,6 +11,29 @@ export type EnvLlmCompleterConfig = {
   model?: string;
   fetchImpl?: typeof fetch;
 };
+
+type ChatContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
+function buildUserContent(
+  prompt: string,
+  images: LlmImageInput[] | undefined,
+): string | ChatContentPart[] {
+  if (!images?.length) {
+    return prompt;
+  }
+
+  return [
+    { type: "text", text: prompt },
+    ...images.map((image) => ({
+      type: "image_url" as const,
+      image_url: {
+        url: `data:${image.mime};base64,${image.base64}`,
+      },
+    })),
+  ];
+}
 
 export function createEnvLlmCompleter(
   config: EnvLlmCompleterConfig = {},
@@ -18,7 +45,7 @@ export function createEnvLlmCompleter(
   const fetchFn = config.fetchImpl ?? fetch;
 
   return {
-    async complete(prompt) {
+    async complete(prompt, options?: LlmCompleteOptions) {
       if (!apiKey) {
         throw new Error("LLM_API_KEY is not configured");
       }
@@ -32,7 +59,12 @@ export function createEnvLlmCompleter(
         },
         body: JSON.stringify({
           model,
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            {
+              role: "user",
+              content: buildUserContent(prompt, options?.images),
+            },
+          ],
           temperature: 0.7,
         }),
       });
@@ -63,8 +95,10 @@ export function createEnvLlmCompleter(
             }
           : null;
 
+      const maxOutputChars = options?.maxOutputChars ?? 2200;
+
       return {
-        text: content.slice(0, 2200),
+        text: content.slice(0, maxOutputChars),
         model: json.model ?? model,
         usage,
         latencyMs,

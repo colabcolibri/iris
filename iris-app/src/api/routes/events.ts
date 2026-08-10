@@ -46,6 +46,7 @@ export function handleEventsRoute(request: RouteRequest): boolean {
       res.write(": ping\n\n");
     } catch {
       clearInterval(heartbeat);
+      eventBus.unsubscribe(res);
     }
   }, HEARTBEAT_MS);
 
@@ -55,6 +56,7 @@ export function handleEventsRoute(request: RouteRequest): boolean {
 
   res.on("close", () => {
     clearInterval(heartbeat);
+    eventBus.unsubscribe(res);
   });
 
   return true;

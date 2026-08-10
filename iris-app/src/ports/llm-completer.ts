@@ -11,8 +11,19 @@ export type LlmCompletionResult = {
   latencyMs: number;
 };
 
+export type LlmImageInput = {
+  mime: string;
+  base64: string;
+};
+
+export type LlmCompleteOptions = {
+  images?: LlmImageInput[];
+  /** Default completer cap is 2200; carousel summaries may request more. */
+  maxOutputChars?: number;
+};
+
 export type LlmCompleter = {
-  complete(prompt: string): Promise<LlmCompletionResult>;
+  complete(prompt: string, options?: LlmCompleteOptions): Promise<LlmCompletionResult>;
 };
 
 export function createTestLlmCompletion(

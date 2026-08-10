@@ -1,22 +1,6 @@
-import type { PostAssetContext } from "../../domain/reply-context/post-context.ts";
-import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { ImageContextProvider } from "../../ports/image-context-provider.ts";
+import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { PostReplyContext } from "../../domain/reply-context/post-context.ts";
-import { summarizeImagesWithVision } from "../../domain/carousel-summary/summarize-images-with-vision.ts";
-
-export async function summarizeCarouselImagesWithVision(
-  assets: PostAssetContext[],
-  llm: LlmCompleter,
-): Promise<string> {
-  const images = assets
-    .filter((asset) => Boolean(asset.publishUrl))
-    .map((asset) => ({
-      sortOrder: asset.sortOrder,
-      imageUrl: asset.publishUrl!,
-    }));
-
-  return summarizeImagesWithVision(images, llm);
-}
 
 export type EnvImageContextProviderOptions = {
   llm?: LlmCompleter | null;

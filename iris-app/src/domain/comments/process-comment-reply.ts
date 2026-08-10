@@ -2,6 +2,8 @@ import type { AppContext } from "../../api/app-context.ts";
 import type { MetaCommentReplier } from "../../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentRun } from "../../ports/agent-run-repository.ts";
+import type { Comment } from "../comment.ts";
+import type { Post } from "../post.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { assembleReplyContext } from "../reply-context/reply-context-assembler.ts";
@@ -19,6 +21,7 @@ import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
 } from "../reply-mode.ts";
+import { commentReplyLimiter } from "./comment-reply-limiter.ts";
 
 export type ProcessCommentReplyOptions = {
   trigger: "worker" | "webhook";
@@ -30,41 +33,19 @@ function guardrailMessage(reason: string): string {
   return `[guardrail] ${reason}`.slice(0, 500);
 }
 
-export async function processCommentReply(
+async function processCommentReplyCore(
   ctx: AppContext,
   commentId: string,
   options: ProcessCommentReplyOptions,
+  deps: {
+    comment: Comment;
+    post: Post;
+    effectiveReplyMode: ReturnType<typeof resolveEffectiveReplyMode>;
+    llm: LlmCompleter;
+    replier: MetaCommentReplier | undefined;
+  },
 ): Promise<boolean> {
-  const comment = ctx.comments.findById(commentId);
-  if (!comment || comment.status !== "pending") {
-    return false;
-  }
-
-  if (ctx.comments.hasReplyRecord(commentId)) {
-    return false;
-  }
-
-  const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
-  const post = ctx.posts.findById(comment.postId);
-  if (!post) {
-    return false;
-  }
-
-  const effectiveReplyMode = resolveEffectiveReplyMode(
-    appSettings.replyMode,
-    post.replyMode,
-  );
-
-  if (!shouldScheduleCommentReply(effectiveReplyMode)) {
-    return false;
-  }
-
-  const llm = options.llmCompleter ?? ctx.resolveLlmCompleter();
-  const replier = options.metaCommentReplier ?? ctx.metaCommentReplier;
-
-  if (!llm) {
-    return false;
-  }
+  const { comment, post, effectiveReplyMode, llm, replier } = deps;
 
   const context = await assembleReplyContext(commentId, ctx.replyContextAssembler);
   if (!context) {
@@ -169,6 +150,53 @@ export async function processCommentReply(
     notifyCommentsChanged({ post_id: comment.postId });
     return false;
   }
+}
+
+export async function processCommentReply(
+  ctx: AppContext,
+  commentId: string,
+  options: ProcessCommentReplyOptions,
+): Promise<boolean> {
+  const comment = ctx.comments.findById(commentId);
+  if (!comment || comment.status !== "pending") {
+    return false;
+  }
+
+  if (ctx.comments.hasReplyRecord(commentId)) {
+    return false;
+  }
+
+  const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
+  const post = ctx.posts.findById(comment.postId);
+  if (!post) {
+    return false;
+  }
+
+  const effectiveReplyMode = resolveEffectiveReplyMode(
+    appSettings.replyMode,
+    post.replyMode,
+  );
+
+  if (!shouldScheduleCommentReply(effectiveReplyMode)) {
+    return false;
+  }
+
+  const llm = options.llmCompleter ?? ctx.resolveLlmCompleter();
+  const replier = options.metaCommentReplier ?? ctx.metaCommentReplier;
+
+  if (!llm) {
+    return false;
+  }
+
+  return commentReplyLimiter.run(() =>
+    processCommentReplyCore(ctx, commentId, options, {
+      comment,
+      post,
+      effectiveReplyMode,
+      llm,
+      replier,
+    }),
+  );
 }
 
 export function scheduleCommentReply(

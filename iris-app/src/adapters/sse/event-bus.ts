@@ -14,8 +14,12 @@ class EventBus {
   subscribe(client: ServerResponse): void {
     this.clients.add(client);
     client.on("close", () => {
-      this.clients.delete(client);
+      this.unsubscribe(client);
     });
+  }
+
+  unsubscribe(client: ServerResponse): void {
+    this.clients.delete(client);
   }
 
   broadcast(event: string, data: unknown): void {

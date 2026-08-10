@@ -17,7 +17,7 @@ import {
   createLlmConfigResolver,
   llmKeyHint,
 } from "../../domain/llm/resolve-llm-config.ts";
-import { truncateWebhookPayload } from "./meta-webhook.ts";
+import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
 
 type RouteRequest = {
   req: IncomingMessage;

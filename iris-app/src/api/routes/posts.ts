@@ -85,13 +85,18 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
 
     try {
       const postId = carouselMatch[1];
+      const llmConfig = ctx.llmConfigResolver.resolve();
+      const persona = ctx.replyPersonaStore.get();
       const summary = await generateCarouselSummaryForPost(postId, {
         posts: ctx.posts,
         assets: ctx.assets,
         metaCommentReader: ctx.metaCommentReader,
         publicBaseUrl: ctx.publicBaseUrl,
         publishUrlSecret: ctx.publishUrlSecret,
+        mediaStorage: ctx.mediaStorage,
         llm: ctx.resolveLlmCompleter(),
+        responseLanguage: persona?.responseLanguage,
+        visionEnabled: llmConfig?.supportsVision ?? false,
       });
       notifyPostsChanged({ post_id: postId });
       sendJson(res, 200, { carousel_summary: summary });

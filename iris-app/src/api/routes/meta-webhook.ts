@@ -16,8 +16,7 @@ import {
 } from "../../domain/reply-mode.ts";
 import { isBrandAuthor } from "../../domain/comments/is-brand-author.ts";
 
-const PAYLOAD_PREVIEW_BYTES = 2048;
-
+import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
 export function handleMetaWebhookRoute(
   req: IncomingMessage,
   res: ServerResponse,
@@ -96,7 +95,7 @@ async function handleMetaWebhookPost(
     );
 
     const event = persistWebhookReceipt(ctx, {
-      payloadJson,
+      payloadJson: truncateWebhookPayload(payloadJson),
       signatureValid,
       processingStatus: signatureValid ? "received" : "failed",
       errorMessage: signatureValid ? null : "invalid signature",
@@ -214,12 +213,4 @@ async function handleMetaWebhookPost(
     sendError(res, 500, "internal server error");
     return true;
   }
-}
-
-export function truncateWebhookPayload(payloadJson: string): string {
-  if (payloadJson.length <= PAYLOAD_PREVIEW_BYTES) {
-    return payloadJson;
-  }
-
-  return `${payloadJson.slice(0, PAYLOAD_PREVIEW_BYTES)}…`;
 }
