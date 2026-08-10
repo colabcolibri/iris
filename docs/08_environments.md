@@ -25,7 +25,7 @@ blocks: []
 | `IRIS_SMTP_HOST` | `127.0.0.1` | Host SMTP (dev: Mailpit) |
 | `IRIS_SMTP_PORT` | `1025` | Porta SMTP (Mailpit) |
 | `IRIS_AGENT_TOKEN` | required | Agent Bearer token (espelhar em `agent/iris.credentials.json`) |
-| `IRIS_MCP_CONNECTION_CODE` | required (prod) | Código de conexão MCP (Cursor, ChatGPT, Claude, etc.) — **distinto** de `IRIS_AGENT_TOKEN`; gerar com `openssl rand -hex 32` |
+| `IRIS_MCP_CONNECTION_CODE` | optional | Código MCP — **opcional** se gerado em Configurações → Conexão MCP; útil para infra/CI. Distinto de `IRIS_AGENT_TOKEN` |
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
 
@@ -54,7 +54,9 @@ Push via agente `@iris-local` / skill `push-publication` (`curl` + Bearer). Ver 
 
 Guia canônico: `docs/architecture/mcp-integration.md`.
 
-Em dev, se `IRIS_MCP_CONNECTION_CODE` não estiver no `.env`, o server usa o default documentado `dev-mcp-connection-code-change-me` — **nunca** em produção.
+**Fluxo recomendado:** admin em `/settings` → seção **Conexão MCP** → **Gerar código** → copiar e colar no client (Cursor, ChatGPT, Claude).
+
+Em dev, se não houver código na interface nem no `.env`, o server aceita o default documentado `dev-mcp-connection-code-change-me` — **nunca** em produção.
 
 | Client | Config | URL |
 | ------ | ------ | --- |

@@ -45,14 +45,24 @@ blocks: []
 
 ### MCP (clientes de IA — Cursor, ChatGPT, Claude, etc.)
 
-Guia completo de setup: `docs/architecture/mcp-integration.md`.
+#### MCP admin (interface)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/api/settings/mcp` | admin (sessão UI) | Status da conexão (`configured`, `code_hint`, `mcp_url`, `source`) |
+| POST | `/api/settings/mcp` | admin | Gera ou rotaciona código — resposta inclui `connection_code` (exibido uma vez) |
+| DELETE | `/api/settings/mcp` | admin | Revoga código gerado na interface |
+
+O código pode vir da **interface** (hash no SQLite) ou de `IRIS_MCP_CONNECTION_CODE` no `.env` (ambos válidos em paralelo). Preferir a interface para operadores não técnicos.
+
+Guia completo: `docs/architecture/mcp-integration.md`.
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
 | POST | `/api/mcp/validate` | public | Valida `{ "connectionCode": "..." }` — `200` `{ "valid": true, "server": "iris", "mcpPath": "/mcp" }` ou `401` |
-| POST | `/mcp` | `Bearer <IRIS_MCP_CONNECTION_CODE>` | Transport Streamable HTTP do protocolo MCP (tools editoriais) |
+| POST | `/mcp` | `Bearer <código MCP>` | Transport Streamable HTTP do protocolo MCP (tools editoriais) |
 
-O código MCP é **distinto** de `IRIS_AGENT_TOKEN`. Gerar com `openssl rand -hex 32` e configurar em `IRIS_MCP_CONNECTION_CODE`.
+O código MCP é **distinto** de `IRIS_AGENT_TOKEN`. Gerar em **Configurações → Conexão MCP** (recomendado) ou via `IRIS_MCP_CONNECTION_CODE` no `.env`.
 
 **Headers do transporte MCP:** clientes devem enviar `Accept: application/json, text/event-stream` em `POST /mcp`. Ausência pode resultar em `406`.
 

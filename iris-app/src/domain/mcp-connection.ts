@@ -31,13 +31,24 @@ export function loadMcpConnectionCodeFromEnv(
 export function assertMcpConnectionCodeConfigured(
   nodeEnv: string | undefined = process.env.NODE_ENV,
   code?: string,
+  options?: { hasStoredConfig?: boolean },
 ): void {
   const resolved = (code ?? loadMcpConnectionCodeFromEnv(nodeEnv)).trim();
-  if (!resolved) {
-    throw new McpConnectionConfigError(
-      "IRIS_MCP_CONNECTION_CODE is required in production. Generate with: openssl rand -hex 32",
-    );
+  if (resolved) {
+    return;
   }
+
+  if (options?.hasStoredConfig) {
+    return;
+  }
+
+  if (nodeEnv !== "production") {
+    return;
+  }
+
+  throw new McpConnectionConfigError(
+    "MCP connection is not configured. Generate a code in Settings or set IRIS_MCP_CONNECTION_CODE.",
+  );
 }
 
 export function validateMcpConnectionCode(

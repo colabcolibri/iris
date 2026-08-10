@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, Comment, CommentsInbox, MetaStatus, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
+import type { AppSettings, Asset, Comment, CommentsInbox, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, ReplyInspection, ReplyPersona } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -257,5 +257,23 @@ export function updateAppSettings(body: { timezone: string }) {
   return apiFetch<AppSettings>("/api/settings/app", {
     method: "PUT",
     body: JSON.stringify(body),
+  });
+}
+
+export type { McpSettings, McpSettingsGenerateResult };
+
+export function fetchMcpSettings() {
+  return apiFetch<McpSettings>("/api/settings/mcp");
+}
+
+export function generateMcpConnection() {
+  return apiFetch<McpSettingsGenerateResult>("/api/settings/mcp", {
+    method: "POST",
+  });
+}
+
+export function revokeMcpConnection() {
+  return apiFetch<McpSettings>("/api/settings/mcp", {
+    method: "DELETE",
   });
 }

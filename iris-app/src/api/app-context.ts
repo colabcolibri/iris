@@ -20,6 +20,7 @@ import { createEnvLlmCompleter } from "../adapters/llm/env-llm-completer.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
 import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
 import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-repository.ts";
+import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connection-repository.ts";
 import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
 import {
   createSqliteAdminLoginChallengeRepository,
@@ -40,12 +41,17 @@ import type { MetaTokenStore } from "../ports/meta-token-store.ts";
 import type { PostRepository } from "../ports/post-repository.ts";
 import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
 import type { AppSettingsStore } from "../ports/app-settings-store.ts";
+import type { McpConnectionStore } from "../ports/mcp-connection-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 import {
   loadMcpConnectionCodeFromEnv,
   type McpConfig,
 } from "../domain/mcp-connection.ts";
+import {
+  createMcpConnectionVerifier,
+  type McpConnectionVerifier,
+} from "../domain/mcp-connection-verifier.ts";
 
 const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -53,6 +59,8 @@ export type AppContext = {
   db: DatabaseSync;
   auth: AuthConfig;
   mcp: McpConfig;
+  mcpVerifier: McpConnectionVerifier;
+  mcpConnectionStore: McpConnectionStore;
   posts: PostRepository;
   assets: AssetRepository;
   comments: CommentRepository;
@@ -178,6 +186,16 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
   const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
+  const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
+  const nodeEnv = process.env.NODE_ENV ?? "development";
+  const envMcpCode = (
+    options.mcpConnectionCode ?? process.env.IRIS_MCP_CONNECTION_CODE ?? ""
+  ).trim();
+  const mcpVerifier = createMcpConnectionVerifier({
+    envCode: envMcpCode,
+    nodeEnv,
+    getStoredHash: () => mcpConnectionStore.get()?.codeHash ?? null,
+  });
   const imageContextProvider = createEnvImageContextProvider({
     llm: llmCompleter,
     model: process.env.LLM_MODEL,
@@ -197,9 +215,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
     db: options.db,
     auth,
     mcp: {
-      connectionCode:
-        options.mcpConnectionCode ?? loadMcpConnectionCodeFromEnv(),
+      connectionCode: envMcpCode || loadMcpConnectionCodeFromEnv(nodeEnv),
     },
+    mcpVerifier,
+    mcpConnectionStore,
     posts: replyContextAssembler.posts,
     assets,
     comments: replyContextAssembler.comments,

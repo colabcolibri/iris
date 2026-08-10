@@ -1,8 +1,8 @@
 ---
 title: Test strategy
 status: approved
-version: 1.0
-updated: 2026-08-09
+version: 1.1
+updated: 2026-08-10
 depends_on: [05_architecture.md, 01_tech_stack.md]
 blocks: []
 ---
@@ -31,6 +31,17 @@ blocks: []
 
 - Meta Graph API: mock `fetch` in adapter tests
 - LLM agent: mock port in worker tests
+
+## MCP (v1.6)
+
+| Área | Arquivos de teste |
+| ---- | ----------------- |
+| Connection code / validate | `src/domain/mcp-connection.test.ts`, `src/api/routes/mcp-auth.routes.test.ts` |
+| Transport Streamable HTTP | `src/mcp/streamable-http-handler.test.ts` |
+| Tools | `src/mcp/tools/*.test.ts` |
+| Kit check script | `test/mcp-check-script.test.ts` |
+
+Validação manual: `cd iris-agent && ./scripts/iris-mcp-check.sh` contra server em dev.
 
 ## CI (future)
 

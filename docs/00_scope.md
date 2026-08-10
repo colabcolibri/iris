@@ -1,8 +1,8 @@
 ---
 title: Scope
 status: approved
-version: 1.1
-updated: 2026-08-09
+version: 1.2
+updated: 2026-08-10
 depends_on: []
 blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 ---
@@ -26,7 +26,7 @@ blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 | Audience | Role | Context | Technical level | Primary need |
 | -------- | ---- | ------- | --------------- | ------------ |
 | **Operador editorial** | Dono da conta IG / marketing | Agenda posts, revisa legendas, responde comentários | Médio | Ver calendário, editar, publicar |
-| **Agente local** | Cursor no workspace Iris | Lê `publications/`, faz upload, agenda | Alto (via API) | Endpoints estáveis, skill push-publication |
+| **Agente local / client MCP** | Cursor, ChatGPT, Claude no workspace Iris | Push `publications/`, tools editoriais ad hoc | Alto (via API/MCP) | REST estável, MCP tools, skill push-publication |
 | **Worker no server** | Processo Iris | Publica no horário, responde comentários | — | Tokens Meta só no server |
 
 ## In initial scope (v1)
@@ -37,8 +37,9 @@ blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 - Pasta local `publications/` + `post.md` + skill agente `push-publication`
 - Interface HTML (lista + edição + preview de mídia)
 - SSE (sem polling)
-- Autenticação Bearer (admin + agent)
+- Autenticação Bearer (admin + agent) e MCP (connection code)
 - Webhook Meta + comentários na UI
+- Servidor MCP com tools editoriais (posts, assets, comentários) para clients de IA
 - Worker + agente para resposta automática a comentários
 
 ## Out of initial scope

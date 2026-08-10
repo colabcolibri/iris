@@ -16,12 +16,15 @@ O Iris expõe um **servidor MCP** (Model Context Protocol) para que clientes com
 ## Pré-requisitos no server
 
 1. Iris rodando (`cd iris-app && pnpm dev` em dev).
-2. Variável `IRIS_MCP_CONNECTION_CODE` no `.env` do server:
+2. **Código de conexão** — preferencialmente pela interface:
+   - Admin → **Configurações** → **Conexão MCP** → **Gerar código**
+   - Copie o valor exibido **uma única vez** e configure o client (Cursor, ChatGPT, Claude)
+3. Alternativa avançada (deploy/infra): variável `IRIS_MCP_CONNECTION_CODE` no `.env` do server:
    ```bash
    openssl rand -hex 32
    # IRIS_MCP_CONNECTION_CODE=<valor>
    ```
-3. Em **produção**, HTTPS público é obrigatório para clientes remotos (ChatGPT, Claude cloud).
+4. Em **produção**, HTTPS público é obrigatório para clientes remotos (ChatGPT, Claude cloud).
 
 Em **desenvolvimento**, se a variável estiver ausente, o server aceita o default documentado `dev-mcp-connection-code-change-me` — **nunca** use isso em produção.
 
@@ -29,8 +32,11 @@ Em **desenvolvimento**, se a variável estiver ausente, o server aceita o defaul
 
 | Método | Path | Auth | Uso |
 | ------ | ---- | ---- | --- |
+| `POST` | `/api/settings/mcp` | sessão admin (UI) | Gerar/rotacionar código — retorna `connection_code` **uma vez** |
+| `GET` | `/api/settings/mcp` | sessão admin | Status (`configured`, `code_hint`, `mcp_url`) |
+| `DELETE` | `/api/settings/mcp` | sessão admin | Revogar código gerado na interface |
 | `POST` | `/api/mcp/validate` | público | Testar código antes de configurar o client |
-| `POST` | `/mcp` | `Authorization: Bearer <IRIS_MCP_CONNECTION_CODE>` | Protocolo MCP (tools) |
+| `POST` | `/mcp` | `Authorization: Bearer <código MCP>` | Protocolo MCP (tools) |
 
 ### Validar código
 

@@ -1,8 +1,8 @@
 ---
 title: User types
 status: approved
-version: 1.1
-updated: 2026-08-09
+version: 1.2
+updated: 2026-08-10
 depends_on: [00_scope.md, 02_security.md]
 blocks: [05_architecture.md, 06_database.md]
 ---
@@ -27,19 +27,19 @@ blocks: [05_architecture.md, 06_database.md]
 
 ---
 
-### Agente local
+### Agente local / client MCP
 
-**Who:** Agente Cursor no workspace Iris com skills do kit.
+**Who:** Agente no workspace Iris (Cursor, Claude) ou outro client MCP (ChatGPT connector) com skills do kit.
 
 **Goals:**
-- Escanear `publications/*/post.md` com `status: ready`
+- Escanear `publications/*/post.md` com `status: ready` e fazer push em lote (REST)
+- Criar, editar e consultar posts ad hoc via MCP tools
 - Obter imagens de qualquer fonte (pasta local, export manual, API externa como Casper) e salvar na pasta
-- Push: criar post + upload multipart + agendar
 - Reprogramar `scheduled_at`, consultar status
 
-**Permissions:** token agent — `posts:read`, `posts:write`, `posts:schedule`, `assets:write`, `comments:read`. Sem tokens Meta.
+**Permissions:** token agent (REST) ou connection code (MCP) — `posts:read`, `posts:write`, `posts:schedule`, `assets:write`, `comments:read`. Sem tokens Meta.
 
-**Surfaces:** REST `/api/*`; pasta `publications/` no disco local.
+**Surfaces:** REST `/api/*`; MCP `POST /mcp`; pasta `publications/` no disco local.
 
 ---
 
@@ -63,7 +63,7 @@ blocks: [05_architecture.md, 06_database.md]
 
 ## Profile matrix
 
-| Action | Operador | Agente local | Worker | Meta |
+| Action | Operador | Agente / MCP | Worker | Meta |
 | ------ | -------- | ------------ | ------ | ---- |
 | CRUD posts | yes | yes | no | no |
 | Upload mídia | yes | yes | no | no |

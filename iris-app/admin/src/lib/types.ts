@@ -80,6 +80,24 @@ export type AppSettings = {
   updated_at: string;
 };
 
+export type McpSettings = {
+  configured: boolean;
+  source: "database" | "environment" | "development_default" | null;
+  code_hint: string | null;
+  mcp_path: string;
+  mcp_url: string;
+  updated_at: string | null;
+  env_override: boolean;
+};
+
+export type McpSettingsGenerateResult = {
+  connection_code: string;
+  code_hint: string;
+  mcp_path: string;
+  mcp_url: string;
+  updated_at: string;
+};
+
 export type ReplyInspectionThreadEntry = {
   author: string | null;
   text: string | null;

@@ -53,10 +53,16 @@ test("loadMcpConnectionCodeFromEnv returns empty in production without env", () 
   }
 });
 
-test("assertMcpConnectionCodeConfigured throws in production without code", () => {
+test("assertMcpConnectionCodeConfigured throws in production without code or stored config", () => {
   assert.throws(
     () => assertMcpConnectionCodeConfigured("production", ""),
     McpConnectionConfigError,
+  );
+});
+
+test("assertMcpConnectionCodeConfigured passes with stored config in production", () => {
+  assert.doesNotThrow(() =>
+    assertMcpConnectionCodeConfigured("production", "", { hasStoredConfig: true }),
   );
 });
 

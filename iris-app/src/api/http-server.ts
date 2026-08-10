@@ -19,6 +19,7 @@ import { handleAuthRoute } from "./routes/auth.ts";
 import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
+import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
@@ -27,7 +28,6 @@ import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 import { readAdminSession } from "../domain/auth-session.ts";
 import { shouldGateSpaGet } from "./spa-route-policy.ts";
-import { validateMcpConnectionCode } from "../domain/mcp-connection.ts";
 import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -154,7 +154,12 @@ async function handleMcpRoute(
   }
 
   const token = extractBearerToken(req);
-  if (!validateMcpConnectionCode(token, ctx.mcp.connectionCode)) {
+  if (!ctx.mcpVerifier.isConfigured()) {
+    sendError(res, 503, "MCP connection is not configured");
+    return true;
+  }
+
+  if (!ctx.mcpVerifier.verify(token)) {
     res.writeHead(401, {
       "Content-Type": "application/json",
       "WWW-Authenticate": 'Bearer realm="iris-mcp"',
@@ -257,6 +262,10 @@ async function handleRequest(
     }
 
     if (await handleAppSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleMcpSettingsRoute(routeRequest)) {
       return;
     }
 

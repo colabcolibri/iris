@@ -7,9 +7,9 @@ import {
   sendJson,
   ValidationError,
 } from "../json.ts";
-import { validateMcpConnectionCode } from "../../domain/mcp-connection.ts";
 
 const INVALID_CONNECTION_MESSAGE = "Invalid connection code";
+const NOT_CONFIGURED_MESSAGE = "MCP connection is not configured";
 
 export async function handleMcpAuthRoute(
   req: IncomingMessage,
@@ -21,14 +21,17 @@ export async function handleMcpAuthRoute(
     return false;
   }
 
+  if (!ctx.mcpVerifier.isConfigured()) {
+    sendError(res, 503, NOT_CONFIGURED_MESSAGE);
+    return true;
+  }
+
   try {
     const body = await readJsonBody<{ connectionCode?: unknown }>(req);
     const connectionCode =
       typeof body.connectionCode === "string" ? body.connectionCode : "";
 
-    if (
-      !validateMcpConnectionCode(connectionCode, ctx.mcp.connectionCode)
-    ) {
+    if (!ctx.mcpVerifier.verify(connectionCode)) {
       sendError(res, 401, INVALID_CONNECTION_MESSAGE);
       return true;
     }

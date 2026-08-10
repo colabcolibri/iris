@@ -1,8 +1,8 @@
 ---
 title: Tech stack
 status: approved
-version: 1.0
-updated: 2026-08-09
+version: 1.1
+updated: 2026-08-10
 depends_on: [00_scope.md]
 blocks: [02_security.md, 04_principles.md, 08_environments.md]
 ---
@@ -32,6 +32,7 @@ blocks: [02_security.md, 04_principles.md, 08_environments.md]
 | Server | `node:http` (sem framework) | Mini-server, SRP, poucas deps |
 | UI | HTML + CSS + JS vanilla em `iris-app/public/` | Abre no navegador, zero build de frontend |
 | Real-time | SSE (`EventSource`) | Push sob demanda, sem polling |
+| MCP | `@modelcontextprotocol/sdk` (Streamable HTTP) | Tools editoriais para clients de IA |
 | Media storage | Filesystem `iris-app/data/media/` | Upload multipart; sem S3 na v1 |
 
 ## External integrations
@@ -39,6 +40,7 @@ blocks: [02_security.md, 04_principles.md, 08_environments.md]
 | System | SDK / protocol | Notes |
 | ------ | -------------- | ----- |
 | Instagram Graph API | REST HTTPS | Publicação, comentários, webhooks Meta |
+| Clients de IA | MCP Streamable HTTP (`POST /mcp`) | Cursor, ChatGPT, Claude — Bearer connection code |
 | LLM (agente) | API via env | Apenas no worker `comment-responder` |
 
 ## Tooling
