@@ -74,6 +74,8 @@ export async function handleAgentSimulatorRoute(request: RouteRequest): Promise<
         personaStore: ctx.replyPersonaStore,
         agentContentStore: ctx.agentContentStore,
         llm: ctx.resolveLlmCompleter(),
+        agentRuns: ctx.agentRuns,
+        agentRunSteps: ctx.agentRunSteps,
       },
     );
 

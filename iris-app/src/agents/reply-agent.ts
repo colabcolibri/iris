@@ -24,7 +24,7 @@ export async function generateReply(
 ): Promise<string> {
   if ("prebuiltContext" in input) {
     const prompt = buildReplyPrompt(input.prebuiltContext);
-    return options.llm.complete(prompt);
+    return options.llm.complete(prompt).then((result) => result.text);
   }
 
   if ("commentId" in input && options.assembler) {
@@ -34,7 +34,7 @@ export async function generateReply(
     }
 
     const prompt = buildReplyPrompt(context);
-    return options.llm.complete(prompt);
+    return options.llm.complete(prompt).then((result) => result.text);
   }
 
   const legacy = input as ReplyAgentInput;
@@ -61,5 +61,5 @@ export async function generateReply(
     },
   };
 
-  return options.llm.complete(buildReplyPrompt(context));
+  return options.llm.complete(buildReplyPrompt(context)).then((result) => result.text);
 }

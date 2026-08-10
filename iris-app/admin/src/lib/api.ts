@@ -337,6 +337,7 @@ export function fetchReplyPersona() {
 export function updateReplyPersona(body: {
   response_language: string;
   brand_name: string | null;
+  signature_instruction: string;
   max_chars: number;
 }) {
   return apiFetch<ReplyPersona>("/api/settings/reply-persona", {

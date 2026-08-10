@@ -163,8 +163,10 @@ export function AgentRunsPage() {
                   <thead className="sticky top-0 z-10 bg-card">
                     <tr className="border-b border-border/70 text-muted-foreground">
                       <th className="px-3 py-2 font-medium">Quando</th>
+                      <th className="px-3 py-2 font-medium">Origem</th>
                       <th className="px-3 py-2 font-medium">Status</th>
                       <th className="px-3 py-2 font-medium">Tier</th>
+                      <th className="px-3 py-2 font-medium">Tokens</th>
                       <th className="px-3 py-2 font-medium">Duração</th>
                     </tr>
                   </thead>
@@ -181,6 +183,7 @@ export function AgentRunsPage() {
                         <td className="px-3 py-3 whitespace-nowrap text-muted-foreground">
                           {new Date(row.created_at).toLocaleString("pt-BR")}
                         </td>
+                        <td className="px-3 py-3 text-muted-foreground">{row.trigger}</td>
                         <td className="px-3 py-3">
                           <span
                             className={cn(
@@ -192,6 +195,11 @@ export function AgentRunsPage() {
                           </span>
                         </td>
                         <td className="px-3 py-3">{row.reply_tier ?? "—"}</td>
+                        <td className="px-3 py-3 text-muted-foreground">
+                          {row.total_tokens != null
+                            ? `${row.total_tokens} (${row.total_prompt_tokens ?? 0} in / ${row.total_completion_tokens ?? 0} out)`
+                            : "—"}
+                        </td>
                         <td className="px-3 py-3">{formatDuration(row.duration_ms)}</td>
                       </tr>
                     ))}
@@ -204,9 +212,14 @@ export function AgentRunsPage() {
           <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
               <h2 className="text-sm font-semibold">Detalhe da execução</h2>
-              {selectedId && detail?.comment_id && detail.post_id ? (
+              {selectedId && detail ? (
+                <p className="mt-1 text-[11px] font-mono text-muted-foreground">
+                  flow {detail.audit.flow_id}
+                </p>
+              ) : null}
+              {selectedId && detail?.comment_id ? (
                 <Link
-                  to={`/comments?post_id=${detail.post_id}&comment=${detail.comment_id}`}
+                  to={`/comments?comment=${detail.comment_id}`}
                   className="text-xs text-primary hover:underline"
                 >
                   abrir thread do comentário

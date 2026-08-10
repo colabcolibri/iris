@@ -37,3 +37,22 @@ export function buildBrandLine(persona: ReplyPersona): string | null {
   }
   return `Brand: ${persona.brandName.trim()}`;
 }
+
+export function buildBrandAndSignatureBlock(persona: ReplyPersona): string | null {
+  const lines: string[] = [];
+  const brand = buildBrandLine(persona);
+  if (brand) {
+    lines.push(brand);
+  }
+
+  const signature = persona.signatureInstruction?.trim();
+  if (signature) {
+    lines.push("", "## Signature instruction", signature);
+  }
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  return lines.join("\n");
+}

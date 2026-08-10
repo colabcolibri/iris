@@ -1,15 +1,18 @@
 import type {
   AgentRunListItem,
   AgentRunRepository,
+  AgentRunStatus,
   CreateAgentRunInput,
-  ListAgentRunsOptions,
+  UpdateAgentRunOutcomeInput,
 } from "../../ports/agent-run-repository.ts";
 import type { AgentRun } from "../../ports/agent-run-repository.ts";
+import { deriveHarnessAuditMeta } from "../../domain/reply-audit/derive-harness-audit-meta.ts";
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 
 type AgentRunRow = {
   id: string;
+  flow_id: string | null;
   trigger: string;
   input_summary: string | null;
   output_summary: string | null;
@@ -19,6 +22,7 @@ type AgentRunRow = {
 
 type AgentRunListRow = {
   id: string;
+  flow_id: string | null;
   trigger: string;
   status: string;
   output_summary: string | null;
@@ -30,69 +34,21 @@ type AgentRunListRow = {
   triage_output_json: string | null;
   first_step_at: string | null;
   last_step_at: string | null;
+  total_prompt_tokens: number | null;
+  total_completion_tokens: number | null;
+  total_tokens: number | null;
 };
 
 function mapRow(row: AgentRunRow): AgentRun {
   return {
     id: row.id,
+    flowId: row.flow_id ?? row.id,
     trigger: row.trigger,
     inputSummary: row.input_summary,
     outputSummary: row.output_summary,
     status: row.status as AgentRun["status"],
     createdAt: row.created_at,
   };
-}
-
-function parseReplyTier(row: AgentRunListRow): string | null {
-  if (row.triage_output_json) {
-    try {
-      const parsed = JSON.parse(row.triage_output_json) as { replyTier?: string };
-      if (parsed.replyTier) {
-        return parsed.replyTier;
-      }
-    } catch {
-      // ignore
-    }
-  }
-  if (row.triage_reason?.includes("tier:simple")) {
-    return "simple";
-  }
-  if (row.triage_reason?.includes("tier:full")) {
-    return "full";
-  }
-  if (row.triage_reason?.includes("tier:none")) {
-    return "none";
-  }
-  return null;
-}
-
-function deriveTerminalStatus(row: AgentRunListRow, replyTier: string | null): string | null {
-  const summary = row.output_summary ?? "";
-  if (
-    summary === "blocked_harmful" ||
-    summary === "skipped_triage" ||
-    summary === "rejected_verify" ||
-    summary === "approved_simple" ||
-    summary === "approved"
-  ) {
-    return summary;
-  }
-  if (row.triage_reason?.includes("block:harmful")) {
-    return "blocked_harmful";
-  }
-  if (row.status === "skipped") {
-    return "skipped_triage";
-  }
-  if (row.status === "failed") {
-    return "rejected_verify";
-  }
-  if (row.status === "ok" && replyTier === "simple") {
-    return "approved_simple";
-  }
-  if (row.status === "ok") {
-    return "approved";
-  }
-  return null;
 }
 
 function durationMs(row: AgentRunListRow): number | null {
@@ -108,9 +64,16 @@ function durationMs(row: AgentRunListRow): number | null {
 }
 
 function mapListRow(row: AgentRunListRow): AgentRunListItem {
-  const replyTier = parseReplyTier(row);
+  const meta = deriveHarnessAuditMeta({
+    status: row.status as AgentRunStatus,
+    outputSummary: row.output_summary,
+    triageReason: row.triage_reason,
+    triageOutputJson: row.triage_output_json,
+  });
+
   return {
     id: row.id,
+    flowId: row.flow_id ?? row.id,
     trigger: row.trigger,
     status: row.status as AgentRun["status"],
     outputSummary: row.output_summary,
@@ -118,16 +81,25 @@ function mapListRow(row: AgentRunListRow): AgentRunListItem {
     commentId: row.comment_id,
     postId: row.post_id,
     stepCount: row.step_count,
-    replyTier,
-    terminalStatus: deriveTerminalStatus(row, replyTier),
+    replyTier: meta.replyTier,
+    terminalStatus: meta.terminalStatus,
     durationMs: durationMs(row),
+    totalPromptTokens: row.total_prompt_tokens,
+    totalCompletionTokens: row.total_completion_tokens,
+    totalTokens: row.total_tokens,
   };
 }
 
 export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunRepository {
   const insert = db.prepare(`
-    INSERT INTO agent_runs (id, trigger, input_summary, output_summary, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO agent_runs (id, flow_id, trigger, input_summary, output_summary, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const updateOutcomeStmt = db.prepare(`
+    UPDATE agent_runs
+    SET output_summary = ?, status = ?
+    WHERE id = ?
   `);
 
   const findByIdStmt = db.prepare("SELECT * FROM agent_runs WHERE id = ?");
@@ -135,6 +107,7 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
   const listStmt = db.prepare(`
     SELECT
       ar.id,
+      ar.flow_id,
       ar.trigger,
       ar.status,
       ar.output_summary,
@@ -172,7 +145,16 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
       ) AS first_step_at,
       (
         SELECT MAX(s.created_at) FROM agent_run_steps s WHERE s.agent_run_id = ar.id
-      ) AS last_step_at
+      ) AS last_step_at,
+      (
+        SELECT SUM(s.prompt_tokens) FROM agent_run_steps s WHERE s.agent_run_id = ar.id
+      ) AS total_prompt_tokens,
+      (
+        SELECT SUM(s.completion_tokens) FROM agent_run_steps s WHERE s.agent_run_id = ar.id
+      ) AS total_completion_tokens,
+      (
+        SELECT SUM(s.total_tokens) FROM agent_run_steps s WHERE s.agent_run_id = ar.id
+      ) AS total_tokens
     FROM agent_runs ar
     WHERE (? IS NULL OR ar.created_at < ?)
     ORDER BY ar.created_at DESC, ar.rowid DESC
@@ -182,10 +164,12 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
   return {
     create(input: CreateAgentRunInput) {
       const id = randomUUID();
+      const flowId = input.flowId ?? id;
       const createdAt = new Date().toISOString();
 
       insert.run(
         id,
+        flowId,
         input.trigger,
         input.inputSummary ?? null,
         input.outputSummary ?? null,
@@ -193,9 +177,12 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
         createdAt,
       );
 
-      return mapRow(
-        db.prepare("SELECT * FROM agent_runs WHERE id = ?").get(id) as AgentRunRow,
-      );
+      return mapRow(findByIdStmt.get(id) as AgentRunRow);
+    },
+
+    updateOutcome(id: string, input: UpdateAgentRunOutcomeInput) {
+      updateOutcomeStmt.run(input.outputSummary, input.status, id);
+      return mapRow(findByIdStmt.get(id) as AgentRunRow);
     },
 
     findById(id) {
@@ -203,7 +190,7 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
       return row ? mapRow(row) : null;
     },
 
-    listRecent(options: ListAgentRunsOptions = {}) {
+    listRecent(options = {}) {
       const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
       const cursor = options.cursor ?? null;
       const rows = listStmt.all(cursor, cursor, limit + 1) as AgentRunListRow[];

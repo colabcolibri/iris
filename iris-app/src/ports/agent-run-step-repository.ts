@@ -1,26 +1,32 @@
-import type { HarnessStageName, HarnessVerdict } from "../domain/reply-harness/types.ts";
+import type {
+  HarnessStageName,
+  HarnessVerdict,
+  StageLlmTelemetry,
+} from "../domain/reply-harness/types.ts";
 import type { AgentDecisionJson } from "../domain/reply-harness/decision-json.ts";
 
 export type AgentRunStep = {
   id: string;
   agentRunId: string;
-  commentId: string;
+  commentId: string | null;
   stage: HarnessStageName;
   verdict: HarnessVerdict;
   reason: string | null;
   reasoning: string | null;
   outputJson: string | null;
+  llm: StageLlmTelemetry | null;
   createdAt: string;
 };
 
 export type CreateAgentRunStepInput = {
   agentRunId: string;
-  commentId: string;
+  commentId?: string | null;
   stage: HarnessStageName;
   verdict: HarnessVerdict;
   reason?: string | null;
   reasoning?: string | null;
   outputJson?: AgentDecisionJson | null;
+  llm?: StageLlmTelemetry | null;
 };
 
 export type AgentRunStepRepository = {

@@ -1,7 +1,7 @@
 import type { AppContext } from "../../api/app-context.ts";
 import type { MetaCommentReplier } from "../../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
-import type { AgentRunStatus } from "../../ports/agent-run-repository.ts";
+import type { AgentRun } from "../../ports/agent-run-repository.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { assembleReplyContext } from "../reply-context/reply-context-assembler.ts";
@@ -9,7 +9,11 @@ import {
   buildReplyAuditSummary,
   serializeReplyAuditSummary,
 } from "../reply-context/build-reply-audit-summary.ts";
-import { runReplyHarness } from "../reply-harness/orchestrator.ts";
+import {
+  executeAndRecordHarness,
+  HarnessExecutionError,
+  recordFailedHarnessRun,
+} from "../reply-harness/execute-and-record-harness.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
@@ -23,16 +27,6 @@ export type ProcessCommentReplyOptions = {
 
 function guardrailMessage(reason: string): string {
   return `[guardrail] ${reason}`.slice(0, 500);
-}
-
-function runStatusFromHarness(terminalStatus: string): AgentRunStatus {
-  if (terminalStatus === "approved" || terminalStatus === "approved_simple") {
-    return "ok";
-  }
-  if (terminalStatus === "skipped_triage" || terminalStatus === "blocked_harmful") {
-    return "skipped";
-  }
-  return "failed";
 }
 
 export async function processCommentReply(
@@ -79,35 +73,25 @@ export async function processCommentReply(
   const agentContent = ctx.agentContentStore.get();
   const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
 
+  let run: AgentRun;
+
   try {
-    const harnessResult = await runReplyHarness({
-      context,
-      agentContent,
-      llm,
-      maxChars: context.persona.maxChars,
-    });
-
-    const run = ctx.agentRuns.create({
-      trigger: options.trigger,
-      inputSummary,
-      outputSummary:
-        harnessResult.finalText?.slice(0, 500) ?? harnessResult.terminalStatus,
-      status: runStatusFromHarness(harnessResult.terminalStatus),
-    });
-
-    if (harnessResult.steps.length > 0) {
-      ctx.agentRunSteps.appendBatch(
-        harnessResult.steps.map((step) => ({
-          agentRunId: run.id,
-          commentId,
-          stage: step.stage,
-          verdict: step.verdict,
-          reason: step.reason,
-          reasoning: step.reasoning,
-          outputJson: step.structured ?? null,
-        })),
-      );
-    }
+    const recorded = await executeAndRecordHarness(
+      { agentRuns: ctx.agentRuns, agentRunSteps: ctx.agentRunSteps },
+      {
+        trigger: options.trigger,
+        commentId,
+        inputSummary,
+        harnessInput: {
+          context,
+          agentContent,
+          llm,
+          maxChars: context.persona.maxChars,
+        },
+      },
+    );
+    run = recorded.run;
+    const harnessResult = recorded.harness;
 
     if (
       harnessResult.terminalStatus === "skipped_triage" ||
@@ -160,12 +144,19 @@ export async function processCommentReply(
     const errorMessage =
       error instanceof Error ? error.message.slice(0, 500) : "reply failed";
 
-    const run = ctx.agentRuns.create({
-      trigger: options.trigger,
-      inputSummary,
-      outputSummary: errorMessage,
-      status: "failed",
-    });
+    if (error instanceof HarnessExecutionError) {
+      run = error.run;
+    } else {
+      run = recordFailedHarnessRun(
+        { agentRuns: ctx.agentRuns },
+        {
+          trigger: options.trigger,
+          commentId,
+          inputSummary,
+          errorMessage,
+        },
+      ).run;
+    }
 
     ctx.comments.createReply({
       commentId,

@@ -38,6 +38,7 @@ export async function handleAgentRunsRoute(request: RouteRequest): Promise<boole
     sendJson(res, 200, {
       items: result.items.map((item) => ({
         id: item.id,
+        flow_id: item.flowId,
         trigger: item.trigger,
         status: item.status,
         output_summary: item.outputSummary,
@@ -48,6 +49,9 @@ export async function handleAgentRunsRoute(request: RouteRequest): Promise<boole
         reply_tier: item.replyTier,
         terminal_status: item.terminalStatus,
         duration_ms: item.durationMs,
+        total_prompt_tokens: item.totalPromptTokens,
+        total_completion_tokens: item.totalCompletionTokens,
+        total_tokens: item.totalTokens,
       })),
       next_cursor: result.nextCursor,
     });
@@ -72,7 +76,15 @@ export async function handleAgentRunsRoute(request: RouteRequest): Promise<boole
     const commentId = steps[0]?.commentId ?? null;
 
     sendJson(res, 200, {
-      run,
+      run: {
+        id: run.id,
+        flowId: run.flowId,
+        trigger: run.trigger,
+        inputSummary: run.inputSummary,
+        outputSummary: run.outputSummary,
+        status: run.status,
+        createdAt: run.createdAt,
+      },
       comment_id: commentId,
       audit: serializeReplyAudit(run, steps),
     });

@@ -88,6 +88,7 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
       const summary = await generateCarouselSummaryForPost(postId, {
         posts: ctx.posts,
         assets: ctx.assets,
+        metaCommentReader: ctx.metaCommentReader,
         publicBaseUrl: ctx.publicBaseUrl,
         publishUrlSecret: ctx.publishUrlSecret,
         llm: ctx.resolveLlmCompleter(),

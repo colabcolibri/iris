@@ -58,6 +58,7 @@ export type CommentPostSummary = {
   pending_count: number;
   preview_filename?: string | null;
   preview_mime?: string | null;
+  preview_url?: string | null;
 };
 
 export type PostInsightMetric = {
@@ -191,6 +192,7 @@ export type MetaStatus = {
 
 export type ReplyPersona = {
   brand_name: string | null;
+  signature_instruction: string;
   response_language: string;
   max_chars: number;
   updated_at: string;
@@ -204,6 +206,14 @@ export type AgentContent = {
   updated_at: string;
 };
 
+export type ReplyAuditLlm = {
+  model: string;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  latencyMs: number;
+};
+
 export type ReplyAuditStep = {
   stage: "triage" | "draft" | "verify";
   verdict: "pass" | "fail" | "skip";
@@ -211,10 +221,12 @@ export type ReplyAuditStep = {
   reasoning: string | null;
   created_at: string;
   structured?: Record<string, unknown> | null;
+  llm?: ReplyAuditLlm | null;
 };
 
 export type ReplyAudit = {
   agent_run_id: string;
+  flow_id: string;
   trigger: string;
   terminal_status:
     | "skipped_triage"
@@ -229,6 +241,7 @@ export type ReplyAudit = {
 
 export type AgentRunListItem = {
   id: string;
+  flow_id: string;
   trigger: string;
   status: "ok" | "failed" | "skipped";
   output_summary: string | null;
@@ -239,11 +252,15 @@ export type AgentRunListItem = {
   reply_tier: string | null;
   terminal_status: string | null;
   duration_ms: number | null;
+  total_prompt_tokens: number | null;
+  total_completion_tokens: number | null;
+  total_tokens: number | null;
 };
 
 export type AgentRunDetail = {
   run: {
     id: string;
+    flowId: string;
     trigger: string;
     inputSummary: string | null;
     outputSummary: string | null;

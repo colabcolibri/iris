@@ -20,7 +20,19 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
   return (
     <div className={cn("max-w-full space-y-3", className)}>
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>Execução via {audit.trigger === "worker" ? "worker" : "webhook"}</span>
+        <span>
+          Execução via{" "}
+          {audit.trigger === "worker"
+            ? "worker"
+            : audit.trigger === "simulate"
+              ? "simulador"
+              : audit.trigger}
+        </span>
+        {audit.flow_id ? (
+          <span className="font-mono text-[10px]" title="Flow ID">
+            · flow {audit.flow_id.slice(0, 8)}…
+          </span>
+        ) : null}
         {audit.output_summary ? (
           <span className="truncate" title={audit.output_summary}>
             · {audit.output_summary}
@@ -49,6 +61,14 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
                   {REPLY_AUDIT_VERDICT_LABELS[step.verdict]}
                 </span>
               </div>
+
+              {step.llm ? (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {step.llm.model} · in {step.llm.promptTokens ?? "—"} · out{" "}
+                  {step.llm.completionTokens ?? "—"} · total {step.llm.totalTokens ?? "—"} ·{" "}
+                  {step.llm.latencyMs} ms
+                </p>
+              ) : null}
 
               {step.reason ? (
                 <p className="mt-2 text-sm text-foreground">{step.reason}</p>

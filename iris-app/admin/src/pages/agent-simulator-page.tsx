@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Loader2, Play, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ReplyAuditTimeline } from "@/components/comments/reply-audit-timeline";
 import { PageContainer } from "@/components/templates/page-container";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,13 +16,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchReplyPersona, simulateAgentReply } from "@/lib/api";
+import { fetchAgentContent, fetchReplyPersona, simulateAgentReply } from "@/lib/api";
 import type { ReplyAudit } from "@/lib/types";
 import type { SimulateThreadMessage } from "@/lib/api";
+import {
+  DEFAULT_SIMULATOR_SCENARIO_ID,
+  getSimulatorScenario,
+  SIMULATOR_SCENARIOS,
+  threadRowsFromScenario,
+} from "@/lib/agent-simulator-scenarios";
 import {
   DEFAULT_RESPONSE_LANGUAGE,
   RESPONSE_LANGUAGE_OPTIONS,
 } from "@iris/domain/reply-language/response-languages";
+import { estimateLlmTokens, formatTokenEstimate } from "@/lib/estimate-llm-tokens";
 import { cn } from "@/lib/utils";
 
 type ThreadRow = SimulateThreadMessage & { id: string };
@@ -42,37 +51,85 @@ const TERMINAL_LABELS: Record<string, string> = {
   rejected_verify: "rejeitado na verificação",
 };
 
+const initialScenario = getSimulatorScenario(DEFAULT_SIMULATOR_SCENARIO_ID)!;
+
+function applyScenarioToState(scenario: typeof initialScenario) {
+  return {
+    caption: scenario.caption,
+    carouselSummary: scenario.carousel_summary,
+    thread: threadRowsFromScenario(scenario),
+    targetAuthor: scenario.target_author,
+    targetText: scenario.target_text,
+  };
+}
+
+type ContentFieldStat = {
+  key: "soul" | "page" | "knowledge" | "restrictions";
+  label: string;
+  usedIn: string;
+};
+
+const CONTENT_FIELD_STATS: ContentFieldStat[] = [
+  { key: "soul", label: "SOUL", usedIn: "resposta completa" },
+  { key: "page", label: "Página", usedIn: "resposta completa" },
+  { key: "knowledge", label: "Knowledge", usedIn: "simples + completa" },
+  { key: "restrictions", label: "Restrições", usedIn: "triagem + drafts + verificação" },
+];
+
 export function AgentSimulatorPage() {
-  const [caption, setCaption] = useState("Novo lançamento da coleção verão ☀️");
-  const [carouselSummary, setCarouselSummary] = useState(
-    "Carrossel com 3 slides: look casual, detalhe do tecido e call-to-action para o site.",
-  );
+  const initialForm = applyScenarioToState(initialScenario);
+  const [scenarioId, setScenarioId] = useState(DEFAULT_SIMULATOR_SCENARIO_ID);
+  const [caption, setCaption] = useState(initialForm.caption);
+  const [carouselSummary, setCarouselSummary] = useState(initialForm.carouselSummary);
   const [responseLanguage, setResponseLanguage] = useState(DEFAULT_RESPONSE_LANGUAGE);
   const [brandName, setBrandName] = useState("");
-  const [targetAuthor, setTargetAuthor] = useState("maria");
-  const [targetText, setTargetText] = useState("Amei! Qual o tamanho disponível?");
-  const [thread, setThread] = useState<ThreadRow[]>([
-    { id: "1", author: "joao", text: "Que lindo!", is_brand_reply: false },
-    {
-      id: "2",
-      author: "marca",
-      text: "Obrigada! Ficamos felizes que gostou 💛",
-      is_brand_reply: true,
-    },
-  ]);
+  const [targetAuthor, setTargetAuthor] = useState(initialForm.targetAuthor);
+  const [targetText, setTargetText] = useState(initialForm.targetText);
+  const [thread, setThread] = useState<ThreadRow[]>(initialForm.thread);
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
   const [finalText, setFinalText] = useState<string | null>(null);
   const [terminalStatus, setTerminalStatus] = useState<string | null>(null);
+  const [contentTokens, setContentTokens] = useState<Record<ContentFieldStat["key"], number>>({
+    soul: 0,
+    page: 0,
+    knowledge: 0,
+    restrictions: 0,
+  });
+  const [contentLoaded, setContentLoaded] = useState(false);
 
   useEffect(() => {
-    void fetchReplyPersona()
-      .then((persona) => {
+    void Promise.all([fetchReplyPersona(), fetchAgentContent()])
+      .then(([persona, content]) => {
         setResponseLanguage(persona.response_language ?? DEFAULT_RESPONSE_LANGUAGE);
         setBrandName(persona.brand_name ?? "");
+        setContentTokens({
+          soul: estimateLlmTokens(content.soul),
+          page: estimateLlmTokens(content.page),
+          knowledge: estimateLlmTokens(content.knowledge),
+          restrictions: estimateLlmTokens(content.restrictions),
+        });
+        setContentLoaded(true);
       })
       .catch(() => undefined);
   }, []);
+
+  function handleScenarioChange(id: string | null) {
+    if (!id) return;
+    setScenarioId(id);
+    const scenario = getSimulatorScenario(id);
+    if (!scenario) return;
+
+    const form = applyScenarioToState(scenario);
+    setCaption(form.caption);
+    setCarouselSummary(form.carouselSummary);
+    setThread(form.thread);
+    setTargetAuthor(form.targetAuthor);
+    setTargetText(form.targetText);
+    setAudit(null);
+    setFinalText(null);
+    setTerminalStatus(null);
+  }
 
   async function handleRun() {
     if (!targetText.trim()) {
@@ -117,6 +174,8 @@ export function AgentSimulatorPage() {
     RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)?.label ??
     responseLanguage;
 
+  const selectedScenario = getSimulatorScenario(scenarioId);
+
   return (
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
@@ -129,9 +188,71 @@ export function AgentSimulatorPage() {
                 description="Monte uma thread fictícia e veja como o harness responderia — sem publicar na Meta."
               />
 
+              <Card className="gap-3 border-primary/20 bg-primary/5 p-3 shadow-none">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-foreground">Prompts de produção</p>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    O simulador usa o mesmo harness do worker de comentários e lê SOUL, página,
+                    knowledge e restrições salvos em{" "}
+                    <Link to="/persona" className="text-primary underline-offset-4 hover:underline">
+                      Persona
+                    </Link>
+                    . Triagem usa só restrições; resposta simples inclui knowledge; resposta
+                    completa inclui SOUL e página.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {CONTENT_FIELD_STATS.map((field) => {
+                    const tokens = contentTokens[field.key];
+                    const populated = tokens > 0;
+                    return (
+                      <span
+                        key={field.key}
+                        className={cn(
+                          "rounded-md border px-2 py-0.5 text-[10px] leading-snug",
+                          populated
+                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100"
+                            : "border-border bg-background text-muted-foreground",
+                        )}
+                      >
+                        {field.label}:{" "}
+                        {contentLoaded ? formatTokenEstimate(tokens) : "…"}
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Estimativa de tokens (heurística ~3,5 chars/token — não é contagem exata do modelo).
+                </p>
+              </Card>
+
+              <div className="space-y-2">
+                <Label htmlFor="sim-scenario">Cenário de exemplo</Label>
+                <Select value={scenarioId} onValueChange={handleScenarioChange}>
+                  <SelectTrigger id="sim-scenario" className="w-full bg-background">
+                    <SelectValue>{selectedScenario?.label ?? "Cenário"}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    {SIMULATOR_SCENARIOS.map((scenario) => (
+                      <SelectItem key={scenario.id} value={scenario.id}>
+                        {scenario.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedScenario ? (
+                  <p className="text-[11px] text-muted-foreground">{selectedScenario.description}</p>
+                ) : null}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="sim-language">Idioma da resposta</Label>
-                <Select value={responseLanguage} onValueChange={setResponseLanguage}>
+                <Select
+                  value={responseLanguage}
+                  onValueChange={(value) => {
+                    if (value) setResponseLanguage(value);
+                  }}
+                >
                   <SelectTrigger id="sim-language" className="w-full bg-background">
                     <SelectValue>{languageLabel}</SelectValue>
                   </SelectTrigger>
@@ -302,7 +423,7 @@ export function AgentSimulatorPage() {
                 <p className="text-sm text-muted-foreground">Nenhuma resposta aprovada nesta simulação.</p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Preencha o cenário e clique em simular para ver o harness em ação.
+                  Escolha um cenário ou edite os campos e clique em simular para ver o harness em ação.
                 </p>
               )}
 

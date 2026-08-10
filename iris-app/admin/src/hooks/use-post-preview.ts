@@ -5,6 +5,9 @@ export function localAssetUrl(postId: string, filename: string): string {
 }
 
 export function postPreviewUrl(post: CommentPostSummary): string | null {
+  if (post.preview_url) {
+    return post.preview_url;
+  }
   if (!post.preview_filename) {
     return null;
   }
@@ -12,7 +15,7 @@ export function postPreviewUrl(post: CommentPostSummary): string | null {
 }
 
 export function resolveMediaSlideSrc(postId: string, slide: PostMediaSlide): string {
-  if (slide.source === "local") {
+  if (slide.source === "local" || "preview_filename" in slide) {
     return localAssetUrl(postId, slide.preview_filename);
   }
   return slide.url;
@@ -29,7 +32,7 @@ export function resolveMediaSlides(
   return media.items.map((slide) => ({
     src: resolveMediaSlideSrc(postId, slide),
     mediaType:
-      slide.source === "local"
+      slide.source === "local" || "preview_filename" in slide
         ? slide.preview_mime?.startsWith("video/")
           ? "VIDEO"
           : "IMAGE"

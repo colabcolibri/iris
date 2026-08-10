@@ -1,17 +1,14 @@
-import type { PostAssetContext } from "../reply-context/post-context.ts";
-import type { AssetRepository } from "../../ports/asset-repository.ts";
-import type { PostRepository } from "../../ports/post-repository.ts";
-import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import { ValidationError } from "../../api/json.ts";
-import { summarizeCarouselImagesWithVision } from "../../adapters/llm/image-context-provider.ts";
+import type { LlmCompleter } from "../../ports/llm-completer.ts";
+import type { PostRepository } from "../../ports/post-repository.ts";
 import {
-  buildPostReplyContext,
-  type BuildPostReplyContextDeps,
-} from "../reply-context/build-post-context.ts";
+  resolvePostMedia,
+  type ResolvePostMediaDeps,
+} from "../post-media/resolve-post-media.ts";
+import { summarizeImagesWithVision } from "./summarize-images-with-vision.ts";
 
-export type GenerateCarouselSummaryDeps = BuildPostReplyContextDeps & {
+export type GenerateCarouselSummaryDeps = ResolvePostMediaDeps & {
   posts: PostRepository;
-  assets: AssetRepository;
   llm: LlmCompleter | null;
 };
 
@@ -19,20 +16,28 @@ export async function generateCarouselSummaryForPost(
   postId: string,
   deps: GenerateCarouselSummaryDeps,
 ): Promise<string> {
-  const post = buildPostReplyContext(postId, deps);
+  const post = deps.posts.findById(postId);
   if (!post) {
     throw new ValidationError("post not found");
-  }
-
-  if (post.assets.length === 0) {
-    throw new ValidationError("post has no images");
   }
 
   if (!deps.llm) {
     throw new ValidationError("LLM is not configured");
   }
 
-  const summary = await summarizeCarouselImagesWithVision(post.assets, deps.llm);
+  const media = await resolvePostMedia(postId, deps);
+  if (media.slides.length === 0) {
+    throw new ValidationError("post has no images");
+  }
+
+  const summary = await summarizeImagesWithVision(
+    media.slides.map((slide) => ({
+      sortOrder: slide.sortOrder,
+      imageUrl: slide.url,
+    })),
+    deps.llm,
+  );
+
   if (!summary.trim()) {
     throw new ValidationError("could not generate carousel summary");
   }

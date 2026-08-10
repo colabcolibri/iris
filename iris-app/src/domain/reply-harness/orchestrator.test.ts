@@ -4,6 +4,7 @@ import { runReplyHarness } from "./orchestrator.ts";
 import { defaultAgentContent } from "../agent-content-defaults.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
+import { createTestLlmCompletion } from "../../ports/llm-completer.ts";
 
 function mockContext(): ReplyContext {
   return {
@@ -37,13 +38,15 @@ test("runReplyHarness stops after triage failure", async () => {
   const llm: LlmCompleter = {
     async complete() {
       calls += 1;
-      return JSON.stringify({
-        shouldReply: false,
-        replyTier: "none",
-        blockCategory: "off_topic",
-        reason: "off_topic",
-        reasoning: "Pergunta fora do post",
-      });
+      return createTestLlmCompletion(
+        JSON.stringify({
+          shouldReply: false,
+          replyTier: "none",
+          blockCategory: "off_topic",
+          reason: "off_topic",
+          reasoning: "Pergunta fora do post",
+        }),
+      );
     },
   };
 
@@ -57,18 +60,21 @@ test("runReplyHarness stops after triage failure", async () => {
   assert.equal(result.replyTier, "none");
   assert.equal(result.steps.length, 1);
   assert.equal(calls, 1);
+  assert.equal(result.steps[0]?.llm?.model, "test-model");
 });
 
 test("runReplyHarness blocks harmful at triage", async () => {
   const llm: LlmCompleter = {
     async complete() {
-      return JSON.stringify({
-        shouldReply: false,
-        replyTier: "none",
-        blockCategory: "harmful",
-        reason: "insulto",
-        reasoning: "linguagem ofensiva",
-      });
+      return createTestLlmCompletion(
+        JSON.stringify({
+          shouldReply: false,
+          replyTier: "none",
+          blockCategory: "harmful",
+          reason: "insulto",
+          reasoning: "linguagem ofensiva",
+        }),
+      );
     },
   };
 
@@ -88,25 +94,29 @@ test("runReplyHarness approves full pipeline", async () => {
     async complete() {
       step += 1;
       if (step === 1) {
-        return JSON.stringify({
-          shouldReply: true,
-          replyTier: "full",
-          blockCategory: "none",
-          reason: "ok",
-          reasoning: "legítimo",
-        });
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: true,
+            replyTier: "full",
+            blockCategory: "none",
+            reason: "ok",
+            reasoning: "legítimo",
+          }),
+        );
       }
       if (step === 2) {
-        return "Olá! Obrigado pelo interesse.";
+        return createTestLlmCompletion("Olá! Obrigado pelo interesse.");
       }
-      return JSON.stringify({
-        approved: true,
-        harmful: false,
-        policyViolations: [],
-        reason: "ok",
-        reasoning: "adequado",
-        finalText: "Olá! Obrigado pelo interesse.",
-      });
+      return createTestLlmCompletion(
+        JSON.stringify({
+          approved: true,
+          harmful: false,
+          policyViolations: [],
+          reason: "ok",
+          reasoning: "adequado",
+          finalText: "Olá! Obrigado pelo interesse.",
+        }),
+      );
     },
   };
 
@@ -127,24 +137,28 @@ test("runReplyHarness rejects at verify", async () => {
     async complete() {
       step += 1;
       if (step === 1) {
-        return JSON.stringify({
-          shouldReply: true,
-          replyTier: "full",
-          blockCategory: "none",
-          reason: "ok",
-          reasoning: "ok",
-        });
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: true,
+            replyTier: "full",
+            blockCategory: "none",
+            reason: "ok",
+            reasoning: "ok",
+          }),
+        );
       }
       if (step === 2) {
-        return "texto ruim";
+        return createTestLlmCompletion("texto ruim");
       }
-      return JSON.stringify({
-        approved: false,
-        harmful: true,
-        policyViolations: ["harmful"],
-        reason: "off_brand",
-        reasoning: "inadequado",
-      });
+      return createTestLlmCompletion(
+        JSON.stringify({
+          approved: false,
+          harmful: true,
+          policyViolations: ["harmful"],
+          reason: "off_brand",
+          reasoning: "inadequado",
+        }),
+      );
     },
   };
 
@@ -167,26 +181,30 @@ test("runReplyHarness simple tier runs light verify", async () => {
         assert.match(prompt, /Brand restrictions/);
         assert.match(prompt, /Response language \(MANDATORY\)/);
         assert.doesNotMatch(prompt, /## SOUL/);
-        return JSON.stringify({
-          shouldReply: true,
-          replyTier: "simple",
-          blockCategory: "none",
-          reason: "thanks",
-          reasoning: "agradecimento",
-        });
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: true,
+            replyTier: "simple",
+            blockCategory: "none",
+            reason: "thanks",
+            reasoning: "agradecimento",
+          }),
+        );
       }
       if (calls === 2) {
         assert.match(prompt, /ONE short Instagram/);
         assert.doesNotMatch(prompt, /## SOUL/);
-        return "Obrigada pelo carinho! 💙";
+        return createTestLlmCompletion("Obrigada pelo carinho! 💙");
       }
-      return JSON.stringify({
-        approved: true,
-        harmful: false,
-        policyViolations: [],
-        reason: "ok",
-        reasoning: "ok",
-      });
+      return createTestLlmCompletion(
+        JSON.stringify({
+          approved: true,
+          harmful: false,
+          policyViolations: [],
+          reason: "ok",
+          reasoning: "ok",
+        }),
+      );
     },
   };
 
@@ -209,15 +227,17 @@ test("runReplyHarness simple tier rejects harmful draft via code guard", async (
     async complete() {
       calls += 1;
       if (calls === 1) {
-        return JSON.stringify({
-          shouldReply: true,
-          replyTier: "simple",
-          blockCategory: "none",
-          reason: "ok",
-          reasoning: "ok",
-        });
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: true,
+            replyTier: "simple",
+            blockCategory: "none",
+            reason: "ok",
+            reasoning: "ok",
+          }),
+        );
       }
-      return "vai se foder";
+      return createTestLlmCompletion("vai se foder");
     },
   };
 

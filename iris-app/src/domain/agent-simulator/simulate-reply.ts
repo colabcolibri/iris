@@ -7,10 +7,16 @@ import { isSupportedResponseLanguage } from "../reply-language/response-language
 import { ValidationError } from "../../api/json.ts";
 import type { CommentThreadContext } from "../reply-context/thread-context.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
-import { runReplyHarness } from "../reply-harness/orchestrator.ts";
+import { executeAndRecordHarness } from "../reply-harness/execute-and-record-harness.ts";
 import type { HarnessRunResult } from "../reply-harness/types.ts";
 import { serializeHarnessAudit } from "../reply-audit/serialize-harness-audit.ts";
 import { createEnvImageContextProvider } from "../../adapters/llm/image-context-provider.ts";
+import type { AgentRunRepository } from "../../ports/agent-run-repository.ts";
+import type { AgentRunStepRepository } from "../../ports/agent-run-step-repository.ts";
+import {
+  buildReplyAuditSummary,
+  serializeReplyAuditSummary,
+} from "../reply-context/build-reply-audit-summary.ts";
 
 export type SimulateThreadMessage = {
   author: string;
@@ -36,6 +42,8 @@ export type SimulateReplyDeps = {
   personaStore: ReplyPersonaStore;
   agentContentStore: AgentContentStore;
   llm: LlmCompleter | null;
+  agentRuns: AgentRunRepository;
+  agentRunSteps: AgentRunStepRepository;
 };
 
 export type SimulateReplyResult = {
@@ -125,19 +133,32 @@ export async function simulateReply(
   context.imageContext = await createEnvImageContextProvider().build(context.post);
 
   const agentContent = deps.agentContentStore.get() ?? defaultAgentContent();
+  const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
 
-  const harness = await runReplyHarness({
-    context,
-    agentContent,
-    llm: deps.llm,
-    maxChars: context.persona.maxChars,
-  });
+  const recorded = await executeAndRecordHarness(
+    { agentRuns: deps.agentRuns, agentRunSteps: deps.agentRunSteps },
+    {
+      trigger: "simulate",
+      inputSummary,
+      harnessInput: {
+        context,
+        agentContent,
+        llm: deps.llm,
+        maxChars: context.persona.maxChars,
+      },
+    },
+  );
 
   return {
-    audit: serializeHarnessAudit(harness, "simulate"),
-    final_text: harness.finalText,
-    terminal_status: harness.terminalStatus,
-    reply_tier: harness.replyTier,
+    audit: serializeHarnessAudit(
+      recorded.harness,
+      "simulate",
+      recorded.run.id,
+      recorded.flowId,
+    ),
+    final_text: recorded.harness.finalText,
+    terminal_status: recorded.harness.terminalStatus,
+    reply_tier: recorded.harness.replyTier,
     response_language: context.persona.responseLanguage,
   };
 }

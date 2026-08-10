@@ -15,11 +15,13 @@ test("reply persona store upserts and reads single row", () => {
 
     const saved = store.upsert({
       brandName: "Marca X",
+      signatureInstruction: "Assine com — Equipe X",
       responseLanguage: "pt-BR",
       maxChars: 400,
     });
 
     assert.equal(saved.brandName, "Marca X");
+    assert.equal(saved.signatureInstruction, "Assine com — Equipe X");
     assert.equal(saved.responseLanguage, "pt-BR");
     assert.equal(saved.maxChars, 400);
 

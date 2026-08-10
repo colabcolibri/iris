@@ -23,6 +23,7 @@ type RouteRequest = {
 function serializePersona(persona: ReplyPersona) {
   return {
     brand_name: persona.brandName,
+    signature_instruction: persona.signatureInstruction,
     response_language: persona.responseLanguage,
     max_chars: persona.maxChars,
     updated_at: persona.updatedAt,
@@ -60,8 +61,24 @@ function normalizePersonaBody(body: Record<string, unknown>): Omit<ReplyPersona,
     throw new ValidationError("brand_name must be a string or null");
   }
 
+  const signatureInstruction =
+    typeof body.signature_instruction === "string"
+      ? body.signature_instruction
+      : body.signature_instruction === undefined
+        ? ""
+        : undefined;
+
+  if (signatureInstruction === undefined) {
+    throw new ValidationError("signature_instruction must be a string");
+  }
+
+  if (signatureInstruction.length > 2000) {
+    throw new ValidationError("signature_instruction exceeds 2000 characters");
+  }
+
   return {
     brandName,
+    signatureInstruction,
     responseLanguage,
     maxChars,
   };

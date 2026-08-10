@@ -48,7 +48,7 @@ export function CarouselSummaryEditor({ postId, initialSummary }: CarouselSummar
   return (
     <PostFormSection
       title="Resumo do carrossel"
-      description="O harness usa este texto em vez das imagens. Gere com IA (passa as imagens uma vez) ou edite manualmente."
+      description="O harness usa este texto em vez das imagens. Para posts do Iris usa os arquivos locais; para publicações externas, busca as URLs do Instagram na Meta."
       action={
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => void handleGenerate()} disabled={generating}>

@@ -2,55 +2,20 @@ import type { PostAssetContext } from "../../domain/reply-context/post-context.t
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { ImageContextProvider } from "../../ports/image-context-provider.ts";
 import type { PostReplyContext } from "../../domain/reply-context/post-context.ts";
-
-const MAX_IMAGES = 10;
+import { summarizeImagesWithVision } from "../../domain/carousel-summary/summarize-images-with-vision.ts";
 
 export async function summarizeCarouselImagesWithVision(
   assets: PostAssetContext[],
   llm: LlmCompleter,
 ): Promise<string> {
-  const slice = assets.slice(0, MAX_IMAGES);
-  const descriptions: string[] = [];
+  const images = assets
+    .filter((asset) => Boolean(asset.publishUrl))
+    .map((asset) => ({
+      sortOrder: asset.sortOrder,
+      imageUrl: asset.publishUrl!,
+    }));
 
-  for (const asset of slice) {
-    if (!asset.publishUrl) {
-      descriptions.push(`Slide ${asset.sortOrder}: image URL unavailable.`);
-      continue;
-    }
-
-    const prompt = [
-      "Describe in one short sentence (English) what appears in this Instagram carousel slide.",
-      `Image URL: ${asset.publishUrl}`,
-    ].join("\n");
-
-    try {
-      const description = await llm.complete(prompt);
-      descriptions.push(`Slide ${asset.sortOrder}: ${description.trim()}`);
-    } catch {
-      descriptions.push(`Slide ${asset.sortOrder}: description unavailable.`);
-    }
-  }
-
-  if (descriptions.length === 0) {
-    return "";
-  }
-
-  if (descriptions.length === 1) {
-    return descriptions[0] ?? "";
-  }
-
-  const synthesisPrompt = [
-    "Combine these per-slide descriptions into one concise carousel summary (2–4 sentences, English).",
-    "Focus on what the audience sees across the whole post.",
-    "",
-    descriptions.join("\n"),
-  ].join("\n");
-
-  try {
-    return (await llm.complete(synthesisPrompt)).trim();
-  } catch {
-    return descriptions.join(" ");
-  }
+  return summarizeImagesWithVision(images, llm);
 }
 
 export type EnvImageContextProviderOptions = {

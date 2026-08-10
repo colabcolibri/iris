@@ -5,6 +5,14 @@ export type HarnessStageName = "triage" | "draft" | "verify";
 
 export type HarnessVerdict = "pass" | "fail" | "skip";
 
+export type StageLlmTelemetry = {
+  model: string;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  latencyMs: number;
+};
+
 export type HarnessTerminalStatus =
   | "skipped_triage"
   | "blocked_harmful"
@@ -23,6 +31,7 @@ export type StageResult = {
   draftText?: string;
   finalText?: string;
   structured?: AgentDecisionJson;
+  llm?: StageLlmTelemetry;
 };
 
 export type HarnessRunResult = {

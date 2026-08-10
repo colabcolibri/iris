@@ -25,10 +25,19 @@ import {
   RESPONSE_LANGUAGE_OPTIONS,
 } from "@iris/domain/reply-language/response-languages";
 
+type FieldHintProps = {
+  children: React.ReactNode;
+};
+
+function FieldHint({ children }: FieldHintProps) {
+  return <p className="text-xs leading-relaxed text-muted-foreground">{children}</p>;
+}
+
 export function PersonaPage() {
   const [persona, setPersona] = useState<ReplyPersona | null>(null);
   const [responseLanguage, setResponseLanguage] = useState(DEFAULT_RESPONSE_LANGUAGE);
   const [brandName, setBrandName] = useState("");
+  const [signatureInstruction, setSignatureInstruction] = useState("");
   const [maxChars, setMaxChars] = useState(500);
   const [agentContent, setAgentContent] = useState<AgentContent | null>(null);
   const [soul, setSoul] = useState("");
@@ -45,6 +54,7 @@ export function PersonaPage() {
         setPersona(personaData);
         setResponseLanguage(personaData.response_language ?? DEFAULT_RESPONSE_LANGUAGE);
         setBrandName(personaData.brand_name ?? "");
+        setSignatureInstruction(personaData.signature_instruction ?? "");
         setMaxChars(personaData.max_chars);
         setAgentContent(contentData);
         setSoul(contentData.soul);
@@ -62,6 +72,7 @@ export function PersonaPage() {
       const saved = await updateReplyPersona({
         response_language: responseLanguage,
         brand_name: brandName.trim() || null,
+        signature_instruction: signatureInstruction,
         max_chars: maxChars,
       });
       setPersona(saved);
@@ -101,10 +112,10 @@ export function PersonaPage() {
         <PageContainer.Header
           eyebrow="Respostas automáticas"
           title="Persona da marca"
-          description="Idioma das respostas, nome da marca e limites. O tom e a voz vêm do SOUL e das restrições abaixo."
+          description="Identidade e limites da marca ficam no banco (SQLite). O conteúdo editorial do agente também é persistido no banco — na primeira subida, textos antigos em data/agent/*.md são importados automaticamente."
         />
 
-        <Card className="space-y-4 border-border/80 bg-card/90 p-6 shadow-sm">
+        <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : (
@@ -123,10 +134,11 @@ export function PersonaPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  O agente sempre responderá neste idioma. Os prompts internos ficam em inglês; o
-                  idioma é reforçado em cada estágio do harness.
-                </p>
+                <FieldHint>
+                  Idioma obrigatório de todas as respostas públicas no Instagram. Os prompts
+                  internos do harness ficam em inglês; este idioma é reforçado em triagem,
+                  rascunho e verificação.
+                </FieldHint>
               </div>
 
               <div className="space-y-2">
@@ -135,7 +147,27 @@ export function PersonaPage() {
                   id="brand-name"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
+                  placeholder="Ex.: Colab Colibri"
                 />
+                <FieldHint>
+                  Nome exibido no topo dos prompts de rascunho, logo após o idioma. Ajuda a IA a se
+                  referir à marca corretamente.
+                </FieldHint>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signature-instruction">Instrução de assinatura</Label>
+                <Textarea
+                  id="signature-instruction"
+                  rows={3}
+                  value={signatureInstruction}
+                  onChange={(e) => setSignatureInstruction(e.target.value)}
+                  placeholder="Ex.: Assine sempre com “— Equipe Colab” ou use o primeiro nome do atendente."
+                />
+                <FieldHint>
+                  Como a IA deve encerrar ou assinar a resposta (nome, emoji, tom). Inserido no
+                  prompt logo abaixo do nome da marca, antes do SOUL.
+                </FieldHint>
               </div>
 
               <div className="space-y-2">
@@ -148,6 +180,10 @@ export function PersonaPage() {
                   value={maxChars}
                   onChange={(e) => setMaxChars(Number(e.target.value))}
                 />
+                <FieldHint>
+                  Teto de caracteres da resposta final no Instagram. O verificador rejeita rascunhos
+                  que ultrapassarem este limite.
+                </FieldHint>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -164,12 +200,12 @@ export function PersonaPage() {
           )}
         </Card>
 
-        <Card className="mt-6 space-y-4 border-border/80 bg-card/90 p-6 shadow-sm">
+        <Card className="mt-6 space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Conteúdo do agente</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              SOUL, contexto da página, base de conhecimento e restrições usados pelo harness de
-              respostas automáticas. É aqui que você define voz, tom e políticas editoriais.
+              Blocos editoriais usados pelo harness em estágios diferentes. Salvo no mesmo banco da
+              persona — não depende mais de arquivos em disco.
             </p>
           </div>
 
@@ -185,6 +221,10 @@ export function PersonaPage() {
                   value={soul}
                   onChange={(e) => setSoul(e.target.value)}
                 />
+                <FieldHint>
+                  Voz, personalidade e tom da marca. Usado em respostas completas (tier full), não
+                  entra na triagem nem em respostas curtas simples.
+                </FieldHint>
               </div>
 
               <div className="space-y-2">
@@ -195,6 +235,10 @@ export function PersonaPage() {
                   value={page}
                   onChange={(e) => setPage(e.target.value)}
                 />
+                <FieldHint>
+                  Contexto do perfil ou campanha: o que é a conta, público-alvo e objetivo editorial.
+                  Reforça o SOUL em respostas elaboradas.
+                </FieldHint>
               </div>
 
               <div className="space-y-2">
@@ -205,6 +249,10 @@ export function PersonaPage() {
                   value={knowledge}
                   onChange={(e) => setKnowledge(e.target.value)}
                 />
+                <FieldHint>
+                  Fatos, links oficiais, preços, políticas e respostas-modelo. Usado em respostas
+                  simples e completas quando o comentário pede informação concreta.
+                </FieldHint>
               </div>
 
               <div className="space-y-2">
@@ -215,6 +263,10 @@ export function PersonaPage() {
                   value={restrictions}
                   onChange={(e) => setRestrictions(e.target.value)}
                 />
+                <FieldHint>
+                  O que a IA nunca deve fazer ou prometer. Entra na triagem, nos rascunhos e na
+                  verificação final — é o principal filtro de política da marca.
+                </FieldHint>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">

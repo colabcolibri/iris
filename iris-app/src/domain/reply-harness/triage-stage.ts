@@ -4,6 +4,7 @@ import type { ReplyContext } from "../reply-context/types.ts";
 import { buildTriagePrompt } from "./build-harness-prompt.ts";
 import type { TriageDecisionJson } from "./decision-json.ts";
 import { parseLlmJson } from "./parse-llm-json.ts";
+import { stageLlmFromCompletion } from "./stage-llm.ts";
 import {
   formatTriageReason,
   normalizeTriageOutput,
@@ -24,7 +25,8 @@ export type TriageStageResult = StageResult & {
 
 export async function runTriageStage(input: TriageStageInput): Promise<TriageStageResult> {
   const prompt = buildTriagePrompt(input.context, input.agentContent.restrictions);
-  const raw = await input.llm.complete(prompt);
+  const completion = await input.llm.complete(prompt);
+  const raw = completion.text;
   const parsed = parseLlmJson<TriageStageOutput>(raw);
 
   if (!parsed || (!parsed.replyTier && typeof parsed.shouldReply !== "boolean")) {
@@ -42,6 +44,7 @@ export async function runTriageStage(input: TriageStageInput): Promise<TriageSta
         reason: "invalid_llm_response",
         reasoning: raw.slice(0, 2000),
       },
+      llm: stageLlmFromCompletion(completion),
     };
   }
 
@@ -62,5 +65,6 @@ export async function runTriageStage(input: TriageStageInput): Promise<TriageSta
     reason: formatTriageReason(triage),
     reasoning: structured.reasoning,
     structured,
+    llm: stageLlmFromCompletion(completion),
   };
 }

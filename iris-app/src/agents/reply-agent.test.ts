@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createTestLlmCompletion } from "../ports/llm-completer.ts";
 import { generateReply } from "./reply-agent.ts";
 
 test("generateReply uses llm completer", async () => {
@@ -9,7 +10,7 @@ test("generateReply uses llm completer", async () => {
         async complete(prompt) {
           assert.match(prompt, /@fan: Adorei!/);
           assert.match(prompt, /Response language \(MANDATORY\)/);
-          return "Thanks for your comment!";
+          return createTestLlmCompletion("Thanks for your comment!");
         },
       },
       responseLanguage: "en-US",

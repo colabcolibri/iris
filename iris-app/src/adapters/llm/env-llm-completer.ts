@@ -1,15 +1,11 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
+import type { ChatResponse } from "./openai-chat-response.ts";
 
 export type EnvLlmCompleterConfig = {
   apiKey?: string;
   apiUrl?: string;
   model?: string;
   fetchImpl?: typeof fetch;
-};
-
-type ChatResponse = {
-  choices?: Array<{ message?: { content?: string } }>;
-  error?: { message?: string };
 };
 
 export function createEnvLlmCompleter(
@@ -27,6 +23,7 @@ export function createEnvLlmCompleter(
         throw new Error("LLM_API_KEY is not configured");
       }
 
+      const startedAt = Date.now();
       const response = await fetchFn(apiUrl, {
         method: "POST",
         headers: {
@@ -41,6 +38,7 @@ export function createEnvLlmCompleter(
       });
 
       const json = (await response.json()) as ChatResponse;
+      const latencyMs = Date.now() - startedAt;
 
       if (!response.ok || json.error) {
         throw new Error(json.error?.message ?? `LLM request failed (${response.status})`);
@@ -51,7 +49,26 @@ export function createEnvLlmCompleter(
         throw new Error("LLM returned empty response");
       }
 
-      return content.slice(0, 2200);
+      const usage =
+        json.usage &&
+        typeof json.usage.prompt_tokens === "number" &&
+        typeof json.usage.completion_tokens === "number"
+          ? {
+              promptTokens: json.usage.prompt_tokens,
+              completionTokens: json.usage.completion_tokens,
+              totalTokens:
+                typeof json.usage.total_tokens === "number"
+                  ? json.usage.total_tokens
+                  : json.usage.prompt_tokens + json.usage.completion_tokens,
+            }
+          : null;
+
+      return {
+        text: content.slice(0, 2200),
+        model: json.model ?? model,
+        usage,
+        latencyMs,
+      };
     },
   };
 }

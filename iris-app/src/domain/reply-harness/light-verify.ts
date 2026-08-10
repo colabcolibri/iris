@@ -3,6 +3,7 @@ import type { ReplyContext } from "../reply-context/types.ts";
 import { buildLightVerifyPrompt } from "./build-harness-prompt.ts";
 import type { VerifyDecisionJson } from "./decision-json.ts";
 import { parseLlmJson } from "./parse-llm-json.ts";
+import { stageLlmFromCompletion } from "./stage-llm.ts";
 import type { StageResult } from "./types.ts";
 
 const HARMFUL_WORDS = [
@@ -87,7 +88,8 @@ export async function runLightVerifyStage(input: LightVerifyStageInput): Promise
 
   if (input.llm) {
     const prompt = buildLightVerifyPrompt(input.context, trimmed);
-    const raw = await input.llm.complete(prompt);
+    const completion = await input.llm.complete(prompt);
+    const raw = completion.text;
     const parsed = parseLlmJson<VerifyDecisionJson>(raw);
 
     if (parsed && typeof parsed.approved === "boolean") {
@@ -112,6 +114,7 @@ export async function runLightVerifyStage(input: LightVerifyStageInput): Promise
         reasoning: structured.reasoning,
         finalText: structured.finalText,
         structured,
+        llm: stageLlmFromCompletion(completion),
       };
     }
   }

@@ -1,5 +1,6 @@
 export type ReplyPersona = {
   brandName: string | null;
+  signatureInstruction: string;
   responseLanguage: string;
   maxChars: number;
   updatedAt: string;

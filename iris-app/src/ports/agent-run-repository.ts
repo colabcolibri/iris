@@ -2,6 +2,7 @@ export type AgentRunStatus = "ok" | "failed" | "skipped";
 
 export type AgentRun = {
   id: string;
+  flowId: string;
   trigger: string;
   inputSummary: string | null;
   outputSummary: string | null;
@@ -14,10 +15,17 @@ export type CreateAgentRunInput = {
   inputSummary?: string | null;
   outputSummary?: string | null;
   status: AgentRunStatus;
+  flowId?: string;
+};
+
+export type UpdateAgentRunOutcomeInput = {
+  outputSummary: string | null;
+  status: AgentRunStatus;
 };
 
 export type AgentRunListItem = {
   id: string;
+  flowId: string;
   trigger: string;
   status: AgentRunStatus;
   outputSummary: string | null;
@@ -28,6 +36,9 @@ export type AgentRunListItem = {
   replyTier: string | null;
   terminalStatus: string | null;
   durationMs: number | null;
+  totalPromptTokens: number | null;
+  totalCompletionTokens: number | null;
+  totalTokens: number | null;
 };
 
 export type ListAgentRunsOptions = {
@@ -39,6 +50,7 @@ export type ListAgentRunsOptions = {
 
 export type AgentRunRepository = {
   create(input: CreateAgentRunInput): AgentRun;
+  updateOutcome(id: string, input: UpdateAgentRunOutcomeInput): AgentRun;
   findById(id: string): AgentRun | null;
   listRecent(options?: ListAgentRunsOptions): { items: AgentRunListItem[]; nextCursor: string | null };
 };

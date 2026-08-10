@@ -1,7 +1,7 @@
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { DEFAULT_GUARDRAIL_RULES } from "./default-guardrails.ts";
-import { buildResponseLanguageDirective } from "./prompt-language.ts";
+import { buildBrandAndSignatureBlock, buildResponseLanguageDirective } from "./prompt-language.ts";
 import {
   buildContextSection,
   captionForTier,
@@ -53,11 +53,14 @@ export function buildSimpleDraftPrompt(
   agentContent: AgentContent,
   maxChars: number,
 ): string {
+  const brandBlock = buildBrandAndSignatureBlock(context.persona);
+
   return [
     "Write ONE short Instagram comment reply.",
     "Maximum 1–2 sentences. No hashtags. No long speeches.",
     "",
     buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
+    ...(brandBlock ? ["", brandBlock] : []),
     "",
     "## Brand restrictions",
     agentContent.restrictions,
@@ -79,10 +82,13 @@ export function buildFullDraftPrompt(
   agentContent: AgentContent,
   maxChars: number,
 ): string {
+  const brandBlock = buildBrandAndSignatureBlock(context.persona);
+
   return [
     "Write an Instagram comment reply on behalf of the brand.",
     "",
     buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
+    ...(brandBlock ? ["", brandBlock] : []),
     "",
     "## SOUL",
     agentContent.soul,

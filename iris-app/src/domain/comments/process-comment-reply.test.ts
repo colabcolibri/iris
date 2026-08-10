@@ -6,6 +6,7 @@ import { createAppContext } from "../../api/app-context.ts";
 import { registerMonitoredPost } from "./register-monitored-post.ts";
 import { processCommentReply } from "./process-comment-reply.ts";
 import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
+import { createTestLlmCompletion } from "../../ports/llm-completer.ts";
 
 test("registerMonitoredPost creates monitored post from ig_media_id", async () => {
   const db = openDatabase(":memory:");
@@ -131,7 +132,7 @@ test("processCommentReply skips posts with reply_mode off", async () => {
       llmCompleter: {
         async complete() {
           llmCalled = true;
-          return "nope";
+          return createTestLlmCompletion("nope");
         },
       },
     });
@@ -182,7 +183,7 @@ test("processCommentReply skips when global is off and post inherits", async () 
       llmCompleter: {
         async complete() {
           llmCalled = true;
-          return "nope";
+          return createTestLlmCompletion("nope");
         },
       },
     });

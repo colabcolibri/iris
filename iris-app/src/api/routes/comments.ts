@@ -9,7 +9,7 @@ import {
   sendJson,
   ValidationError,
 } from "../json.ts";
-import { serializeComment } from "../../adapters/sqlite/mappers.ts";
+import { serializeComment, serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { buildReplyInspection } from "../../domain/reply-context/build-reply-inspection.ts";
 import { buildCommentsInbox, buildLocalCommentsInbox } from "../../domain/comments/build-comments-inbox.ts";
@@ -24,7 +24,11 @@ import { assembleReplyContext } from "../../domain/reply-context/reply-context-a
 import { serializeReplyAudit } from "../../domain/reply-audit/serialize-reply-audit.ts";
 import { registerMonitoredPost } from "../../domain/comments/register-monitored-post.ts";
 import { registerMonitoredPostsBatch } from "../../domain/comments/register-monitored-posts-batch.ts";
-import { serializePost } from "../../adapters/sqlite/mappers.ts";
+import {
+  firstPostMediaUrl,
+  resolvePostMedia,
+} from "../../domain/post-media/resolve-post-media.ts";
+import { serializePostMedia } from "../../domain/post-media/serialize-post-media.ts";
 import {
   planCommentThreadReconciliation,
   reconcileCommentThreadStatuses,
@@ -108,22 +112,40 @@ export async function handleCommentsRoute(
     });
 
     sendJson(res, 200, {
-      posts: posts.map((post) => {
-        const firstAsset = ctx.assets.listByPostId(post.postId)[0];
-        return {
-          post_id: post.postId,
-          caption: post.caption,
-          carousel_summary: post.carouselSummary ?? null,
-          published_at: post.publishedAt,
-          ig_media_id: post.igMediaId,
-          status: post.status,
-          is_external: post.status === "monitored",
-          comments_count: post.commentsCount,
-          pending_count: post.pendingCount,
-          preview_filename: firstAsset?.storagePath ?? null,
-          preview_mime: firstAsset?.mime ?? null,
-        };
-      }),
+      posts: await Promise.all(
+        posts.map(async (post) => {
+          const firstAsset = ctx.assets.listByPostId(post.postId)[0];
+          let previewUrl: string | null = firstAsset
+            ? `/api/posts/${post.postId}/assets/${encodeURIComponent(firstAsset.storagePath)}`
+            : null;
+
+          if (!previewUrl && post.igMediaId && getMetaReadiness(ctx).ready) {
+            const media = await resolvePostMedia(post.postId, {
+              posts: ctx.posts,
+              assets: ctx.assets,
+              metaCommentReader: ctx.metaCommentReader,
+              publicBaseUrl: ctx.publicBaseUrl,
+              publishUrlSecret: ctx.publishUrlSecret,
+            });
+            previewUrl = firstPostMediaUrl(media);
+          }
+
+          return {
+            post_id: post.postId,
+            caption: post.caption,
+            carousel_summary: post.carouselSummary ?? null,
+            published_at: post.publishedAt,
+            ig_media_id: post.igMediaId,
+            status: post.status,
+            is_external: post.status === "monitored",
+            comments_count: post.commentsCount,
+            pending_count: post.pendingCount,
+            preview_filename: firstAsset?.storagePath ?? null,
+            preview_mime: firstAsset?.mime ?? null,
+            preview_url: previewUrl,
+          };
+        }),
+      ),
     });
     return true;
   }
@@ -164,33 +186,14 @@ export async function handleCommentsRoute(
     }
 
     const assets = ctx.assets.listByPostId(postId);
-    let media: Record<string, unknown> | null = null;
-
-    if (assets.length > 0) {
-      media = {
-        source: "local",
-        items: assets.map((asset) => ({
-          preview_filename: asset.storagePath,
-          preview_mime: asset.mime,
-        })),
-      };
-    } else {
-      try {
-        const remote = await ctx.metaCommentReader.fetchMediaPreview(post.igMediaId);
-        media = {
-          source: "meta",
-          permalink: remote.permalink ?? null,
-          media_type: remote.mediaType ?? null,
-          items: remote.slides.map((slide) => ({
-            url: slide.url,
-            media_type: slide.mediaType,
-            thumbnail_url: slide.thumbnailUrl,
-          })),
-        };
-      } catch {
-        media = { source: "meta", permalink: null, media_type: null, items: [] };
-      }
-    }
+    const resolvedMedia = await resolvePostMedia(postId, {
+      posts: ctx.posts,
+      assets: ctx.assets,
+      metaCommentReader: ctx.metaCommentReader,
+      publicBaseUrl: ctx.publicBaseUrl,
+      publishUrlSecret: ctx.publishUrlSecret,
+    });
+    const media = serializePostMedia(resolvedMedia);
 
     sendJson(res, 200, {
       ok: insightsMessage === null,

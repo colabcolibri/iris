@@ -19,6 +19,7 @@ test("assembleReplyContext builds full context", async () => {
 
     personaStore.upsert({
       brandName: "Iris",
+      signatureInstruction: "",
       responseLanguage: "pt-BR",
       maxChars: 300,
     });

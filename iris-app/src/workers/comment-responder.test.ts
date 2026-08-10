@@ -5,6 +5,7 @@ import { runMigrations } from "../adapters/sqlite/migrate.ts";
 import { createAppContext } from "../api/app-context.ts";
 import { startCommentResponder } from "./comment-responder.ts";
 import { createHarnessLlmMock } from "../test-utils/harness-llm-mock.ts";
+import { createTestLlmCompletion } from "../ports/llm-completer.ts";
 
 test("comment responder replies to pending comments with auto_reply enabled", async () => {
   const db = openDatabase(":memory:");
@@ -27,6 +28,7 @@ test("comment responder replies to pending comments with auto_reply enabled", as
 
     ctx.replyPersonaStore.upsert({
       brandName: "Iris",
+      signatureInstruction: "",
       responseLanguage: "pt-BR",
       maxChars: 280,
     });
@@ -117,7 +119,7 @@ test("comment responder ignores posts without auto_reply", async () => {
       intervalMs: 50,
       llmCompleter: {
         async complete() {
-          return "ok";
+          return createTestLlmCompletion("ok");
         },
       },
     });
