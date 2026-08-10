@@ -5,11 +5,18 @@ import type { Post, PostStatus } from "@/lib/types";
 type KanbanBoardProps = {
   posts: Post[];
   timeZone: string;
+  globalAutoReplyEnabled: boolean;
   onOpenPost: (post: Post) => void;
   onStatusChange: (post: Post, status: PostStatus) => void;
 };
 
-export function KanbanBoard({ posts, timeZone, onOpenPost, onStatusChange }: KanbanBoardProps) {
+export function KanbanBoard({
+  posts,
+  timeZone,
+  globalAutoReplyEnabled,
+  onOpenPost,
+  onStatusChange,
+}: KanbanBoardProps) {
   return (
     <div className="kanban-scroll flex h-full min-h-0 gap-6 overflow-x-auto pb-2">
       {KANBAN_COLUMNS.map((column) => (
@@ -18,6 +25,7 @@ export function KanbanBoard({ posts, timeZone, onOpenPost, onStatusChange }: Kan
           column={column}
           posts={posts.filter((post) => post.status === column.id)}
           timeZone={timeZone}
+          globalAutoReplyEnabled={globalAutoReplyEnabled}
           onOpenPost={onOpenPost}
           onStatusChange={onStatusChange}
         />

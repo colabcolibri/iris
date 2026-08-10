@@ -1,15 +1,40 @@
+import { useCallback, useState } from "react";
 import { Loader2, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { commentStatusBadgeLabel, commentStatusHint } from "@/lib/comment-status";
+import type { CommentTreeNode } from "@/lib/build-comment-tree";
+import { indexCommentsByIgId } from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
 import type { Comment } from "@/lib/types";
+import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 
-type DisplayComment = Comment & { depth: number };
+function shouldShowReplyAudit(node: Comment): boolean {
+  if (node.draft_text) {
+    return true;
+  }
+  const status = node.status ?? "";
+  return status === "skipped" || status === "failed" || status === "replied";
+}
 
 function initials(username: string | undefined): string {
   const value = username?.trim() || "?";
   return value.slice(0, 2).toUpperCase();
+}
+
+function formatHandle(username: string | undefined): string {
+  const value = username?.trim() || "usuário";
+  return value.startsWith("@") ? value : `@${value}`;
 }
 
 function formatRelativeTime(value: string): string {
@@ -48,118 +73,324 @@ function statusVariant(status: string): "default" | "secondary" | "outline" | "d
   if (status === "failed") {
     return "destructive";
   }
+  if (status === "skipped") {
+    return "outline";
+  }
   return "outline";
 }
 
+async function copyToClipboard(value: string, label: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success(`${label} copiado.`);
+  } catch {
+    toast.error("Não foi possível copiar.");
+  }
+}
+
+function parentHandle(comment: Comment, byIgId: Map<string, Comment>): string | null {
+  const parentId = comment.parent_ig_comment_id;
+  if (!parentId) {
+    return null;
+  }
+  const parent = byIgId.get(parentId);
+  return parent?.author_username ? formatHandle(parent.author_username) : null;
+}
+
+function replyToHandle(
+  replyToIgId: string | null | undefined,
+  byIgId: Map<string, Comment>,
+  fallbackHandle: string,
+): string {
+  if (!replyToIgId) {
+    return fallbackHandle;
+  }
+  const target = byIgId.get(replyToIgId);
+  if (target?.author_username) {
+    return formatHandle(target.author_username);
+  }
+  return fallbackHandle;
+}
+
+function countDescendants(node: CommentTreeNode): number {
+  return node.children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
+}
+
+function hasChildWithIgId(node: CommentTreeNode, igCommentId: string | null | undefined): boolean {
+  if (!igCommentId) {
+    return false;
+  }
+  if (node.ig_comment_id === igCommentId) {
+    return true;
+  }
+  return node.children.some((child) => hasChildWithIgId(child, igCommentId));
+}
+
 type CommentThreadProps = {
-  comments: DisplayComment[];
+  roots: CommentTreeNode[];
+  allComments: Comment[];
+  brandUsername?: string | null;
   approvingId: string | null;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
 };
 
-export function CommentThread({ comments, approvingId, onApproveDraft }: CommentThreadProps) {
+type CommentItemProps = {
+  node: CommentTreeNode;
+  depth: number;
+  byIgId: Map<string, Comment>;
+  brandUsername?: string | null;
+  approvingId: string | null;
+  collapsedIds: Set<string>;
+  onToggleCollapse: (commentId: string) => void;
+  onApproveDraft: (commentId: string, draftText?: string | null) => void;
+};
+
+function CommentItem({
+  node,
+  depth,
+  byIgId,
+  brandUsername,
+  approvingId,
+  collapsedIds,
+  onToggleCollapse,
+  onApproveDraft,
+}: CommentItemProps) {
+  const handle = formatHandle(node.author_username);
+  const statusLabel = commentStatusBadgeLabel(node);
+  const replyTarget = parentHandle(node, byIgId);
+  const showLinkedReply =
+    Boolean(node.linked_reply_text) &&
+    !hasChildWithIgId(node, node.linked_reply_ig_comment_id);
+  const linkedReplyTarget = replyToHandle(node.reply_to_ig_comment_id, byIgId, handle);
+  const descendantCount = countDescendants(node);
+  const isCollapsed = collapsedIds.has(node.id);
+  const brandHandle = formatHandle(brandUsername ?? "marca");
+
   return (
-    <div className="flex flex-col gap-4">
-      {comments.map((comment, index) => {
-        const isReply = comment.depth > 0;
-        const username = comment.author_username ?? "usuário";
-        const handle = username.startsWith("@") ? username : `@${username}`;
+    <div className={cn(depth > 0 && "mt-3")}>
+      <div className="flex gap-2.5">
+        <Avatar
+          className={cn(
+            "shrink-0 border border-border/30",
+            depth > 0 ? "size-7" : "size-9",
+          )}
+        >
+          <AvatarFallback className="text-[10px] font-semibold">
+            {initials(node.author_username)}
+          </AvatarFallback>
+        </Avatar>
 
-        return (
-          <div key={comment.id}>
-            <div
-              className={cn(
-                "flex gap-3",
-                isReply && "ml-4 border-l-2 border-border/40 pl-4",
-              )}
-            >
-              <Avatar
-                className={cn(
-                  "shrink-0 border border-border/30",
-                  isReply ? "size-8" : "size-10",
-                )}
-              >
-                <AvatarFallback className="text-[10px] font-semibold">
-                  {initials(comment.author_username)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="min-w-0 flex-1 flex flex-col gap-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <span className="text-sm font-semibold text-foreground">{handle}</span>
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {formatRelativeTime(comment.created_at)}
-                    </span>
-                    {comment.status ? (
-                      <Badge
-                        variant={statusVariant(comment.status)}
-                        className="ml-2 align-middle text-[10px]"
-                      >
-                        {comment.status}
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Mais opções"
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className="text-sm font-semibold text-foreground">{handle}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatRelativeTime(node.created_at)}
+                </span>
+                {statusLabel ? (
+                  <Badge
+                    variant={statusVariant(node.status ?? "")}
+                    className="text-[10px]"
+                    title={commentStatusHint(node)}
                   >
-                    <MoreHorizontal className="size-5" />
-                  </button>
-                </div>
-
-                <p className="wrap-break-word text-base leading-relaxed text-foreground">
-                  {comment.text ?? "(sem texto)"}
-                </p>
-
-                {comment.draft_text ? (
-                  <div className="mt-2 rounded-lg border border-primary/30 bg-muted/40 p-3">
-                    <p className="text-xs font-semibold text-primary">Rascunho da IA</p>
-                    <p className="mt-1 wrap-break-word text-sm">{comment.draft_text}</p>
-                    {comment.status === "pending" ? (
-                      <div className="mt-2 flex justify-end">
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={approvingId === comment.id}
-                          onClick={() => onApproveDraft(comment.id, comment.draft_text)}
-                        >
-                          {approvingId === comment.id ? (
-                            <Loader2 className="mr-2 size-4 animate-spin" />
-                          ) : null}
-                          Aprovar e publicar
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {!isReply && !comment.draft_text ? (
-                  <div className="mt-1 flex gap-3">
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-primary hover:underline"
-                    >
-                      Responder
-                    </button>
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                    >
-                      Ocultar
-                    </button>
-                  </div>
+                    {statusLabel}
+                  </Badge>
                 ) : null}
               </div>
+              {replyTarget && depth > 0 ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Em resposta a{" "}
+                  <span className="font-medium text-foreground/80">{replyTarget}</span>
+                </p>
+              ) : null}
             </div>
 
-            {index < comments.length - 1 ? (
-              <hr className="mt-4 border-border/30" />
-            ) : null}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label="Mais opções"
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => void copyToClipboard(node.text ?? "", "Texto")}
+                  >
+                    Copiar texto
+                  </DropdownMenuItem>
+                  {node.ig_comment_id ? (
+                    <DropdownMenuItem
+                      onClick={() => void copyToClipboard(node.ig_comment_id!, "ID Meta")}
+                    >
+                      Copiar ID do comentário
+                    </DropdownMenuItem>
+                  ) : null}
+                  {node.parent_ig_comment_id ? (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        void copyToClipboard(node.parent_ig_comment_id!, "ID respondido")
+                      }
+                    >
+                      Copiar ID respondido
+                    </DropdownMenuItem>
+                  ) : null}
+                  {node.reply_to_ig_comment_id &&
+                  node.reply_to_ig_comment_id !== node.parent_ig_comment_id ? (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        void copyToClipboard(node.reply_to_ig_comment_id!, "ID vinculado")
+                      }
+                    >
+                      Copiar ID da resposta vinculada
+                    </DropdownMenuItem>
+                  ) : null}
+                  {descendantCount > 0 ? (
+                    <DropdownMenuItem onClick={() => onToggleCollapse(node.id)}>
+                      {isCollapsed ? "Mostrar conversa" : "Ocultar conversa"}
+                    </DropdownMenuItem>
+                  ) : null}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        );
-      })}
+
+          <p className="mt-1 wrap-break-word text-[15px] leading-relaxed text-foreground">
+            {node.text ?? "(sem texto)"}
+          </p>
+
+          {node.draft_text ? (
+            <div className="mt-2 rounded-2xl border border-primary/25 bg-primary/5 px-3 py-2.5">
+              <p className="text-xs font-semibold text-primary">Sugestão da IA</p>
+              <p className="mt-1 wrap-break-word text-sm leading-relaxed">{node.draft_text}</p>
+              {node.status === "pending" ? (
+                <div className="mt-2 flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={approvingId === node.id}
+                    onClick={() => onApproveDraft(node.id, node.draft_text)}
+                  >
+                    {approvingId === node.id ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : null}
+                    Aprovar e publicar
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {shouldShowReplyAudit(node) ? (
+            <ReplyAuditSection commentId={node.id} className="mt-2" />
+          ) : null}
+
+          {node.error_message ? (
+            <p className="mt-2 text-xs text-muted-foreground">{node.error_message}</p>
+          ) : null}
+
+          {showLinkedReply ? (
+            <div className="mt-2 flex gap-2.5">
+              <Avatar className="size-7 shrink-0 border border-border/30">
+                <AvatarFallback className="text-[9px] font-semibold">
+                  {initials(brandUsername ?? "marca")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 rounded-2xl bg-muted/55 px-3 py-2">
+                <p className="text-xs font-semibold text-foreground">{brandHandle}</p>
+                <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
+                  {node.linked_reply_text}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Em resposta a{" "}
+                  <span className="font-medium text-foreground/80">{linkedReplyTarget}</span>
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          {descendantCount > 0 && isCollapsed ? (
+            <button
+              type="button"
+              className="mt-2 text-xs font-semibold text-primary hover:underline"
+              onClick={() => onToggleCollapse(node.id)}
+            >
+              Ver {descendantCount} resposta{descendantCount === 1 ? "" : "s"}
+            </button>
+          ) : null}
+
+          {node.children.length > 0 && !isCollapsed ? (
+            <div className={cn("space-y-0", depth === 0 ? "mt-2" : "mt-1")}>
+              {node.children.map((child) => (
+                <CommentItem
+                  key={child.id}
+                  node={child}
+                  depth={depth + 1}
+                  byIgId={byIgId}
+                  brandUsername={brandUsername}
+                  approvingId={approvingId}
+                  collapsedIds={collapsedIds}
+                  onToggleCollapse={onToggleCollapse}
+                  onApproveDraft={onApproveDraft}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CommentThread({
+  roots,
+  allComments,
+  brandUsername,
+  approvingId,
+  onApproveDraft,
+}: CommentThreadProps) {
+  const byIgId = indexCommentsByIgId(allComments);
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
+
+  const onToggleCollapse = useCallback((commentId: string) => {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
+      return next;
+    });
+  }, []);
+
+  if (roots.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {roots.map((root) => (
+        <article key={root.id} className="min-w-0">
+          <CommentItem
+            node={root}
+            depth={0}
+            byIgId={byIgId}
+            brandUsername={brandUsername}
+            approvingId={approvingId}
+            collapsedIds={collapsedIds}
+            onToggleCollapse={onToggleCollapse}
+            onApproveDraft={onApproveDraft}
+          />
+        </article>
+      ))}
     </div>
   );
 }

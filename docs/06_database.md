@@ -81,7 +81,20 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | trigger | TEXT | `webhook`, `manual`, `worker` |
 | input_summary | TEXT | |
 | output_summary | TEXT | |
-| status | TEXT | `ok`, `failed` |
+| status | TEXT | `ok`, `failed`, `skipped` |
+| created_at | TEXT | |
+
+### `agent_run_steps`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | UUID |
+| agent_run_id | TEXT FK | → `agent_runs` |
+| comment_id | TEXT FK | → `comments` |
+| stage | TEXT | `triage`, `draft`, `verify` |
+| verdict | TEXT | `pass`, `fail`, `skip` |
+| reason | TEXT | Resumo curto para badge |
+| reasoning | TEXT | Texto livre do LLM |
 | created_at | TEXT | |
 
 ### `api_keys`
@@ -108,9 +121,10 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 
 ```txt
 data/media/{post_id}/{filename}
+data/agent/{soul,page,knowledge,restrictions}.md
 ```
 
-Índice em `post_assets.storage_path`. Worker e Meta leem daqui.
+Índice em `post_assets.storage_path`. Worker e Meta leem mídia daqui. Conteúdo editorial do agente (SOUL, página, KB, restrições) em `data/agent/` — override via `IRIS_AGENT_CONTENT_DIR`.
 
 ## Indexes
 
@@ -118,6 +132,7 @@ data/media/{post_id}/{filename}
 - `post_assets(post_id, sort_order)`
 - `comments(post_id)`
 - `comments(ig_comment_id)`
+- `agent_run_steps(comment_id, created_at)`
 
 ## Backup
 

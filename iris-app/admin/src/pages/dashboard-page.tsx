@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { PostDialog, type PostDialogMode } from "@/components/posts/post-dialog";
+import { PageContainer } from "@/components/templates/page-container";
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
@@ -23,7 +24,7 @@ import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/li
 import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 export function DashboardPage() {
-  const { timezone } = useAppSettings();
+  const { timezone, autoReplyEnabled } = useAppSettings();
   const { meta } = useMetaSession();
   const { view } = useDashboardView();
   const { confirm } = useConfirmDialog();
@@ -243,11 +244,12 @@ export function DashboardPage() {
         </header>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-8 pb-8">
+      <PageContainer variant="fill" className="px-8 pb-8">
         {view === "kanban" ? (
           <KanbanBoard
             posts={posts}
             timeZone={timezone}
+            globalAutoReplyEnabled={autoReplyEnabled}
             onOpenPost={openPost}
             onStatusChange={(post, status) => void changeStatus(post, status)}
           />
@@ -257,12 +259,13 @@ export function DashboardPage() {
             cursor={cursor}
             selectedId={selectedPost?.id ?? null}
             timeZone={timezone}
+            globalAutoReplyEnabled={autoReplyEnabled}
             onCursorChange={setCursor}
             onSelect={openPost}
             onCreatePost={openCreate}
           />
         )}
-      </div>
+      </PageContainer>
 
       <PostDialog
         open={dialogOpen}

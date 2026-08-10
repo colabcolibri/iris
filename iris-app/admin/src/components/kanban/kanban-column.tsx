@@ -10,6 +10,7 @@ type KanbanColumnProps = {
   column: { id: PostStatus; label: string };
   posts: Post[];
   timeZone: string;
+  globalAutoReplyEnabled: boolean;
   onOpenPost: (post: Post) => void;
   onStatusChange: (post: Post, status: PostStatus) => void;
 };
@@ -18,6 +19,7 @@ export function KanbanColumn({
   column,
   posts,
   timeZone,
+  globalAutoReplyEnabled,
   onOpenPost,
   onStatusChange,
 }: KanbanColumnProps) {
@@ -31,6 +33,7 @@ export function KanbanColumn({
             key={post.id}
             post={post}
             timeZone={timeZone}
+            globalAutoReplyEnabled={globalAutoReplyEnabled}
             onOpen={() => onOpenPost(post)}
             onStatusChange={(status) => onStatusChange(post, status)}
           />

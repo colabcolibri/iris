@@ -10,8 +10,12 @@ test("persona page and route exist", () => {
   const page = readFileSync("admin/src/pages/persona-page.tsx", "utf8");
   assert.match(page, /fetchReplyPersona/);
   assert.match(page, /updateReplyPersona/);
+  assert.match(page, /fetchAgentContent/);
+  assert.match(page, /updateAgentContent/);
+  assert.match(page, /Conteúdo do agente/);
   assert.match(page, /system_prompt/);
 
   const api = readFileSync("admin/src/lib/api.ts", "utf8");
   assert.match(api, /\/api\/settings\/reply-persona/);
+  assert.match(api, /\/api\/settings\/agent-content/);
 });

@@ -6,6 +6,7 @@ export type UpsertCommentInput = {
   parentIgCommentId?: string | null;
   authorUsername?: string | null;
   text?: string | null;
+  igTimestamp?: string | null;
 };
 
 export type SentCommentReply = {
@@ -24,6 +25,14 @@ export type CreateReplyInput = {
   sentText?: string | null;
   draftText?: string | null;
   agentRunId?: string | null;
+  sourceIgCommentId?: string | null;
+  replyToIgCommentId?: string | null;
+};
+
+export type LinkInstagramReplyInput = {
+  userCommentId: string;
+  brandIgCommentId: string;
+  sentText: string | null;
 };
 
 export type CommentReplyRecord = {
@@ -32,6 +41,8 @@ export type CommentReplyRecord = {
   sentText: string | null;
   draftText: string | null;
   status: string;
+  sourceIgCommentId: string | null;
+  replyToIgCommentId: string | null;
 };
 
 export type CommentRepository = {
@@ -42,10 +53,17 @@ export type CommentRepository = {
   listSentRepliesByPostId(postId: string): SentCommentReply[];
   listPendingForAgentReply(): PendingAgentReplyComment[];
   hasReplyRecord(commentId: string): boolean;
-  promoteDraftToSent(commentId: string, sentText: string): boolean;
+  promoteDraftToSent(
+    commentId: string,
+    sentText: string,
+    meta?: { replyToIgCommentId?: string | null; sourceIgCommentId?: string | null },
+  ): boolean;
   findLatestDraft(commentId: string): CommentReplyRecord | null;
+  findLatestSentReply(commentId: string): CommentReplyRecord | null;
   findById(id: string): Comment | null;
   markReplied(id: string): Comment | null;
+  markSkipped(id: string, errorMessage?: string | null): Comment | null;
   markFailed(id: string, errorMessage: string): Comment | null;
   createReply(input: CreateReplyInput): CommentReplyRecord;
+  linkInstagramReply(input: LinkInstagramReplyInput): boolean;
 };

@@ -12,6 +12,7 @@ import {
   scheduleCommentReply,
   shouldScheduleCommentReply,
 } from "../../domain/comments/process-comment-reply.ts";
+import { isBrandAuthor } from "../../domain/comments/is-brand-author.ts";
 
 const PAYLOAD_PREVIEW_BYTES = 2048;
 
@@ -84,6 +85,7 @@ async function handleMetaWebhookPost(
 
     const entries = parseCommentEntries(payload);
     const affectedPosts = new Set<string>();
+    const brandUsername = ctx.metaConnectionStore.get()?.igUsername ?? null;
     let processed = false;
     let linkedCommentId: string | null = null;
     let linkedPostId: string | null = null;
@@ -109,7 +111,11 @@ async function handleMetaWebhookPost(
       if (result.created) {
         affectedPosts.add(post.id);
 
-        if (
+        if (isBrandAuthor(entry.authorUsername, brandUsername)) {
+          if (result.comment.status === "pending") {
+            ctx.comments.markSkipped(result.comment.id);
+          }
+        } else if (
           shouldScheduleCommentReply(post.replyMode) &&
           ctx.resolveLlmCompleter()
         ) {

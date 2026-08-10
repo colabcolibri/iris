@@ -25,6 +25,7 @@ pnpm dev
 
 - **Dev:** email via SMTP/Mailpit (default quando `NODE_ENV !== production`)
 - **Prod:** `IRIS_EMAIL_PROVIDER=resend` — ver [`.env.railway.example`](.env.railway.example) para lista de variáveis (somente placeholders)
+- **Instagram:** cada deploy usa app Meta próprio — guia em [`../docs/architecture/meta-integration.md`](../docs/architecture/meta-integration.md)
 
 Login em `/login` com o email em `IRIS_ADMIN_EMAIL`.
 

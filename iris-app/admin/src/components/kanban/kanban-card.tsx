@@ -1,11 +1,11 @@
 import {
-  Bot,
   Clock,
   ImageIcon,
   MoreHorizontal,
   PlayCircle,
 } from "lucide-react";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
+import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
 import { KanbanColumnShell } from "@/components/templates/kanban-column-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import type { Post, PostStatus } from "@/lib/types";
 type KanbanCardProps = {
   post: Post;
   timeZone: string;
+  globalAutoReplyEnabled: boolean;
   onOpen: () => void;
   onStatusChange: (status: PostStatus) => void;
 };
@@ -52,7 +53,13 @@ function dateMeta(post: Post, timeZone: string) {
   }
 }
 
-export function KanbanCard({ post, timeZone, onOpen, onStatusChange }: KanbanCardProps) {
+export function KanbanCard({
+  post,
+  timeZone,
+  globalAutoReplyEnabled,
+  onOpen,
+  onStatusChange,
+}: KanbanCardProps) {
   const actions = getKanbanActions(post.status);
   const meta = dateMeta(post, timeZone);
   const isFailed = post.status === "failed";
@@ -147,12 +154,10 @@ export function KanbanCard({ post, timeZone, onOpen, onStatusChange }: KanbanCar
         ) : (
           <span className="text-amber-700">Sem mídia</span>
         )}
-        {post.auto_reply_enabled && (
-          <span className="inline-flex items-center gap-1 text-primary">
-            <Bot className="size-3.5" />
-            Auto-reply
-          </span>
-        )}
+        <PostReplyStatusBadge
+          post={post}
+          globalAutoReplyEnabled={globalAutoReplyEnabled}
+        />
       </div>
     </KanbanColumnShell.Card>
   );

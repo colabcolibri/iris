@@ -4,6 +4,7 @@ import { openDatabase } from "../adapters/sqlite/connection.ts";
 import { runMigrations } from "../adapters/sqlite/migrate.ts";
 import { createAppContext } from "../api/app-context.ts";
 import { startCommentResponder } from "./comment-responder.ts";
+import { createHarnessLlmMock } from "../test-utils/harness-llm-mock.ts";
 
 test("comment responder replies to pending comments with auto_reply enabled", async () => {
   const db = openDatabase(":memory:");
@@ -39,20 +40,23 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     });
 
     const replies: string[] = [];
-    let capturedPrompt = "";
+    const prompts: string[] = [];
 
     ctx.metaCommentReplier = {
       async reply(_igCommentId, message) {
         replies.push(message);
+        return {};
       },
     };
+
+    const harnessLlm = createHarnessLlmMock({ draftText: "Obrigado pelo interesse!" });
 
     const stop = startCommentResponder(ctx, {
       intervalMs: 50,
       llmCompleter: {
         async complete(prompt) {
-          capturedPrompt = prompt;
-          return "Obrigado pelo interesse!";
+          prompts.push(prompt);
+          return harnessLlm.complete(prompt);
         },
       },
     });
@@ -62,8 +66,9 @@ test("comment responder replies to pending comments with auto_reply enabled", as
     const updated = ctx.comments.findById(comment.id);
     assert.equal(updated?.status, "replied");
     assert.equal(replies.length, 1);
-    assert.match(capturedPrompt, /## Persona/);
-    assert.match(capturedPrompt, /Responda com empatia/);
+    assert.match(prompts[0] ?? "", /Restrições da marca/);
+    assert.match(prompts[0] ?? "", /replyTier/);
+    assert.match(prompts[1] ?? "", /## SOUL/);
 
     const run = db
       .prepare("SELECT input_summary FROM agent_runs ORDER BY id DESC LIMIT 1")

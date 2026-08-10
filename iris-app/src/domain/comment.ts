@@ -10,4 +10,5 @@ export type Comment = {
   status: CommentStatus;
   errorMessage: string | null;
   createdAt: string;
+  igTimestamp: string | null;
 };

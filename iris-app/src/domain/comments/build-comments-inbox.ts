@@ -62,6 +62,7 @@ export type BuildCommentsInboxDeps = {
     parentIgCommentId?: string | null;
     authorUsername?: string | null;
     text?: string | null;
+    igTimestamp?: string | null;
   }) => { comment: { id: string; status: string } };
   findByIgCommentId: (igCommentId: string) => { id: string; status: string } | null;
 };
@@ -154,7 +155,9 @@ export async function buildCommentsInbox(
 
   const remoteMedia = await deps.metaCommentReader.listRecentMediaWithComments(since, readerOptions);
 
-  const media: InboxMedia[] = remoteMedia.map((item) => {
+  const media: InboxMedia[] = [];
+
+  for (const item of remoteMedia) {
     const postId = deps.findPostIdByIgMediaId(item.igMediaId);
 
     const comments: InboxComment[] = item.comments.map((comment) => {
@@ -168,6 +171,7 @@ export async function buildCommentsInbox(
           parentIgCommentId: comment.parentIgCommentId,
           authorUsername: comment.authorUsername,
           text: comment.text,
+          igTimestamp: comment.timestamp,
         });
         irisCommentId = upserted.comment.id;
         status = upserted.comment.status;
@@ -190,15 +194,15 @@ export async function buildCommentsInbox(
       };
     });
 
-    return {
+    media.push({
       igMediaId: item.igMediaId,
       postId,
       caption: item.caption,
       mediaTimestamp: item.timestamp,
       reportedCommentsCount: item.reportedCommentsCount,
       comments,
-    };
-  });
+    });
+  }
 
   const visibleMedia = media.filter(
     (item) => item.comments.length > 0 || item.reportedCommentsCount > 0,

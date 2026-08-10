@@ -1,4 +1,4 @@
-export type AgentRunStatus = "ok" | "failed";
+export type AgentRunStatus = "ok" | "failed" | "skipped";
 
 export type AgentRun = {
   id: string;
@@ -18,4 +18,5 @@ export type CreateAgentRunInput = {
 
 export type AgentRunRepository = {
   create(input: CreateAgentRunInput): AgentRun;
+  findById(id: string): AgentRun | null;
 };

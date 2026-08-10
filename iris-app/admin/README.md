@@ -1,32 +1,81 @@
-# React + TypeScript + Vite
+# Iris admin (React)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+SPA do operador editorial. Build Vite → `iris-app/public/`. Documentação de arquitetura de layout: [`docs/architecture/admin-ui-layout.md`](../../docs/architecture/admin-ui-layout.md).
 
-Currently, two official plugins are available:
+## Comandos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+# na raiz iris-app/
+pnpm dev:admin      # HMR em modo dev
+pnpm build:admin    # produção → public/
+```
 
-## React Compiler
+## Estrutura
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```txt
+src/
+  App.tsx                 # rotas + providers globais
+  components/
+    layout/               # AppLayout, AppShell, sidebar, header, nav
+    templates/            # PageContainer, PagePanel, AppDialog
+    ui/                   # shadcn primitives (evitar editar)
+    {feature}/            # kanban, calendar, comments, settings…
+  contexts/               # auth, meta, settings, confirm dialog
+  hooks/                  # use-dashboard-view, use-mobile…
+  pages/                  # uma rota por arquivo — só conteúdo
+  lib/                    # api client, types, utils
+```
 
-## Expanding the Oxlint configuration
+## Layout — regra de ouro
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+**Shell persiste; página só renderiza conteúdo.**
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+```
+AppLayout (Outlet)
+  └── AppShell (header + sidebar)
+        └── SuaPage
+              └── PageContainer
+```
+
+Não use `AppShell` nas páginas. Rotas autenticadas são filhas de `AppLayout` em `App.tsx`.
+
+## PageContainer
+
+Template padrão para padding, scroll e cabeçalho.
+
+```tsx
+import { PageContainer } from "@/components/templates/page-container";
+
+export function MinhaPage() {
+  return (
+    <PageContainer>
+      <PageContainer.Content>
+        <PageContainer.Header
+          eyebrow="Seção"
+          title="Título"
+          description="Opcional."
+        />
+        {/* conteúdo */}
+      </PageContainer.Content>
+    </PageContainer>
+  );
 }
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+| Caso | `variant` |
+| ---- | --------- |
+| Formulários, settings, listas com scroll | `scroll` (padrão) |
+| Dashboard, inbox split (altura fixa) | `fill` |
+
+## Meta e dashboard
+
+- **Meta:** `useMetaSession()` de `@/contexts/meta-session-context` (provider no `AppLayout`).
+- **Calendário / Kanban:** `useDashboardView()` — URL `/?view=kanban` ou `/`.
+
+## Nova página
+
+1. `pages/nova-page.tsx` com `PageContainer`.
+2. Rota em `App.tsx` dentro do grupo `AppLayout`.
+3. Item em `app-navigation.tsx` se for menu principal.
+
+Detalhes: [`docs/architecture/admin-ui-layout.md`](../../docs/architecture/admin-ui-layout.md).

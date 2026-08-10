@@ -132,8 +132,12 @@ test("GET app settings returns default timezone", async () => {
       headers: { Cookie: adminCookie },
     });
     assert.equal(response.status, 200);
-    const body = (await response.json()) as { timezone: string };
+    const body = (await response.json()) as {
+      timezone: string;
+      auto_reply_enabled: boolean;
+    };
     assert.equal(body.timezone, "America/Sao_Paulo");
+    assert.equal(body.auto_reply_enabled, true);
   });
 });
 
@@ -164,6 +168,32 @@ test("PUT app settings persists timezone and rejects invalid zone", async () => 
     });
     const body = (await getResponse.json()) as { timezone: string };
     assert.equal(body.timezone, "Europe/Lisbon");
+  });
+});
+
+test("PUT app settings persists auto_reply_enabled without timezone", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const disable = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ auto_reply_enabled: false }),
+    });
+    assert.equal(disable.status, 200);
+    const disabled = (await disable.json()) as {
+      auto_reply_enabled: boolean;
+      timezone: string;
+    };
+    assert.equal(disabled.auto_reply_enabled, false);
+    assert.equal(disabled.timezone, "America/Sao_Paulo");
+
+    const getResponse = await fetch(`${baseUrl}/api/settings/app`, {
+      headers: { Cookie: adminCookie },
+    });
+    const body = (await getResponse.json()) as { auto_reply_enabled: boolean };
+    assert.equal(body.auto_reply_enabled, false);
   });
 });
 
@@ -218,5 +248,65 @@ test("agent cannot update llm settings", async () => {
       }),
     });
     assert.equal(response.status, 403);
+  });
+});
+
+test("GET agent content returns defaults", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const response = await fetch(`${baseUrl}/api/settings/agent-content`, {
+      headers: { Cookie: adminCookie },
+    });
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      soul: string;
+      page: string;
+      knowledge: string;
+      restrictions: string;
+    };
+    assert.ok(body.soul.length > 0);
+    assert.ok(body.page.length > 0);
+    assert.ok(typeof body.knowledge === "string");
+    assert.ok(body.restrictions.length > 0);
+  });
+});
+
+test("PUT agent content persists and agent cannot write", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const putResponse = await fetch(`${baseUrl}/api/settings/agent-content`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        soul: "# Soul custom",
+        page: "Página teste",
+        knowledge: "Fatos",
+        restrictions: "Não prometer desconto",
+      }),
+    });
+    assert.equal(putResponse.status, 200);
+
+    const agentPut = await fetch(`${baseUrl}/api/settings/agent-content`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${AGENT}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        soul: "hack",
+        page: "x",
+        knowledge: "y",
+        restrictions: "z",
+      }),
+    });
+    assert.equal(agentPut.status, 403);
+
+    const getResponse = await fetch(`${baseUrl}/api/settings/agent-content`, {
+      headers: { Cookie: adminCookie },
+    });
+    const body = (await getResponse.json()) as { soul: string; restrictions: string };
+    assert.equal(body.soul, "# Soul custom");
+    assert.equal(body.restrictions, "Não prometer desconto");
   });
 });

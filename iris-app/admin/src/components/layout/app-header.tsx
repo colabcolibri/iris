@@ -2,6 +2,7 @@ import { ChevronDown, LogOut, RefreshCw, UserRound, Unplug } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { AgentGlobalStatusBadge } from "@/components/layout/agent-global-status-badge";
 import { IrisSidebarTrigger } from "@/components/layout/iris-sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthSession } from "@/contexts/auth-session-context";
+import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,7 @@ import { cn } from "@/lib/utils";
 export function AppHeader() {
   const navigate = useNavigate();
   const { signOut } = useAuthSession();
+  const { autoReplyEnabled, loading: settingsLoading } = useAppSettings();
   const { confirm } = useConfirmDialog();
   const { meta, handleDisconnect, handleMetaHealth } = useMetaSession();
   const connected = Boolean(meta?.connected);
@@ -86,6 +89,8 @@ export function AppHeader() {
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+        <AgentGlobalStatusBadge enabled={autoReplyEnabled} loading={settingsLoading} />
+
         {!connected ? (
           <a
             href="/auth/meta"

@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CloudUpload, Loader2 } from "lucide-react";
+import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 import { StatusBadge } from "@/components/posts/status-badge";
+import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
 import { AppDialog } from "@/components/templates/app-dialog";
+import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppSettings } from "@/contexts/app-settings-context";
+import {
+  replyStatusPresentation,
+  resolveEffectivePostReplyStatus,
+} from "@iris/domain/reply-effective-status";
 import {
   fetchAssetBlob,
   fetchReplyInspection,
@@ -65,10 +73,18 @@ export function PostDialog({
   onRetryDraft,
   onRetrySchedule,
 }: PostDialogProps) {
+  const { autoReplyEnabled: globalAutoReplyEnabled } = useAppSettings();
   const [inspection, setInspection] = useState<ReplyInspection | null>(null);
   const [assetUrls, setAssetUrls] = useState<string[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState("content");
+
+  useEffect(() => {
+    if (open) {
+      setActiveTab("content");
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open || !post?.id || mode !== "edit") {
@@ -125,6 +141,8 @@ export function PostDialog({
   const isFailed = status === "failed";
   const isCancelled = status === "cancelled";
   const isDraft = !status || status === "draft";
+  const effectiveReply = resolveEffectivePostReplyStatus(globalAutoReplyEnabled, replyMode);
+  const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
 
   const statusHint = (() => {
     if (mode === "create") {
@@ -146,31 +164,86 @@ export function PostDialog({
     }
   })();
 
+  const showCommentsSection =
+    mode === "edit" &&
+    post?.id &&
+    (status === "published" ||
+      status === "monitored" ||
+      loadingComments ||
+      comments.length > 0);
+
+  const headerActions = (
+    <div className="flex flex-wrap items-center gap-2">
+      {post ? <StatusBadge status={post.status} /> : null}
+      {(isScheduled || isCancelled) && onRevertToDraft ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+          onClick={onRevertToDraft}
+        >
+          {isScheduled ? "Desagendar" : "Restaurar rascunho"}
+        </Button>
+      ) : null}
+      {isFailed && onRetryDraft ? (
+        <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={onRetryDraft}>
+          Voltar a rascunho
+        </Button>
+      ) : null}
+      {isFailed && onRetrySchedule ? (
+        <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={onRetrySchedule}>
+          Reagendar
+        </Button>
+      ) : null}
+    </div>
+  );
+
   return (
     <AppDialog open={open} onOpenChange={onOpenChange} size="xl">
-      <AppDialog.Header title={title}>
-        {post ? <StatusBadge status={post.status} /> : null}
+      <AppDialog.Header title={title} description={statusHint}>
+        {headerActions}
       </AppDialog.Header>
 
       <AppDialog.Body>
-        {statusHint && (
-          <p className="mb-6 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            {statusHint}
+        {isFailed && post?.error_message ? (
+          <p className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            Causa da falha: {post.error_message}
           </p>
-        )}
+        ) : null}
 
-        <div className="grid min-w-0 gap-8 lg:grid-cols-12">
-          <div className="flex min-w-0 flex-col gap-6 lg:col-span-7">
-            {isFailed && post?.error_message && (
-              <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                Causa da falha: {post.error_message}
-              </p>
-            )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-5">
+          <TabsList
+            variant="line"
+            className="h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0"
+          >
+            <TabsTrigger value="content" className="px-3 pb-2.5">
+              Conteúdo
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="px-3 pb-2.5">
+              Agendamento
+            </TabsTrigger>
+            <TabsTrigger value="replies" className="px-3 pb-2.5">
+              Respostas da IA
+            </TabsTrigger>
+            {showCommentsSection ? (
+              <TabsTrigger value="comments" className="gap-1.5 px-3 pb-2.5">
+                Comentários
+                {comments.length > 0 ? (
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                    {comments.length}
+                  </span>
+                ) : null}
+              </TabsTrigger>
+            ) : null}
+          </TabsList>
 
-            {status === "published" && post?.ig_media_id && (
-              <p className="text-sm text-muted-foreground">
-                ID na Meta: {post.ig_media_id}
-                {metaIgUsername && (
+          <TabsContent value="content" className="mt-0 space-y-5">
+            {status === "published" && post?.ig_media_id ? (
+              <p className="text-xs text-muted-foreground">
+                ID na Meta:{" "}
+                <span className="font-mono text-foreground/80">{post.ig_media_id}</span>
+                {metaIgUsername ? (
                   <>
                     {" · "}
                     <a
@@ -179,292 +252,304 @@ export function PostDialog({
                       rel="noopener noreferrer"
                       className="text-primary underline-offset-4 hover:underline"
                     >
-                      Abrir perfil no Instagram
+                      Abrir perfil
                     </a>
                   </>
-                )}
+                ) : null}
               </p>
-            )}
+            ) : null}
 
-            {isFailed && (onRetryDraft || onRetrySchedule) && (
-              <div className="flex flex-wrap gap-2">
-                {onRetryDraft && (
-                  <Button type="button" variant="outline" size="sm" onClick={onRetryDraft}>
-                    Voltar a rascunho
-                  </Button>
-                )}
-                {onRetrySchedule && (
-                  <Button type="button" size="sm" onClick={onRetrySchedule}>
-                    Reagendar
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {(isScheduled || isCancelled) && onRevertToDraft && (
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={onRevertToDraft}>
-                  {isScheduled ? "Desagendar (voltar a rascunho)" : "Restaurar como rascunho"}
-                </Button>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="post-caption" className="text-xs font-semibold tracking-wide uppercase">
-                Legenda
-              </Label>
-              <Textarea
-                id="post-caption"
-                value={caption}
-                onChange={(e) => onCaptionChange(e.target.value)}
-                rows={5}
-                className="min-h-32 resize-none border-0 border-b bg-muted/60 focus-visible:ring-0"
-                required
-                readOnly={isReadOnly}
-                disabled={isReadOnly}
-              />
-            </div>
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="post-scheduled-at" className="text-xs font-semibold tracking-wide uppercase">
-                  {isScheduled ? "Publicação agendada para" : "Agendar para"}
+            <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+              <section className="space-y-2">
+                <Label
+                  htmlFor="post-caption"
+                  className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Legenda
                 </Label>
-                <Input
-                  id="post-scheduled-at"
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => onScheduledAtChange(e.target.value)}
-                  className="border-0 border-b bg-muted/60 focus-visible:ring-0"
-                  disabled={isReadOnly || isCancelled}
+                <Textarea
+                  id="post-caption"
+                  value={caption}
+                  onChange={(e) => onCaptionChange(e.target.value)}
+                  rows={8}
+                  className="min-h-[10rem] resize-none bg-background"
+                  placeholder="Escreva a legenda da publicação…"
+                  required
+                  readOnly={isReadOnly}
+                  disabled={isReadOnly}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Horário no fuso editorial: {timeZone}
-                  {isDraft && scheduledAt
-                    ? " · a data só entra no calendário após agendar"
-                    : ""}
+              </section>
+
+              <section className="flex flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-4">
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Mídia
+                  </Label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    PNG, JPEG ou WebP. Você pode selecionar vários arquivos.
+                  </p>
+                </div>
+
+                {!isReadOnly ? (
+                  <label
+                    className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/80 bg-background px-4 py-8 text-center transition-colors hover:border-primary/50 hover:bg-muted/30"
+                  >
+                    <CloudUpload className="mb-2 size-8 text-muted-foreground/70" />
+                    <span className="text-sm font-medium">Adicionar mídia</span>
+                    <span className="mt-1 text-xs text-muted-foreground">
+                      Arraste ou clique para selecionar
+                    </span>
+                    <Input
+                      id="post-asset-files"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => onFilesChange(e.target.files)}
+                    />
+                  </label>
+                ) : null}
+
+                {assetUrls.length > 0 ? (
+                  <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
+                    {assetUrls.map((url) => (
+                      <div
+                        key={url}
+                        className="overflow-hidden rounded-lg border border-border/60 bg-background"
+                      >
+                        <img src={url} alt="" className="aspect-square w-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-lg border border-dashed border-border/60 bg-background/50 px-3 py-6 text-center text-sm text-muted-foreground">
+                    {isReadOnly ? "Sem preview de mídia." : "Nenhuma mídia adicionada ainda."}
+                  </p>
+                )}
+              </section>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="schedule" className="mt-0 space-y-4">
+            <div className="max-w-md space-y-2">
+              <Label htmlFor="post-scheduled-at" className="text-sm font-medium">
+                {isScheduled ? "Publicação agendada para" : "Agendar para"}
+              </Label>
+              <Input
+                id="post-scheduled-at"
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => onScheduledAtChange(e.target.value)}
+                className="bg-background"
+                disabled={isReadOnly || isCancelled}
+              />
+              <p className="text-xs text-muted-foreground">
+                Fuso editorial: {timeZone}
+                {isDraft && scheduledAt ? " · entra no calendário ao agendar" : ""}
+              </p>
+            </div>
+            {!metaConnected ? (
+              <p className="text-xs text-muted-foreground">
+                Conecte o Instagram em configurações para agendar publicações.
+              </p>
+            ) : null}
+          </TabsContent>
+
+          <TabsContent value="replies" className="mt-0 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Modo de resposta</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Como a Iris deve responder comentários nesta publicação.
                 </p>
               </div>
-              <div className="space-y-2 pb-2 sm:pb-0">
-                <Label htmlFor="post-reply-mode" className="text-xs font-semibold tracking-wide uppercase">
-                  Respostas da IA
-                </Label>
-                <select
-                  id="post-reply-mode"
-                  value={replyMode}
-                  onChange={(e) => onReplyModeChange(e.target.value as ReplyMode)}
-                  className="h-10 w-full rounded-md border border-input bg-muted/60 px-3 text-sm"
-                  disabled={isReadOnly}
-                >
-                  <option value="off">Desligado</option>
-                  <option value="auto">Automático (publica na Meta)</option>
-                  <option value="draft">Rascunho (aprovar antes)</option>
-                </select>
-              </div>
+              <PostReplyStatusBadge
+                post={{ reply_mode: replyMode }}
+                globalAutoReplyEnabled={globalAutoReplyEnabled}
+                size="md"
+              />
             </div>
 
-            {post?.id && (
-              <>
-                <Separator />
-                {inspection && (
-                  <section className="space-y-3 rounded-lg border bg-muted/40 p-3">
-                    <h3 className="text-sm font-semibold">Contexto do post</h3>
-                    <p className="text-sm wrap-break-word text-muted-foreground">
-                      {inspection.post_context.caption_truncated ?? "(sem legenda)"}
-                    </p>
-                    {(inspection.auto_reply_enabled || replyMode !== "off") && (
-                      <p className="text-xs">
-                        <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">
-                          {replyMode === "draft"
-                            ? "Modo rascunho"
-                            : replyMode === "auto"
-                              ? "Auto-reply ativo"
-                              : "Respostas desligadas"}
-                        </span>
-                        {" · "}
-                        <Link
-                          to="/persona"
-                          className="text-primary underline-offset-4 hover:underline"
-                        >
-                          Editar persona
-                        </Link>
-                      </p>
-                    )}
-                  </section>
-                )}
-                <section className="space-y-3">
-                  <h3 className="border-b pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                    Comentários
-                  </h3>
-                  {loadingComments ? (
-                    <p className="text-sm text-muted-foreground">Carregando…</p>
-                  ) : comments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {comments.map((comment) => (
-                        <article
-                          key={comment.id}
-                          className="rounded-lg border bg-muted/40 p-3 text-sm"
-                        >
-                          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <strong className="text-foreground">
-                              {comment.author_username ?? "usuário"}
-                            </strong>
-                            <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
-                          </div>
-                          <p className="wrap-break-word">{comment.text}</p>
-                          {comment.thread.length > 0 && (
-                            <details className="mt-2">
-                              <summary className="cursor-pointer text-xs text-primary">
-                                Ver conversa
-                              </summary>
-                              <ul className="mt-2 space-y-2 border-l-2 border-muted text-xs">
-                                {comment.thread.map((entry, index) => (
-                                  <li
-                                    key={`${comment.id}-${index}`}
-                                    className="wrap-break-word"
-                                    style={{
-                                      marginLeft: `${Math.min(entry.depth, 4) * 12}px`,
-                                      paddingLeft: "0.75rem",
-                                    }}
-                                  >
-                                    <span className="font-medium text-foreground">
-                                      {entry.is_brand_reply
-                                        ? "marca"
-                                        : (entry.author ?? "usuário")}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      {" · "}
-                                      {new Date(entry.at).toLocaleString("pt-BR")}
-                                    </span>
-                                    <p className="text-muted-foreground">{entry.text}</p>
-                                  </li>
-                                ))}
-                              </ul>
-                            </details>
-                          )}
-                          {comment.status === "pending" && (
-                            <form
-                              className="mt-3 space-y-2"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                const message = replyDrafts[comment.id]?.trim();
-                                if (!message) return;
-                                void replyToComment(comment.id, message).then(() =>
-                                  fetchReplyInspection(post.id).then(setInspection),
-                                );
-                              }}
-                            >
-                              <Textarea
-                                placeholder="Responder…"
-                                value={replyDrafts[comment.id] ?? ""}
-                                onChange={(e) =>
-                                  setReplyDrafts((prev) => ({
-                                    ...prev,
-                                    [comment.id]: e.target.value,
-                                  }))
-                                }
-                                rows={2}
-                                className="resize-none"
-                              />
-                              <Button type="submit" size="sm">
-                                Responder
-                              </Button>
-                            </form>
-                          )}
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              </>
-            )}
-          </div>
+            {!globalAutoReplyEnabled ? (
+              <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-950 dark:text-amber-100">
+                Agente pausado globalmente.{" "}
+                <Link to="/settings" className="font-medium underline underline-offset-4">
+                  Reativar em configurações
+                </Link>
+              </p>
+            ) : null}
 
-          <div className="flex min-w-0 flex-col gap-4 lg:col-span-5">
-            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Mídia
-            </Label>
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/30 p-8 text-center transition-colors hover:border-primary hover:bg-muted/50">
-              <CloudUpload className="mb-2 size-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Adicionar mídia</span>
-              <span className="mt-1 text-xs text-muted-foreground">
-                Arraste ou clique para selecionar
-              </span>
-              <Input
-                id="post-asset-files"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                multiple
-                className="sr-only"
-                onChange={(e) => onFilesChange(e.target.files)}
+            <div className="max-w-xl space-y-2">
+              <Label htmlFor="post-reply-mode" className="text-sm font-medium">
+                Respostas da IA neste post
+              </Label>
+              <ReplyModeSelect
+                id="post-reply-mode"
+                value={replyMode}
+                onChange={onReplyModeChange}
+                disabled={isReadOnly}
               />
-            </label>
+              <p className="text-xs text-muted-foreground">
+                {effectiveReplyCopy.hint ??
+                  `Estado efetivo agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
+                {" · "}
+                <Link to="/persona" className="text-primary underline-offset-4 hover:underline">
+                  Editar persona
+                </Link>
+              </p>
+            </div>
+          </TabsContent>
 
-            {assetUrls.length > 0 && (
-              <div className="grid min-w-0 grid-cols-3 gap-2">
-                {assetUrls.map((url) => (
-                  <img
-                    key={url}
-                    src={url}
-                    alt=""
-                    className="aspect-square w-full max-w-full rounded-md border object-cover"
-                  />
-                ))}
+          {showCommentsSection ? (
+            <TabsContent value="comments" className="mt-0 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Resumo dos comentários nesta publicação.
+                </p>
+                {post?.id ? (
+                  <Link
+                    to={`/comments?post_id=${post.id}`}
+                    className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Abrir no hub
+                  </Link>
+                ) : null}
               </div>
-            )}
-          </div>
-        </div>
+              {loadingComments ? (
+                <p className="text-sm text-muted-foreground">Carregando…</p>
+              ) : comments.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
+                  Nenhum comentário neste post ainda.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {comments.slice(0, 6).map((comment) => (
+                    <article
+                      key={comment.id}
+                      className="rounded-lg border border-border/60 bg-background p-3 text-sm"
+                    >
+                      <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          {comment.author_username ?? "usuário"}
+                        </span>
+                        <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
+                      </div>
+                      <p className="wrap-break-word leading-relaxed">{comment.text}</p>
+                      {comment.status === "skipped" ||
+                      comment.status === "failed" ||
+                      comment.status === "replied" ? (
+                        <ReplyAuditSection commentId={comment.id} className="mt-2" />
+                      ) : null}
+                      {comment.thread.length > 0 ? (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs font-medium text-primary">
+                            Ver conversa ({comment.thread.length})
+                          </summary>
+                          <ul className="mt-2 space-y-2 border-l-2 border-border/60 pl-3 text-xs">
+                            {comment.thread.map((entry, index) => (
+                              <li
+                                key={`${comment.id}-${index}`}
+                                className="wrap-break-word"
+                                style={{
+                                  marginLeft: `${Math.min(entry.depth, 4) * 10}px`,
+                                }}
+                              >
+                                <span className="font-medium text-foreground">
+                                  {entry.is_brand_reply ? "marca" : (entry.author ?? "usuário")}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {" · "}
+                                  {new Date(entry.at).toLocaleString("pt-BR")}
+                                </span>
+                                <p className="text-muted-foreground">{entry.text}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : null}
+                      {comment.status === "pending" ? (
+                        <form
+                          className="mt-3 space-y-2"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const message = replyDrafts[comment.id]?.trim();
+                            if (!message || !post?.id) return;
+                            void replyToComment(comment.id, message).then(() =>
+                              fetchReplyInspection(post.id).then(setInspection),
+                            );
+                          }}
+                        >
+                          <Textarea
+                            placeholder="Responder…"
+                            value={replyDrafts[comment.id] ?? ""}
+                            onChange={(e) =>
+                              setReplyDrafts((prev) => ({
+                                ...prev,
+                                [comment.id]: e.target.value,
+                              }))
+                            }
+                            rows={2}
+                            className="resize-none bg-background"
+                          />
+                          <Button type="submit" size="sm" variant="outline">
+                            Responder
+                          </Button>
+                        </form>
+                      ) : null}
+                    </article>
+                  ))}
+                  {comments.length > 6 ? (
+                    <p className="text-xs text-muted-foreground">
+                      +{comments.length - 6} comentário
+                      {comments.length - 6 === 1 ? "" : "s"} — use o hub de publicações.
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            </TabsContent>
+          ) : null}
+        </Tabs>
 
-        {!metaConnected && (
-          <p className="mt-6 text-xs text-muted-foreground">
-            Conecte o Instagram para agendar publicações.
-          </p>
-        )}
-
-        {error && (
+        {error ? (
           <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
-        )}
+        ) : null}
       </AppDialog.Body>
 
       <AppDialog.Footer className="justify-between sm:justify-between">
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
           Fechar
         </Button>
         <div className="flex flex-wrap gap-2">
-          {!isReadOnly && !isCancelled && (
+          {!isReadOnly && !isCancelled ? (
             <>
-              {(isDraft || mode === "create") && (
+              {(isDraft || mode === "create") ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-primary text-primary"
                   onClick={onSchedule}
                   disabled={saving || !metaConnected || !scheduledAt}
                 >
                   Agendar publicação
                 </Button>
-              )}
-              {isScheduled && (
+              ) : null}
+              {isScheduled ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-primary text-primary"
                   onClick={onSchedule}
                   disabled={saving || !metaConnected}
                 >
                   Atualizar agendamento
                 </Button>
-              )}
+              ) : null}
               <Button type="button" onClick={onSaveDraft} disabled={saving}>
-                {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                 {isScheduled ? "Salvar alterações" : "Salvar rascunho"}
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </AppDialog.Footer>
     </AppDialog>

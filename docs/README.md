@@ -17,6 +17,6 @@ Meridian phase docs for **Iris** (Instagram scheduling and comments service).
 | [10_test_strategy.md](./10_test_strategy.md) | Testing approach |
 | [11_decisions.md](./11_decisions.md) | Decision log pointer |
 
-Detail files: [architecture/](./architecture/) — [mcp-integration](./architecture/mcp-integration.md), [local-publications](./architecture/local-publications.md), [image-optimization](./architecture/image-optimization.md).
+Detail files: [architecture/](./architecture/) — [mcp-integration](./architecture/mcp-integration.md), [local-publications](./architecture/local-publications.md), [image-optimization](./architecture/image-optimization.md), [admin-ui-layout](./architecture/admin-ui-layout.md).
 
 Backlog: `.meridian/meridian.db` — use Board extension or `meridian_db_export --format planning`.

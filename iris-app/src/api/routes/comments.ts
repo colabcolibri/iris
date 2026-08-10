@@ -21,19 +21,45 @@ import {
 } from "../../domain/meta-readiness.ts";
 import { serializeReplyContext } from "../../domain/reply-context/serialize-reply-context.ts";
 import { assembleReplyContext } from "../../domain/reply-context/reply-context-assembler.ts";
+import { serializeReplyAudit } from "../../domain/reply-audit/serialize-reply-audit.ts";
 import { registerMonitoredPost } from "../../domain/comments/register-monitored-post.ts";
 import { registerMonitoredPostsBatch } from "../../domain/comments/register-monitored-posts-batch.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
+import {
+  planCommentThreadReconciliation,
+  reconcileCommentThreadStatuses,
+} from "../../domain/comments/reconcile-comment-thread-statuses.ts";
+
+function brandUsername(ctx: AppContext): string | null {
+  return ctx.metaConnectionStore.get()?.igUsername ?? null;
+}
+
+function commentReconcileDeps(ctx: AppContext) {
+  return {
+    listByPostId: ctx.comments.listByPostId,
+    hasReplyRecord: ctx.comments.hasReplyRecord,
+    linkInstagramReply: (input: {
+      userCommentId: string;
+      brandIgCommentId: string;
+      sentText: string | null;
+    }) => ctx.comments.linkInstagramReply(input),
+    markSkipped: ctx.comments.markSkipped,
+  };
+}
 
 function serializeCommentWithDraft(
   comment: Parameters<typeof serializeComment>[0],
   ctx: AppContext,
 ) {
   const draft = ctx.comments.findLatestDraft(comment.id);
+  const sent = ctx.comments.findLatestSentReply(comment.id);
   return {
     ...serializeComment(comment),
     draft_text: draft?.draftText ?? null,
     draft_status: draft?.status ?? null,
+    linked_reply_text: sent?.sentText ?? null,
+    linked_reply_ig_comment_id: sent?.sourceIgCommentId ?? null,
+    reply_to_ig_comment_id: sent?.replyToIgCommentId ?? null,
   };
 }
 
@@ -338,6 +364,80 @@ export async function handleCommentsRoute(
     return true;
   }
 
+  const reconcilePreviewMatch = /^\/api\/posts\/([^/]+)\/comments\/reconcile-preview$/.exec(
+    pathname,
+  );
+  if (reconcilePreviewMatch && req.method === "GET") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const postId = reconcilePreviewMatch[1];
+    const post = ctx.posts.findById(postId);
+    if (!post) {
+      sendError(res, 404, "post not found");
+      return true;
+    }
+
+    const brand = brandUsername(ctx);
+    const plan = planCommentThreadReconciliation(
+      postId,
+      brand,
+      ctx.comments.listByPostId,
+      ctx.comments.hasReplyRecord,
+    );
+
+    sendJson(res, 200, {
+      post_id: postId,
+      brand_username: brand,
+      linkable_count: plan.links.length,
+      skipped_brand_count: plan.skippedBrandCommentIds.length,
+      links: plan.links.map((link) => ({
+        user_comment_id: link.userCommentId,
+        brand_ig_comment_id: link.brandIgCommentId,
+        preview_text: link.sentText,
+      })),
+    });
+    return true;
+  }
+
+  const reconcileMatch = /^\/api\/posts\/([^/]+)\/comments\/reconcile$/.exec(pathname);
+  if (reconcileMatch && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const postId = reconcileMatch[1];
+    const post = ctx.posts.findById(postId);
+    if (!post) {
+      sendError(res, 404, "post not found");
+      return true;
+    }
+
+    const brand = brandUsername(ctx);
+    const result = reconcileCommentThreadStatuses(
+      postId,
+      brand,
+      commentReconcileDeps(ctx),
+    );
+
+    notifyCommentsChanged({ post_id: postId });
+
+    sendJson(res, 200, {
+      post_id: postId,
+      brand_username: brand,
+      linked_count: result.linkedCount,
+      skipped_brand_count: result.skippedBrandCount,
+      linkable_count: result.plan.links.length,
+      comments: ctx.comments.listByPostId(postId).map((comment) =>
+        serializeCommentWithDraft(comment, ctx),
+      ),
+    });
+    return true;
+  }
+
   const syncMatch = /^\/api\/posts\/([^/]+)\/comments\/sync$/.exec(pathname);
   if (syncMatch && req.method === "POST") {
     if (!requireAdmin(auth)) {
@@ -463,6 +563,42 @@ export async function handleCommentsRoute(
     return true;
   }
 
+  const replyAuditMatch = /^\/api\/comments\/([^/]+)\/reply-audit$/.exec(pathname);
+  if (replyAuditMatch && req.method === "GET") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const commentId = replyAuditMatch[1];
+    const comment = ctx.comments.findById(commentId);
+    if (!comment) {
+      sendError(res, 404, "comment not found");
+      return true;
+    }
+
+    const steps = ctx.agentRunSteps.listByCommentId(commentId);
+    if (steps.length === 0) {
+      sendError(res, 404, "no agent run for comment");
+      return true;
+    }
+
+    const agentRunId = ctx.agentRunSteps.findLatestRunIdByCommentId(commentId);
+    if (!agentRunId) {
+      sendError(res, 404, "no agent run for comment");
+      return true;
+    }
+
+    const run = ctx.agentRuns.findById(agentRunId);
+    if (!run) {
+      sendError(res, 404, "no agent run for comment");
+      return true;
+    }
+
+    sendJson(res, 200, serializeReplyAudit(run, steps));
+    return true;
+  }
+
   const approveReplyMatch = /^\/api\/comments\/([^/]+)\/approve-reply$/.exec(pathname);
   if (approveReplyMatch && req.method === "POST") {
     if (!requireAdmin(auth)) {
@@ -510,12 +646,17 @@ export async function handleCommentsRoute(
       }
 
       try {
-        await ctx.metaCommentReplier.reply(comment.igCommentId, message);
-        if (!ctx.comments.promoteDraftToSent(commentId, message)) {
+        const publishResult = await ctx.metaCommentReplier.reply(comment.igCommentId, message);
+        const replyMeta = {
+          replyToIgCommentId: comment.igCommentId,
+          sourceIgCommentId: publishResult?.publishedIgCommentId ?? null,
+        };
+        if (!ctx.comments.promoteDraftToSent(commentId, message, replyMeta)) {
           ctx.comments.createReply({
             commentId,
             sentText: message,
             status: "sent",
+            ...replyMeta,
           });
         }
         const updated = ctx.comments.markReplied(commentId);
@@ -578,8 +719,14 @@ export async function handleCommentsRoute(
       }
 
       try {
-        await ctx.metaCommentReplier.reply(comment.igCommentId, message);
-        ctx.comments.createReply({ commentId, sentText: message, status: "sent" });
+        const publishResult = await ctx.metaCommentReplier.reply(comment.igCommentId, message);
+        ctx.comments.createReply({
+          commentId,
+          sentText: message,
+          status: "sent",
+          replyToIgCommentId: comment.igCommentId,
+          sourceIgCommentId: publishResult?.publishedIgCommentId ?? null,
+        });
         const updated = ctx.comments.markReplied(commentId);
         notifyCommentsChanged({ post_id: comment.postId });
         sendJson(res, 200, serializeCommentWithDraft(updated!, ctx));

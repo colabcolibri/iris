@@ -34,6 +34,9 @@ export type Comment = {
   error_message?: string | null;
   draft_text?: string | null;
   draft_status?: string | null;
+  linked_reply_text?: string | null;
+  linked_reply_ig_comment_id?: string | null;
+  reply_to_ig_comment_id?: string | null;
 };
 
 export type CommentPostSummary = {
@@ -120,6 +123,27 @@ export type SyncPostCommentsResult = {
   comments: Comment[];
 };
 
+export type ReconcileCommentsPreview = {
+  post_id: string;
+  brand_username: string | null;
+  linkable_count: number;
+  skipped_brand_count: number;
+  links: Array<{
+    user_comment_id: string;
+    brand_ig_comment_id: string;
+    preview_text: string | null;
+  }>;
+};
+
+export type ReconcileCommentsResult = {
+  post_id: string;
+  brand_username: string | null;
+  linked_count: number;
+  skipped_brand_count: number;
+  linkable_count: number;
+  comments: Comment[];
+};
+
 export type CommentsInboxMedia = {
   ig_media_id: string;
   post_id: string | null;
@@ -165,8 +189,33 @@ export type ReplyPersona = {
   updated_at: string;
 };
 
+export type AgentContent = {
+  soul: string;
+  page: string;
+  knowledge: string;
+  restrictions: string;
+  updated_at: string;
+};
+
+export type ReplyAuditStep = {
+  stage: "triage" | "draft" | "verify";
+  verdict: "pass" | "fail" | "skip";
+  reason: string | null;
+  reasoning: string | null;
+  created_at: string;
+};
+
+export type ReplyAudit = {
+  agent_run_id: string;
+  trigger: string;
+  terminal_status: "skipped_triage" | "rejected_verify" | "approved";
+  output_summary: string | null;
+  steps: ReplyAuditStep[];
+};
+
 export type AppSettings = {
   timezone: string;
+  auto_reply_enabled: boolean;
   updated_at: string;
 };
 

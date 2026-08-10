@@ -122,13 +122,18 @@ DELIVER
 
 ```
 iris-app/admin/src/
-  pages/dashboard-page.tsx      # shell + tabs + kanban/calendar
+  App.tsx                       # rotas; AppLayout persiste shell
+  components/layout/            # AppLayout, AppShell, iris-sidebar, app-navigation
+  components/templates/         # PageContainer, PagePanel, AppDialog, KanbanColumnShell
+  contexts/                     # meta-session, auth, app-settings
+  pages/                        # só conteúdo — sem AppShell
   components/kanban/            # board, column, card
   components/calendar/          # calendar-view
   components/posts/post-dialog.tsx
-  components/templates/         # AppDialog, PagePanel, KanbanColumnShell
   components/ui/                # shadcn primitives (não alterar)
 ```
+
+Layout detalhado: `docs/architecture/admin-ui-layout.md`
 
 ## O que está ruim hoje (corrigir no design)
 

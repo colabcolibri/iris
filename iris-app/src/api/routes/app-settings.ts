@@ -23,23 +23,42 @@ type RouteRequest = {
 function serializeAppSettings(settings: AppSettings) {
   return {
     timezone: settings.timezone,
+    auto_reply_enabled: settings.autoReplyEnabled,
     updated_at: settings.updatedAt,
   };
 }
 
-function normalizeAppSettingsBody(body: Record<string, unknown>) {
-  const timezone =
-    typeof body.timezone === "string" ? body.timezone.trim() : "";
+function normalizeAppSettingsBody(
+  body: Record<string, unknown>,
+  current: AppSettings,
+): Omit<AppSettings, "updatedAt"> {
+  const hasTimezone = "timezone" in body;
+  const hasAutoReply = "auto_reply_enabled" in body;
 
-  if (!timezone) {
-    throw new ValidationError("timezone is required");
+  if (!hasTimezone && !hasAutoReply) {
+    throw new ValidationError("at least one of timezone or auto_reply_enabled is required");
   }
 
-  if (!isValidIanaTimeZone(timezone)) {
-    throw new ValidationError("timezone must be a valid IANA time zone");
+  let timezone = current.timezone;
+  if (hasTimezone) {
+    timezone = typeof body.timezone === "string" ? body.timezone.trim() : "";
+    if (!timezone) {
+      throw new ValidationError("timezone is required");
+    }
+    if (!isValidIanaTimeZone(timezone)) {
+      throw new ValidationError("timezone must be a valid IANA time zone");
+    }
   }
 
-  return { timezone };
+  let autoReplyEnabled = current.autoReplyEnabled;
+  if (hasAutoReply) {
+    if (typeof body.auto_reply_enabled !== "boolean") {
+      throw new ValidationError("auto_reply_enabled must be a boolean");
+    }
+    autoReplyEnabled = body.auto_reply_enabled;
+  }
+
+  return { timezone, autoReplyEnabled };
 }
 
 export async function handleAppSettingsRoute(request: RouteRequest): Promise<boolean> {
@@ -64,7 +83,8 @@ export async function handleAppSettingsRoute(request: RouteRequest): Promise<boo
   if (req.method === "PUT") {
     try {
       const body = await readJsonBody<Record<string, unknown>>(req);
-      const input = normalizeAppSettingsBody(body);
+      const current = ctx.appSettingsStore.get() ?? defaultAppSettings();
+      const input = normalizeAppSettingsBody(body, current);
       const saved = ctx.appSettingsStore.upsert(input);
       sendJson(res, 200, serializeAppSettings(saved));
     } catch (error) {

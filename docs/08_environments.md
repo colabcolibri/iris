@@ -128,6 +128,8 @@ Production: `https://<your-public-host>/webhooks/meta`
 
 Configure in Meta Developers → Webhooks → Instagram. OAuth callback: `https://<your-public-host>/auth/meta/callback`.
 
+Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup guide: `docs/architecture/meta-integration.md`.
+
 ## Ports
 
 | Service | Port |

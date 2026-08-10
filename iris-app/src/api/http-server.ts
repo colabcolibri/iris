@@ -27,6 +27,7 @@ import {
   handleWebhookEventsSettingsRoute,
 } from "./routes/settings-llm.ts";
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
+import { handleAgentContentSettingsRoute } from "./routes/settings-agent-content.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
@@ -279,6 +280,10 @@ async function handleRequest(
     }
 
     if (await handleAppSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleAgentContentSettingsRoute(routeRequest)) {
       return;
     }
 

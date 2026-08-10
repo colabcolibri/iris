@@ -9,6 +9,7 @@ export type SyncPostCommentsDeps = {
     parentIgCommentId?: string | null;
     authorUsername?: string | null;
     text?: string | null;
+    igTimestamp?: string | null;
   }) => { comment: Comment; created: boolean };
 };
 
@@ -62,6 +63,7 @@ export async function syncPostComments(
       parentIgCommentId: remoteComment.parentIgCommentId,
       authorUsername: remoteComment.authorUsername,
       text: remoteComment.text,
+      igTimestamp: remoteComment.timestamp,
     });
     comments.push(upserted.comment);
   }

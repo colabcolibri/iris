@@ -1,7 +1,7 @@
 ---
 title: Architecture
-status: approved
-version: 1.2
+status: review
+version: 1.3
 updated: 2026-08-10
 depends_on: [00_scope.md, 01_tech_stack.md, 02_security.md, 03_user_types.md, 04_principles.md]
 blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_system.md]
@@ -104,7 +104,7 @@ iris/                     # workspace Meridian
 | Media storage | `data/media/{post_id}/` | `src/adapters/media-storage/` |
 | Image optimizer | Resize + JPEG no ingest | `src/adapters/image-optimizer/` |
 | Publish worker | Lê disco → Meta | `src/workers/publish-scheduler.ts` |
-| Admin UI | Lista, preview, upload | `public/` |
+| Admin UI (React SPA) | Operador editorial — calendário, kanban, comentários | `admin/src/` → build `public/` |
 
 ## Integration points
 
@@ -139,6 +139,10 @@ iris/                     # workspace Meridian
 
 Webhook → `comments` → SSE → UI; worker auto-reply se habilitado.
 
+**Agente de respostas (v1.10):** gates globais (`auto_reply_enabled`) e por post (`reply_mode`) → `process-comment-reply` → harness em 3 estágios (triagem, rascunho, verificação) com conteúdo editorial em `data/agent/*.md` → `agent_runs` + `agent_run_steps` → draft local ou publicação Meta → UI inspeciona via `GET /api/comments/:id/reply-audit`.
+
+Diagramas: ver § Architecture diagrams (`iris-reply-agent-*`).
+
 ### 5 — Cliente MCP (ad hoc)
 
 1. Client envia `POST /mcp` com `Authorization: Bearer <IRIS_MCP_CONNECTION_CODE>`
@@ -146,6 +150,16 @@ Webhook → `comments` → SSE → UI; worker auto-reply se habilitado.
 3. Tool invoca use-cases equivalentes ao REST agent (posts, assets, comments)
 
 Ver `docs/architecture/mcp-integration.md` para setup por client.
+
+## Architecture diagrams
+
+Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/architecture/diagrams/`).
+
+| File | Kind | Scope |
+| ---- | ---- | ----- |
+| `architecture/diagrams/iris-reply-agent-flow.md` | flow | Sequência webhook/worker → gates → harness → draft/Meta → audit UI |
+| `architecture/diagrams/iris-reply-agent-runtime.md` | runtime | Módulos, config editorial, adapters e tabelas SQLite |
+| `architecture/diagrams/iris-reply-agent-harness.md` | flow | Estados terminais do harness e efeito no comentário |
 
 ## Architecture detail files
 
@@ -156,6 +170,7 @@ Ver `docs/architecture/mcp-integration.md` para setup por client.
 | `docs/architecture/meta-integration.md` | Graph API, webhooks |
 | `docs/architecture/meta-app-review.md` | Checklist revisão app Meta (IGIris) |
 | `docs/architecture/srp-modules.md` | Módulos e dependências |
+| `docs/architecture/admin-ui-layout.md` | Admin React — shell persistente, `PageContainer`, providers |
 
 ## Gaps
 

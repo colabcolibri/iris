@@ -5,6 +5,7 @@ import { runMigrations } from "../../adapters/sqlite/migrate.ts";
 import { createAppContext } from "../../api/app-context.ts";
 import { registerMonitoredPost } from "./register-monitored-post.ts";
 import { processCommentReply } from "./process-comment-reply.ts";
+import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
 
 test("registerMonitoredPost creates monitored post from ig_media_id", async () => {
   const db = openDatabase(":memory:");
@@ -84,16 +85,15 @@ test("processCommentReply stores draft without calling Meta", async () => {
 
     await processCommentReply(ctx, comment.id, {
       trigger: "webhook",
-      llmCompleter: {
-        async complete() {
-          return "Rascunho da IA";
-        },
-      },
+      llmCompleter: createHarnessLlmMock({ draftText: "Rascunho da IA" }),
     });
 
     assert.equal(metaCalled, false);
     assert.equal(ctx.comments.findLatestDraft(comment.id)?.draftText, "Rascunho da IA");
     assert.equal(ctx.comments.findById(comment.id)?.status, "pending");
+
+    const steps = ctx.agentRunSteps.listByCommentId(comment.id);
+    assert.equal(steps.length, 3);
   } finally {
     db.close();
   }
@@ -120,6 +120,56 @@ test("processCommentReply skips posts with reply_mode off", async () => {
 
     const { comment } = ctx.comments.upsertFromWebhook({
       igCommentId: "ig-off-1",
+      postId: post.id,
+      text: "oi",
+    });
+
+    let llmCalled = false;
+    const processed = await processCommentReply(ctx, comment.id, {
+      trigger: "worker",
+      llmCompleter: {
+        async complete() {
+          llmCalled = true;
+          return "nope";
+        },
+      },
+    });
+
+    assert.equal(processed, false);
+    assert.equal(llmCalled, false);
+  } finally {
+    db.close();
+  }
+});
+
+test("processCommentReply skips when global auto_reply is disabled", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      encryptionKey: "d".repeat(64),
+      metaAccessToken: "meta",
+    });
+
+    ctx.appSettingsStore.upsert({
+      timezone: "America/Sao_Paulo",
+      autoReplyEnabled: false,
+    });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post",
+      igMediaId: "media-global-off",
+      publishedAt: new Date().toISOString(),
+      replyMode: "auto",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-global-off-1",
       postId: post.id,
       text: "oi",
     });

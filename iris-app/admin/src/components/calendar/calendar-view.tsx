@@ -1,6 +1,10 @@
-import { AlertCircle, ChevronLeft, ChevronRight, Clock, Plus } from "lucide-react";
+import { AlertCircle, Bot, ChevronLeft, ChevronRight, Clock, PauseCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  resolveEffectivePostReplyStatusFromPost,
+  replyStatusPresentation,
+} from "@iris/domain/reply-effective-status";
 import {
   WEEKDAYS,
   addMonths,
@@ -19,6 +23,7 @@ type CalendarViewProps = {
   cursor: Date;
   selectedId: string | null;
   timeZone: string;
+  globalAutoReplyEnabled: boolean;
   onCursorChange: (date: Date) => void;
   onSelect: (post: Post) => void;
   onCreatePost: () => void;
@@ -40,6 +45,7 @@ export function CalendarView({
   cursor,
   selectedId,
   timeZone,
+  globalAutoReplyEnabled,
   onCursorChange,
   onSelect,
   onCreatePost,
@@ -163,13 +169,24 @@ export function CalendarView({
                 const time = calendarDate ? formatChipTime(calendarDate, timeZone) : "";
                 const label = truncate(post.caption, 18);
                 const statusLabel = POST_STATUS_LABELS[post.status];
+                const replyStatus = resolveEffectivePostReplyStatusFromPost(
+                  globalAutoReplyEnabled,
+                  post,
+                );
+                const replyCopy = replyStatusPresentation(replyStatus);
+                const ReplyIcon =
+                  replyStatus.kind === "paused"
+                    ? PauseCircle
+                    : replyStatus.kind === "off"
+                      ? null
+                      : Bot;
 
                 return (
                   <button
                     key={post.id}
                     type="button"
                     onClick={() => onSelect(post)}
-                    title={`${statusLabel}${time ? ` · ${time}` : ""} — ${post.caption ?? ""}`}
+                    title={`${statusLabel}${time ? ` · ${time}` : ""} · ${replyCopy.label} — ${post.caption ?? ""}`}
                     className={cn(
                       "flex w-full flex-col gap-0.5 truncate rounded-sm border px-2 py-1 text-left text-[10px] font-semibold",
                       CHIP_STYLES[post.status],
@@ -188,6 +205,19 @@ export function CalendarView({
                       {time && <span className="shrink-0 opacity-70">{time}</span>}
                     </span>
                     <span className="truncate font-normal opacity-90">{label}</span>
+                    {ReplyIcon ? (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 truncate font-medium",
+                          replyStatus.kind === "auto" && "text-emerald-800",
+                          replyStatus.kind === "draft" && "text-sky-900",
+                          replyStatus.kind === "paused" && "text-amber-900",
+                        )}
+                      >
+                        <ReplyIcon className="size-2.5 shrink-0" />
+                        <span className="truncate">{replyCopy.shortLabel}</span>
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}

@@ -1,4 +1,4 @@
-import type { AppSettings, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, MetaTestConversationsResult, MetaTestInsightsResult, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -96,6 +96,18 @@ export async function fetchCommentPosts() {
 
 export function syncPostComments(postId: string) {
   return apiFetch<SyncPostCommentsResult>(`/api/posts/${postId}/comments/sync`, {
+    method: "POST",
+  });
+}
+
+export function fetchReconcileCommentsPreview(postId: string) {
+  return apiFetch<ReconcileCommentsPreview>(
+    `/api/posts/${postId}/comments/reconcile-preview`,
+  );
+}
+
+export function reconcilePostComments(postId: string) {
+  return apiFetch<ReconcileCommentsResult>(`/api/posts/${postId}/comments/reconcile`, {
     method: "POST",
   });
 }
@@ -320,11 +332,52 @@ export function updateReplyPersona(body: {
   });
 }
 
+export function fetchAgentContent() {
+  return apiFetch<AgentContent>("/api/settings/agent-content");
+}
+
+export function updateAgentContent(body: {
+  soul: string;
+  page: string;
+  knowledge: string;
+  restrictions: string;
+}) {
+  return apiFetch<AgentContent>("/api/settings/agent-content", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchReplyAudit(commentId: string): Promise<ReplyAudit | null> {
+  const response = await fetch(`/api/comments/${commentId}/reply-audit`, {
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    notifyUnauthorized();
+    throw new UnauthorizedError();
+  }
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(payload.error ?? `Request failed (${response.status})`);
+  }
+
+  return response.json() as Promise<ReplyAudit>;
+}
+
 export function fetchAppSettings() {
   return apiFetch<AppSettings>("/api/settings/app");
 }
 
-export function updateAppSettings(body: { timezone: string }) {
+export function updateAppSettings(body: {
+  timezone?: string;
+  auto_reply_enabled?: boolean;
+}) {
   return apiFetch<AppSettings>("/api/settings/app", {
     method: "PUT",
     body: JSON.stringify(body),

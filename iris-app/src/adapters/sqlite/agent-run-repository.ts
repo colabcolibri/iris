@@ -29,6 +29,8 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
     VALUES (?, ?, ?, ?, ?, ?)
   `);
 
+  const findByIdStmt = db.prepare("SELECT * FROM agent_runs WHERE id = ?");
+
   return {
     create(input: CreateAgentRunInput) {
       const id = randomUUID();
@@ -46,6 +48,11 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
       return mapRow(
         db.prepare("SELECT * FROM agent_runs WHERE id = ?").get(id) as AgentRunRow,
       );
+    },
+
+    findById(id) {
+      const row = findByIdStmt.get(id) as AgentRunRow | undefined;
+      return row ? mapRow(row) : null;
     },
   };
 }

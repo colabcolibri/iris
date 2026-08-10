@@ -1,5 +1,6 @@
 export type AppSettings = {
   timezone: string;
+  autoReplyEnabled: boolean;
   updatedAt: string;
 };
 

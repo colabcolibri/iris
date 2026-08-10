@@ -29,6 +29,7 @@ type CommentRow = {
   status: string;
   error_message: string | null;
   created_at: string;
+  ig_timestamp: string | null;
 };
 
 type AssetRow = {
@@ -76,6 +77,7 @@ export function mapCommentRow(row: CommentRow): Comment {
     status: row.status as Comment["status"],
     errorMessage: row.error_message,
     createdAt: row.created_at,
+    igTimestamp: row.ig_timestamp ?? null,
   };
 }
 

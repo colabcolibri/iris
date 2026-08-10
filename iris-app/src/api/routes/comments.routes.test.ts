@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { createServer } from "../http-server.ts";
+import { processCommentReply } from "../../domain/comments/process-comment-reply.ts";
+import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
 
 const ADMIN = "comments-admin";
 const AGENT = "comments-agent";
@@ -498,7 +500,7 @@ test("POST comment reply marks comment replied with mock replier", async () => {
 
     ctx.metaCommentReplier = {
       async reply() {
-        return undefined;
+        return {};
       },
     };
 
@@ -594,5 +596,53 @@ test("GET reply-context returns target comment and thread for agent", async () =
     assert.equal(body.post?.ig_media_id, "media-context");
     assert.ok(body.persona.max_chars > 0);
     assert.ok(root.id);
+  });
+});
+
+test("GET reply-audit returns ordered steps for comment", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post audit",
+      igMediaId: "media-audit",
+      publishedAt: new Date().toISOString(),
+      replyMode: "draft",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-audit-1",
+      postId: post.id,
+      text: "Pergunta",
+    });
+
+    await processCommentReply(ctx, comment.id, {
+      trigger: "worker",
+      llmCompleter: createHarnessLlmMock({ draftText: "Resposta auditada" }),
+    });
+
+    const response = await fetch(`${baseUrl}/api/comments/${comment.id}/reply-audit`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      agent_run_id: string;
+      terminal_status: string;
+      steps: Array<{ stage: string; verdict: string }>;
+    };
+
+    assert.ok(body.agent_run_id);
+    assert.equal(body.terminal_status, "approved");
+    assert.equal(body.steps.length, 3);
+    assert.deepEqual(
+      body.steps.map((step) => step.stage),
+      ["triage", "draft", "verify"],
+    );
+
+    const missing = await fetch(`${baseUrl}/api/comments/missing-comment/reply-audit`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    assert.equal(missing.status, 404);
   });
 });

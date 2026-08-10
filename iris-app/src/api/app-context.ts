@@ -24,6 +24,11 @@ import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-re
 import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connection-repository.ts";
 import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-event-repository.ts";
 import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
+import {
+  createFsAgentContentStore,
+  resolveAgentContentDir,
+} from "../adapters/fs/agent-content-store.ts";
+import { createSqliteAgentRunStepRepository } from "../adapters/sqlite/agent-run-step-repository.ts";
 import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
 import {
   createLlmConfigResolver,
@@ -52,6 +57,8 @@ import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
 import type { AppSettingsStore } from "../ports/app-settings-store.ts";
 import type { McpConnectionStore } from "../ports/mcp-connection-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
+import type { AgentContentStore } from "../ports/agent-content-store.ts";
+import type { AgentRunStepRepository } from "../ports/agent-run-step-repository.ts";
 import type { LlmSettingsStore } from "../ports/llm-settings-store.ts";
 import type { WebhookEventRepository } from "../ports/webhook-event-repository.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
@@ -98,6 +105,8 @@ export type AppContext = {
   emailSender: EmailSender;
   adminLoginChallenges: AdminLoginChallengeRepository;
   replyPersonaStore: ReplyPersonaStore;
+  agentContentStore: AgentContentStore;
+  agentRunSteps: AgentRunStepRepository;
   appSettingsStore: AppSettingsStore;
   imageContextProvider: ImageContextProvider;
   replyContextAssembler: ReplyContextAssemblerDeps;
@@ -214,6 +223,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
   const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
+  const agentContentStore = createFsAgentContentStore({
+    rootDir: resolveAgentContentDir(APP_ROOT),
+  });
+  const agentRunSteps = createSqliteAgentRunStepRepository(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
   const webhookEvents = createSqliteWebhookEventRepository(options.db);
@@ -278,6 +291,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     emailSender,
     adminLoginChallenges,
     replyPersonaStore,
+    agentContentStore,
+    agentRunSteps,
     appSettingsStore,
     imageContextProvider,
     replyContextAssembler,

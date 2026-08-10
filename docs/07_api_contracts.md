@@ -182,6 +182,7 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post (`parent_ig_comment_id` nullable) |
 | GET | `/api/posts/:id/reply-inspection` | admin | Post context + comment threads for supervision (`thread[].depth`) |
 | GET | `/api/comments/:id/reply-context` | admin, agent | Full reply envelope: target comment, thread, post, images, persona |
+| GET | `/api/comments/:id/reply-audit` | admin | Harness audit trail: `agent_run_id`, `trigger`, `terminal_status`, `steps[]` |
 | GET | `/api/comments/posts` | admin | Posts gerenciados (`published` + `monitored`) com contagens locais |
 | POST | `/api/comments/monitored-posts` | admin | Registra post externo por `ig_media_id` ou permalink (valida na Graph) |
 | POST | `/api/posts/:id/comments/sync` | admin | Sync comments from Meta for one post (`ig_media_id` required); upserts SQLite |
@@ -214,6 +215,8 @@ Responses: `{ ok: true, ... }` or `{ ok: false, code, message }`. Codes: `not_co
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/settings/reply-persona` | admin | Read global reply persona (defaults if unset) |
 | PUT | `/api/settings/reply-persona` | admin | Update `system_prompt`, `tone`, `brand_name`, `max_chars` (100–1000) |
+| GET | `/api/settings/agent-content` | admin | Read agent Markdown blocks (`soul`, `page`, `knowledge`, `restrictions`) |
+| PUT | `/api/settings/agent-content` | admin | Update agent Markdown blocks (max 32 000 chars each) |
 | GET | `/api/settings/llm` | admin | LLM provider status (`configured`, `api_url`, `model`, `key_hint`, `source`) |
 | PUT | `/api/settings/llm` | admin | Set `api_key` (optional on rotate), `api_url`, `model`, `supports_vision` |
 | GET | `/api/settings/webhook-events?limit=50` | admin | Recent Meta webhook payloads (truncated JSON) for audit |

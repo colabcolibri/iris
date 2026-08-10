@@ -45,6 +45,8 @@ export function createGraphApiCommentReplier(
       if (!response.ok || json.error) {
         throw new Error(json.error?.message ?? `Meta API error (${response.status})`);
       }
+
+      return { publishedIgCommentId: json.id ?? null };
     },
   };
 }

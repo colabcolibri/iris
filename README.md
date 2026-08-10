@@ -106,6 +106,7 @@ Sem acoplamento a Casper, Canva ou qualquer criador. O Iris não precisa saber d
 - Tokens Meta criptografados no vault do servidor
 - Login OTP por email, sessão HttpOnly
 - Deploy em Docker/Railway com volume persistente em `/app/data`
+- **App Meta próprio por deploy** — quem self-host cria o app na Meta; quem você hospeda usa o seu. Operadores só conectam a conta Instagram no admin. Ver [`docs/architecture/meta-integration.md`](docs/architecture/meta-integration.md).
 
 ### Stack enxuta, sem magia
 
@@ -238,7 +239,7 @@ Monorepo em duas áreas de produto:
 
 ## Quick start
 
-**Requisitos:** Node.js ≥ 22, [pnpm](https://pnpm.io/), conta Instagram Business/Creator + app Meta (para produção).
+**Requisitos:** Node.js ≥ 22, [pnpm](https://pnpm.io/). Para publicar no Instagram: conta Business/Creator + [app Meta no seu deploy](docs/architecture/meta-integration.md) (cada instância usa credenciais próprias — não compartilhe secrets no repo).
 
 ```bash
 git clone https://github.com/colabcolibri/iris.git
@@ -280,6 +281,7 @@ O repositório inclui `Dockerfile` e `railway.toml` na **raiz** (build do monore
 **Checklist de produção:**
 
 - `IRIS_PUBLIC_BASE_URL` — URL HTTPS pública
+- `META_INSTAGRAM_APP_ID` + `META_INSTAGRAM_APP_SECRET` — app **do operador do deploy**, não do repositório
 - `META_OAUTH_REDIRECT_URI` — `{base}/auth/meta/callback`
 - Webhook Meta — `{base}/webhooks/meta`
 - `IRIS_EMAIL_PROVIDER=resend` + `RESEND_API_KEY` + remetente verificado
@@ -314,6 +316,7 @@ Guia completo: [`docs/08_environments.md`](docs/08_environments.md).
 | [`docs/05_architecture.md`](docs/05_architecture.md) | Arquitetura, camadas e fluxos |
 | [`docs/07_api_contracts.md`](docs/07_api_contracts.md) | Contratos REST |
 | [`docs/08_environments.md`](docs/08_environments.md) | Variáveis e ambientes |
+| [`docs/architecture/meta-integration.md`](docs/architecture/meta-integration.md) | Instagram — BYOA, OAuth, webhooks, setup |
 | [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md) | MCP — Cursor, ChatGPT, Claude |
 | [`iris-app/README.md`](iris-app/README.md) | Detalhes do pacote da aplicação |
 

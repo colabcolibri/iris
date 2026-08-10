@@ -5,10 +5,12 @@ import { toast } from "sonner";
 import { ImportPostsDialog } from "@/components/comments/import-posts-dialog";
 import { PostDetailPanel } from "@/components/comments/post-detail-panel";
 import { PostInboxList } from "@/components/comments/post-inbox-list";
+import { PageContainer } from "@/components/templates/page-container";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { firstMediaSlideSrc } from "@/hooks/use-post-preview";
 import {
@@ -16,63 +18,18 @@ import {
   fetchCommentPosts,
   fetchComments,
   fetchPostInsights,
+  fetchReconcileCommentsPreview,
   registerMonitoredPost,
+  reconcilePostComments,
   subscribeRealtimeEvents,
   syncPostComments,
 } from "@/lib/api";
+import { buildCommentTree } from "@/lib/build-comment-tree";
 import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
-
-type DisplayComment = Comment & {
-  depth: number;
-};
-
-function buildDisplayComments(comments: Comment[]): DisplayComment[] {
-  const byIgId = new Map(
-    comments
-      .filter((comment) => comment.ig_comment_id)
-      .map((comment) => [comment.ig_comment_id!, comment]),
-  );
-  const children = new Map<string, Comment[]>();
-
-  for (const comment of comments) {
-    const parentId = comment.parent_ig_comment_id;
-    if (!parentId || !byIgId.has(parentId)) {
-      continue;
-    }
-
-    const siblings = children.get(parentId) ?? [];
-    siblings.push(comment);
-    children.set(parentId, siblings);
-  }
-
-  const roots = comments.filter((comment) => {
-    const parentId = comment.parent_ig_comment_id;
-    return !parentId || !byIgId.has(parentId);
-  });
-
-  const ordered: DisplayComment[] = [];
-
-  const walk = (comment: Comment, depth: number) => {
-    ordered.push({ ...comment, depth });
-    const igCommentId = comment.ig_comment_id;
-    if (!igCommentId) {
-      return;
-    }
-
-    for (const child of children.get(igCommentId) ?? []) {
-      walk(child, depth + 1);
-    }
-  };
-
-  for (const root of roots) {
-    walk(root, 0);
-  }
-
-  return ordered;
-}
 
 export function CommentsPage() {
   const { meta } = useMetaSession();
+  const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedPostId = searchParams.get("post_id")?.trim() ?? "";
 
@@ -83,6 +40,7 @@ export function CommentsPage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
   const [error, setError] = useState("");
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -114,7 +72,7 @@ export function CommentsPage() {
     });
   }, [posts, searchQuery]);
 
-  const displayComments = useMemo(() => buildDisplayComments(comments), [comments]);
+  const commentRoots = useMemo(() => buildCommentTree(comments), [comments]);
 
   const loadPosts = useCallback(async () => {
     setLoadingPosts(true);
@@ -264,6 +222,61 @@ export function CommentsPage() {
     }
   }, [loadInsights, loadPosts, selectedPostId]);
 
+  const handleReconcile = useCallback(async () => {
+    if (!selectedPostId) {
+      return;
+    }
+
+    setError("");
+
+    try {
+      const preview = await fetchReconcileCommentsPreview(selectedPostId);
+      if (preview.linkable_count === 0) {
+        toast.info("Nenhum comentário pendente para vincular a respostas já existentes no Instagram.");
+        return;
+      }
+
+      const brandHandle = preview.brand_username
+        ? `@${preview.brand_username}`
+        : "a marca";
+
+      const ok = await confirm({
+        title: "Vincular respostas do Instagram?",
+        description: (
+          <>
+            Encontramos <strong>{preview.linkable_count}</strong> comentário
+            {preview.linkable_count === 1 ? "" : "s"} já respondido
+            {preview.linkable_count === 1 ? "" : "s"} por {brandHandle} no Instagram. O Iris vai
+            vincular cada um à resposta real do thread (texto e ID do comentário no IG), sem
+            publicar nada novo.
+          </>
+        ),
+        confirmLabel: "Vincular respostas",
+      });
+
+      if (!ok) {
+        return;
+      }
+
+      setReconciling(true);
+      const result = await reconcilePostComments(selectedPostId);
+      setComments(result.comments);
+      await loadPosts();
+      toast.success(
+        result.linked_count > 0
+          ? `${result.linked_count} comentário${result.linked_count === 1 ? "" : "s"} vinculado${result.linked_count === 1 ? "" : "s"} à resposta existente no Instagram.`
+          : "Nenhum comentário novo para vincular.",
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Falha ao vincular respostas do Instagram.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setReconciling(false);
+    }
+  }, [confirm, loadPosts, selectedPostId]);
+
   useEffect(() => {
     void loadPosts();
   }, [loadPosts]);
@@ -320,7 +333,7 @@ export function CommentsPage() {
   }, [loadComments, loadPosts, selectedPostId]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <PageContainer variant="fill">
         {!meta?.connected && (
           <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
             Conecte o Instagram em{" "}
@@ -430,15 +443,19 @@ export function CommentsPage() {
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <PostDetailPanel
                 post={selectedPost}
-                comments={displayComments}
+                commentRoots={commentRoots}
+                allComments={comments}
+                brandUsername={meta?.igUsername}
                 insights={insights}
                 loadingComments={loadingComments}
                 loadingInsights={loadingInsights}
                 syncing={syncing}
+                reconciling={reconciling}
                 syncWarning={syncWarning}
                 metaConnected={Boolean(meta?.connected)}
                 approvingId={approvingId}
                 onSync={() => void handleSync()}
+                onReconcile={() => void handleReconcile()}
                 onRefreshInsights={() => void loadInsights(selectedPostId)}
                 onApproveDraft={(commentId, draftText) =>
                   void handleApproveDraft(commentId, draftText)
@@ -492,6 +509,6 @@ export function CommentsPage() {
         onOpenChange={setImportDialogOpen}
         onImported={() => void loadPosts()}
       />
-    </div>
+    </PageContainer>
   );
 }

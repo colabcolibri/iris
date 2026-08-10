@@ -59,8 +59,10 @@ AppDialog.Header = function AppDialogHeader({
         <DialogTitle className="font-display text-xl font-semibold tracking-tight">
           {title}
         </DialogTitle>
-        {description ? <DialogDescription>{description}</DialogDescription> : null}
-        {children}
+        {description ? (
+          <DialogDescription className="text-sm leading-relaxed">{description}</DialogDescription>
+        ) : null}
+        {children ? <div className="pt-2">{children}</div> : null}
       </DialogHeader>
       <DialogClose
         render={
