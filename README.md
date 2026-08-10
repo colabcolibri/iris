@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="#interface">Interface</a> ·
   <a href="#o-problema">O problema</a> ·
   <a href="#por-que-iris">Por que Iris</a> ·
   <a href="#como-funciona">Como funciona</a> ·
@@ -25,6 +26,40 @@
   <img src="https://img.shields.io/badge/MCP-native-8B5CF6?logo=openai&logoColor=white" alt="MCP" />
   <img src="https://img.shields.io/badge/instagram-graph_API-E4405F?logo=instagram&logoColor=white" alt="Instagram Graph API" />
 </p>
+
+<p align="center">
+  <img src="docs/readme/calendar.webp" alt="Calendário editorial do Iris com post agendado" width="900" />
+</p>
+
+---
+
+## Interface
+
+Calendário, kanban, inbox de comentários, conexão MCP e persona para auto-reply — tudo no mesmo admin.
+
+<p align="center">
+  <strong>Pipeline kanban</strong><br />
+  <img src="docs/readme/kanban.webp" alt="Kanban por status" width="880" />
+</p>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Inbox de comentários</strong><br />
+      <img src="docs/readme/comments.webp" alt="Inbox de comentários" width="420" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Conexão MCP</strong><br />
+      <img src="docs/readme/mcp-settings.webp" alt="Configuração MCP para Cursor, ChatGPT e Claude" width="420" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <strong>Persona da marca</strong> — tom e prompt para respostas automáticas<br />
+      <img src="docs/readme/persona.webp" alt="Persona da marca para auto-reply" width="420" />
+    </td>
+  </tr>
+</table>
 
 ---
 
