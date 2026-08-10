@@ -41,15 +41,17 @@ export function createSqliteWebhookEventRepository(
     INSERT INTO meta_webhook_events (
       id, received_at, signature_valid, object, field, payload_json,
       processing_status, comment_id, post_id, error_message
-    ) VALUES (?, ?, 1, ?, ?, ?, 'received', NULL, NULL, NULL)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)
   `);
 
   const updateStmt = db.prepare(`
     UPDATE meta_webhook_events
-    SET processing_status = ?,
+    SET processing_status = COALESCE(?, processing_status),
+        object = COALESCE(?, object),
+        field = COALESCE(?, field),
         comment_id = COALESCE(?, comment_id),
         post_id = COALESCE(?, post_id),
-        error_message = ?
+        error_message = COALESCE(?, error_message)
     WHERE id = ?
   `);
 
@@ -71,13 +73,17 @@ export function createSqliteWebhookEventRepository(
     insert(input: InsertWebhookEventInput) {
       const id = randomUUID();
       const receivedAt = new Date().toISOString();
+      const processingStatus = input.processingStatus ?? "received";
 
       insertStmt.run(
         id,
         receivedAt,
-        input.object,
-        input.field,
+        input.signatureValid ? 1 : 0,
+        input.object ?? null,
+        input.field ?? null,
         input.payloadJson,
+        processingStatus,
+        input.errorMessage ?? null,
       );
 
       return mapRow(selectById.get(id) as never);
@@ -85,7 +91,9 @@ export function createSqliteWebhookEventRepository(
 
     update(id: string, input: UpdateWebhookEventInput) {
       updateStmt.run(
-        input.processingStatus,
+        input.processingStatus ?? null,
+        input.object ?? null,
+        input.field ?? null,
         input.commentId ?? null,
         input.postId ?? null,
         input.errorMessage ?? null,

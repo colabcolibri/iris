@@ -111,6 +111,7 @@ test("comment responder ignores posts without auto_reply", async () => {
     ctx.metaCommentReplier = {
       async reply() {
         called = true;
+        return {};
       },
     };
     const stop = startCommentResponder(ctx, {

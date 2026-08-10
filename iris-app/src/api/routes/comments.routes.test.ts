@@ -92,6 +92,11 @@ test("meta webhook POST persists comment and lists via API", async () => {
       body: payload,
     });
     assert.equal(unsigned.status, 403);
+    assert.equal(ctx.webhookEvents.count(), 1);
+    const unsignedEvent = ctx.webhookEvents.listRecent(1)[0];
+    assert.equal(unsignedEvent?.signatureValid, false);
+    assert.equal(unsignedEvent?.processingStatus, "failed");
+    assert.equal(unsignedEvent?.errorMessage, "invalid signature");
 
     const signed = await fetch(`${baseUrl}/webhooks/meta`, {
       method: "POST",
@@ -115,18 +120,23 @@ test("meta webhook POST persists comment and lists via API", async () => {
     assert.equal(body.comments[0]?.ig_comment_id, "ig-comment-1");
     assert.equal(body.comments[0]?.text, "muito bom");
     assert.equal(body.comments[0]?.status, "pending");
-    assert.equal(ctx.webhookEvents.count(), 1);
+    assert.equal(ctx.webhookEvents.count(), 2);
 
     const eventsResponse = await fetch(`${baseUrl}/api/settings/webhook-events?limit=5`, {
       headers: { Authorization: `Bearer ${ADMIN}` },
     });
     assert.equal(eventsResponse.status, 200);
     const eventsBody = (await eventsResponse.json()) as {
-      events: Array<{ processing_status: string; post_id: string }>;
+      events: Array<{ processing_status: string; post_id: string | null; signature_valid: boolean }>;
     };
-    assert.equal(eventsBody.events.length, 1);
-    assert.equal(eventsBody.events[0]?.processing_status, "processed");
-    assert.equal(eventsBody.events[0]?.post_id, post.id);
+    assert.equal(eventsBody.events.length, 2);
+    const processedEvent = eventsBody.events.find((event) => event.processing_status === "processed");
+    assert.ok(processedEvent);
+    assert.equal(processedEvent?.post_id, post.id);
+    assert.equal(
+      eventsBody.events.some((event) => !event.signature_valid),
+      true,
+    );
   });
 });
 

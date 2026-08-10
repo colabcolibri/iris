@@ -1,13 +1,18 @@
 export type WebhookProcessingStatus = "received" | "processed" | "ignored" | "failed";
 
 export type InsertWebhookEventInput = {
-  object: string | null;
-  field: string | null;
+  object?: string | null;
+  field?: string | null;
   payloadJson: string;
+  signatureValid: boolean;
+  processingStatus?: WebhookProcessingStatus;
+  errorMessage?: string | null;
 };
 
 export type UpdateWebhookEventInput = {
-  processingStatus: WebhookProcessingStatus;
+  processingStatus?: WebhookProcessingStatus;
+  object?: string | null;
+  field?: string | null;
   commentId?: string | null;
   postId?: string | null;
   errorMessage?: string | null;

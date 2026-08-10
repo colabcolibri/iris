@@ -54,33 +54,74 @@ export function handleMetaWebhookRoute(
   return handleMetaWebhookPost(req, res, ctx);
 }
 
+function persistWebhookReceipt(
+  ctx: AppContext,
+  input: {
+    payloadJson: string;
+    signatureValid: boolean;
+    processingStatus?: "received" | "failed";
+    errorMessage?: string | null;
+    object?: string | null;
+    field?: string | null;
+  },
+) {
+  return ctx.webhookEvents.insert({
+    payloadJson: input.payloadJson,
+    signatureValid: input.signatureValid,
+    processingStatus: input.processingStatus,
+    errorMessage: input.errorMessage,
+    object: input.object ?? null,
+    field: input.field ?? null,
+  });
+}
+
 async function handleMetaWebhookPost(
   req: IncomingMessage,
   res: ServerResponse,
   ctx: AppContext,
 ): Promise<boolean> {
+  let eventId: string | null = null;
+
   try {
     const rawBody = await readRawBody(req);
+    const payloadJson = rawBody.toString("utf8");
     const signature = req.headers["x-hub-signature-256"];
     const signatureHeader = Array.isArray(signature) ? signature[0] : signature;
+    const signatureValid = verifyHubSignature(
+      rawBody,
+      signatureHeader,
+      ctx.metaAppSecret ?? "",
+    );
 
-    if (
-      !verifyHubSignature(
-        rawBody,
-        signatureHeader,
-        ctx.metaAppSecret ?? "",
-      )
-    ) {
+    const event = persistWebhookReceipt(ctx, {
+      payloadJson,
+      signatureValid,
+      processingStatus: signatureValid ? "received" : "failed",
+      errorMessage: signatureValid ? null : "invalid signature",
+    });
+    eventId = event.id;
+
+    if (!signatureValid) {
       sendError(res, 403, "invalid signature");
       return true;
     }
 
-    const payload = JSON.parse(rawBody.toString("utf8")) as unknown;
+    let payload: unknown;
+    try {
+      payload = JSON.parse(payloadJson) as unknown;
+    } catch {
+      ctx.webhookEvents.update(event.id, {
+        processingStatus: "failed",
+        errorMessage: "invalid json payload",
+      });
+      sendError(res, 400, "invalid json payload");
+      return true;
+    }
+
     const envelope = readWebhookEnvelope(payload);
-    const event = ctx.webhookEvents.insert({
+    ctx.webhookEvents.update(event.id, {
       object: envelope.object,
       field: envelope.field,
-      payloadJson: rawBody.toString("utf8"),
     });
 
     const entries = parseCommentEntries(payload);
@@ -139,8 +180,28 @@ async function handleMetaWebhookPost(
     return true;
   } catch (error) {
     if (error instanceof BodyTooLargeError) {
+      persistWebhookReceipt(ctx, {
+        payloadJson: "",
+        signatureValid: false,
+        processingStatus: "failed",
+        errorMessage: error.message,
+      });
       sendError(res, 413, error.message);
       return true;
+    }
+
+    if (eventId) {
+      ctx.webhookEvents.update(eventId, {
+        processingStatus: "failed",
+        errorMessage: error instanceof Error ? error.message : "internal server error",
+      });
+    } else {
+      persistWebhookReceipt(ctx, {
+        payloadJson: "",
+        signatureValid: false,
+        processingStatus: "failed",
+        errorMessage: error instanceof Error ? error.message : "internal server error",
+      });
     }
 
     sendError(res, 500, "internal server error");
