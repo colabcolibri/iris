@@ -1,4 +1,4 @@
-import { CalendarDays, LayoutGrid, MessageCircle, Settings, Sparkles } from "lucide-react";
+import { CalendarDays, LayoutGrid, MessageCircle, Settings, Sparkles, Webhook } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { AppView } from "@/components/layout/app-sidebar";
@@ -8,8 +8,12 @@ const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] = 
   { id: "kanban", label: "Kanban", icon: LayoutGrid },
 ];
 
-const ROUTE_ITEMS = [
+const MAIN_ROUTE_ITEMS = [
   { to: "/comments", label: "Comentários", icon: MessageCircle },
+  { to: "/webhooks", label: "Webhooks", icon: Webhook },
+] as const;
+
+const FOOTER_ROUTE_ITEMS = [
   { to: "/settings", label: "Configurações", icon: Settings },
   { to: "/persona", label: "Persona", icon: Sparkles },
 ] as const;
@@ -71,7 +75,7 @@ export function AppNavigation({
           );
         })}
 
-        {ROUTE_ITEMS.slice(0, 1).map((item) => {
+        {MAIN_ROUTE_ITEMS.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
@@ -89,7 +93,7 @@ export function AppNavigation({
 
       {showFooter && (
         <div className="mt-auto flex flex-col gap-1 border-t border-sidebar-border pt-4">
-          {ROUTE_ITEMS.slice(1).map((item) => {
+          {FOOTER_ROUTE_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink

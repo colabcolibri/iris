@@ -6,7 +6,6 @@ import type { MetaStatus } from "@/lib/types";
 type AppShellProps = {
   meta: MetaStatus | null;
   onDisconnectMeta?: () => Promise<boolean>;
-  onNewPost?: () => void;
   onMetaHealth?: () => void;
   sidebarView?: AppView;
   onSidebarViewChange?: (view: AppView) => void;
@@ -16,7 +15,6 @@ type AppShellProps = {
 export function AppShell({
   meta,
   onDisconnectMeta,
-  onNewPost,
   onMetaHealth,
   sidebarView,
   onSidebarViewChange,
@@ -26,7 +24,6 @@ export function AppShell({
     <div className="flex h-svh flex-col overflow-hidden bg-background">
       <AppHeader
         meta={meta}
-        onNewPost={onNewPost ?? (() => undefined)}
         onDisconnectMeta={onDisconnectMeta}
         onMetaHealth={onMetaHealth}
         sidebarView={sidebarView}

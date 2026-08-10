@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
@@ -6,6 +7,7 @@ import type { AppView } from "@/components/layout/app-sidebar";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { PostDialog, type PostDialogMode } from "@/components/posts/post-dialog";
+import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/hooks/use-meta-session";
@@ -225,20 +227,30 @@ export function DashboardPage() {
   return (
     <AppShell
       meta={meta}
-      onNewPost={openCreate}
       onDisconnectMeta={handleDisconnect}
       onMetaHealth={handleMetaHealth}
       sidebarView={view}
       onSidebarViewChange={setView}
     >
       {view === "kanban" && (
-        <header className="shrink-0 px-8 pt-8 pb-4">
-          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
-            Pipeline editorial
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Organize rascunhos, agendamentos e publicações.
-          </p>
+        <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 px-8 pt-8 pb-4">
+          <div>
+            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
+              Pipeline editorial
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Organize rascunhos, agendamentos e publicações.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={openCreate}
+            className="h-9 shrink-0 rounded-full px-4 font-semibold uppercase tracking-wide shadow-sm sm:px-6"
+          >
+            <Plus className="mr-2 size-4" />
+            Nova postagem
+          </Button>
         </header>
       )}
 
@@ -258,6 +270,7 @@ export function DashboardPage() {
             timeZone={timezone}
             onCursorChange={setCursor}
             onSelect={openPost}
+            onCreatePost={openCreate}
           />
         )}
       </div>

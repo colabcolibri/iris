@@ -1,10 +1,19 @@
-import { LogOut, Plus } from "lucide-react";
+import { ChevronDown, LogOut, RefreshCw, UserRound, Unplug } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { AppMobileNav } from "@/components/layout/app-mobile-nav";
 import type { AppView } from "@/components/layout/app-sidebar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuthSession } from "@/contexts/auth-session-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { cn } from "@/lib/utils";
@@ -13,7 +22,6 @@ import type { MetaStatus } from "@/lib/types";
 type AppHeaderProps = {
   meta: MetaStatus | null;
   onDisconnectMeta?: () => Promise<boolean>;
-  onNewPost: () => void;
   onMetaHealth?: () => void;
   sidebarView?: AppView;
   onSidebarViewChange?: (view: AppView) => void;
@@ -22,7 +30,6 @@ type AppHeaderProps = {
 export function AppHeader({
   meta,
   onDisconnectMeta,
-  onNewPost,
   onMetaHealth,
   sidebarView,
   onSidebarViewChange,
@@ -72,26 +79,25 @@ export function AppHeader({
 
   return (
     <header className="flex h-20 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-black/20 bg-[#1f1d1b] px-4 text-white shadow-sm sm:gap-4 sm:px-6">
-      <div className="flex min-w-0 items-center gap-3 md:gap-6">
+      <div className="flex min-w-0 items-center gap-3 md:gap-5">
         <AppMobileNav view={sidebarView} onViewChange={onSidebarViewChange} />
-        <div className="flex items-center gap-3 md:hidden">
+        <div className="flex min-w-0 items-center gap-3">
           <BrandLogo size="sm" />
-          <span className="font-display text-2xl font-semibold tracking-tight">Iris</span>
+          <div className="min-w-0">
+            <p className="font-display text-xl font-semibold leading-none tracking-tight sm:text-2xl">
+              Iris
+            </p>
+            <p className="hidden truncate text-xs text-white/60 sm:block">Creative scheduler</p>
+          </div>
         </div>
 
-        {connected && handle ? (
-          <div className="hidden items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 md:flex">
-            <InstagramIcon className="size-3.5 text-emerald-300" />
-            <span className="text-sm">Instagram {handle}</span>
-            <span className="size-2 rounded-full bg-emerald-400" aria-hidden />
-          </div>
-        ) : (
-          <p className="hidden max-w-xs text-sm text-white/70 md:block">
+        {!connected ? (
+          <p className="hidden max-w-xs text-sm text-white/70 lg:block">
             {tokenExpired
               ? "Sua sessão com o Instagram expirou. Conecte de novo para agendar publicações."
               : "Conecte sua conta do Instagram para agendar e publicar posts."}
           </p>
-        )}
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
@@ -106,57 +112,72 @@ export function AppHeader({
             )}
           >
             <InstagramIcon className="size-4 shrink-0" />
-            {tokenExpired ? "Reconectar Instagram" : "Conectar Instagram"}
+            <span className="hidden sm:inline">
+              {tokenExpired ? "Reconectar Instagram" : "Conectar Instagram"}
+            </span>
+            <span className="sm:hidden">Conectar</span>
           </a>
         ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => void handleSwitchAccount()}
-              className="hidden items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white lg:inline-flex"
-            >
-              <InstagramIcon className="size-4" />
-              Trocar conta
-            </button>
-            {onDisconnectMeta && (
-              <button
-                type="button"
-                onClick={() => void handleDisconnect()}
-                className="hidden text-sm text-white/60 transition-colors hover:text-white lg:inline"
+          handle && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 rounded-full border-emerald-400/35 bg-emerald-500/10 px-3 text-white hover:bg-emerald-500/20 hover:text-white"
+                    aria-label="Conta do Instagram conectada"
+                  />
+                }
               >
-                Desconectar
-              </button>
-            )}
-          </>
-        )}
-
-        {connected && onMetaHealth && (
-          <button
-            type="button"
-            onClick={onMetaHealth}
-            className="hidden text-sm text-white/60 transition-colors hover:text-white lg:inline"
-          >
-            Testar conexão
-          </button>
+                <InstagramIcon className="size-4 text-emerald-300" />
+                <span className="max-w-[9rem] truncate text-sm font-medium sm:max-w-none">
+                  {handle}
+                </span>
+                <span className="size-2 shrink-0 rounded-full bg-emerald-400" aria-hidden />
+                <ChevronDown className="size-3.5 shrink-0 opacity-70" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Instagram conectado</DropdownMenuLabel>
+                  <p className="px-2 pb-1 text-xs text-muted-foreground">{handle}</p>
+                  {onMetaHealth ? (
+                    <DropdownMenuItem onClick={onMetaHealth}>
+                      <RefreshCw className="size-4" />
+                      Testar conexão
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem onClick={() => void handleSwitchAccount()}>
+                    <UserRound className="size-4" />
+                    Trocar conta
+                  </DropdownMenuItem>
+                  {onDisconnectMeta ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => void handleDisconnect()}
+                      >
+                        <Unplug className="size-4" />
+                        Desconectar
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         )}
 
         <Button
           variant="ghost"
           size="sm"
           onClick={() => void handleLogout()}
-          className="hidden text-white/70 hover:bg-white/10 hover:text-white md:inline-flex"
+          className="hidden text-white/80 hover:bg-white/10 hover:text-white md:inline-flex"
         >
           <LogOut className="mr-2 size-4" />
           Sair
-        </Button>
-        <Button
-          size="sm"
-          onClick={onNewPost}
-          className="rounded-full bg-primary px-4 uppercase tracking-wide shadow-sm hover:bg-primary/90 sm:px-6"
-        >
-          <Plus className="mr-2 size-4" />
-          <span className="hidden sm:inline">Nova postagem</span>
-          <span className="sm:hidden">Nova</span>
         </Button>
       </div>
     </header>

@@ -9,6 +9,7 @@ import { LoginPage } from "@/pages/login-page";
 import { PersonaPage } from "@/pages/persona-page";
 import { CommentsPage } from "@/pages/comments-page";
 import { SettingsPage } from "@/pages/settings-page";
+import { WebhooksPage } from "@/pages/webhooks-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
 
 export function App() {
@@ -31,6 +32,14 @@ export function App() {
                 element={
                   <ProtectedRoute>
                     <CommentsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/webhooks"
+                element={
+                  <ProtectedRoute>
+                    <WebhooksPage />
                   </ProtectedRoute>
                 }
               />

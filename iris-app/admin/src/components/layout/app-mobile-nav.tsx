@@ -8,7 +8,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { BrandLogo } from "@/components/layout/brand-logo";
 import { AppNavigation } from "@/components/layout/app-navigation";
 import type { AppView } from "@/components/layout/app-sidebar";
 
@@ -39,11 +38,8 @@ export function AppMobileNav({ view, onViewChange }: AppMobileNavProps) {
         side="left"
         className="w-70 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
       >
-        <SheetHeader className="border-b border-sidebar-border px-4 py-5 text-left">
-          <div className="flex items-center gap-3">
-            <BrandLogo />
-            <SheetTitle className="font-display text-2xl text-sidebar-foreground">Iris</SheetTitle>
-          </div>
+        <SheetHeader className="border-b border-sidebar-border px-4 py-4 text-left">
+          <SheetTitle className="font-display text-lg text-sidebar-foreground">Menu</SheetTitle>
         </SheetHeader>
         <div className="flex h-[calc(100%-5rem)] flex-col p-4">
           <AppNavigation

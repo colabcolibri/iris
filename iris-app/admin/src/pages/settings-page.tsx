@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
-import { WebhookEventsCard } from "@/components/settings/webhook-events-card";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useMetaSession } from "@/hooks/use-meta-session";
 import { formatInTimeZone } from "@/lib/datetime";
@@ -51,7 +50,7 @@ export function SettingsPage() {
             </p>
             <h1 className="font-display text-3xl font-semibold tracking-tight">Configurações</h1>
             <p className="text-sm text-muted-foreground">
-              Fuso horário editorial, conexão MCP, provedor de IA e auditoria de webhooks Meta.
+              Fuso horário editorial, conexão MCP e provedor de IA para respostas automáticas.
             </p>
           </header>
 
@@ -102,8 +101,6 @@ export function SettingsPage() {
           <McpConnectionCard />
 
           <LlmSettingsCard />
-
-          <WebhookEventsCard />
         </div>
       </div>
     </AppShell>

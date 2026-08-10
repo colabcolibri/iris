@@ -1,4 +1,4 @@
-import { AlertCircle, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -21,6 +21,7 @@ type CalendarViewProps = {
   timeZone: string;
   onCursorChange: (date: Date) => void;
   onSelect: (post: Post) => void;
+  onCreatePost: () => void;
 };
 
 const CHIP_STYLES: Record<PostStatus, string> = {
@@ -41,6 +42,7 @@ export function CalendarView({
   timeZone,
   onCursorChange,
   onSelect,
+  onCreatePost,
 }: CalendarViewProps) {
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
@@ -82,7 +84,7 @@ export function CalendarView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {CALENDAR_LEGEND.map((status) => (
             <span
               key={status}
@@ -101,6 +103,15 @@ export function CalendarView({
               {POST_STATUS_LABELS[status]}
             </span>
           ))}
+          <Button
+            type="button"
+            size="sm"
+            onClick={onCreatePost}
+            className="h-9 rounded-full px-4 font-semibold uppercase tracking-wide shadow-sm sm:px-6"
+          >
+            <Plus className="mr-2 size-4" />
+            Nova postagem
+          </Button>
         </div>
       </header>
 

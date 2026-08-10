@@ -15,6 +15,8 @@ test("app sidebar includes comments in main navigation", () => {
   const navigation = readFileSync("admin/src/components/layout/app-navigation.tsx", "utf8");
   assert.match(navigation, /Comentários/);
   assert.match(navigation, /\/comments/);
+  assert.match(navigation, /Webhooks/);
+  assert.match(navigation, /\/webhooks/);
   assert.match(navigation, /VIEW_ITEMS\.map/);
 });
 
