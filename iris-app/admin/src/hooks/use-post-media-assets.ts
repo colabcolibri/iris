@@ -45,12 +45,18 @@ function revokePreviewUrls(items: PostMediaAsset[]) {
   }
 }
 
+function revokeUrlList(urls: string[]) {
+  for (const url of urls) {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function usePostMediaAssets(postId: string | undefined, refreshKey?: string) {
   const [items, setItems] = useState<PostMediaAsset[]>([]);
   const [loading, setLoading] = useState(Boolean(postId));
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const loadAssets = useCallback(async () => {
+  const loadAssets = useCallback(async (signal: AbortSignal) => {
     if (!postId) {
       setItems((previous) => {
         revokePreviewUrls(previous);
@@ -61,24 +67,48 @@ export function usePostMediaAssets(postId: string | undefined, refreshKey?: stri
     }
 
     setLoading(true);
+    const createdUrls: string[] = [];
+
     try {
       const assets = await listAssets(postId);
+      if (signal.aborted) {
+        return;
+      }
+
       const sorted = [...assets].sort((a, b) => a.sort_order - b.sort_order);
       const nextItems: PostMediaAsset[] = [];
 
       for (const asset of sorted) {
+        if (signal.aborted) {
+          revokeUrlList(createdUrls);
+          return;
+        }
+
         const filename = filenameFromStoragePath(asset.storage_path);
         if (!filename) {
           continue;
         }
+
         const blob = await fetchAssetBlob(postId, filename);
+        if (signal.aborted) {
+          revokeUrlList(createdUrls);
+          return;
+        }
+
+        const previewUrl = URL.createObjectURL(blob);
+        createdUrls.push(previewUrl);
         nextItems.push({
           id: asset.id,
           sortOrder: asset.sort_order,
-          previewUrl: URL.createObjectURL(blob),
+          previewUrl,
           width: asset.width ?? null,
           height: asset.height ?? null,
         });
+      }
+
+      if (signal.aborted) {
+        revokeUrlList(createdUrls);
+        return;
       }
 
       setItems((previous) => {
@@ -86,19 +116,27 @@ export function usePostMediaAssets(postId: string | undefined, refreshKey?: stri
         return nextItems;
       });
     } catch (err) {
+      revokeUrlList(createdUrls);
+      if (signal.aborted) {
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Falha ao carregar mídia.");
       setItems((previous) => {
         revokePreviewUrls(previous);
         return [];
       });
     } finally {
-      setLoading(false);
+      if (!signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [postId]);
 
   useEffect(() => {
-    void loadAssets();
+    const controller = new AbortController();
+    void loadAssets(controller.signal);
     return () => {
+      controller.abort();
       setItems((previous) => {
         revokePreviewUrls(previous);
         return [];
@@ -133,7 +171,7 @@ export function usePostMediaAssets(postId: string | undefined, refreshKey?: stri
       setItems(nextItems);
       void persistOrder(nextItems).catch((err) => {
         toast.error(err instanceof Error ? err.message : "Falha ao reordenar mídia.");
-        void loadAssets();
+        void loadAssets(new AbortController().signal);
       });
     },
     [loadAssets, persistOrder],

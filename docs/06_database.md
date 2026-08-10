@@ -1,8 +1,8 @@
 ---
 title: Database
-status: approved
-version: 1.1
-updated: 2026-08-09
+status: review
+version: 1.2
+updated: 2026-08-11
 depends_on: [05_architecture.md]
 blocks: [07_api_contracts.md]
 ---
@@ -137,3 +137,13 @@ data/agent/{soul,page,knowledge,restrictions}.md
 ## Backup
 
 SQLite + cópia de `data/media/` juntos.
+
+## Retenção e auditoria
+
+| Tabela | Política |
+| ------ | -------- |
+| `meta_webhook_events` | Worker periódico remove linhas com `received_at` anterior a `IRIS_RETENTION_DAYS` (default 90). Payload já truncado a 2048 bytes no insert. |
+| `agent_runs` / `agent_run_steps` | **Sem delete automático** — trail de auditoria do harness preservado integralmente. Crescimento em disco é aceito; backup periódico recomendado. |
+| `comment_replies` | Preservado enquanto o comentário existir — `agent_run_id` referencia runs históricos. |
+
+Ver `IRIS_RETENTION_*` em `08_environments.md`.

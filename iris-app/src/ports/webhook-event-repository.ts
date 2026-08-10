@@ -36,4 +36,5 @@ export type WebhookEventRepository = {
   update(id: string, input: UpdateWebhookEventInput): WebhookEventRecord | null;
   listRecent(limit: number): WebhookEventRecord[];
   count(): number;
+  deleteOlderThan(cutoffIso: string): number;
 };

@@ -1,8 +1,8 @@
 ---
 title: Environments
-status: approved
-version: 1.1
-updated: 2026-08-10
+status: review
+version: 1.2
+updated: 2026-08-11
 depends_on: [01_tech_stack.md, 05_architecture.md]
 blocks: []
 ---
@@ -28,6 +28,9 @@ blocks: []
 | `IRIS_MCP_CONNECTION_CODE` | optional | Código MCP — **opcional** se gerado em Configurações → Conexão MCP; útil para infra/CI. Distinto de `IRIS_AGENT_TOKEN` |
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
+| `IRIS_REPLY_MAX_CONCURRENT` | `10` | Máximo de `processCommentReply` em paralelo (webhook + worker); mínimo efetivo `1` |
+| `IRIS_RETENTION_DAYS` | `90` | Idade máxima de linhas em `meta_webhook_events` antes do purge |
+| `IRIS_RETENTION_TICK_MS` | `86400000` (24h) | Intervalo do worker de retenção de webhooks |
 
 ## Agente local (`iris-agent/`)
 
@@ -116,6 +119,8 @@ Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar 
 | `IRIS_ADMIN_EMAIL` | Email allowlisted para OTP |
 | `META_*` | App credentials + access token |
 | `LLM_API_KEY` | For comment responder (v1-S6) |
+| `IRIS_REPLY_MAX_CONCURRENT` | Default `10` — ajuste conforme quota/custo do provedor LLM |
+| `IRIS_RETENTION_DAYS` | Default `90` — purge de `meta_webhook_events` antigos |
 
 Requirements:
 - HTTPS (Meta webhooks require public URL)

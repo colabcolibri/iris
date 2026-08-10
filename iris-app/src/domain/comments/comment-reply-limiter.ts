@@ -1,6 +1,6 @@
 type ReleaseFn = () => void;
 
-function createConcurrencyLimiter(maxConcurrent: number) {
+export function createConcurrencyLimiter(maxConcurrent: number) {
   const max = Math.max(1, maxConcurrent);
   let running = 0;
   const queue: Array<() => void> = [];
@@ -43,6 +43,8 @@ function createConcurrencyLimiter(maxConcurrent: number) {
   return { run };
 }
 
+export const DEFAULT_REPLY_MAX_CONCURRENT = 10;
+
 export const commentReplyLimiter = createConcurrencyLimiter(
-  Number(process.env.IRIS_REPLY_MAX_CONCURRENT ?? 1),
+  Number(process.env.IRIS_REPLY_MAX_CONCURRENT ?? DEFAULT_REPLY_MAX_CONCURRENT),
 );

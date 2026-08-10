@@ -33,6 +33,7 @@ import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
+import { startDataRetention } from "../workers/data-retention.ts";
 import { readAdminSession } from "../domain/auth-session.ts";
 import { shouldGateSpaGet } from "./spa-route-policy.ts";
 import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
@@ -81,6 +82,7 @@ export type HttpServerHandle = {
   db: DatabaseSync;
   ctx: AppContext;
   stopScheduler: () => void;
+  closeDatabase: () => void;
   setAdminVite: (vite: ViteDevServer) => void;
   closeAdminVite: () => Promise<void>;
 };
@@ -380,9 +382,14 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
       })
     : () => undefined;
 
+  const stopDataRetention = options.startScheduler
+    ? startDataRetention(ctx)
+    : () => undefined;
+
   const stopScheduler = () => {
     stopPublishScheduler();
     stopCommentResponder();
+    stopDataRetention();
   };
 
   let adminVite: ViteDevServer | undefined;
@@ -398,6 +405,9 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     db,
     ctx,
     stopScheduler,
+    closeDatabase() {
+      db.close();
+    },
     setAdminVite(vite: ViteDevServer) {
       adminVite = vite;
     },

@@ -69,6 +69,11 @@ export function createSqliteWebhookEventRepository(
     SELECT COUNT(*) AS total FROM meta_webhook_events
   `);
 
+  const deleteOlderThanStmt = db.prepare(`
+    DELETE FROM meta_webhook_events
+    WHERE datetime(received_at) < datetime(?)
+  `);
+
   return {
     insert(input: InsertWebhookEventInput) {
       const id = randomUUID();
@@ -111,6 +116,11 @@ export function createSqliteWebhookEventRepository(
     count() {
       const row = countStmt.get() as { total: number };
       return row.total;
+    },
+
+    deleteOlderThan(cutoffIso: string) {
+      const result = deleteOlderThanStmt.run(cutoffIso);
+      return result.changes ?? 0;
     },
   };
 }

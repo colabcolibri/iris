@@ -81,6 +81,16 @@ export function CommentsPage() {
     try {
       const nextPosts = await fetchCommentPosts();
       setPosts(nextPosts);
+      const activePostIds = new Set(nextPosts.map((post) => post.post_id));
+      setThumbnailOverrides((current) => {
+        const next: Record<string, string> = {};
+        for (const [postId, url] of Object.entries(current)) {
+          if (activePostIds.has(postId)) {
+            next[postId] = url;
+          }
+        }
+        return Object.keys(next).length === Object.keys(current).length ? current : next;
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao carregar postagens.";
       setError(message);

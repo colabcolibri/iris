@@ -15,7 +15,7 @@ const host = process.env.HOST ?? "0.0.0.0";
 const isDev = process.env.NODE_ENV !== "production";
 const projectRoot = dirname(getPublicDirectory());
 
-const { server, stopScheduler, setAdminVite, closeAdminVite } = createServer({
+const { server, stopScheduler, closeDatabase, setAdminVite, closeAdminVite } = createServer({
   startScheduler: true,
 });
 
@@ -27,7 +27,10 @@ if (isDev) {
 function shutdown(): void {
   stopScheduler();
   void closeAdminVite().finally(() => {
-    server.close(() => process.exit(0));
+    server.close(() => {
+      closeDatabase();
+      process.exit(0);
+    });
   });
 }
 
