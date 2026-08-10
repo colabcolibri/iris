@@ -102,6 +102,13 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
         <McpCopyField id="chatgpt-name" label="Nome" value="Iris" />
         <McpCopyField id="chatgpt-url" label="URL" value={mcpUrl} hint="Use HTTPS público (ex.: ngrok) — não localhost." />
 
+        <p className="rounded-md border border-border/80 bg-background px-3 py-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Variável de ambiente de token do portador:</span> deixe
+          vazio. Esse campo é só o <em>nome</em> de uma variável no seu computador (ex.{" "}
+          <span className="font-mono">MCP_BEARER_TOKEN</span>) — não cole o código do Iris aí. Para o Iris,
+          use o cabeçalho <span className="font-mono">Authorization</span> abaixo.
+        </p>
+
         {connectionCode ? (
           <>
             <McpCopyField
@@ -114,17 +121,12 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
               id="chatgpt-header-value"
               label="Cabeçalhos — valor"
               value={bearerValue!}
+              hint='Cole exatamente assim: a palavra Bearer, um espaço e o código.'
             />
             <p className="text-xs text-muted-foreground">
-              Alternativa: em algumas telas há campo de token — cole só o código, sem a palavra{" "}
-              <span className="font-mono">Bearer</span>.
+              Não preencha &quot;Cabeçalhos a partir de variáveis do ambiente&quot; — isso é alternativa
+              avançada. Com o cabeçalho fixo acima, basta clicar em Salvar.
             </p>
-            <McpCopyField
-              id="chatgpt-token-only"
-              label="Token (sem Bearer)"
-              value={connectionCode}
-              hint="Use se o ChatGPT pedir apenas o token, não o header inteiro."
-            />
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
