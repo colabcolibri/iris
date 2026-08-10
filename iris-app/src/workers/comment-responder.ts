@@ -1,6 +1,8 @@
 import type { AppContext } from "../api/app-context.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
+import { getAppSettingsOrDefault } from "../adapters/sqlite/app-settings-repository.ts";
+import { resolveCommentResponderIntervalMs } from "../domain/comments/resolve-comment-responder-interval.ts";
 import { processCommentReply } from "../domain/comments/process-comment-reply.ts";
 
 export type CommentResponderOptions = {
@@ -21,8 +23,10 @@ export function startCommentResponder(
     return () => undefined;
   }
 
+  const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
   const intervalMs =
-    options.intervalMs ?? Number(process.env.IRIS_REPLY_TICK_MS ?? 60_000);
+    options.intervalMs ??
+    resolveCommentResponderIntervalMs(appSettings.replyDelaySeconds);
   let running = false;
 
   const tick = async () => {

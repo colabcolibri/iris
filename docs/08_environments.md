@@ -29,10 +29,19 @@ blocks: []
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
 | `IRIS_REPLY_MAX_CONCURRENT` | `10` | Máximo de `processCommentReply` em paralelo (webhook + worker); mínimo efetivo `1` |
-| `IRIS_REPLY_TICK_MS` | `60000` | Intervalo do worker de respostas; use `15000` se `reply_delay_seconds` > 0 para maior precisão |
-| `reply_delay_seconds` (app settings) | `0` | `0` = imediato; `30`–`600` = fila durável antes do harness |
 | `IRIS_RETENTION_DAYS` | `90` | Idade máxima de linhas em `meta_webhook_events` antes do purge |
 | `IRIS_RETENTION_TICK_MS` | `86400000` (24h) | Intervalo do worker de retenção de webhooks |
+
+## Configuração na UI (admin)
+
+Estes valores **não** vêm de `.env` — persistem em `app_settings` via **Configurações** (`/settings`):
+
+| Campo | Default | Onde na UI |
+| ----- | ------- | ---------- |
+| `reply_mode` | `auto` | Agente de comentários → modo global |
+| `reply_delay_seconds` | `0` | Agente de comentários → **Resposta imediata** ou **Fila com delay** (30–600s) |
+
+Com `reply_delay_seconds = 0`, o agente processa no próximo ciclo do worker (~60s). Com fila ativa, o worker acelera o poll (~15s) automaticamente — sem variável de ambiente.
 
 ## Agente local (`iris-agent/`)
 
