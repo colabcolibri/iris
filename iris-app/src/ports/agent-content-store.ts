@@ -9,6 +9,6 @@ export type AgentContent = {
 export type AgentContentInput = Omit<AgentContent, "updatedAt">;
 
 export type AgentContentStore = {
-  get(): AgentContent;
+  get(): AgentContent | null;
   upsert(input: AgentContentInput): AgentContent;
 };

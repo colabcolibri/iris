@@ -50,7 +50,9 @@ export async function runVerifyStage(input: VerifyStageInput): Promise<StageResu
       ? ["harmful"]
       : [];
   const approved = parsed.approved && !harmful;
-  const finalText = (parsed.finalText?.trim() || input.draftText).slice(0, input.maxChars);
+  const finalText = approved
+    ? (parsed.finalText?.trim() || input.draftText.trim())
+    : undefined;
 
   const structured: VerifyDecisionJson = {
     approved,

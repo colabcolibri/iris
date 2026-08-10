@@ -1,7 +1,7 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentContentStore } from "../../ports/agent-content-store.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
-import { defaultAgentContent } from "../agent-content-defaults.ts";
+import { getAgentContentOrDefault } from "../agent-content-defaults.ts";
 import { defaultReplyPersona } from "../reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../reply-language/response-languages.ts";
 import { ValidationError } from "../../api/json.ts";
@@ -88,6 +88,7 @@ function buildSimulatedContext(input: SimulateReplyInput, deps: SimulateReplyDep
 
   const persona = {
     brandName,
+    signatureInstruction: storedPersona.signatureInstruction,
     responseLanguage,
     maxChars,
     updatedAt: storedPersona.updatedAt,
@@ -132,7 +133,7 @@ export async function simulateReply(
   const context = buildSimulatedContext(input, deps);
   context.imageContext = await createEnvImageContextProvider().build(context.post);
 
-  const agentContent = deps.agentContentStore.get() ?? defaultAgentContent();
+  const agentContent = getAgentContentOrDefault(deps.agentContentStore);
   const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
 
   const recorded = await executeAndRecordHarness(

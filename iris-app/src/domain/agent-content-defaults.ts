@@ -18,3 +18,10 @@ export function defaultAgentContent(): AgentContent {
     updatedAt: new Date().toISOString(),
   };
 }
+
+/** Fallback só em memória — nunca persiste no banco. */
+export function getAgentContentOrDefault(
+  store: { get(): AgentContent | null },
+): AgentContent {
+  return store.get() ?? defaultAgentContent();
+}

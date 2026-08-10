@@ -14,6 +14,7 @@ import {
   HarnessExecutionError,
   recordFailedHarnessRun,
 } from "../reply-harness/execute-and-record-harness.ts";
+import { getAgentContentOrDefault } from "../agent-content-defaults.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
@@ -70,7 +71,7 @@ export async function processCommentReply(
     return false;
   }
 
-  const agentContent = ctx.agentContentStore.get();
+  const agentContent = getAgentContentOrDefault(ctx.agentContentStore);
   const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
 
   let run: AgentRun;

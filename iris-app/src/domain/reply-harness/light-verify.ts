@@ -87,7 +87,7 @@ export async function runLightVerifyStage(input: LightVerifyStageInput): Promise
   }
 
   if (input.llm) {
-    const prompt = buildLightVerifyPrompt(input.context, trimmed);
+    const prompt = buildLightVerifyPrompt(input.context, trimmed, input.maxChars);
     const completion = await input.llm.complete(prompt);
     const raw = completion.text;
     const parsed = parseLlmJson<VerifyDecisionJson>(raw);
@@ -104,7 +104,10 @@ export async function runLightVerifyStage(input: LightVerifyStageInput): Promise
         policyViolations,
         reason: parsed.reason || (parsed.approved ? "approved" : "rejected"),
         reasoning: parsed.reasoning || raw.slice(0, 500),
-        finalText: parsed.approved && !harmful ? trimmed : undefined,
+        finalText:
+          parsed.approved && !harmful
+            ? (parsed.finalText?.trim() || trimmed)
+            : undefined,
       };
 
       return {

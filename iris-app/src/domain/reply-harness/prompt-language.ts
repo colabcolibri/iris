@@ -38,21 +38,28 @@ export function buildBrandLine(persona: ReplyPersona): string | null {
   return `Brand: ${persona.brandName.trim()}`;
 }
 
-export function buildBrandAndSignatureBlock(persona: ReplyPersona): string | null {
-  const lines: string[] = [];
-  const brand = buildBrandLine(persona);
-  if (brand) {
-    lines.push(brand);
-  }
-
+export function buildSignatureVerificationBlock(persona: ReplyPersona): string | null {
   const signature = persona.signatureInstruction?.trim();
-  if (signature) {
-    lines.push("", "## Signature instruction", signature);
-  }
-
-  if (lines.length === 0) {
+  if (!signature) {
     return null;
   }
 
-  return lines.join("\n");
+  return [
+    "## Signature",
+    "Brand signature rule:",
+    signature,
+    "",
+    "If the draft is missing this signature, do NOT reject for that reason alone.",
+    "When approved=true, rewrite finalText so the signature is included.",
+    "The character limit does not apply to adding the signature — finalText may be longer than the draft.",
+  ].join("\n");
+}
+
+export function buildBrandBlock(persona: ReplyPersona): string | null {
+  return buildBrandLine(persona);
+}
+
+/** @deprecated Use buildBrandBlock in drafts and buildSignatureVerificationBlock in verify. */
+export function buildBrandAndSignatureBlock(persona: ReplyPersona): string | null {
+  return buildBrandBlock(persona);
 }

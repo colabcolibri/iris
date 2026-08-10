@@ -1,7 +1,7 @@
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { DEFAULT_GUARDRAIL_RULES } from "./default-guardrails.ts";
-import { buildBrandAndSignatureBlock, buildResponseLanguageDirective } from "./prompt-language.ts";
+import { buildBrandBlock, buildResponseLanguageDirective, buildSignatureVerificationBlock } from "./prompt-language.ts";
 import {
   buildContextSection,
   captionForTier,
@@ -53,7 +53,7 @@ export function buildSimpleDraftPrompt(
   agentContent: AgentContent,
   maxChars: number,
 ): string {
-  const brandBlock = buildBrandAndSignatureBlock(context.persona);
+  const brandBlock = buildBrandBlock(context.persona);
 
   return [
     "Write ONE short Instagram comment reply.",
@@ -82,7 +82,7 @@ export function buildFullDraftPrompt(
   agentContent: AgentContent,
   maxChars: number,
 ): string {
-  const brandBlock = buildBrandAndSignatureBlock(context.persona);
+  const brandBlock = buildBrandBlock(context.persona);
 
   return [
     "Write an Instagram comment reply on behalf of the brand.",
@@ -130,14 +130,17 @@ export function buildVerifyPrompt(
   maxChars: number,
 ): string {
   const language = buildResponseLanguageDirective(context.persona);
+  const signatureBlock = buildSignatureVerificationBlock(context.persona);
+  const hasSignature = Boolean(signatureBlock);
 
   return [
     "You are the final auditor for automated Instagram replies.",
     "Validate whether the draft can be published.",
-    "Mark harmful=true for insults, harassment, or discriminatory content.",
+    "Set harmful=true for insults, harassment, or discriminatory content — in that case set approved=false.",
     "Reject the draft if it is not written in the mandatory response language.",
     "",
     language,
+    ...(signatureBlock ? ["", signatureBlock] : []),
     "",
     "## Brand restrictions",
     agentContent.restrictions,
@@ -156,11 +159,17 @@ export function buildVerifyPrompt(
     "## Candidate draft",
     draftText,
     "",
-    `Character limit: ${maxChars}`,
+    `Draft character limit (body only): ${maxChars}`,
+    ...(hasSignature
+      ? ["Adding the signature in finalText may exceed this limit."]
+      : []),
     "",
     "Reply with valid JSON only:",
-    '{"approved":true|false,"harmful":true|false,"policyViolations":["..."],"reason":"short label","reasoning":"explanation","finalText":"optional final text"}',
-    "If approved=true and finalText is empty, the original draft will be used.",
+    '{"approved":true|false,"harmful":true|false,"policyViolations":["..."],"reason":"short label","reasoning":"explanation","finalText":"complete publishable reply"}',
+    "If approved=true, finalText MUST be the full text to publish.",
+    hasSignature
+      ? "If the signature is missing, include it in finalText — do not reject only for a missing signature."
+      : "If approved=true and finalText is empty, the original draft will be used.",
     "finalText MUST respect the mandatory response language.",
   ].join("\n");
 }
@@ -168,14 +177,29 @@ export function buildVerifyPrompt(
 export function buildLightVerifyPrompt(
   context: ReplyContext,
   draftText: string,
+  maxChars: number,
 ): string {
+  const signatureBlock = buildSignatureVerificationBlock(context.persona);
+  const hasSignature = Boolean(signatureBlock);
+
   return [
     "Audit this short Instagram reply draft.",
+    "Set harmful=true for insults, harassment, or discriminatory content — in that case set approved=false.",
     buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
     "Reject if the draft is not in the mandatory response language.",
+    ...(signatureBlock ? ["", signatureBlock] : []),
+    "",
+    `Draft character limit (body only): ${maxChars}`,
+    ...(hasSignature
+      ? ["Adding the signature in finalText may exceed this limit."]
+      : []),
     "",
     "Reply with valid JSON only:",
-    '{"approved":true|false,"harmful":true|false,"policyViolations":[],"reason":"short label","reasoning":"brief"}',
+    '{"approved":true|false,"harmful":true|false,"policyViolations":[],"reason":"short label","reasoning":"brief","finalText":"complete publishable reply"}',
+    "If approved=true, finalText MUST be the full text to publish.",
+    hasSignature
+      ? "If the signature is missing, include it in finalText — do not reject only for a missing signature."
+      : "If approved=true and finalText is empty, the original draft will be used.",
     "",
     "Draft:",
     draftText,

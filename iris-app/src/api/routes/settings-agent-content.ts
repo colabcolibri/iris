@@ -9,6 +9,7 @@ import {
   sendJson,
   ValidationError,
 } from "../json.ts";
+import { defaultAgentContent } from "../../domain/agent-content-defaults.ts";
 import { normalizeAgentContentBody } from "../../domain/agent-content.ts";
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 
@@ -45,7 +46,17 @@ export async function handleAgentContentSettingsRoute(
   }
 
   if (req.method === "GET") {
-    sendJson(res, 200, serializeAgentContent(ctx.agentContentStore.get()));
+    const stored = ctx.agentContentStore.get();
+    if (stored) {
+      sendJson(res, 200, serializeAgentContent(stored));
+      return true;
+    }
+
+    const defaults = defaultAgentContent();
+    sendJson(res, 200, {
+      ...serializeAgentContent(defaults),
+      updated_at: null,
+    });
     return true;
   }
 

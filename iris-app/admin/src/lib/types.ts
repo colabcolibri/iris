@@ -195,7 +195,7 @@ export type ReplyPersona = {
   signature_instruction: string;
   response_language: string;
   max_chars: number;
-  updated_at: string;
+  updated_at: string | null;
 };
 
 export type AgentContent = {
@@ -203,7 +203,7 @@ export type AgentContent = {
   page: string;
   knowledge: string;
   restrictions: string;
-  updated_at: string;
+  updated_at: string | null;
 };
 
 export type ReplyAuditLlm = {

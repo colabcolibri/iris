@@ -112,7 +112,7 @@ export function PersonaPage() {
         <PageContainer.Header
           eyebrow="Respostas automáticas"
           title="Persona da marca"
-          description="Identidade e limites da marca ficam no banco (SQLite). O conteúdo editorial do agente também é persistido no banco — na primeira subida, textos antigos em data/agent/*.md são importados automaticamente."
+          description="Identidade e limites da marca ficam no banco (SQLite). O conteúdo editorial do agente também é persistido no banco — só muda quando você salva explicitamente."
         />
 
         <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">

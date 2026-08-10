@@ -77,9 +77,11 @@ test("GET reply persona returns default when empty", async () => {
     const body = (await response.json()) as {
       response_language: string;
       max_chars: number;
+      updated_at: string | null;
     };
     assert.equal(body.response_language, "pt-BR");
     assert.equal(body.max_chars, 500);
+    assert.equal(body.updated_at, null);
   });
 });
 
@@ -252,7 +254,7 @@ test("agent cannot update llm settings", async () => {
   });
 });
 
-test("GET agent content returns defaults", async () => {
+test("GET agent content returns defaults without persisting", async () => {
   await withSettingsServer(async ({ baseUrl, adminCookie }) => {
     const response = await fetch(`${baseUrl}/api/settings/agent-content`, {
       headers: { Cookie: adminCookie },
@@ -263,11 +265,13 @@ test("GET agent content returns defaults", async () => {
       page: string;
       knowledge: string;
       restrictions: string;
+      updated_at: string | null;
     };
     assert.ok(body.soul.length > 0);
     assert.ok(body.page.length > 0);
     assert.ok(typeof body.knowledge === "string");
     assert.ok(body.restrictions.length > 0);
+    assert.equal(body.updated_at, null);
   });
 });
 

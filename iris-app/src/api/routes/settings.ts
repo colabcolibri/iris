@@ -98,8 +98,17 @@ export async function handleSettingsRoute(request: RouteRequest): Promise<boolea
   }
 
   if (req.method === "GET") {
-    const persona = ctx.replyPersonaStore.get() ?? defaultReplyPersona();
-    sendJson(res, 200, serializePersona(persona));
+    const stored = ctx.replyPersonaStore.get();
+    if (stored) {
+      sendJson(res, 200, serializePersona(stored));
+      return true;
+    }
+
+    const defaults = defaultReplyPersona();
+    sendJson(res, 200, {
+      ...serializePersona(defaults),
+      updated_at: null,
+    });
     return true;
   }
 

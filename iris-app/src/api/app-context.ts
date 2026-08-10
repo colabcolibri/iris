@@ -24,7 +24,6 @@ import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-re
 import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connection-repository.ts";
 import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-event-repository.ts";
 import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
-import { resolveAgentContentDir } from "../adapters/fs/agent-content-store.ts";
 import { createSqliteAgentContentStore } from "../adapters/sqlite/agent-content-repository.ts";
 import { createSqliteAgentRunStepRepository } from "../adapters/sqlite/agent-run-step-repository.ts";
 import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
@@ -221,9 +220,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
   const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
-  const agentContentStore = createSqliteAgentContentStore(options.db, {
-    fsImportDir: resolveAgentContentDir(APP_ROOT),
-  });
+  const agentContentStore = createSqliteAgentContentStore(options.db);
   const agentRunSteps = createSqliteAgentRunStepRepository(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
