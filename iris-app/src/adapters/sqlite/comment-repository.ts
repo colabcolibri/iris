@@ -21,6 +21,13 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
   const listByPostId = db.prepare(`
     SELECT * FROM comments WHERE post_id = ? ORDER BY datetime(created_at) ASC
   `);
+  const countByPostIdStmt = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending
+    FROM comments
+    WHERE post_id = ?
+  `);
 
   const markRepliedStmt = db.prepare(`
     UPDATE comments
@@ -109,6 +116,16 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
     listByPostId(postId) {
       return listByPostId.all(postId).map((row) => mapCommentRow(row as never));
+    },
+
+    countByPostId(postId) {
+      const row = countByPostIdStmt.get(postId) as
+        | { total: number | string; pending: number | string | null }
+        | undefined;
+      return {
+        total: Number(row?.total ?? 0),
+        pending: Number(row?.pending ?? 0),
+      };
     },
 
     listSentRepliesByPostId(postId) {

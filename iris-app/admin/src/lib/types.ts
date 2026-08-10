@@ -23,12 +23,33 @@ export type Asset = {
 
 export type Comment = {
   id: string;
+  ig_comment_id?: string;
   text: string;
   status: string;
   author_username?: string;
   parent_ig_comment_id?: string | null;
   created_at: string;
   error_message?: string | null;
+};
+
+export type CommentPostSummary = {
+  post_id: string;
+  caption: string | null;
+  published_at: string | null;
+  ig_media_id: string;
+  comments_count: number;
+  pending_count: number;
+};
+
+export type SyncPostCommentsResult = {
+  post_id: string;
+  ig_media_id: string;
+  synced_at: string;
+  reported_comments_count: number;
+  comments_fetched: number;
+  access_limited: boolean;
+  warning: string | null;
+  comments: Comment[];
 };
 
 export type CommentsInboxMedia = {
@@ -49,6 +70,7 @@ export type CommentsInboxMedia = {
 };
 
 export type CommentsInbox = {
+  source?: "local" | "meta";
   synced_at: string;
   days: number;
   summary?: {

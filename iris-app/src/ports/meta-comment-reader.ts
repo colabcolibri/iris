@@ -14,6 +14,15 @@ export type RemoteMediaWithComments = {
   comments: RemoteComment[];
 };
 
+export type ListRecentMediaOptions = {
+  igMediaId?: string;
+  /** Quando informado, busca só esses posts (evita varrer /me/media). */
+  igMediaIds?: string[];
+};
+
 export type MetaCommentReader = {
-  listRecentMediaWithComments(since: Date): Promise<RemoteMediaWithComments[]>;
+  listRecentMediaWithComments(
+    since: Date,
+    options?: ListRecentMediaOptions,
+  ): Promise<RemoteMediaWithComments[]>;
 };

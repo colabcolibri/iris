@@ -2,10 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-test("comments page includes inbox sync UI", () => {
+test("comments page includes post-centric sync UI", () => {
   const page = readFileSync("admin/src/pages/comments-page.tsx", "utf8");
-  assert.match(page, /fetchCommentsInbox/);
-  assert.match(page, /Últimos 30 dias/);
+  assert.match(page, /fetchCommentPosts/);
+  assert.match(page, /syncPostComments/);
+  assert.match(page, /Sincronizar este post/);
   assert.match(page, /comment\.depth/);
 });
 

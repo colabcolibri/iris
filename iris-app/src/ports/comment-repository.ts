@@ -28,6 +28,7 @@ export type CommentRepository = {
   upsertFromWebhook(input: UpsertCommentInput): { comment: Comment; created: boolean };
   findByIgCommentId(igCommentId: string): Comment | null;
   listByPostId(postId: string): Comment[];
+  countByPostId(postId: string): { total: number; pending: number };
   listSentRepliesByPostId(postId: string): SentCommentReply[];
   listPendingForAutoReply(): PendingAutoReplyComment[];
   findById(id: string): Comment | null;

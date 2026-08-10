@@ -108,11 +108,74 @@ export function createGraphApiCommentReader(
     return flattened;
   }
 
+  async function fetchMediaWithComments(
+    media: GraphMedia,
+    token: string,
+  ): Promise<RemoteMediaWithComments | null> {
+    if (!media.id) {
+      return null;
+    }
+
+    const commentsUrl = new URL(`${base}/${media.id}/comments`);
+    commentsUrl.searchParams.set("fields", COMMENT_FIELDS);
+    commentsUrl.searchParams.set("access_token", token);
+
+    const commentItems = await fetchAllPages<GraphComment>(commentsUrl.toString());
+    const comments = flattenComments(commentItems);
+
+    return {
+      igMediaId: media.id,
+      caption: media.caption ?? null,
+      timestamp: media.timestamp ?? new Date().toISOString(),
+      reportedCommentsCount: Number(media.comments_count ?? 0),
+      comments,
+    };
+  }
+
   return {
-    async listRecentMediaWithComments(since: Date): Promise<RemoteMediaWithComments[]> {
+    async listRecentMediaWithComments(
+      since: Date,
+      options?: { igMediaId?: string },
+    ): Promise<RemoteMediaWithComments[]> {
       const token = deps.metaTokenStore.getActiveToken();
       if (!token) {
         throw new Error("Meta access token not configured");
+      }
+
+      if (options?.igMediaId) {
+        const mediaUrl = new URL(`${base}/${options.igMediaId}`);
+        mediaUrl.searchParams.set("fields", MEDIA_FIELDS);
+        mediaUrl.searchParams.set("access_token", token);
+
+        const media = await fetchGraph<GraphMedia>(mediaUrl.toString());
+        if (Number(media.comments_count ?? 0) === 0) {
+          return [];
+        }
+
+        const result = await fetchMediaWithComments(media, token);
+        return result ? [result] : [];
+      }
+
+      if (options?.igMediaIds?.length) {
+        const results: RemoteMediaWithComments[] = [];
+
+        for (const mediaId of options.igMediaIds) {
+          const mediaUrl = new URL(`${base}/${mediaId}`);
+          mediaUrl.searchParams.set("fields", MEDIA_FIELDS);
+          mediaUrl.searchParams.set("access_token", token);
+
+          const media = await fetchGraph<GraphMedia>(mediaUrl.toString());
+          if (Number(media.comments_count ?? 0) === 0) {
+            continue;
+          }
+
+          const result = await fetchMediaWithComments(media, token);
+          if (result) {
+            results.push(result);
+          }
+        }
+
+        return results;
       }
 
       const igUserId = deps.config.resolveIgUserId();
@@ -131,30 +194,20 @@ export function createGraphApiCommentReader(
           return false;
         }
 
+        if (Number(item.comments_count ?? 0) === 0) {
+          return false;
+        }
+
         return Date.parse(item.timestamp) >= sinceMs;
       });
 
       const results: RemoteMediaWithComments[] = [];
 
       for (const media of recentMedia) {
-        if (!media.id) {
-          continue;
+        const result = await fetchMediaWithComments(media, token);
+        if (result) {
+          results.push(result);
         }
-
-        const commentsUrl = new URL(`${base}/${media.id}/comments`);
-        commentsUrl.searchParams.set("fields", COMMENT_FIELDS);
-        commentsUrl.searchParams.set("access_token", token);
-
-        const commentItems = await fetchAllPages<GraphComment>(commentsUrl.toString());
-        const comments = flattenComments(commentItems);
-
-        results.push({
-          igMediaId: media.id,
-          caption: media.caption ?? null,
-          timestamp: media.timestamp ?? new Date().toISOString(),
-          reportedCommentsCount: Number(media.comments_count ?? 0),
-          comments,
-        });
       }
 
       return results;

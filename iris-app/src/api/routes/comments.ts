@@ -12,7 +12,9 @@ import {
 import { serializeComment } from "../../adapters/sqlite/mappers.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { buildReplyInspection } from "../../domain/reply-context/build-reply-inspection.ts";
-import { buildCommentsInbox } from "../../domain/comments/build-comments-inbox.ts";
+import { buildCommentsInbox, buildLocalCommentsInbox } from "../../domain/comments/build-comments-inbox.ts";
+import { listCommentPosts } from "../../domain/comments/list-comment-posts.ts";
+import { syncPostComments } from "../../domain/comments/sync-post-comments.ts";
 import {
   getMetaReadiness,
   metaReadinessMessage,
@@ -33,6 +35,38 @@ export async function handleCommentsRoute(
   const { req, res, ctx, auth } = request;
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
 
+  if (pathname === "/api/comments/posts" && req.method === "GET") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const posts = listCommentPosts({
+      listPublishedPosts: () =>
+        ctx.posts
+          .list({ calendarOnly: true, status: "published" })
+          .map((post) => ({
+            id: post.id,
+            caption: post.caption,
+            publishedAt: post.publishedAt,
+            igMediaId: post.igMediaId,
+          })),
+      countCommentsByPostId: (postId) => ctx.comments.countByPostId(postId),
+    });
+
+    sendJson(res, 200, {
+      posts: posts.map((post) => ({
+        post_id: post.postId,
+        caption: post.caption,
+        published_at: post.publishedAt,
+        ig_media_id: post.igMediaId,
+        comments_count: post.commentsCount,
+        pending_count: post.pendingCount,
+      })),
+    });
+    return true;
+  }
+
   if (pathname === "/api/comments/inbox" && req.method === "GET") {
     if (!requireAdmin(auth)) {
       sendError(res, 403, "admin token required");
@@ -48,16 +82,64 @@ export async function handleCommentsRoute(
     const url = new URL(req.url ?? "/", "http://localhost");
     const daysRaw = Number(url.searchParams.get("days") ?? "30");
     const days = Number.isFinite(daysRaw) ? Math.min(Math.max(daysRaw, 1), 90) : 30;
+    const sourceParam = url.searchParams.get("source")?.trim().toLowerCase();
+    const source = sourceParam === "meta" ? "meta" : "local";
+    const scopeParam = url.searchParams.get("scope")?.trim().toLowerCase();
+    const scope = scopeParam === "all" ? "all" : "iris";
+    const igMediaIdParam = url.searchParams.get("ig_media_id")?.trim() || undefined;
+    const postIdParam = url.searchParams.get("post_id")?.trim() || undefined;
+
+    let igMediaId = igMediaIdParam;
+    if (!igMediaId && postIdParam) {
+      const post = ctx.posts.findById(postIdParam);
+      if (!post) {
+        sendError(res, 404, "post not found");
+        return true;
+      }
+      if (!post.igMediaId) {
+        sendError(res, 422, "post has no ig_media_id");
+        return true;
+      }
+      igMediaId = post.igMediaId;
+    }
+
+    const inboxDeps = {
+      metaCommentReader: ctx.metaCommentReader,
+      findPostIdByIgMediaId: (mediaId: string) => ctx.posts.findByIgMediaId(mediaId)?.id ?? null,
+      listIrisPostsSince: (since: Date) =>
+        ctx.posts
+          .list({ from: since.toISOString(), calendarOnly: true })
+          .filter((post) => post.igMediaId && post.status === "published")
+          .map((post) => ({
+            id: post.id,
+            igMediaId: post.igMediaId!,
+            caption: post.caption,
+            publishedAt: post.publishedAt,
+            scheduledAt: post.scheduledAt,
+          })),
+      listCommentsByPostId: (postId: string) =>
+        ctx.comments.listByPostId(postId).map((comment) => ({
+          id: comment.id,
+          igCommentId: comment.igCommentId,
+          parentIgCommentId: comment.parentIgCommentId,
+          authorUsername: comment.authorUsername,
+          text: comment.text,
+          status: comment.status,
+          createdAt: comment.createdAt,
+        })),
+      upsertFromWebhook: (input: Parameters<typeof ctx.comments.upsertFromWebhook>[0]) =>
+        ctx.comments.upsertFromWebhook(input),
+      findByIgCommentId: (igCommentId: string) => ctx.comments.findByIgCommentId(igCommentId),
+    };
 
     try {
-      const inbox = await buildCommentsInbox(days, {
-        metaCommentReader: ctx.metaCommentReader,
-        findPostIdByIgMediaId: (igMediaId) => ctx.posts.findByIgMediaId(igMediaId)?.id ?? null,
-        upsertFromWebhook: (input) => ctx.comments.upsertFromWebhook(input),
-        findByIgCommentId: (igCommentId) => ctx.comments.findByIgCommentId(igCommentId),
-      });
+      const inbox =
+        source === "local"
+          ? buildLocalCommentsInbox(days, inboxDeps, { igMediaId })
+          : await buildCommentsInbox(days, inboxDeps, { igMediaId, scope });
 
       sendJson(res, 200, {
+        source: inbox.source,
         synced_at: inbox.syncedAt,
         days: inbox.days,
         summary: inbox.summary,
@@ -77,6 +159,60 @@ export async function handleCommentsRoute(
             status: comment.status,
           })),
         })),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "failed to sync comments";
+      sendError(res, 502, message);
+    }
+
+    return true;
+  }
+
+  const syncMatch = /^\/api\/posts\/([^/]+)\/comments\/sync$/.exec(pathname);
+  if (syncMatch && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    const postId = syncMatch[1];
+    const post = ctx.posts.findById(postId);
+    if (!post) {
+      sendError(res, 404, "post not found");
+      return true;
+    }
+
+    if (!post.igMediaId) {
+      sendError(res, 422, "post has no ig_media_id");
+      return true;
+    }
+
+    const readiness = getMetaReadiness(ctx);
+    if (!readiness.ready) {
+      sendError(res, 503, metaReadinessMessage(readiness));
+      return true;
+    }
+
+    try {
+      const result = await syncPostComments(
+        { postId, igMediaId: post.igMediaId },
+        {
+          metaCommentReader: ctx.metaCommentReader,
+          upsertFromWebhook: (input) => ctx.comments.upsertFromWebhook(input),
+        },
+      );
+
+      notifyCommentsChanged({ post_id: postId });
+
+      sendJson(res, 200, {
+        post_id: result.postId,
+        ig_media_id: result.igMediaId,
+        synced_at: result.syncedAt,
+        reported_comments_count: result.reportedCommentsCount,
+        comments_fetched: result.commentsFetched,
+        access_limited: result.accessLimited,
+        warning: result.warning,
+        comments: result.comments.map(serializeComment),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "failed to sync comments";

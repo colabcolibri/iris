@@ -199,6 +199,90 @@ test("meta webhook POST persists parent_id and re-upsert updates parent", async 
   });
 });
 
+test("GET comments posts returns published posts with counts", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post comentários",
+    });
+    ctx.posts.update(post.id, {
+      igMediaId: "media-comments",
+      publishedAt: new Date().toISOString(),
+    });
+    ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-post-1",
+      postId: post.id,
+      text: "oi",
+    });
+
+    const response = await fetch(`${baseUrl}/api/comments/posts`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      posts: Array<{ post_id: string; comments_count: number }>;
+    };
+
+    assert.equal(body.posts.length, 1);
+    assert.equal(body.posts[0]?.post_id, post.id);
+    assert.equal(body.posts[0]?.comments_count, 1);
+  });
+});
+
+test("POST comments sync upserts comments for one post", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post sync",
+    });
+    ctx.posts.update(post.id, { igMediaId: "media-sync-post" });
+
+    ctx.metaCommentReader = {
+      async listRecentMediaWithComments(_since, options) {
+        if (options?.igMediaId === "media-sync-post") {
+          return [
+            {
+              igMediaId: "media-sync-post",
+              caption: "Post sync",
+              timestamp: new Date().toISOString(),
+              reportedCommentsCount: 1,
+              comments: [
+                {
+                  igCommentId: "ig-sync-post-1",
+                  parentIgCommentId: null,
+                  authorUsername: "fan",
+                  text: "sync por post",
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            },
+          ];
+        }
+
+        return [];
+      },
+    };
+
+    const response = await fetch(`${baseUrl}/api/posts/${post.id}/comments/sync`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      comments_fetched: number;
+      comments: Array<{ text: string }>;
+    };
+
+    assert.equal(body.comments_fetched, 1);
+    assert.equal(body.comments[0]?.text, "sync por post");
+    assert.equal(ctx.comments.listByPostId(post.id).length, 1);
+  });
+});
+
 test("GET comments inbox returns synced media", async () => {
   await withServer(async (baseUrl, ctx) => {
     const post = ctx.posts.create({
@@ -230,7 +314,7 @@ test("GET comments inbox returns synced media", async () => {
       },
     };
 
-    const response = await fetch(`${baseUrl}/api/comments/inbox?days=30`, {
+    const response = await fetch(`${baseUrl}/api/comments/inbox?days=30&source=meta`, {
       headers: { Authorization: `Bearer ${ADMIN}` },
     });
 
@@ -246,6 +330,50 @@ test("GET comments inbox returns synced media", async () => {
     assert.equal(body.media[0]?.post_id, post.id);
     assert.equal(body.media[0]?.comments[0]?.text, "comentário inbox");
     assert.ok(body.media[0]?.comments[0]?.iris_comment_id);
+  });
+});
+
+test("GET comments inbox filters by ig_media_id", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.metaCommentReader = {
+      async listRecentMediaWithComments(_since, options) {
+        if (options?.igMediaId === "media-only") {
+          return [
+            {
+              igMediaId: "media-only",
+              caption: "Post filtrado",
+              timestamp: new Date().toISOString(),
+              reportedCommentsCount: 1,
+              comments: [
+                {
+                  igCommentId: "ig-only-1",
+                  parentIgCommentId: null,
+                  authorUsername: "fan",
+                  text: "comentário único",
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            },
+          ];
+        }
+
+        return [];
+      },
+    };
+
+    const response = await fetch(
+      `${baseUrl}/api/comments/inbox?ig_media_id=media-only&source=meta`,
+      {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      media: Array<{ ig_media_id: string; comments: Array<{ text: string }> }>;
+    };
+
+    assert.equal(body.media.length, 1);
+    assert.equal(body.media[0]?.comments[0]?.text, "comentário único");
   });
 });
 

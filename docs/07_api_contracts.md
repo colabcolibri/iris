@@ -181,7 +181,9 @@ Regra: post só pode ir para `scheduled` se tiver ≥ 1 asset.
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/posts/:id/comments` | admin, agent | Comments for post (`parent_ig_comment_id` nullable) |
 | GET | `/api/posts/:id/reply-inspection` | admin | Post context + comment threads for supervision (`thread[].depth`) |
-| GET | `/api/comments/inbox?days=30` | admin | Sync comments from Instagram for last N days (1–90); upserts Iris posts |
+| GET | `/api/comments/posts` | admin | Published Iris posts with local `comments_count` / `pending_count` (no Meta call) |
+| POST | `/api/posts/:id/comments/sync` | admin | Sync comments from Meta for one post (`ig_media_id` required); upserts SQLite |
+| GET | `/api/comments/inbox?days=30` | admin | **Legacy** — inbox sync; prefer per-post sync above |
 | POST | `/api/comments/:id/reply` | admin | Manual reply → Meta |
 
 ## Meta (Instagram connection)

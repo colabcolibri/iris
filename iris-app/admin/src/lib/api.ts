@@ -89,6 +89,17 @@ export function uploadAsset(postId: string, file: File, sortOrder: number) {
   });
 }
 
+export async function fetchCommentPosts() {
+  const payload = await apiFetch<{ posts: CommentPostSummary[] }>("/api/comments/posts");
+  return payload.posts ?? [];
+}
+
+export function syncPostComments(postId: string) {
+  return apiFetch<SyncPostCommentsResult>(`/api/posts/${postId}/comments/sync`, {
+    method: "POST",
+  });
+}
+
 export async function fetchComments(postId: string) {
   const payload = await apiFetch<{ comments: Comment[] }>(`/api/posts/${postId}/comments`);
   return payload.comments ?? [];
@@ -98,8 +109,28 @@ export function fetchReplyInspection(postId: string) {
   return apiFetch<ReplyInspection>(`/api/posts/${postId}/reply-inspection`);
 }
 
-export function fetchCommentsInbox(days = 30) {
-  return apiFetch<CommentsInbox>(`/api/comments/inbox?days=${days}`);
+export function fetchCommentsInbox(
+  options: {
+    days?: number;
+    igMediaId?: string;
+    postId?: string;
+    source?: "local" | "meta";
+    scope?: "iris" | "all";
+  } = {},
+) {
+  const params = new URLSearchParams();
+  params.set("days", String(options.days ?? 30));
+  params.set("source", options.source ?? "local");
+  if (options.source === "meta") {
+    params.set("scope", options.scope ?? "iris");
+  }
+  if (options.igMediaId) {
+    params.set("ig_media_id", options.igMediaId);
+  }
+  if (options.postId) {
+    params.set("post_id", options.postId);
+  }
+  return apiFetch<CommentsInbox>(`/api/comments/inbox?${params.toString()}`);
 }
 
 export function replyToComment(commentId: string, message: string) {

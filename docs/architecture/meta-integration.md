@@ -26,7 +26,8 @@
 - On event: extract `media_id`, `comment_id`, `text`, `username`, `parent_id`
 - Match `posts.ig_media_id` → link `comments.post_id`
 - Reply: `POST /{comment-id}/replies?message=...`
-- Inbox sync: `GET /api/comments/inbox?days=30` pulls media + comments from Graph API (`/{ig-user-id}/media`, `/{media-id}/comments`) and upserts into SQLite when the media matches an Iris post
+- Per-post sync: `POST /api/posts/:id/comments/sync` pulls comments for one `ig_media_id` and upserts into SQLite
+- Legacy inbox sync: `GET /api/comments/inbox` — avoid for routine use; prefer per-post sync or webhook ingest
 
 ## Webhook verification
 
