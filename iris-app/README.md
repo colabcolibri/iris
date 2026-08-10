@@ -1,6 +1,21 @@
 # Iris app
 
-Mini-server Node do produto Iris. O workspace Meridian (docs, backlog) fica na raiz do repositório.
+Pacote principal do **Iris** — API HTTP, admin React, workers e persistência SQLite.
+
+Documentação de produto e arquitetura: [`../docs/`](../docs/).  
+README do repositório: [`../README.md`](../README.md).
+
+## Scripts
+
+| Comando | Descrição |
+| ------- | --------- |
+| `pnpm dev` | Servidor único em `http://127.0.0.1:8792` (API + UI + HMR) |
+| `pnpm build:admin` | Build do admin → `public/` |
+| `pnpm start` | Produção (`NODE_ENV=production`) |
+| `pnpm test` | Testes Node (`src/` + `test/`) |
+| `pnpm typecheck` | TypeScript |
+
+## Configuração
 
 ```bash
 cp .env.example .env
@@ -8,20 +23,28 @@ pnpm install
 pnpm dev
 ```
 
-Abra **http://127.0.0.1:8792** — um único servidor com API, UI e hot reload (Vite embutido em dev).
+- **Dev:** email via SMTP/Mailpit (default quando `NODE_ENV !== production`)
+- **Prod:** `IRIS_EMAIL_PROVIDER=resend` — ver [`.env.railway.example`](.env.railway.example) para lista de variáveis (somente placeholders)
 
-**Produção local:** `pnpm build:admin` e `NODE_ENV=production pnpm start`.
+Login em `/login` com o email em `IRIS_ADMIN_EMAIL`.
 
-**Railway (monorepo):** deploy na **raiz do repositório** — `Dockerfile` + `railway.toml` na raiz constroem `iris-app/`. Monte volume em `/app/data`. Variáveis: ver `.env.railway.example` (somente placeholders; valores reais só no painel Railway).
+## Estrutura
 
-O diretório `public/` contém só o output do Vite + assets estáticos (`admin/public/`). O desk vanilla foi removido.
+```txt
+src/
+  api/           # HTTP server, rotas, auth
+  domain/        # regras de negócio
+  adapters/      # SQLite, Meta, email, …
+  workers/       # publish scheduler, comment responder
+admin/           # UI React (Vite)
+migrations/      # SQL versionado
+public/          # bundle estático (output do Vite)
+```
 
-Login em `/login` com o email configurado em `IRIS_ADMIN_EMAIL`.
+## Deploy (Railway)
 
-**Dev (email):** suba o Mailpit (`mailpit` — SMTP `:1025`, UI `:8025`) e rode `pnpm dev`. Em dev o provider default é `smtp`; os OTP aparecem no Mailpit.
+Deploy na **raiz do monorepo** — `../Dockerfile` + `../railway.toml`. Volume em `/app/data`.
 
 ## Agente local
 
-O agente **não** fica neste pacote. Use o workspace portável **`../iris-agent/`** (kit Meridian + `publications/` + credenciais). Ver `../iris-agent/README.md`.
-
-Ver `../docs/` para arquitetura, API e backlog.
+O agente não vive neste pacote. Use [`../iris-agent/`](../iris-agent/) para `publications/` e push via API.
