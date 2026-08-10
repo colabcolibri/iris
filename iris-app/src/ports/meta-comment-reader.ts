@@ -32,4 +32,5 @@ export type MetaCommentReader = {
     options?: ListRecentMediaOptions,
   ): Promise<RemoteMediaWithComments[]>;
   fetchMediaMetadata(igMediaId: string): Promise<RemoteMediaMetadata>;
+  findMediaByPermalink(permalink: string): Promise<RemoteMediaMetadata | null>;
 };

@@ -499,5 +499,10 @@ function handleCommentsError(res: ServerResponse, error: unknown): void {
     return;
   }
 
+  if (error instanceof Error && error.message.trim()) {
+    sendError(res, 502, error.message);
+    return;
+  }
+
   sendError(res, 500, "internal server error");
 }

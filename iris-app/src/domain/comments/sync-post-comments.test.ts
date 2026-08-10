@@ -101,6 +101,9 @@ test("syncPostComments upserts remote comments for one post", async () => {
             timestamp: new Date().toISOString(),
           };
         },
+        async findMediaByPermalink() {
+          return null;
+        },
       },
       upsertFromWebhook: (input) => ({
         comment: {

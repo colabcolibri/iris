@@ -33,6 +33,9 @@ test("registerMonitoredPost creates monitored post from ig_media_id", async () =
               timestamp: "2026-08-10T10:00:00.000Z",
             };
           },
+          async findMediaByPermalink() {
+            return null;
+          },
         },
       },
     );

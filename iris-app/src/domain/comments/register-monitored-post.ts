@@ -2,6 +2,7 @@ import type { Post } from "../post.ts";
 import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
 import type { PostRepository } from "../../ports/post-repository.ts";
 import { parseInstagramMediaInput } from "./parse-instagram-media-input.ts";
+import { resolveMonitoredPostMedia } from "./resolve-monitored-post-media.ts";
 import { ValidationError } from "../../api/json.ts";
 
 export type RegisterMonitoredPostInput = {
@@ -18,7 +19,9 @@ export async function registerMonitoredPost(
   input: RegisterMonitoredPostInput,
   deps: RegisterMonitoredPostDeps,
 ): Promise<Post> {
-  const { igMediaId } = parseInstagramMediaInput(input);
+  const parsed = parseInstagramMediaInput(input);
+  const metadata = await resolveMonitoredPostMedia(parsed, deps.metaCommentReader);
+  const igMediaId = metadata.igMediaId;
   const existing = deps.posts.findByIgMediaId(igMediaId);
 
   if (existing) {
@@ -34,8 +37,6 @@ export async function registerMonitoredPost(
       "post with this ig_media_id already exists with a different status",
     );
   }
-
-  const metadata = await deps.metaCommentReader.fetchMediaMetadata(igMediaId);
 
   return deps.posts.create({
     channel: "instagram",

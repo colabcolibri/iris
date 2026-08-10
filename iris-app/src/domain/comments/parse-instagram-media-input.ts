@@ -1,51 +1,29 @@
 import { ValidationError } from "../../api/json.ts";
 
 export type ParsedInstagramMediaInput = {
-  igMediaId: string;
+  igMediaId: string | null;
+  permalink: string | null;
 };
 
-const SHORTCODE_ALPHABET =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+const PERMALINK_PATH_PREFIXES = new Set(["p", "reel", "reels", "tv"]);
 
-const SHORTCODE_PATH_PREFIXES = new Set(["p", "reel", "reels", "tv"]);
-
-export function instagramShortcodeToMediaId(shortcode: string): string {
-  const normalized = shortcode.trim();
-  if (!normalized) {
-    throw new ValidationError("Instagram shortcode is empty");
-  }
-
-  let id = 0n;
-
-  for (const char of normalized) {
-    const index = SHORTCODE_ALPHABET.indexOf(char);
-    if (index < 0) {
-      throw new ValidationError(`invalid Instagram shortcode: ${normalized}`);
-    }
-
-    id = id * 64n + BigInt(index);
-  }
-
-  return id.toString();
-}
-
-export function extractInstagramShortcodeFromUrl(url: URL): string | null {
+export function normalizeInstagramPermalink(input: string): string {
+  const url = new URL(input.startsWith("http") ? input : `https://${input}`);
   const segments = url.pathname.split("/").filter(Boolean);
+
   if (segments.length < 2) {
-    return null;
+    throw new ValidationError("permalink must include an Instagram post or reel path");
   }
 
   const prefix = segments[0]?.toLowerCase();
-  if (!prefix || !SHORTCODE_PATH_PREFIXES.has(prefix)) {
-    return null;
+  const shortcode = segments[1]?.trim();
+
+  if (!prefix || !shortcode || !PERMALINK_PATH_PREFIXES.has(prefix)) {
+    throw new ValidationError("permalink must be a valid Instagram post/reel URL");
   }
 
-  const shortcode = segments[1]?.split("?")[0]?.trim();
-  if (!shortcode || /^\d+$/.test(shortcode)) {
-    return null;
-  }
-
-  return shortcode;
+  const normalizedPrefix = prefix === "reels" ? "reel" : prefix;
+  return `https://www.instagram.com/${normalizedPrefix}/${shortcode}/`;
 }
 
 export function parseInstagramMediaInput(input: {
@@ -62,7 +40,7 @@ export function parseInstagramMediaInput(input: {
       throw new ValidationError("ig_media_id must be a numeric Meta media id");
     }
 
-    return { igMediaId: rawId };
+    return { igMediaId: rawId, permalink: null };
   }
 
   if (!rawPermalink) {
@@ -71,35 +49,11 @@ export function parseInstagramMediaInput(input: {
 
   const directNumeric = rawPermalink.replace(/\s+/g, "");
   if (/^\d{5,}$/.test(directNumeric)) {
-    return { igMediaId: directNumeric };
+    return { igMediaId: directNumeric, permalink: null };
   }
 
-  try {
-    const url = new URL(
-      rawPermalink.startsWith("http")
-        ? rawPermalink
-        : `https://${rawPermalink}`,
-    );
-
-    const numericSegment = url.pathname
-      .split("/")
-      .find((segment) => /^\d{5,}$/.test(segment));
-    if (numericSegment) {
-      return { igMediaId: numericSegment };
-    }
-
-    const shortcode = extractInstagramShortcodeFromUrl(url);
-    if (shortcode) {
-      return { igMediaId: instagramShortcodeToMediaId(shortcode) };
-    }
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error;
-    }
-    // fall through to validation error
-  }
-
-  throw new ValidationError(
-    "permalink must be a valid Instagram post/reel URL, or pass ig_media_id directly",
-  );
+  return {
+    igMediaId: null,
+    permalink: normalizeInstagramPermalink(rawPermalink),
+  };
 }

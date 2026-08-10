@@ -4,6 +4,7 @@ import type {
   RemoteComment,
   RemoteMediaWithComments,
 } from "../../ports/meta-comment-reader.ts";
+import { normalizeInstagramPermalink } from "../../domain/comments/parse-instagram-media-input.ts";
 
 export type GraphApiCommentReaderConfig = {
   resolveIgUserId: () => string | null;
@@ -27,6 +28,7 @@ type GraphMedia = {
   caption?: string;
   timestamp?: string;
   comments_count?: number;
+  permalink?: string;
 };
 
 type GraphComment = {
@@ -40,6 +42,7 @@ type GraphComment = {
 };
 
 const MEDIA_FIELDS = "id,caption,timestamp,comments_count";
+const MEDIA_LOOKUP_FIELDS = "id,caption,timestamp,permalink";
 const COMMENT_FIELDS =
   "id,text,from{username},timestamp,parent_id,replies{id,text,from{username},timestamp,parent_id}";
 
@@ -233,6 +236,45 @@ export function createGraphApiCommentReader(
         caption: media.caption ?? null,
         timestamp: media.timestamp ?? null,
       };
+    },
+
+    async findMediaByPermalink(permalink: string) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
+      }
+
+      const igUserId = deps.config.resolveIgUserId();
+      if (!igUserId) {
+        throw new Error("IG user id not configured");
+      }
+
+      const target = normalizeInstagramPermalink(permalink);
+      const mediaUrl = new URL(`${base}/${igUserId}/media`);
+      mediaUrl.searchParams.set("fields", MEDIA_LOOKUP_FIELDS);
+      mediaUrl.searchParams.set("access_token", token);
+
+      const mediaItems = await fetchAllPages<GraphMedia>(mediaUrl.toString());
+
+      for (const media of mediaItems) {
+        if (!media.id || !media.permalink) {
+          continue;
+        }
+
+        try {
+          if (normalizeInstagramPermalink(media.permalink) === target) {
+            return {
+              igMediaId: media.id,
+              caption: media.caption ?? null,
+              timestamp: media.timestamp ?? null,
+            };
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      return null;
     },
   };
 }
