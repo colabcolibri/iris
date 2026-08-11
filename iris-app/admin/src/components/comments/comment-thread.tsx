@@ -547,7 +547,6 @@ type CommentRootExtrasProps = {
   onRemoveDraft: (commentId: string) => void;
   onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
   group: CommentThreadGroup;
-  auditState: ReturnType<typeof useReplyAudit>;
 };
 
 function CommentRootExtras({
@@ -561,19 +560,16 @@ function CommentRootExtras({
   onRemoveDraft,
   onSaveDraft,
   group,
-  auditState,
 }: CommentRootExtrasProps) {
   const handle = formatHandle(comment.author_username);
   const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
   const linkedReplyTarget = replyToHandle(comment.reply_to_ig_comment_id, byIgId, handle);
   const brandHandle = formatHandle(brandUsername ?? "marca");
-  const showAudit = shouldShowReplyAudit(comment);
 
   const hasExtras =
     Boolean(comment.draft_text) ||
     Boolean(comment.error_message) ||
-    showLinkedReply ||
-    (showAudit && auditState.open);
+    showLinkedReply;
 
   if (!hasExtras) {
     return null;
@@ -616,8 +612,6 @@ function CommentRootExtras({
           </div>
         </div>
       ) : null}
-
-      {showAudit ? <ReplyAuditPanel {...auditState} /> : null}
     </div>
   );
 }
@@ -844,6 +838,12 @@ function ThreadAccordionItem({
         onGenerateDraft={onGenerateDraft}
       />
 
+      {showAudit && auditState.open ? (
+        <div className="border-b border-border/40 bg-muted/10 px-4 py-3">
+          <ReplyAuditPanel {...auditState} className="border-0 bg-transparent p-0 shadow-none" />
+        </div>
+      ) : null}
+
       <AppAccordion.Content className="space-y-4 border-t border-border/50 bg-muted/15 px-4 pb-4 pt-4">
         <CommentRootExtras
           comment={root}
@@ -856,7 +856,6 @@ function ThreadAccordionItem({
           onRemoveDraft={onRemoveDraft}
           onSaveDraft={onSaveDraft}
           group={group}
-          auditState={auditState}
         />
 
         <div className="space-y-3">

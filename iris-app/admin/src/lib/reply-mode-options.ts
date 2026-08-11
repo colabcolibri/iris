@@ -39,8 +39,8 @@ export const POST_REPLY_MODE_OPTIONS: ReplyModeOption<PostReplyModeSetting>[] = 
   },
   {
     value: "off",
-    label: "Desligado neste post",
-    description: "A Iris não responde comentários desta publicação.",
+    label: "Pausar nesta publicação",
+    description: "A Iris não responde comentários desta publicação (o modo global continua igual).",
     icon: BotOff,
   },
   {

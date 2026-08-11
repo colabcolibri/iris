@@ -28,6 +28,8 @@ export const commentsInboxRouter = createRouter([
             publishedAt: post.publishedAt,
             igMediaId: post.igMediaId,
             status: post.status,
+            replyMode: post.replyMode,
+            autoReplyEnabled: post.autoReplyEnabled,
           })),
       countCommentsByPostId: (postId) => match.ctx.comments.countByPostId(postId),
     });
@@ -59,6 +61,8 @@ export const commentsInboxRouter = createRouter([
             ig_media_id: post.igMediaId,
             status: post.status,
             is_external: post.status === "monitored",
+            reply_mode: post.replyMode,
+            auto_reply_enabled: post.autoReplyEnabled,
             comments_count: post.commentsCount,
             pending_count: post.pendingCount,
             preview_filename: firstAsset?.storagePath ?? null,

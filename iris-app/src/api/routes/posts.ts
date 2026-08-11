@@ -14,6 +14,7 @@ import { serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import { generateCarouselSummaryForPost } from "../../domain/carousel-summary/generate-carousel-summary.ts";
 import { publishPostNow } from "../../domain/publish-post.ts";
+import { enqueueSchedulablePendingComments } from "../../domain/comments/enqueue-schedulable-pending-comments.ts";
 
 export const handlePostsRoute = createRouter([
   route("GET", "/api/posts", async (match) => {
@@ -154,6 +155,13 @@ export const handlePostsRoute = createRouter([
         scheduledAt: schedule.scheduledAt,
         errorMessage: clearError ? null : undefined,
       });
+
+      if (
+        update.replyMode !== undefined ||
+        update.autoReplyEnabled !== undefined
+      ) {
+        enqueueSchedulablePendingComments(match.ctx, { postId });
+      }
 
       notifyPostsChanged({ post_id: postId });
       sendJson(match.res, 200, serializePost(updated!));

@@ -14,6 +14,7 @@ type ThreadSortSelectProps = {
   onChange: (value: ThreadSortMode) => void;
   className?: string;
   disabled?: boolean;
+  fullWidth?: boolean;
 };
 
 export function ThreadSortSelect({
@@ -21,6 +22,7 @@ export function ThreadSortSelect({
   onChange,
   className,
   disabled = false,
+  fullWidth = false,
 }: ThreadSortSelectProps) {
   const selected = THREAD_SORT_OPTIONS.find((option) => option.value === value);
 
@@ -33,7 +35,8 @@ export function ThreadSortSelect({
       <SelectTrigger
         size="sm"
         className={cn(
-          "h-8 w-auto max-w-[11.5rem] shrink-0 gap-1.5 border-border/60 bg-muted/40 px-2.5 text-xs shadow-none",
+          "gap-1.5 border-border/60 bg-muted/40 px-2.5 text-xs shadow-none",
+          fullWidth ? "h-9 w-full max-w-none" : "h-8 w-auto max-w-[11.5rem] shrink-0",
           className,
         )}
       >
@@ -42,7 +45,7 @@ export function ThreadSortSelect({
           <span className="truncate">{selected?.label ?? "Ordenar"}</span>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent align="end" className="min-w-[12.5rem]">
+      <SelectContent align={fullWidth ? "start" : "end"} className="min-w-[12.5rem]">
         {THREAD_SORT_OPTIONS.map((option) => (
           <SelectItem key={option.value} value={option.value} className="text-sm">
             {option.label}

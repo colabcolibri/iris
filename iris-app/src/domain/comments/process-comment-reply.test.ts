@@ -45,6 +45,7 @@ test("registerMonitoredPost creates monitored post from ig_media_id", async () =
     assert.equal(post.status, "monitored");
     assert.equal(post.igMediaId, "17841400000000001");
     assert.equal(post.caption, "Post externo");
+    assert.equal(post.replyMode, "inherit");
   } finally {
     db.close();
   }

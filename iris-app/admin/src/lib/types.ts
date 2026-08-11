@@ -56,6 +56,8 @@ export type CommentPostSummary = {
   ig_media_id: string;
   status?: string;
   is_external?: boolean;
+  reply_mode?: PostReplyModeSetting;
+  auto_reply_enabled?: boolean;
   comments_count: number;
   pending_count: number;
   preview_filename?: string | null;

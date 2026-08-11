@@ -45,5 +45,6 @@ export async function registerMonitoredPost(
     igMediaId: metadata.igMediaId,
     publishedAt: metadata.timestamp,
     sourceNote: "monitored externally",
+    replyMode: "inherit",
   });
 }

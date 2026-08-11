@@ -26,13 +26,15 @@ import {
   updateCommentDraft,
   subscribeRealtimeEvents,
   syncPostComments,
+  updatePost,
 } from "@/lib/api";
 import {
   buildCommentThreadGroups,
   sortCommentThreadGroups,
   type ThreadSortMode,
 } from "@/lib/build-comment-tree";
-import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
+import type { Comment, CommentPostSummary, PostInsightsResult, PostReplyModeSetting } from "@/lib/types";
+import { postReplyModeOption } from "@/lib/reply-mode-options";
 import {
   COMMENTS_CACHE_STALE_MS,
   CommentsPostCache,
@@ -95,6 +97,7 @@ export function CommentsPage() {
   const [removingDraftId, setRemovingDraftId] = useState<string | null>(null);
   const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [savingReplyMode, setSavingReplyMode] = useState(false);
   const [threadSort, setThreadSort] = useState<ThreadSortMode>("activity_desc");
   const [liveConnected, setLiveConnected] = useState(true);
   const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
@@ -106,6 +109,17 @@ export function CommentsPage() {
     () => posts.find((post) => post.post_id === selectedPostId) ?? null,
     [posts, selectedPostId],
   );
+
+  const selectedReplyMode = useMemo<PostReplyModeSetting>(() => {
+    if (!selectedPost) {
+      return "inherit";
+    }
+
+    return (
+      selectedPost.reply_mode ??
+      (selectedPost.auto_reply_enabled ? "auto" : "inherit")
+    );
+  }, [selectedPost]);
 
   const filteredPosts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -384,6 +398,38 @@ export function CommentsPage() {
       }
     },
     [comments, confirm, loadComments, selectedPostId],
+  );
+
+  const handleReplyModeChange = useCallback(
+    async (next: PostReplyModeSetting) => {
+      if (!selectedPost) {
+        return;
+      }
+
+      setSavingReplyMode(true);
+      try {
+        await updatePost(selectedPost.post_id, { reply_mode: next });
+        setPosts((current) =>
+          current.map((post) =>
+            post.post_id === selectedPost.post_id
+              ? {
+                  ...post,
+                  reply_mode: next,
+                  auto_reply_enabled: next === "auto" || next === "draft",
+                }
+              : post,
+          ),
+        );
+        toast.success(`Modo deste post: ${postReplyModeOption(next).label.toLowerCase()}.`);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Não foi possível atualizar o modo de resposta.";
+        toast.error(message);
+      } finally {
+        setSavingReplyMode(false);
+      }
+    },
+    [selectedPost],
   );
 
   const handleRemoveDraft = useCallback(
@@ -778,6 +824,9 @@ export function CommentsPage() {
                   handleSaveDraft(commentId, draftText)
                 }
                 onGenerateDraft={(commentId) => void handleGenerateDraft(commentId)}
+                replyMode={selectedReplyMode}
+                savingReplyMode={savingReplyMode}
+                onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
               />
             </section>
           ) : (

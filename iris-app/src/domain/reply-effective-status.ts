@@ -116,10 +116,10 @@ export function replyStatusPresentation(
     case "off":
       return {
         label: `IA desligada${inheritedSuffix}`,
-        shortLabel: status.inherited ? "Off (global)" : "Off",
+        shortLabel: status.inherited ? "Off (global)" : "Pausada",
         hint: status.inherited
           ? "Este post segue o agente desligado nas configurações globais."
-          : undefined,
+          : "A Iris não responde comentários nesta publicação (o modo global não muda).",
       };
   }
 }

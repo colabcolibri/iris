@@ -19,7 +19,6 @@ import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-ed
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { resolveMediaSlides } from "@/hooks/use-post-preview";
 import { formatRelativeTimeAgo, useRelativeTimeTick } from "@/lib/format-relative-time";
 import { formatInsightValue, insightMetricValue } from "@/lib/insights";
@@ -27,6 +26,12 @@ import { cn } from "@/lib/utils";
 import type { CommentThreadGroup, ThreadSortMode } from "@/lib/build-comment-tree";
 import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
 import { ThreadSortSelect } from "@/components/comments/thread-sort-select";
+import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
+import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
+import { Label } from "@/components/ui/label";
+import { useAppSettings } from "@/contexts/app-settings-context";
+import { resolveEffectivePostReplyStatus, replyStatusPresentation } from "@iris/domain/reply-effective-status";
+import type { PostReplyModeSetting } from "@/lib/types";
 
 type PostDetailPanelProps = {
   post: CommentPostSummary;
@@ -53,6 +58,9 @@ type PostDetailPanelProps = {
   onRemoveDraft: (commentId: string) => void;
   onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
   onGenerateDraft: (commentId: string) => void;
+  replyMode: PostReplyModeSetting;
+  savingReplyMode?: boolean;
+  onReplyModeChange: (mode: PostReplyModeSetting) => void;
 };
 
 const STAT_CONFIG: Array<{
@@ -96,7 +104,7 @@ function postTitle(caption: string | null): string {
   return text.replace(/\s+/g, " ");
 }
 
-function InsightStat({
+function InsightMetricCard({
   label,
   value,
   icon: Icon,
@@ -110,33 +118,26 @@ function InsightStat({
   loading: boolean;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <div
-            className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md bg-muted/45 px-2 py-1.5 outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring sm:h-10 sm:px-2.5"
-            tabIndex={0}
-          />
-        }
-      >
+    <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+      <div className="flex items-center gap-2.5">
         <div
           className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-lg sm:size-8",
+            "flex size-9 shrink-0 items-center justify-center rounded-lg",
             accent,
           )}
         >
-          <Icon className="size-3.5 sm:size-4" />
+          <Icon className="size-4" aria-hidden />
         </div>
-        {loading ? (
-          <Skeleton className="h-6 w-10 shrink-0" />
-        ) : (
-          <p className="min-w-0 truncate font-display text-base font-semibold leading-none tabular-nums sm:text-lg">
-            {value === null ? "—" : formatInsightValue(value)}
-          </p>
-        )}
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+        <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">{label}</p>
+      </div>
+      {loading ? (
+        <Skeleton className="h-8 w-20" />
+      ) : (
+        <p className="font-display text-2xl font-semibold leading-none tracking-tight tabular-nums text-foreground sm:text-3xl">
+          {value === null ? "—" : formatInsightValue(value)}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -153,11 +154,115 @@ function LastSyncedLabel({ syncedAt }: { syncedAt: number | null | undefined }) 
 
   return (
     <p
-      className="text-right text-[11px] leading-snug text-muted-foreground"
+      className="text-[11px] leading-snug text-muted-foreground"
       title={new Date(syncedAt).toLocaleString("pt-BR")}
     >
       Última sincronização {relative}
     </p>
+  );
+}
+
+type DetailTab = "performance" | "comments" | "caption" | "config";
+
+function PerformanceTabContent({
+  insightsError,
+  hasInsightsData,
+  metricRows,
+  loadingInsights,
+}: {
+  insightsError: string | null;
+  hasInsightsData: boolean;
+  metricRows: NonNullable<PostInsightsResult["insights"]>;
+  loadingInsights: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {insightsError ? (
+        <div
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm",
+            hasInsightsData
+              ? "border-amber-500/30 bg-amber-500/10 text-amber-950"
+              : "border-destructive/30 bg-destructive/10 text-destructive",
+          )}
+        >
+          <p className="font-medium">
+            {hasInsightsData
+              ? "Algumas métricas não estão disponíveis"
+              : "Não foi possível carregar insights"}
+          </p>
+          <p className="mt-0.5 text-xs opacity-90">{insightsError}</p>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {STAT_CONFIG.map((stat) => (
+          <InsightMetricCard
+            key={stat.key}
+            label={stat.label}
+            icon={stat.icon}
+            accent={stat.accent}
+            value={insightMetricValue(metricRows, stat.key)}
+            loading={loadingInsights && !hasInsightsData}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PostMetaToolbar({
+  permalink,
+  metaConnected,
+  syncing,
+  reconciling,
+  onSync,
+  lastSyncedAt,
+}: {
+  permalink: string | null;
+  metaConnected: boolean;
+  syncing: boolean;
+  reconciling: boolean;
+  onSync: () => void;
+  lastSyncedAt?: number | null;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 border-b border-border/60 p-4 pb-3 sm:px-5">
+      <div className="grid grid-cols-2 gap-2">
+        {permalink ? (
+          <a
+            href={permalink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2 text-sm font-semibold hover:bg-muted"
+          >
+            <ExternalLink className="size-4 shrink-0" />
+            <span className="truncate">Ver no IG</span>
+          </a>
+        ) : (
+          <Button variant="outline" size="sm" className="h-9 gap-1.5 px-2" disabled>
+            <InstagramIcon className="size-4 shrink-0 opacity-50" />
+            <span className="truncate">Ver no IG</span>
+          </Button>
+        )}
+        <Button
+          type="button"
+          size="sm"
+          className="h-9 gap-1.5 px-2"
+          onClick={onSync}
+          disabled={!metaConnected || syncing || reconciling}
+          title="Sincroniza comentários, mídia e métricas com o Instagram"
+        >
+          {syncing ? (
+            <Loader2 className="size-4 shrink-0 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4 shrink-0" />
+          )}
+          <span className="truncate">Sincronizar</span>
+        </Button>
+      </div>
+      <LastSyncedLabel syncedAt={lastSyncedAt} />
+    </div>
   );
 }
 
@@ -186,8 +291,14 @@ export function PostDetailPanel({
   onRemoveDraft,
   onSaveDraft,
   onGenerateDraft,
+  replyMode,
+  savingReplyMode = false,
+  onReplyModeChange,
 }: PostDetailPanelProps) {
-  const [activeTab, setActiveTab] = useState<"comments" | "caption">("comments");
+  const { replyMode: globalReplyMode } = useAppSettings();
+  const effectiveReply = resolveEffectivePostReplyStatus(globalReplyMode, replyMode);
+  const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
+  const [activeTab, setActiveTab] = useState<DetailTab>("performance");
   const slides = resolveMediaSlides(post.post_id, insights?.media);
   const permalink = insights?.media?.permalink ?? null;
   const metricRows = insights?.insights ?? [];
@@ -202,6 +313,15 @@ export function PostDetailPanel({
       <div
         className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto lg:w-[42%] lg:border-r lg:border-border"
       >
+        <PostMetaToolbar
+          permalink={permalink}
+          metaConnected={metaConnected}
+          syncing={syncing}
+          reconciling={reconciling}
+          onSync={onSync}
+          lastSyncedAt={lastSyncedAt}
+        />
+
         <div className="shrink-0">
           <PostMediaCarousel
             slides={slides}
@@ -212,7 +332,7 @@ export function PostDetailPanel({
         </div>
 
         <div className="flex flex-col gap-4 p-4 sm:p-5">
-          <div className="space-y-3 border-b border-border/60 pb-4">
+          <div className="space-y-3">
             <div className="flex min-w-0 items-center gap-1.5 text-[10px] leading-none">
               {post.is_external ? (
                 <Badge
@@ -256,149 +376,114 @@ export function PostDetailPanel({
               {title}
             </h2>
           </div>
-
-          <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Desempenho
-              </h3>
-
-              {insightsError ? (
-                <div
-                  className={cn(
-                    "mb-3 rounded-lg border px-3 py-2 text-sm",
-                    hasInsightsData
-                      ? "border-amber-500/30 bg-amber-500/10 text-amber-950"
-                      : "border-destructive/30 bg-destructive/10 text-destructive",
-                  )}
-                >
-                  <p className="font-medium">
-                    {hasInsightsData
-                      ? "Algumas métricas não estão disponíveis"
-                      : "Não foi possível carregar insights"}
-                  </p>
-                  <p className="mt-0.5 text-xs opacity-90">{insightsError}</p>
-                </div>
-              ) : null}
-
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                {STAT_CONFIG.map((stat) => (
-                  <div key={stat.key} className="min-w-0 w-full">
-                    <InsightStat
-                      label={stat.label}
-                      icon={stat.icon}
-                      accent={stat.accent}
-                      value={insightMetricValue(metricRows, stat.key)}
-                      loading={loadingInsights && !hasInsightsData}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        </div>
       </div>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex shrink-0 flex-col gap-3 border-b border-border bg-muted/20 p-4 sm:px-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-            {permalink ? (
-              <a
-                href={permalink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-sm font-semibold hover:bg-muted"
-              >
-                <ExternalLink className="size-4 shrink-0" />
-                Ver no IG
-              </a>
-            ) : (
-              <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled>
-                <InstagramIcon className="size-4 opacity-50" />
-                Ver no IG
-              </Button>
-            )}
-            <Button
+        <div className="shrink-0 border-b border-border bg-muted/20 px-4 pt-3 sm:px-5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-border/50 pb-2">
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5"
-              onClick={onReconcile}
-              disabled={!metaConnected || reconciling || syncing || loadingComments}
-            >
-              {reconciling ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Link2 className="size-4" />
+              onClick={() => setActiveTab("performance")}
+              className={cn(
+                "pb-0.5 text-sm font-semibold transition-colors",
+                activeTab === "performance"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
               )}
-              Vincular respostas
-            </Button>
-            <Button
+            >
+              Desempenho
+            </button>
+            <button
               type="button"
-              size="sm"
-              className="h-8 gap-1.5"
-              onClick={onSync}
-              disabled={!metaConnected || syncing || reconciling}
-              title="Sincroniza comentários, mídia e métricas com o Instagram"
-            >
-              {syncing ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <RefreshCw className="size-4" />
+              onClick={() => setActiveTab("comments")}
+              className={cn(
+                "inline-flex items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
+                activeTab === "comments"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
               )}
-              Sincronizar
-            </Button>
-            </div>
-
-            <LastSyncedLabel syncedAt={lastSyncedAt} />
-          </div>
-
-          <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-2">
-            <div className="flex min-w-0 items-center gap-4">
-              <button
-                type="button"
-                onClick={() => setActiveTab("comments")}
+            >
+              Comentários
+              <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
+                  "rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
                   activeTab === "comments"
-                    ? "border-b-2 border-primary text-primary"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-primary/15 text-primary"
+                    : "bg-muted text-muted-foreground",
                 )}
               >
-                Comentários
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
-                    activeTab === "comments"
-                      ? "bg-primary/15 text-primary"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {post.comments_count}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("caption")}
-                className={cn(
-                  "pb-0.5 text-sm font-semibold transition-colors",
-                  activeTab === "caption"
-                    ? "border-b-2 border-primary text-primary"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Legenda
-              </button>
-            </div>
-
-            {activeTab === "comments" && !loadingComments && threadGroups.length > 0 ? (
-              <ThreadSortSelect value={threadSort} onChange={onThreadSortChange} />
-            ) : null}
+                {post.comments_count}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("caption")}
+              className={cn(
+                "pb-0.5 text-sm font-semibold transition-colors",
+                activeTab === "caption"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Legenda
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("config")}
+              className={cn(
+                "inline-flex items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
+                activeTab === "config"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Config
+              <PostReplyStatusBadge
+                post={{ reply_mode: replyMode }}
+                globalReplyMode={globalReplyMode}
+                size="sm"
+                className="hidden sm:inline-flex"
+              />
+            </button>
           </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5">
-          {activeTab === "comments" ? (
+          {activeTab === "performance" ? (
+            <PerformanceTabContent
+              insightsError={insightsError ?? null}
+              hasInsightsData={hasInsightsData}
+              metricRows={metricRows}
+              loadingInsights={loadingInsights}
+            />
+          ) : activeTab === "comments" ? (
             <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="min-w-0 sm:flex-1">
+                  <ThreadSortSelect
+                    value={threadSort}
+                    onChange={onThreadSortChange}
+                    fullWidth
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 shrink-0 gap-1.5 sm:w-auto"
+                  onClick={onReconcile}
+                  disabled={!metaConnected || reconciling || syncing || loadingComments}
+                >
+                  {reconciling ? (
+                    <Loader2 className="size-4 shrink-0 animate-spin" />
+                  ) : (
+                    <Link2 className="size-4 shrink-0" />
+                  )}
+                  Vincular respostas
+                </Button>
+              </div>
+
               {syncWarning ? (
                 <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-950">
                   {syncWarning}
@@ -434,7 +519,7 @@ export function PostDetailPanel({
                 />
               )}
             </div>
-          ) : (
+          ) : activeTab === "caption" ? (
             <div className="space-y-4">
               <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
                 {captionPreview || "(sem legenda)"}
@@ -443,6 +528,49 @@ export function PostDetailPanel({
                 postId={post.post_id}
                 initialSummary={post.carousel_summary}
               />
+            </div>
+          ) : (
+            <div className="mx-auto flex w-full max-w-lg flex-col gap-5">
+              <div className="space-y-1">
+                <h3 className="text-base font-semibold text-foreground">Resposta da Iris</h3>
+                <p className="text-sm text-muted-foreground">
+                  {post.is_external
+                    ? "Post externo — novos comentários chegam via webhook da Meta."
+                    : "Novos comentários chegam via webhook da Meta."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 p-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Estado efetivo</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {effectiveReplyCopy.hint ??
+                      `Agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
+                  </p>
+                </div>
+                <PostReplyStatusBadge
+                  post={{ reply_mode: replyMode }}
+                  globalReplyMode={globalReplyMode}
+                  size="md"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="comments-post-reply-mode" className="text-sm font-medium">
+                  Modo nesta publicação
+                </Label>
+                <ReplyModeSelect
+                  id="comments-post-reply-mode"
+                  variant="post"
+                  value={replyMode}
+                  onChange={onReplyModeChange}
+                  disabled={savingReplyMode}
+                />
+                <p className="text-xs leading-snug text-muted-foreground">
+                  &quot;Seguir global&quot; usa o modo em Configurações → Agente.
+                  &quot;Pausar nesta publicação&quot; desliga a Iris só aqui.
+                </p>
+              </div>
             </div>
           )}
         </div>

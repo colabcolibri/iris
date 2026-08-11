@@ -1,3 +1,5 @@
+import type { PostReplyModeSetting } from "../reply-mode.ts";
+
 export type CommentPostSummary = {
   postId: string;
   caption: string | null;
@@ -5,6 +7,8 @@ export type CommentPostSummary = {
   publishedAt: string | null;
   igMediaId: string;
   status: string;
+  replyMode: PostReplyModeSetting;
+  autoReplyEnabled: boolean;
   commentsCount: number;
   pendingCount: number;
 };
@@ -17,6 +21,8 @@ export type ListCommentPostsDeps = {
     publishedAt: string | null;
     igMediaId: string | null;
     status: string;
+    replyMode: PostReplyModeSetting;
+    autoReplyEnabled: boolean;
   }>;
   countCommentsByPostId: (postId: string) => { total: number; pending: number };
 };
@@ -34,6 +40,8 @@ export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary
         publishedAt: post.publishedAt,
         igMediaId: post.igMediaId,
         status: post.status,
+        replyMode: post.replyMode,
+        autoReplyEnabled: post.autoReplyEnabled,
         commentsCount: counts.total,
         pendingCount: counts.pending,
       };
