@@ -9,6 +9,10 @@ import { StatusBadge } from "@/components/posts/status-badge";
 import { PostFormSection } from "@/components/posts/post-form-section";
 import { PostMediaSection } from "@/components/posts/post-media-section";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
+import {
+  getPostDialogFooterActions,
+  type PostDialogFooterActionId,
+} from "@/components/posts/post-dialog-footer-actions";
 import { AppDialog } from "@/components/templates/app-dialog";
 import { AppAccordion } from "@/components/templates/app-accordion";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
@@ -49,6 +53,7 @@ type PostDialogProps = {
   onSaveDraft: () => void;
   onSchedule: () => void;
   onPublishNow?: () => void;
+  onDelete?: () => void;
   onRevertToDraft?: () => void;
   onRetryDraft?: () => void;
   onRetrySchedule?: () => void;
@@ -74,6 +79,7 @@ export function PostDialog({
   onSaveDraft,
   onSchedule,
   onPublishNow,
+  onDelete,
   onRevertToDraft,
   onRetryDraft,
   onRetrySchedule,
@@ -107,7 +113,7 @@ export function PostDialog({
   const title = mode === "create" ? "Nova postagem" : "Editar postagem";
   const comments = inspection?.comments ?? [];
   const status = post?.status;
-  const isReadOnly = status === "published";
+  const isReadOnly = status === "published" || status === "monitored";
   const isScheduled = status === "scheduled";
   const isFailed = status === "failed";
   const isCancelled = status === "cancelled";
@@ -116,7 +122,28 @@ export function PostDialog({
     Boolean(onPublishNow) &&
     !isReadOnly &&
     !isCancelled &&
-    (isDraft || isScheduled || isFailed);
+    (isDraft || isScheduled || isFailed || mode === "create");
+  const footerActions = getPostDialogFooterActions({
+    status,
+    mode,
+    hasSchedule: Boolean(scheduledAt.trim()),
+    metaConnected,
+    canPublishNow,
+    canRevertToDraft: Boolean(onRevertToDraft) && (isScheduled || isCancelled),
+    canRetryDraft: Boolean(onRetryDraft) && isFailed,
+    canRetrySchedule: Boolean(onRetrySchedule) && isFailed,
+    canDelete: Boolean(onDelete) && mode === "edit" && Boolean(post?.id) && !isReadOnly && !isCancelled,
+  });
+  const footerHandlers: Partial<Record<PostDialogFooterActionId, () => void>> = {
+    delete: onDelete,
+    publish_now: onPublishNow,
+    schedule: onSchedule,
+    save_draft: onSaveDraft,
+    save_scheduled: onSchedule,
+    revert_to_draft: onRevertToDraft,
+    retry_draft: onRetryDraft,
+    retry_schedule: onRetrySchedule,
+  };
   const effectiveReply = resolveEffectivePostReplyStatus(globalReplyMode, replyMode);
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
 
@@ -428,70 +455,41 @@ export function PostDialog({
         ) : null}
       </AppDialog.Body>
 
-      <AppDialog.Footer className="justify-between sm:justify-between">
-        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-          Fechar
-        </Button>
-        <div className="flex flex-wrap items-center gap-2">
-          {(isScheduled || isCancelled) && onRevertToDraft ? (
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={onRevertToDraft}
-              disabled={saving}
-            >
-              {isScheduled ? "Desagendar" : "Restaurar rascunho"}
-            </Button>
-          ) : null}
-          {isFailed && onRetryDraft ? (
-            <Button type="button" variant="ghost" onClick={onRetryDraft} disabled={saving}>
-              Voltar a rascunho
-            </Button>
-          ) : null}
-          {isFailed && onRetrySchedule ? (
-            <Button type="button" variant="ghost" onClick={onRetrySchedule} disabled={saving}>
-              Reagendar
-            </Button>
-          ) : null}
-          {!isReadOnly && !isCancelled ? (
-            <>
-              {canPublishNow ? (
-                <Button
-                  type="button"
-                  onClick={onPublishNow}
-                  disabled={saving || !metaConnected}
-                >
-                  {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                  Publicar agora
-                </Button>
-              ) : null}
-              {(isDraft || mode === "create") ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onSchedule}
-                  disabled={saving || !metaConnected || !scheduledAt}
-                >
-                  Agendar publicação
-                </Button>
-              ) : null}
-              {isScheduled ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onSchedule}
-                  disabled={saving || !metaConnected}
-                >
-                  Atualizar agendamento
-                </Button>
-              ) : null}
-              <Button type="button" onClick={onSaveDraft} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                {isScheduled ? "Salvar alterações" : "Salvar rascunho"}
+      <AppDialog.Footer className="justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {footerActions.map((action) => {
+            const handler = footerHandlers[action.id];
+            if (!handler) {
+              return null;
+            }
+            return (
+              <Button
+                key={action.id}
+                type="button"
+                size="sm"
+                variant={action.variant === "destructive" ? "destructive" : action.variant}
+                className={
+                  action.id === "delete"
+                    ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    : action.variant === "ghost"
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "min-h-8 px-3.5 py-1.5 text-sm leading-none"
+                }
+                onClick={handler}
+                disabled={saving || Boolean(action.disabled)}
+              >
+                {saving &&
+                (action.id === "save_draft" ||
+                  action.id === "save_scheduled" ||
+                  action.id === "publish_now" ||
+                  action.id === "schedule" ||
+                  action.id === "retry_schedule") ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : null}
+                {action.label}
               </Button>
-            </>
-          ) : null}
+            );
+          })}
           {statusBadge}
         </div>
       </AppDialog.Footer>

@@ -12,6 +12,7 @@ import { useMetaSession } from "@/contexts/meta-session-context";
 import { useDashboardView } from "@/hooks/use-dashboard-view";
 import {
   createPost,
+  deletePost,
   fetchPost,
   fetchPosts,
   listAssets,
@@ -118,7 +119,7 @@ export function DashboardPage() {
         title: "Cancelar postagem?",
         description: "A postagem sai do fluxo editorial ativo. Você poderá restaurá-la como rascunho depois.",
         confirmLabel: "Cancelar postagem",
-        confirmPhrase: "CANCELAR",
+        confirmPhrase: "cancelar",
         variant: "destructive",
       });
       if (!ok) return;
@@ -241,7 +242,7 @@ export function DashboardPage() {
         ? "A postagem sai imediatamente, sem aguardar o horário agendado. Isso não pode ser desfeito pelo Iris."
         : "A postagem será publicada na sua conta do Instagram imediatamente. Isso não pode ser desfeito pelo Iris.",
       confirmLabel: "Publicar agora",
-      confirmPhrase: "PUBLICAR",
+      confirmPhrase: "publicar",
     });
     if (!ok) return;
 
@@ -300,6 +301,34 @@ export function DashboardPage() {
             // ignore refresh errors after failed publish
           }
         }
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteSelectedPost() {
+    if (!selectedPost) return;
+    const ok = await confirm({
+      title: "Deletar postagem?",
+      description:
+        "A postagem sai do fluxo editorial ativo (status cancelado). Você poderá restaurá-la como rascunho depois.",
+      confirmLabel: "Deletar",
+      confirmPhrase: "deletar",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
+    setSaving(true);
+    setError("");
+    try {
+      await deletePost(selectedPost.id);
+      await loadPosts();
+      toast.success("Postagem deletada.");
+      closeDialog();
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        setError(err instanceof Error ? err.message : "Falha ao deletar.");
       }
     } finally {
       setSaving(false);
@@ -393,6 +422,14 @@ export function DashboardPage() {
         onSaveDraft={() => void savePost(false)}
         onSchedule={() => void savePost(true)}
         onPublishNow={() => void publishNow()}
+        onDelete={
+          selectedPost &&
+          selectedPost.status !== "published" &&
+          selectedPost.status !== "monitored" &&
+          selectedPost.status !== "cancelled"
+            ? () => void deleteSelectedPost()
+            : undefined
+        }
         onRevertToDraft={
           selectedPost?.status === "scheduled" || selectedPost?.status === "cancelled"
             ? () => void revertToDraft()

@@ -74,6 +74,13 @@ export function updatePost(postId: string, body: Record<string, unknown>) {
   });
 }
 
+/** Soft-delete: marca a postagem como `cancelled` (DELETE admin). */
+export function deletePost(postId: string) {
+  return apiFetch<Post>(`/api/posts/${postId}`, {
+    method: "DELETE",
+  });
+}
+
 export function publishPostNow(postId: string) {
   return apiFetch<Post>(`/api/posts/${postId}/publish`, {
     method: "POST",

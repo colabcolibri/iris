@@ -20,13 +20,17 @@ export type ConfirmDialogProps = {
   description?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** Se definido, o usuário precisa digitar exatamente este texto para confirmar. */
+  /** Se definido, o usuário precisa digitar este texto para confirmar (exibido em minúsculas; comparação ignora maiúsculas). */
   confirmPhrase?: string;
   confirmPhraseHint?: string;
   variant?: "default" | "destructive";
   loading?: boolean;
   onConfirm: () => void | Promise<void>;
 };
+
+function normalizeConfirmPhrase(value: string): string {
+  return value.trim().toLocaleLowerCase("pt-BR");
+}
 
 /** Template sobre AlertDialog do shadcn — confirmação destrutiva com frase opcional. */
 export function ConfirmDialog({
@@ -53,8 +57,9 @@ export function ConfirmDialog({
     }
   }, [open]);
 
-  const phraseRequired = Boolean(confirmPhrase);
-  const phraseOk = !phraseRequired || typed.trim() === confirmPhrase;
+  const expectedPhrase = confirmPhrase ? normalizeConfirmPhrase(confirmPhrase) : "";
+  const phraseRequired = Boolean(expectedPhrase);
+  const phraseOk = !phraseRequired || normalizeConfirmPhrase(typed) === expectedPhrase;
   const busy = loading || pending;
 
   async function handleConfirm() {
@@ -82,13 +87,13 @@ export function ConfirmDialog({
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
 
-        {phraseRequired && confirmPhrase ? (
+        {phraseRequired ? (
           <div className="space-y-2">
             <Label htmlFor={inputId} className="text-sm font-medium text-foreground">
               {confirmPhraseHint ?? (
                 <>
-                  Digite <span className="font-mono font-semibold">{confirmPhrase}</span> para
-                  confirmar
+                  Digite <span className="font-mono font-semibold lowercase">{expectedPhrase}</span>{" "}
+                  para confirmar
                 </>
               )}
             </Label>
@@ -99,8 +104,8 @@ export function ConfirmDialog({
               autoComplete="off"
               autoFocus
               disabled={busy}
-              className="font-mono"
-              placeholder={confirmPhrase}
+              className="font-mono lowercase"
+              placeholder={expectedPhrase}
             />
           </div>
         ) : null}
