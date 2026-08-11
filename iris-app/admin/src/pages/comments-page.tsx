@@ -33,6 +33,12 @@ import {
   type ThreadSortMode,
 } from "@/lib/build-comment-tree";
 import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
+import {
+  COMMENTS_CACHE_STALE_MS,
+  CommentsPostCache,
+  INSIGHTS_CACHE_STALE_MS,
+  isCacheFresh,
+} from "@/lib/comments-post-cache";
 
 const COMMENTS_FALLBACK_POLL_MS = 60_000;
 const COMMENTS_REALTIME_DEBOUNCE_MS = 750;
@@ -88,6 +94,8 @@ export function CommentsPage() {
   const [liveConnected, setLiveConnected] = useState(true);
   const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
   const commentsRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const postCacheRef = useRef(new CommentsPostCache());
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
 
   const selectedPost = useMemo(
     () => posts.find((post) => post.post_id === selectedPostId) ?? null,
@@ -120,6 +128,7 @@ export function CommentsPage() {
       const nextPosts = await fetchCommentPosts();
       setPosts(nextPosts);
       const activePostIds = new Set(nextPosts.map((post) => post.post_id));
+      postCacheRef.current.pruneInactivePostIds(activePostIds);
       setThumbnailOverrides((current) => {
         const next: Record<string, string> = {};
         for (const [postId, url] of Object.entries(current)) {
@@ -138,64 +147,97 @@ export function CommentsPage() {
     }
   }, []);
 
-  const loadComments = useCallback(async (postId: string, silent = false) => {
-    if (!postId) {
-      setComments([]);
-      return;
-    }
+  const loadComments = useCallback(
+    async (postId: string, options: { silent?: boolean; force?: boolean } = {}) => {
+      const { silent = false, force = false } = options;
+      if (!postId) {
+        setComments([]);
+        return;
+      }
 
-    if (!silent) {
-      setLoadingComments(true);
-    }
+      const cached = postCacheRef.current.getComments(postId);
+      if (cached) {
+        setComments(cached.data);
+      }
 
-    try {
-      const nextComments = await fetchComments(postId);
-      setComments((current) =>
-        commentsHaveChanged(current, nextComments) ? nextComments : current,
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao carregar comentários.";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, []);
+      if (!force && cached && isCacheFresh(cached.fetchedAt, COMMENTS_CACHE_STALE_MS)) {
+        return;
+      }
 
-  const loadInsights = useCallback(async (postId: string, silent = false) => {
-    if (!postId || !meta?.connected) {
-      setInsights(null);
-      return;
-    }
+      if (!silent && !cached) {
+        setLoadingComments(true);
+      }
 
-    if (!silent) {
-      setLoadingInsights(true);
-    }
-
-    try {
-      const result = await fetchPostInsights(postId);
-      setInsights(result);
-
-      const previewUrl = firstMediaSlideSrc(postId, result.media);
-      if (previewUrl) {
-        setThumbnailOverrides((current) =>
-          current[postId] === previewUrl ? current : { ...current, [postId]: previewUrl },
+      try {
+        const nextComments = await fetchComments(postId);
+        const fetchedAt = Date.now();
+        postCacheRef.current.setComments(postId, nextComments, fetchedAt);
+        setComments((current) =>
+          commentsHaveChanged(current, nextComments) ? nextComments : current,
         );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Falha ao carregar comentários.";
+        setError(message);
+        toast.error(message);
+      } finally {
+        setLoadingComments(false);
+      }
+    },
+    [],
+  );
+
+  const loadInsights = useCallback(
+    async (postId: string, options: { silent?: boolean; force?: boolean } = {}) => {
+      const { silent = false, force = false } = options;
+      if (!postId || !meta?.connected) {
+        setInsights(null);
+        return;
       }
 
-      if (!result.ok && result.message && !silent && !result.insights?.length) {
-        toast.error(result.message);
+      const cached = postCacheRef.current.getInsights(postId);
+      if (cached) {
+        setInsights(cached.data);
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao carregar insights.";
-      setInsights({ ok: false, message, post_id: postId });
-      if (!silent) {
-        toast.error(message);
+
+      if (!force && cached && isCacheFresh(cached.fetchedAt, INSIGHTS_CACHE_STALE_MS)) {
+        return;
       }
-    } finally {
-      setLoadingInsights(false);
-    }
-  }, [meta?.connected]);
+
+      if (!silent && !cached) {
+        setLoadingInsights(true);
+      }
+
+      try {
+        const result = await fetchPostInsights(postId);
+        const fetchedAt = Date.now();
+        postCacheRef.current.setInsights(postId, result, fetchedAt);
+        setInsights(result);
+
+        const previewUrl = firstMediaSlideSrc(postId, result.media);
+        if (previewUrl) {
+          setThumbnailOverrides((current) =>
+            current[postId] === previewUrl ? current : { ...current, [postId]: previewUrl },
+          );
+        }
+
+        if (!result.ok && result.message && !silent && !result.insights?.length) {
+          toast.error(result.message);
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Falha ao carregar insights.";
+        const fallback = { ok: false, message, post_id: postId } satisfies PostInsightsResult;
+        if (!cached) {
+          setInsights(fallback);
+        }
+        if (!silent) {
+          toast.error(message);
+        }
+      } finally {
+        setLoadingInsights(false);
+      }
+    },
+    [meta?.connected],
+  );
 
   const handleAddMonitoredPost = useCallback(async () => {
     const value = mediaInput.trim();
@@ -229,7 +271,7 @@ export function CommentsPage() {
       try {
         await approveCommentReply(commentId, draftText ?? undefined);
         if (selectedPostId) {
-          await loadComments(selectedPostId, true);
+          await loadComments(selectedPostId, { silent: true, force: true });
           await loadPosts();
         }
         toast.success("Resposta publicada na Meta.");
@@ -276,7 +318,7 @@ export function CommentsPage() {
       try {
         const updated = await requestCommentAiReply(commentId, "draft");
         if (selectedPostId) {
-          await loadComments(selectedPostId, true);
+          await loadComments(selectedPostId, { silent: true, force: true });
           await loadPosts();
         }
         if (updated.status === "failed" || updated.status === "skipped") {
@@ -289,7 +331,7 @@ export function CommentsPage() {
           err instanceof Error ? err.message : "Falha ao gerar rascunho.";
         toast.error(message);
         if (selectedPostId) {
-          await loadComments(selectedPostId, true);
+          await loadComments(selectedPostId, { silent: true, force: true });
         }
       } finally {
         setGeneratingId(null);
@@ -331,7 +373,7 @@ export function CommentsPage() {
       try {
         await removeCommentDraft(commentId);
         if (selectedPostId) {
-          await loadComments(selectedPostId, true);
+          await loadComments(selectedPostId, { silent: true, force: true });
           await loadPosts();
         }
         toast.success("Rascunho deletado.");
@@ -351,7 +393,7 @@ export function CommentsPage() {
       try {
         await updateCommentDraft(commentId, draftText);
         if (selectedPostId) {
-          await loadComments(selectedPostId, true);
+          await loadComments(selectedPostId, { silent: true, force: true });
         }
         toast.success("Rascunho salvo.");
       } catch (err) {
@@ -376,17 +418,18 @@ export function CommentsPage() {
 
     try {
       const result = await syncPostComments(selectedPostId);
+      postCacheRef.current.setComments(selectedPostId, result.comments, Date.now());
       setComments(result.comments);
       setSyncWarning(result.warning);
+      await loadInsights(selectedPostId, { silent: true, force: true });
       await loadPosts();
-      await loadInsights(selectedPostId, true);
-      toast.success(
-        result.comments_fetched > 0
-          ? `${result.comments_fetched} comentário${result.comments_fetched === 1 ? "" : "s"} sincronizado${result.comments_fetched === 1 ? "" : "s"}.`
-          : "Nenhum comentário novo na Meta para este post.",
-      );
+
+      const syncedAt = Date.now();
+      postCacheRef.current.setLastSyncedAt(selectedPostId, syncedAt);
+      setLastSyncedAt(syncedAt);
+      toast.success("Publicação sincronizada com o Instagram.");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao sincronizar comentários.";
+      const message = err instanceof Error ? err.message : "Falha ao sincronizar publicação.";
       setError(message);
       toast.error(message);
     } finally {
@@ -432,6 +475,8 @@ export function CommentsPage() {
 
       setReconciling(true);
       const result = await reconcilePostComments(selectedPostId);
+      const reconciledAt = Date.now();
+      postCacheRef.current.setComments(selectedPostId, result.comments, reconciledAt);
       setComments(result.comments);
       await loadPosts();
       toast.success(
@@ -460,8 +505,33 @@ export function CommentsPage() {
   }, [posts, selectedPostId, setSearchParams]);
 
   useEffect(() => {
-    void loadComments(selectedPostId);
-    void loadInsights(selectedPostId);
+    if (!selectedPostId) {
+      setComments([]);
+      setInsights(null);
+      setLastSyncedAt(null);
+      return;
+    }
+
+    const cachedComments = postCacheRef.current.getComments(selectedPostId);
+    const cachedInsights = postCacheRef.current.getInsights(selectedPostId);
+    const cachedLastSyncedAt = postCacheRef.current.getLastSyncedAt(selectedPostId) ?? null;
+
+    if (cachedComments) {
+      setComments(cachedComments.data);
+    } else {
+      setComments([]);
+    }
+
+    if (cachedInsights) {
+      setInsights(cachedInsights.data);
+    } else {
+      setInsights(null);
+    }
+
+    setLastSyncedAt(cachedLastSyncedAt);
+
+    void loadComments(selectedPostId, { silent: Boolean(cachedComments) });
+    void loadInsights(selectedPostId, { silent: Boolean(cachedInsights) });
   }, [loadComments, loadInsights, selectedPostId]);
 
   useEffect(() => {
@@ -472,7 +542,7 @@ export function CommentsPage() {
 
       commentsRefreshTimerRef.current = setTimeout(() => {
         commentsRefreshTimerRef.current = null;
-        void loadComments(postId, true);
+        void loadComments(postId, { silent: true });
         void loadPosts();
       }, COMMENTS_REALTIME_DEBOUNCE_MS);
     };
@@ -496,7 +566,7 @@ export function CommentsPage() {
       if (document.visibilityState !== "visible") {
         return;
       }
-      void loadComments(selectedPostId, true);
+      void loadComments(selectedPostId, { silent: true });
     };
 
     const intervalId = window.setInterval(poll, COMMENTS_FALLBACK_POLL_MS);
@@ -631,6 +701,7 @@ export function CommentsPage() {
                 threadSort={threadSort}
                 onThreadSortChange={setThreadSort}
                 insights={insights}
+                lastSyncedAt={lastSyncedAt}
                 loadingComments={loadingComments}
                 loadingInsights={loadingInsights}
                 syncing={syncing}
@@ -643,7 +714,6 @@ export function CommentsPage() {
                 generatingId={generatingId}
                 onSync={() => void handleSync()}
                 onReconcile={() => void handleReconcile()}
-                onRefreshInsights={() => void loadInsights(selectedPostId)}
                 onApproveDraft={(commentId, draftText) =>
                   void handleApproveDraft(commentId, draftText)
                 }

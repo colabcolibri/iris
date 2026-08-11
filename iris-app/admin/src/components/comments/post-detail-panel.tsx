@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  BarChart3,
   Bookmark,
   ExternalLink,
   Eye,
@@ -22,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { resolveMediaSlides } from "@/hooks/use-post-preview";
+import { formatRelativeTimeAgo, useRelativeTimeTick } from "@/lib/format-relative-time";
 import { formatInsightValue, insightMetricValue } from "@/lib/insights";
 import { cn } from "@/lib/utils";
 import type { CommentThreadGroup, ThreadSortMode } from "@/lib/build-comment-tree";
@@ -36,6 +36,7 @@ type PostDetailPanelProps = {
   threadSort: ThreadSortMode;
   onThreadSortChange: (mode: ThreadSortMode) => void;
   insights: PostInsightsResult | null;
+  lastSyncedAt?: number | null;
   loadingComments: boolean;
   loadingInsights: boolean;
   syncing: boolean;
@@ -48,7 +49,6 @@ type PostDetailPanelProps = {
   generatingId: string | null;
   onSync: () => void;
   onReconcile: () => void;
-  onRefreshInsights: () => void;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
   onRemoveDraft: (commentId: string) => void;
   onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
@@ -140,6 +140,27 @@ function InsightStat({
   );
 }
 
+function LastSyncedLabel({ syncedAt }: { syncedAt: number | null | undefined }) {
+  useRelativeTimeTick();
+  if (!syncedAt) {
+    return null;
+  }
+
+  const relative = formatRelativeTimeAgo(syncedAt);
+  if (!relative) {
+    return null;
+  }
+
+  return (
+    <p
+      className="text-right text-[11px] leading-snug text-muted-foreground"
+      title={new Date(syncedAt).toLocaleString("pt-BR")}
+    >
+      Última sincronização {relative}
+    </p>
+  );
+}
+
 export function PostDetailPanel({
   post,
   threadGroups,
@@ -148,6 +169,7 @@ export function PostDetailPanel({
   threadSort,
   onThreadSortChange,
   insights,
+  lastSyncedAt,
   loadingComments,
   loadingInsights,
   syncing,
@@ -160,7 +182,6 @@ export function PostDetailPanel({
   generatingId,
   onSync,
   onReconcile,
-  onRefreshInsights,
   onApproveDraft,
   onRemoveDraft,
   onSaveDraft,
@@ -237,33 +258,9 @@ export function PostDetailPanel({
           </div>
 
           <div>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  Desempenho
-                </h3>
-                <div className="flex items-center gap-2">
-                  {insights?.fetched_at ? (
-                    <span className="text-[11px] text-muted-foreground">
-                      {new Date(insights.fetched_at).toLocaleTimeString("pt-BR")}
-                    </span>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="size-7 shrink-0"
-                    onClick={onRefreshInsights}
-                    disabled={!metaConnected || loadingInsights}
-                    aria-label="Atualizar insights"
-                  >
-                    {loadingInsights ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <BarChart3 className="size-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Desempenho
+              </h3>
 
               {insightsError ? (
                 <div
@@ -291,7 +288,7 @@ export function PostDetailPanel({
                       icon={stat.icon}
                       accent={stat.accent}
                       value={insightMetricValue(metricRows, stat.key)}
-                      loading={loadingInsights}
+                      loading={loadingInsights && !hasInsightsData}
                     />
                   </div>
                 ))}
@@ -302,7 +299,8 @@ export function PostDetailPanel({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <div className="flex shrink-0 flex-col gap-3 border-b border-border bg-muted/20 p-4 sm:px-5">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
             {permalink ? (
               <a
                 href={permalink}
@@ -339,7 +337,8 @@ export function PostDetailPanel({
               size="sm"
               className="h-8 gap-1.5"
               onClick={onSync}
-              disabled={!metaConnected || syncing || loadingComments}
+              disabled={!metaConnected || syncing || reconciling}
+              title="Sincroniza comentários, mídia e métricas com o Instagram"
             >
               {syncing ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -348,6 +347,9 @@ export function PostDetailPanel({
               )}
               Sincronizar
             </Button>
+            </div>
+
+            <LastSyncedLabel syncedAt={lastSyncedAt} />
           </div>
 
           <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-2">
@@ -403,7 +405,7 @@ export function PostDetailPanel({
                 </p>
               ) : null}
 
-              {loadingComments ? (
+              {loadingComments && threadGroups.length === 0 ? (
                 <div className="space-y-3">
                   <Skeleton className="h-24 w-full rounded-md" />
                   <Skeleton className="h-24 w-full rounded-md" />
