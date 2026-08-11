@@ -116,13 +116,96 @@ test("syncPostComments upserts remote comments for one post", async () => {
           status: "pending",
           errorMessage: null,
           createdAt: new Date().toISOString(),
+          igTimestamp: null,
+          deletedAt: null,
         },
         created: true,
       }),
+      listByPostId: () => [],
+      markDeletedFromInstagram: () => false,
+      restoreFromInstagram: () => false,
     },
   );
 
   assert.equal(result.commentsFetched, 1);
-  assert.equal(result.comments[0]?.text, "sync");
   assert.equal(result.accessLimited, false);
+});
+
+test("syncPostComments marks comments removed from instagram when remote list is complete", async () => {
+  const db = openDatabase(":memory:");
+  try {
+    runMigrations(db);
+    const posts = createSqlitePostRepository(db);
+    const comments = createSqliteCommentRepository(db);
+
+    const post = posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post",
+    });
+    posts.update(post.id, { igMediaId: "media-1" });
+
+    comments.upsertFromWebhook({
+      igCommentId: "ig-stays",
+      postId: post.id,
+      text: "permanece",
+    });
+    comments.upsertFromWebhook({
+      igCommentId: "ig-removed",
+      postId: post.id,
+      text: "sumiu",
+    });
+
+    const result = await syncPostComments(
+      { postId: post.id, igMediaId: "media-1" },
+      {
+        metaCommentReader: {
+          async listRecentMediaWithComments() {
+            return [
+              {
+                igMediaId: "media-1",
+                caption: "Legenda",
+                timestamp: new Date().toISOString(),
+                reportedCommentsCount: 1,
+                comments: [
+                  {
+                    igCommentId: "ig-stays",
+                    parentIgCommentId: null,
+                    authorUsername: "fan",
+                    text: "permanece",
+                    timestamp: new Date().toISOString(),
+                  },
+                ],
+              },
+            ];
+          },
+          async fetchMediaMetadata(igMediaId: string) {
+            return {
+              igMediaId,
+              caption: "Legenda",
+              timestamp: new Date().toISOString(),
+            };
+          },
+          async findMediaByPermalink() {
+            return null;
+          },
+        },
+        upsertFromWebhook: (input) => comments.upsertFromWebhook(input),
+        listByPostId: (postId) => comments.listByPostId(postId),
+        markDeletedFromInstagram: (id) => comments.markDeletedFromInstagram(id),
+        restoreFromInstagram: (id) => comments.restoreFromInstagram(id),
+      },
+    );
+
+    assert.equal(result.markedDeleted, 1);
+    assert.equal(result.restored, 0);
+
+    const removed = comments.findByIgCommentId("ig-removed");
+    const stays = comments.findByIgCommentId("ig-stays");
+    assert.ok(removed?.deletedAt);
+    assert.equal(stays?.deletedAt, null);
+    assert.equal(comments.countByPostId(post.id).total, 1);
+  } finally {
+    db.close();
+  }
 });

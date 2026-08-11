@@ -128,7 +128,7 @@ test("sortCommentThreadGroups can order roots by latest activity", () => {
   assert.ok(commentTimeMs(sorted[0]!.replies.at(-1)!) > commentTimeMs(sorted[1]!.root));
 });
 
-test("defaultCollapsedThreadIds keeps the hottest thread open and collapses older ones", () => {
+test("defaultCollapsedThreadIds collapses every thread with replies by default", () => {
   const groups = sortCommentThreadGroups(
     buildCommentThreadGroups([
       comment({
@@ -166,11 +166,26 @@ test("defaultCollapsedThreadIds keeps the hottest thread open and collapses olde
   );
 
   const collapsed = defaultCollapsedThreadIds(groups);
-  assert.equal(collapsed.has("hot-root"), false);
+  assert.equal(collapsed.has("hot-root"), true);
   assert.equal(collapsed.has("old-root"), true);
 });
 
-test("defaultCollapsedThreadIds keeps threads with pending comments expanded", () => {
+test("defaultCollapsedThreadIds ignores single-comment threads", () => {
+  const groups = buildCommentThreadGroups([
+    comment({
+      id: "solo-root",
+      ig_comment_id: "ig-solo",
+      text: "sozinho",
+      status: "pending",
+      created_at: "2026-08-10T12:00:00.000Z",
+    }),
+  ]);
+
+  const collapsed = defaultCollapsedThreadIds(groups);
+  assert.equal(collapsed.size, 0);
+});
+
+test("defaultCollapsedThreadIds collapses threads with pending comments too", () => {
   const groups = sortCommentThreadGroups(
     buildCommentThreadGroups([
       comment({
@@ -200,7 +215,7 @@ test("defaultCollapsedThreadIds keeps threads with pending comments expanded", (
   );
 
   const collapsed = defaultCollapsedThreadIds(groups);
-  assert.equal(collapsed.has("pending-root"), false);
+  assert.equal(collapsed.has("pending-root"), true);
 });
 
 test("buildCommentThreadGroups deduplicates comments by id and ig_comment_id", () => {

@@ -477,6 +477,10 @@ export async function handleCommentsRoute(
         {
           metaCommentReader: ctx.metaCommentReader,
           upsertFromWebhook: (input) => ctx.comments.upsertFromWebhook(input),
+          listByPostId: (id) => ctx.comments.listByPostId(id),
+          markDeletedFromInstagram: (id) =>
+            ctx.comments.markDeletedFromInstagram(id),
+          restoreFromInstagram: (id) => ctx.comments.restoreFromInstagram(id),
         },
       );
 
@@ -494,6 +498,8 @@ export async function handleCommentsRoute(
         comments_fetched: result.commentsFetched,
         access_limited: result.accessLimited,
         warning: result.warning,
+        marked_deleted: result.markedDeleted,
+        restored: result.restored,
         comments: comments.map((comment) =>
           serializeCommentWithDraft(comment, ctx),
         ),
@@ -626,6 +632,11 @@ export async function handleCommentsRoute(
         return true;
       }
 
+      if (comment.deletedAt) {
+        sendError(res, 410, "comment was removed from instagram");
+        return true;
+      }
+
       const body = await readJsonBody<{ mode?: unknown }>(req);
       const mode = body.mode;
       if (mode !== "auto" && mode !== "draft") {
@@ -666,6 +677,11 @@ export async function handleCommentsRoute(
       const comment = ctx.comments.findById(commentId);
       if (!comment) {
         sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      if (comment.deletedAt) {
+        sendError(res, 410, "comment was removed from instagram");
         return true;
       }
 
@@ -716,6 +732,11 @@ export async function handleCommentsRoute(
       const comment = ctx.comments.findById(commentId);
       if (!comment) {
         sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      if (comment.deletedAt) {
+        sendError(res, 410, "comment was removed from instagram");
         return true;
       }
 

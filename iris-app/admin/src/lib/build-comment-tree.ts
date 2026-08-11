@@ -257,22 +257,9 @@ export function sortCommentThreadGroups(
 }
 
 export function defaultCollapsedThreadIds(groups: CommentThreadGroup[]): Set<string> {
-  const collapsed = new Set<string>();
-
-  for (const [index, group] of groups.entries()) {
-    if (group.replies.length === 0) {
-      continue;
-    }
-    if (index === 0) {
-      continue;
-    }
-    if (threadNeedsAttention(group)) {
-      continue;
-    }
-    collapsed.add(group.root.id);
-  }
-
-  return collapsed;
+  return new Set(
+    groups.filter((group) => group.replies.length > 0).map((group) => group.root.id),
+  );
 }
 
 /** @deprecated Use buildCommentThreadGroups for the admin UI. */

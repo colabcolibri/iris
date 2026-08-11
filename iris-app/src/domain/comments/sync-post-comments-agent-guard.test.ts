@@ -68,6 +68,9 @@ test("syncPostComments does not schedule agent replies and reconcile links exist
           },
         },
         upsertFromWebhook: (input) => comments.upsertFromWebhook(input),
+        listByPostId: (postId) => comments.listByPostId(postId),
+        markDeletedFromInstagram: (id) => comments.markDeletedFromInstagram(id),
+        restoreFromInstagram: (id) => comments.restoreFromInstagram(id),
       },
     );
 

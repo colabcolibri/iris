@@ -32,6 +32,7 @@ type CommentRow = {
   error_message: string | null;
   created_at: string;
   ig_timestamp: string | null;
+  deleted_at: string | null;
 };
 
 type AssetRow = {
@@ -83,6 +84,7 @@ export function mapCommentRow(row: CommentRow): Comment {
     errorMessage: row.error_message,
     createdAt: row.created_at,
     igTimestamp: row.ig_timestamp ?? null,
+    deletedAt: row.deleted_at ?? null,
   };
 }
 
@@ -98,6 +100,7 @@ export function serializeComment(comment: Comment) {
     error_message: comment.errorMessage,
     created_at: comment.createdAt,
     ig_timestamp: comment.igTimestamp,
+    deleted_at: comment.deletedAt,
   };
 }
 

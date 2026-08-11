@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Loader2, Plus, RefreshCw, Search, Download } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +34,31 @@ import {
 } from "@/lib/build-comment-tree";
 import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
 
+const COMMENTS_FALLBACK_POLL_MS = 60_000;
+const COMMENTS_REALTIME_DEBOUNCE_MS = 750;
+
+function commentsHaveChanged(current: Comment[], next: Comment[]): boolean {
+  if (current.length !== next.length) {
+    return true;
+  }
+
+  return next.some((comment, index) => {
+    const previous = current[index];
+    if (!previous || previous.id !== comment.id) {
+      return true;
+    }
+
+    return (
+      previous.status !== comment.status ||
+      previous.text !== comment.text ||
+      previous.deleted_at !== comment.deleted_at ||
+      previous.draft_text !== comment.draft_text ||
+      previous.error_message !== comment.error_message ||
+      previous.linked_reply_text !== comment.linked_reply_text
+    );
+  });
+}
+
 export function CommentsPage() {
   const { meta } = useMetaSession();
   const { confirm } = useConfirmDialog();
@@ -62,8 +87,7 @@ export function CommentsPage() {
   const [threadSort, setThreadSort] = useState<ThreadSortMode>("activity_desc");
   const [liveConnected, setLiveConnected] = useState(true);
   const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
-
-  const POLL_MS = 20_000;
+  const commentsRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedPost = useMemo(
     () => posts.find((post) => post.post_id === selectedPostId) ?? null,
@@ -126,7 +150,9 @@ export function CommentsPage() {
 
     try {
       const nextComments = await fetchComments(postId);
-      setComments(nextComments);
+      setComments((current) =>
+        commentsHaveChanged(current, nextComments) ? nextComments : current,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao carregar comentários.";
       setError(message);
@@ -439,19 +465,30 @@ export function CommentsPage() {
   }, [loadComments, loadInsights, selectedPostId]);
 
   useEffect(() => {
+    const scheduleCommentsRefresh = (postId: string) => {
+      if (commentsRefreshTimerRef.current) {
+        clearTimeout(commentsRefreshTimerRef.current);
+      }
+
+      commentsRefreshTimerRef.current = setTimeout(() => {
+        commentsRefreshTimerRef.current = null;
+        void loadComments(postId, true);
+        void loadPosts();
+      }, COMMENTS_REALTIME_DEBOUNCE_MS);
+    };
+
     return subscribeRealtimeEvents({
       onConnectionChange: setLiveConnected,
       onCommentsChanged: (data) => {
         if (data.post_id && data.post_id === selectedPostId) {
-          void loadComments(selectedPostId, true);
-          void loadPosts();
+          scheduleCommentsRefresh(selectedPostId);
         }
       },
     });
   }, [loadComments, loadPosts, selectedPostId]);
 
   useEffect(() => {
-    if (!selectedPostId) {
+    if (!selectedPostId || liveConnected) {
       return;
     }
 
@@ -462,21 +499,20 @@ export function CommentsPage() {
       void loadComments(selectedPostId, true);
     };
 
-    const intervalId = window.setInterval(poll, POLL_MS);
-    const onFocus = () => {
-      void loadComments(selectedPostId, true);
-      void loadPosts();
-    };
-
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
+    const intervalId = window.setInterval(poll, COMMENTS_FALLBACK_POLL_MS);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
     };
-  }, [loadComments, loadPosts, selectedPostId]);
+  }, [liveConnected, loadComments, selectedPostId]);
+
+  useEffect(() => {
+    return () => {
+      if (commentsRefreshTimerRef.current) {
+        clearTimeout(commentsRefreshTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <PageContainer variant="fill">
@@ -498,8 +534,8 @@ export function CommentsPage() {
 
         {!liveConnected ? (
           <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
-            Atualização em tempo real indisponível — comentários são atualizados a cada 20 segundos
-            com a página aberta.
+            Atualização em tempo real indisponível. A lista local será recarregada a cada minuto
+            nesta aba, ou use o botão de sincronizar para buscar comentários no Instagram.
           </p>
         ) : null}
 

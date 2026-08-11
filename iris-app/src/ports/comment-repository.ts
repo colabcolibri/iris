@@ -62,6 +62,8 @@ export type CommentRepository = {
   findLatestSentReply(commentId: string): CommentReplyRecord | null;
   clearDraft(commentId: string): boolean;
   updateDraft(commentId: string, draftText: string): boolean;
+  markDeletedFromInstagram(commentId: string): boolean;
+  restoreFromInstagram(commentId: string): boolean;
   findById(id: string): Comment | null;
   markReplied(id: string): Comment | null;
   markPending(id: string): Comment | null;

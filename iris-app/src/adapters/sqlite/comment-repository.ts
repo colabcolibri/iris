@@ -30,6 +30,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending
     FROM comments
     WHERE post_id = ?
+      AND deleted_at IS NULL
   `);
 
   const markRepliedStmt = db.prepare(`
@@ -125,6 +126,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       )
       AND c.agent_reply_not_before IS NOT NULL
       AND datetime(c.agent_reply_not_before) <= datetime('now')
+      AND c.deleted_at IS NULL
       AND (
         c.author_username IS NULL
         OR NOT EXISTS (
@@ -149,9 +151,30 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     SET parent_ig_comment_id = ?,
         text = ?,
         author_username = COALESCE(?, author_username),
-        ig_timestamp = CASE WHEN ? IS NOT NULL THEN ? ELSE ig_timestamp END
+        ig_timestamp = CASE WHEN ? IS NOT NULL THEN ? ELSE ig_timestamp END,
+        deleted_at = NULL
     WHERE ig_comment_id = ?
   `);
+
+  const restoreFromInstagramStmt = db.prepare(`
+    UPDATE comments
+    SET deleted_at = NULL
+    WHERE id = ?
+      AND deleted_at IS NOT NULL
+  `);
+
+  const markDeletedFromInstagramStmt = db.prepare(`
+    UPDATE comments
+    SET deleted_at = ?,
+        agent_reply_not_before = NULL
+    WHERE id = ?
+      AND deleted_at IS NULL
+  `);
+
+  function readCommentById(id: string): Comment | null {
+    const row = selectById.get(id);
+    return row ? mapCommentRow(row as never) : null;
+  }
 
   return {
     upsertFromWebhook(input: UpsertCommentInput) {
@@ -178,6 +201,12 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
           );
           const updated = selectByIgCommentId.get(input.igCommentId);
           return { comment: mapCommentRow(updated as never), created: false };
+        }
+
+        if (current.deletedAt) {
+          restoreFromInstagramStmt.run(current.id);
+          const restored = selectByIgCommentId.get(input.igCommentId);
+          return { comment: mapCommentRow(restored as never), created: false };
         }
 
         return { comment: current, created: false };
@@ -320,29 +349,41 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       return (result.changes ?? 0) > 0;
     },
 
+    markDeletedFromInstagram(commentId) {
+      const result = markDeletedFromInstagramStmt.run(
+        new Date().toISOString(),
+        commentId,
+      );
+      return (result.changes ?? 0) > 0;
+    },
+
+    restoreFromInstagram(commentId) {
+      const result = restoreFromInstagramStmt.run(commentId);
+      return (result.changes ?? 0) > 0;
+    },
+
     findById(id) {
-      const row = selectById.get(id);
-      return row ? mapCommentRow(row as never) : null;
+      return readCommentById(id);
     },
 
     markReplied(id) {
       markRepliedStmt.run(id);
-      return this.findById(id);
+      return readCommentById(id);
     },
 
     markPending(id) {
       markPendingStmt.run(id);
-      return this.findById(id);
+      return readCommentById(id);
     },
 
     markSkipped(id, errorMessage = null) {
       markSkippedStmt.run(errorMessage, id);
-      return this.findById(id);
+      return readCommentById(id);
     },
 
     markFailed(id, errorMessage) {
       markFailedStmt.run(errorMessage.slice(0, 500), id);
-      return this.findById(id);
+      return readCommentById(id);
     },
 
     scheduleAgentReply(commentId, notBeforeIso) {
@@ -374,20 +415,24 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     },
 
     linkInstagramReply(input) {
-      if (this.hasReplyRecord(input.userCommentId)) {
+      if (Boolean(hasReplyRecordStmt.get(input.userCommentId))) {
         return false;
       }
 
-      const userComment = this.findById(input.userCommentId);
+      const userComment = readCommentById(input.userCommentId);
 
-      this.createReply({
-        commentId: input.userCommentId,
-        sentText: input.sentText,
-        status: "sent",
-        sourceIgCommentId: input.brandIgCommentId,
-        replyToIgCommentId: userComment?.igCommentId ?? null,
-      });
-      this.markReplied(input.userCommentId);
+      const id = randomUUID();
+      insertReply.run(
+        id,
+        input.userCommentId,
+        null,
+        input.sentText,
+        "sent",
+        null,
+        input.brandIgCommentId,
+        userComment?.igCommentId ?? null,
+      );
+      markRepliedStmt.run(input.userCommentId);
       return true;
     },
   };

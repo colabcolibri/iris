@@ -27,6 +27,10 @@ export function validateManualCommentReply(
     return "comment not found";
   }
 
+  if (comment.deletedAt) {
+    return "comment was removed from instagram";
+  }
+
   if (comment.status === "replied" || comment.status === "skipped") {
     return "comment already handled";
   }

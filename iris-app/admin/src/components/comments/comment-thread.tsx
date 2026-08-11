@@ -6,12 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { commentStatusBadgeLabel, commentStatusHint } from "@/lib/comment-status";
+import { commentStatusBadgeLabel, commentStatusHint, isCommentDeletedOnInstagram } from "@/lib/comment-status";
 import type { CommentThreadGroup } from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
 import {
   commentTimestamp,
-  defaultCollapsedThreadIds,
   formatCommentExactTime,
   indexCommentsByIgId,
   isBrandAuthor,
@@ -54,6 +53,13 @@ function statusVariant(status: string): "default" | "secondary" | "outline" | "d
     return "outline";
   }
   return "outline";
+}
+
+function statusBadgeClassName(comment: Comment): string {
+  if (isCommentDeletedOnInstagram(comment)) {
+    return deletedCommentBadgeClass;
+  }
+  return "";
 }
 
 function previewText(text: string | undefined, max = 140): string {
@@ -113,11 +119,18 @@ const brandReplySurfaceClass =
   "border-primary/30 bg-primary/8 dark:border-primary/35 dark:bg-primary/12";
 const brandReplyLinkedSurfaceClass =
   "border border-primary/25 bg-primary/10 dark:bg-primary/15";
+const deletedCommentSurfaceClass =
+  "border border-dashed border-muted-foreground/40 bg-muted/60 dark:bg-muted/30";
+const deletedCommentBadgeClass =
+  "border-muted-foreground/45 bg-muted text-muted-foreground";
 
 function canRequestManualAiReply(
   comment: Comment,
   brandUsername?: string | null,
 ): boolean {
+  if (isCommentDeletedOnInstagram(comment)) {
+    return false;
+  }
   if (isBrandAuthor(comment.author_username, brandUsername)) {
     return false;
   }
@@ -382,6 +395,7 @@ function CommentBody({
   const brandHandle = formatHandle(brandUsername ?? "marca");
   const showAudit = shouldShowReplyAudit(comment);
   const auditState = useReplyAudit(comment.id);
+  const isDeletedOnInstagram = isCommentDeletedOnInstagram(comment);
 
   return (
     <div className="group/comment min-w-0">
@@ -389,13 +403,19 @@ function CommentBody({
         <Avatar
           className={cn(
             "size-9 shrink-0 border",
-            isBrandReply ? "border-primary/35 bg-primary/10" : "border-border/40",
+            isDeletedOnInstagram
+              ? "border-muted-foreground/30 bg-muted/80 grayscale"
+              : isBrandReply
+                ? "border-primary/35 bg-primary/10"
+                : "border-border/40",
           )}
         >
           <AvatarFallback
             className={cn(
               "text-[10px] font-semibold",
-              isBrandReply && "text-primary",
+              isDeletedOnInstagram
+                ? "text-muted-foreground"
+                : isBrandReply && "text-primary",
             )}
           >
             {initials(comment.author_username)}
@@ -409,7 +429,11 @@ function CommentBody({
                 <span
                   className={cn(
                     "text-sm font-semibold",
-                    isBrandReply ? "text-primary" : "text-foreground",
+                    isDeletedOnInstagram
+                      ? "text-muted-foreground line-through decoration-muted-foreground/70"
+                      : isBrandReply
+                        ? "text-primary"
+                        : "text-foreground",
                   )}
                 >
                   {handle}
@@ -421,13 +445,18 @@ function CommentBody({
                 {statusLabel ? (
                   <Badge
                     variant={statusVariant(comment.status ?? "")}
-                    className="text-[10px]"
+                    className={cn("text-[10px]", statusBadgeClassName(comment))}
                     title={commentStatusHint(comment)}
                   >
                     {statusLabel}
                   </Badge>
                 ) : null}
               </div>
+              {isDeletedOnInstagram ? (
+                <p className="text-xs text-muted-foreground">
+                  Este comentário foi removido no Instagram e não pode receber respostas.
+                </p>
+              ) : null}
               {replyTarget && showReplyContext ? (
                 <p className="text-xs text-muted-foreground">
                   Em resposta a{" "}
@@ -436,30 +465,41 @@ function CommentBody({
               ) : null}
             </div>
 
-            <CommentActions
-              comment={comment}
-              brandUsername={brandUsername}
-              showAudit={showAudit}
-              auditActive={auditState.open}
-              onAuditClick={() => void auditState.toggle()}
-              generating={generatingId === comment.id}
-              onGenerateDraft={() => onGenerateDraft(comment.id)}
-            />
+            {!isDeletedOnInstagram ? (
+              <CommentActions
+                comment={comment}
+                brandUsername={brandUsername}
+                showAudit={showAudit}
+                auditActive={auditState.open}
+                onAuditClick={() => void auditState.toggle()}
+                generating={generatingId === comment.id}
+                onGenerateDraft={() => onGenerateDraft(comment.id)}
+              />
+            ) : null}
           </div>
 
-          <p className="mt-1.5 wrap-break-word text-[15px] leading-relaxed text-foreground">
+          <p
+            className={cn(
+              "mt-1.5 wrap-break-word text-[15px] leading-relaxed",
+              isDeletedOnInstagram
+                ? "text-muted-foreground/80 line-through decoration-muted-foreground/60"
+                : "text-foreground",
+            )}
+          >
             {comment.text ?? "(sem texto)"}
           </p>
 
-          <CommentDraftPanel
-            comment={comment}
-            approvingId={approvingId}
-            removingDraftId={removingDraftId}
-            savingDraftId={savingDraftId}
-            onApproveDraft={onApproveDraft}
-            onRemoveDraft={onRemoveDraft}
-            onSaveDraft={onSaveDraft}
-          />
+          {!isDeletedOnInstagram ? (
+            <CommentDraftPanel
+              comment={comment}
+              approvingId={approvingId}
+              removingDraftId={removingDraftId}
+              savingDraftId={savingDraftId}
+              onApproveDraft={onApproveDraft}
+              onRemoveDraft={onRemoveDraft}
+              onSaveDraft={onSaveDraft}
+            />
+          ) : null}
 
           {comment.error_message ? (
             <p className="mt-2 text-xs text-muted-foreground">{comment.error_message}</p>
@@ -487,7 +527,9 @@ function CommentBody({
             </div>
           ) : null}
 
-          {showAudit ? <ReplyAuditPanel {...auditState} className="mt-3" /> : null}
+          {showAudit && !isDeletedOnInstagram ? (
+            <ReplyAuditPanel {...auditState} className="mt-3" />
+          ) : null}
         </div>
       </div>
     </div>
@@ -608,12 +650,17 @@ function ThreadCard({
   onGenerateDraft,
 }: ThreadCardProps) {
   const isBrandRoot = isBrandAuthor(group.root.author_username, brandUsername);
+  const isDeletedRoot = isCommentDeletedOnInstagram(group.root);
 
   return (
     <article
       className={cn(
         "rounded-xl border p-4 shadow-sm",
-        isBrandRoot ? brandReplySurfaceClass : "border-border/60 bg-card",
+        isDeletedRoot
+          ? deletedCommentSurfaceClass
+          : isBrandRoot
+            ? brandReplySurfaceClass
+            : "border-border/60 bg-card",
       )}
     >
       <CommentBody
@@ -661,36 +708,74 @@ function ThreadAccordionHeader({
   const statusLabel = commentStatusBadgeLabel(root);
   const replyCount = group.replies.length;
   const needsAttention = threadNeedsAttention(group);
+  const isDeletedRoot = isCommentDeletedOnInstagram(root);
 
   return (
-    <AppAccordion.Header className="transition-colors hover:bg-muted/30 has-data-panel-open:bg-muted/20">
+    <AppAccordion.Header
+      className={cn(
+        "transition-colors hover:bg-muted/30 has-data-panel-open:bg-muted/20",
+        isDeletedRoot && "bg-muted/40 hover:bg-muted/50 has-data-panel-open:bg-muted/45",
+      )}
+    >
       <div className="flex w-full min-w-0 items-start gap-2 px-4 py-4">
         <AppAccordion.PanelTrigger>
-          <Avatar className="size-9 shrink-0 border border-border/40">
-            <AvatarFallback className="text-[10px] font-semibold">
+          <Avatar
+            className={cn(
+              "size-9 shrink-0 border",
+              isDeletedRoot
+                ? "border-muted-foreground/30 bg-muted/80 grayscale"
+                : "border-border/40",
+            )}
+          >
+            <AvatarFallback
+              className={cn(
+                "text-[10px] font-semibold",
+                isDeletedRoot && "text-muted-foreground",
+              )}
+            >
               {initials(root.author_username)}
             </AvatarFallback>
           </Avatar>
 
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-sm font-semibold text-foreground">{handle}</span>
+              <span
+                className={cn(
+                  "text-sm font-semibold",
+                  isDeletedRoot
+                    ? "text-muted-foreground line-through decoration-muted-foreground/70"
+                    : "text-foreground",
+                )}
+              >
+                {handle}
+              </span>
               <span className="text-xs text-muted-foreground" title={commentTimestamp(root)}>
                 {formatCommentExactTime(commentTimestamp(root))}
               </span>
               {statusLabel ? (
-                <Badge variant={statusVariant(root.status ?? "")} className="text-[10px]">
+                <Badge
+                  variant={statusVariant(root.status ?? "")}
+                  className={cn("text-[10px]", statusBadgeClassName(root))}
+                  title={commentStatusHint(root)}
+                >
                   {statusLabel}
                 </Badge>
               ) : null}
-              {needsAttention ? (
+              {needsAttention && !isDeletedRoot ? (
                 <Badge variant="secondary" className="text-[10px]">
                   Atenção
                 </Badge>
               ) : null}
             </div>
 
-            <p className="line-clamp-2 text-sm leading-relaxed text-foreground/90">
+            <p
+              className={cn(
+                "line-clamp-2 text-sm leading-relaxed",
+                isDeletedRoot
+                  ? "text-muted-foreground/80 line-through decoration-muted-foreground/60"
+                  : "text-foreground/90",
+              )}
+            >
               {previewText(root.text)}
             </p>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
@@ -701,16 +786,18 @@ function ThreadAccordionHeader({
         </AppAccordion.PanelTrigger>
 
         <div className="flex shrink-0 items-center gap-0.5 self-start">
-          <CommentActions
-            comment={comment}
-            brandUsername={brandUsername}
-            showAudit={showAudit}
-            auditActive={auditActive}
-            onAuditClick={onAuditClick}
-            alwaysShowActions
-            generating={generatingId === comment.id}
-            onGenerateDraft={() => onGenerateDraft(comment.id)}
-          />
+          {!isDeletedRoot ? (
+            <CommentActions
+              comment={comment}
+              brandUsername={brandUsername}
+              showAudit={showAudit}
+              auditActive={auditActive}
+              onAuditClick={onAuditClick}
+              alwaysShowActions
+              generating={generatingId === comment.id}
+              onGenerateDraft={() => onGenerateDraft(comment.id)}
+            />
+          ) : null}
           <AppAccordion.ChevronTrigger />
         </div>
       </div>
@@ -734,11 +821,17 @@ function ThreadAccordionItem({
   const root = group.root;
   const showAudit = shouldShowReplyAudit(root);
   const auditState = useReplyAudit(root.id);
+  const isDeletedRoot = isCommentDeletedOnInstagram(root);
 
   return (
     <AppAccordion.Item
       value={root.id}
-      className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+      className={cn(
+        "overflow-hidden rounded-xl border shadow-sm",
+        isDeletedRoot
+          ? deletedCommentSurfaceClass
+          : "border-border/60 bg-card",
+      )}
     >
       <ThreadAccordionHeader
         group={group}
@@ -773,15 +866,18 @@ function ThreadAccordionItem({
           <div className="space-y-3">
             {group.replies.map((reply) => {
               const isBrandReply = isBrandAuthor(reply.author_username, brandUsername);
+              const isDeletedReply = isCommentDeletedOnInstagram(reply);
 
               return (
                 <div
                   key={reply.id}
                   className={cn(
                     "rounded-lg border px-3 py-3",
-                    isBrandReply
-                      ? brandReplySurfaceClass
-                      : "border-border/50 bg-background/80",
+                    isDeletedReply
+                      ? deletedCommentSurfaceClass
+                      : isBrandReply
+                        ? brandReplySurfaceClass
+                        : "border-border/50 bg-background/80",
                   )}
                 >
                   <CommentBody
@@ -824,15 +920,12 @@ export function CommentThread({
 }: CommentThreadProps) {
   const byIgId = indexCommentsByIgId(allComments);
   const groupsKey = useMemo(() => groups.map((group) => group.root.id).join("|"), [groups]);
-  const [openIds, setOpenIds] = useState<string[]>(() =>
-    groups
-      .filter((group) => !defaultCollapsedThreadIds(groups).has(group.root.id))
-      .map((group) => group.root.id),
-  );
+  const [openIds, setOpenIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const collapsed = defaultCollapsedThreadIds(groups);
-    setOpenIds(groups.filter((group) => !collapsed.has(group.root.id)).map((group) => group.root.id));
+    setOpenIds((current) =>
+      current.filter((id) => groups.some((group) => group.root.id === id)),
+    );
   }, [groupsKey, groups]);
 
   const onOpenChange = useCallback((next: string | string[] | undefined) => {

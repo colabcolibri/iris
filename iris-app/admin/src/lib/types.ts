@@ -44,7 +44,7 @@ export type Comment = {
   draft_status?: string | null;
   linked_reply_text?: string | null;
   linked_reply_ig_comment_id?: string | null;
-  reply_to_ig_comment_id?: string | null;
+  deleted_at?: string | null;
 };
 
 export type CommentPostSummary = {
@@ -130,6 +130,8 @@ export type SyncPostCommentsResult = {
   comments_fetched: number;
   access_limited: boolean;
   warning: string | null;
+  marked_deleted?: number;
+  restored?: number;
   comments: Comment[];
 };
 

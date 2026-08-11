@@ -11,4 +11,5 @@ export type Comment = {
   errorMessage: string | null;
   createdAt: string;
   igTimestamp: string | null;
+  deletedAt: string | null;
 };

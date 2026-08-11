@@ -1,6 +1,7 @@
 import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
 import type { Comment } from "../comment.ts";
 import { normalizeCommentTimestamp } from "./normalize-comment-timestamp.ts";
+import { reconcileDeletedInstagramComments } from "./reconcile-deleted-instagram-comments.ts";
 
 export type SyncPostCommentsDeps = {
   metaCommentReader: MetaCommentReader;
@@ -12,6 +13,9 @@ export type SyncPostCommentsDeps = {
     text?: string | null;
     igTimestamp?: string | null;
   }) => { comment: Comment; created: boolean };
+  listByPostId: (postId: string) => Comment[];
+  markDeletedFromInstagram: (commentId: string) => boolean;
+  restoreFromInstagram: (commentId: string) => boolean;
 };
 
 export type SyncPostCommentsInput = {
@@ -27,6 +31,8 @@ export type SyncPostCommentsResult = {
   commentsFetched: number;
   accessLimited: boolean;
   warning: string | null;
+  markedDeleted: number;
+  restored: number;
   comments: Comment[];
 };
 
@@ -51,6 +57,8 @@ export async function syncPostComments(
       commentsFetched: 0,
       accessLimited: false,
       warning: null,
+      markedDeleted: 0,
+      restored: 0,
       comments: [],
     };
   }
@@ -71,6 +79,20 @@ export async function syncPostComments(
 
   const accessLimited = media.reportedCommentsCount > 0 && comments.length === 0;
 
+  const remoteIgCommentIds = new Set(
+    media.comments.map((remoteComment) => remoteComment.igCommentId),
+  );
+  const deletedReconcile = reconcileDeletedInstagramComments(
+    input.postId,
+    remoteIgCommentIds,
+    {
+      listByPostId: deps.listByPostId,
+      markDeletedFromInstagram: deps.markDeletedFromInstagram,
+      restoreFromInstagram: deps.restoreFromInstagram,
+    },
+    { accessLimited },
+  );
+
   return {
     postId: input.postId,
     igMediaId: input.igMediaId,
@@ -81,6 +103,8 @@ export async function syncPostComments(
     warning: accessLimited
       ? "A Meta retornou comments_count neste post, mas a lista veio vazia. Comentários novos ainda podem chegar via webhook."
       : null,
-    comments,
+    markedDeleted: deletedReconcile.markedDeleted,
+    restored: deletedReconcile.restored,
+    comments: deps.listByPostId(input.postId),
   };
 }
