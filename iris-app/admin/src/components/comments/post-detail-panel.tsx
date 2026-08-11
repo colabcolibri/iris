@@ -474,6 +474,7 @@ export function PostDetailPanel({
                   className="h-9 shrink-0 gap-1.5 sm:w-auto"
                   onClick={onReconcile}
                   disabled={!metaConnected || reconciling || syncing || loadingComments}
+                  title="Sincroniza com o Instagram, marca removidos e vincula respostas da marca já existentes no thread"
                 >
                   {reconciling ? (
                     <Loader2 className="size-4 shrink-0 animate-spin" />

@@ -18,6 +18,7 @@ import {
   threadNeedsAttention,
 } from "@/lib/build-comment-tree";
 import type { Comment } from "@/lib/types";
+import { commentTextClassName, displayCommentText } from "@/lib/comment-text-display";
 import {
   ReplyAuditPanel,
   ReplyAuditTrigger,
@@ -63,7 +64,10 @@ function statusBadgeClassName(comment: Comment): string {
 }
 
 function previewText(text: string | undefined, max = 140): string {
-  const value = text?.trim() || "(sem texto)";
+  const value = displayCommentText(text);
+  if (value === "(sem texto)") {
+    return value;
+  }
   if (value.length <= max) {
     return value;
   }
@@ -231,7 +235,9 @@ function CommentDraftPanel({
   return (
     <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
-      <p className="mt-1.5 wrap-break-word text-sm leading-relaxed">{comment.draft_text}</p>
+      <p className="mt-1.5 wrap-break-word text-sm leading-relaxed whitespace-pre-wrap">
+        {displayCommentText(comment.draft_text)}
+      </p>
       {canAct ? (
         <div className="mt-3 flex flex-row flex-wrap items-center gap-2">
           <Button
@@ -480,13 +486,14 @@ function CommentBody({
 
           <p
             className={cn(
-              "mt-1.5 wrap-break-word text-[15px] leading-relaxed",
+              "mt-1.5 text-[15px]",
+              commentTextClassName,
               isDeletedOnInstagram
                 ? "text-muted-foreground/80 line-through decoration-muted-foreground/60"
                 : "text-foreground",
             )}
           >
-            {comment.text ?? "(sem texto)"}
+            {displayCommentText(comment.text)}
           </p>
 
           {!isDeletedOnInstagram ? (
@@ -515,8 +522,8 @@ function CommentBody({
                 </Avatar>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-primary">{brandHandle}</p>
-                  <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
-                    {comment.linked_reply_text}
+                  <p className={cn("mt-0.5 text-sm text-foreground/90", commentTextClassName)}>
+                    {displayCommentText(comment.linked_reply_text)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Em resposta a{" "}
@@ -601,8 +608,8 @@ function CommentRootExtras({
             </Avatar>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-primary">{brandHandle}</p>
-              <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
-                {comment.linked_reply_text}
+              <p className={cn("mt-0.5 text-sm text-foreground/90", commentTextClassName)}>
+                {displayCommentText(comment.linked_reply_text)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Em resposta a{" "}
@@ -764,7 +771,7 @@ function ThreadAccordionHeader({
 
             <p
               className={cn(
-                "line-clamp-2 text-sm leading-relaxed",
+                "line-clamp-2 text-sm whitespace-pre-wrap",
                 isDeletedRoot
                   ? "text-muted-foreground/80 line-through decoration-muted-foreground/60"
                   : "text-foreground/90",

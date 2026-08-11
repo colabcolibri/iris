@@ -51,6 +51,10 @@ function planTreeNode(
   const skippedBrandCommentIds: string[] = [];
 
   for (const comment of sorted) {
+    if (comment.deletedAt) {
+      continue;
+    }
+
     if (isBrandAuthor(comment.authorUsername, brandUsername)) {
       if (comment.status === "pending") {
         skippedBrandCommentIds.push(comment.id);

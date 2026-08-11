@@ -20,6 +20,17 @@ export function commentReconcileDeps(ctx: AppContext) {
   };
 }
 
+export function postCommentSyncDeps(ctx: AppContext) {
+  return {
+    metaCommentReader: ctx.metaCommentReader,
+    upsertFromWebhook: (input: Parameters<AppContext["comments"]["upsertFromWebhook"]>[0]) =>
+      ctx.comments.upsertFromWebhook(input),
+    listByPostId: (postId: string) => ctx.comments.listByPostId(postId),
+    markDeletedFromInstagram: (id: string) => ctx.comments.markDeletedFromInstagram(id),
+    restoreFromInstagram: (id: string) => ctx.comments.restoreFromInstagram(id),
+  };
+}
+
 export function serializeCommentWithDraft(
   comment: Parameters<typeof serializeComment>[0],
   ctx: AppContext,

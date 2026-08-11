@@ -149,6 +149,13 @@ export type ReconcileCommentsPreview = {
     brand_ig_comment_id: string;
     preview_text: string | null;
   }>;
+  synced_at: string;
+  comments_fetched: number;
+  access_limited: boolean;
+  warning: string | null;
+  marked_deleted: number;
+  restored: number;
+  comments: Comment[];
 };
 
 export type ReconcileCommentsResult = {
@@ -157,6 +164,12 @@ export type ReconcileCommentsResult = {
   linked_count: number;
   skipped_brand_count: number;
   linkable_count: number;
+  synced_at: string;
+  comments_fetched: number;
+  access_limited: boolean;
+  warning: string | null;
+  marked_deleted: number;
+  restored: number;
   comments: Comment[];
 };
 

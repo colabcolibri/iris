@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { commentTextClassName, displayCommentText } from "@/lib/comment-text-display";
 import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { StatusBadge } from "@/components/posts/status-badge";
@@ -298,7 +299,7 @@ export function PostDialog({
                             </span>
                             <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
                           </div>
-                          <p className="wrap-break-word leading-relaxed">{comment.text}</p>
+                          <p className={commentTextClassName}>{displayCommentText(comment.text)}</p>
                           {comment.status === "skipped" ||
                           comment.status === "failed" ||
                           comment.status === "replied" ? (

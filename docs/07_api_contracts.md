@@ -173,8 +173,8 @@ Cache padrão: 1 hora (`from_cache` na resposta). Requer Meta conectada.
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/posts/:id/comments` | admin, agent | Comentários do post |
 | GET | `/api/posts/:id/reply-inspection` | admin | Supervisão de threads |
-| GET | `/api/posts/:id/comments/reconcile-preview` | admin | Preview de links marca↔usuário |
-| POST | `/api/posts/:id/comments/reconcile` | admin | Reconcilia status `replied` |
+| GET | `/api/posts/:id/comments/reconcile-preview` | admin + Meta | Sincroniza comentários com a Meta, marca removidos e retorna preview de vínculos |
+| POST | `/api/posts/:id/comments/reconcile` | admin + Meta | Sincroniza, marca removidos e vincula respostas da marca já existentes no IG |
 | POST | `/api/posts/:id/comments/sync` | admin | Sync Graph API → SQLite |
 | GET | `/api/comments/posts` | admin | Posts gerenciados + contagens |
 | GET | `/api/comments/inbox` | admin | Inbox Meta/local (`days`, `source`, `scope`, `ig_media_id`, `post_id`) |

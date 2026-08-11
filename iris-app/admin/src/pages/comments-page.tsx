@@ -537,8 +537,25 @@ export function CommentsPage() {
 
     try {
       const preview = await fetchReconcileCommentsPreview(selectedPostId);
+      const previewAt = Date.now();
+      postCacheRef.current.setComments(selectedPostId, preview.comments, previewAt);
+      setComments(preview.comments);
+      syncPostCountsFromComments(selectedPostId, preview.comments);
+      if (preview.marked_deleted > 0) {
+        toast.info(
+          `${preview.marked_deleted} comentário${preview.marked_deleted === 1 ? "" : "s"} marcado${preview.marked_deleted === 1 ? "" : "s"} como removido${preview.marked_deleted === 1 ? "" : "s"} no Instagram.`,
+        );
+      }
+      if (preview.warning) {
+        setSyncWarning(preview.warning);
+      }
+
       if (preview.linkable_count === 0) {
-        toast.info("Nenhum comentário pendente para vincular a respostas já existentes no Instagram.");
+        toast.info(
+          preview.marked_deleted > 0
+            ? "Comentários atualizados com o Instagram. Nada pendente para vincular."
+            : "Nenhum comentário pendente para vincular a respostas já existentes no Instagram.",
+        );
         return;
       }
 
@@ -550,11 +567,11 @@ export function CommentsPage() {
         title: "Vincular respostas do Instagram?",
         description: (
           <>
-            Encontramos <strong>{preview.linkable_count}</strong> comentário
+            Sincronizamos com o Instagram agora. Encontramos{" "}
+            <strong>{preview.linkable_count}</strong> comentário
             {preview.linkable_count === 1 ? "" : "s"} já respondido
-            {preview.linkable_count === 1 ? "" : "s"} por {brandHandle} no Instagram. O Iris vai
-            vincular cada um à resposta real do thread (texto e ID do comentário no IG), sem
-            publicar nada novo.
+            {preview.linkable_count === 1 ? "" : "s"} por {brandHandle}. O Iris vai vincular cada
+            um à resposta real do thread (texto e ID no IG), sem publicar nada novo.
           </>
         ),
         confirmLabel: "Vincular respostas",
@@ -570,10 +587,17 @@ export function CommentsPage() {
       postCacheRef.current.setComments(selectedPostId, result.comments, reconciledAt);
       setComments(result.comments);
       syncPostCountsFromComments(selectedPostId, result.comments);
+      if (result.warning) {
+        setSyncWarning(result.warning);
+      }
+      const deletedNote =
+        result.marked_deleted > 0
+          ? ` ${result.marked_deleted} removido${result.marked_deleted === 1 ? "" : "s"} no IG.`
+          : "";
       toast.success(
         result.linked_count > 0
-          ? `${result.linked_count} comentário${result.linked_count === 1 ? "" : "s"} vinculado${result.linked_count === 1 ? "" : "s"} à resposta existente no Instagram.`
-          : "Nenhum comentário novo para vincular.",
+          ? `${result.linked_count} comentário${result.linked_count === 1 ? "" : "s"} vinculado${result.linked_count === 1 ? "" : "s"} à resposta existente no Instagram.${deletedNote}`
+          : `Nenhum comentário novo para vincular.${deletedNote}`,
       );
     } catch (err) {
       const message =

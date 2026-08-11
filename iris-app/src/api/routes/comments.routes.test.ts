@@ -404,6 +404,79 @@ test("POST comments sync upserts comments for one post", async () => {
   });
 });
 
+test("POST comments reconcile sincroniza e marca comentários removidos no Instagram", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post reconcile deleted",
+    });
+    ctx.posts.update(post.id, { igMediaId: "media-reconcile-deleted" });
+
+    ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-user-reconcile",
+      postId: post.id,
+      authorUsername: "fan",
+      text: "pergunta",
+      igTimestamp: "2026-08-10T10:00:00.000Z",
+    });
+    ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-brand-deleted",
+      postId: post.id,
+      parentIgCommentId: "ig-user-reconcile",
+      authorUsername: "test-ig-user",
+      text: "resposta apagada",
+      igTimestamp: "2026-08-10T11:00:00.000Z",
+    });
+
+    ctx.metaCommentReader = {
+      async listRecentMediaWithComments(_since, options) {
+        if (options?.igMediaId === "media-reconcile-deleted") {
+          return [
+            {
+              igMediaId: "media-reconcile-deleted",
+              caption: "Post reconcile deleted",
+              timestamp: new Date().toISOString(),
+              reportedCommentsCount: 1,
+              comments: [
+                {
+                  igCommentId: "ig-user-reconcile",
+                  parentIgCommentId: null,
+                  authorUsername: "fan",
+                  text: "pergunta",
+                  timestamp: "2026-08-10T10:00:00.000Z",
+                },
+              ],
+            },
+          ];
+        }
+        return [];
+      },
+    };
+
+    const response = await fetch(`${baseUrl}/api/posts/${post.id}/comments/reconcile`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      marked_deleted: number;
+      linked_count: number;
+      comments: Array<{ ig_comment_id: string; deleted_at: string | null; status: string }>;
+    };
+
+    assert.equal(body.marked_deleted, 1);
+    assert.equal(body.linked_count, 0);
+
+    const user = body.comments.find((c) => c.ig_comment_id === "ig-user-reconcile");
+    const brand = body.comments.find((c) => c.ig_comment_id === "ig-brand-deleted");
+    assert.equal(user?.status, "pending");
+    assert.equal(user?.deleted_at, null);
+    assert.ok(brand?.deleted_at);
+  });
+});
+
 test("GET comments inbox returns synced media", async () => {
   await withServer(async (baseUrl, ctx) => {
     const post = ctx.posts.create({

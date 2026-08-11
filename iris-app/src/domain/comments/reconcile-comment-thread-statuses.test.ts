@@ -17,6 +17,7 @@ function makeComment(
     errorMessage: null,
     createdAt: "2026-08-10T10:00:00.000Z",
     igTimestamp: partial.createdAt ?? "2026-08-10T10:00:00.000Z",
+    deletedAt: null,
     ...partial,
   };
 }
@@ -165,4 +166,38 @@ test("planCommentThreadReconciliation não inclui comentários já vinculados", 
   );
 
   assert.equal(plan.links.length, 0);
+});
+
+test("planCommentThreadReconciliation ignora comentários removidos no Instagram", () => {
+  const postId = "post-1";
+  const comments: Comment[] = [
+    makeComment({
+      id: "u1",
+      igCommentId: "ig-u1",
+      postId,
+      igTimestamp: "2026-08-10T10:00:00.000Z",
+      createdAt: "2026-08-10T10:00:00.000Z",
+    }),
+    makeComment({
+      id: "b1",
+      igCommentId: "ig-b1",
+      postId,
+      parentIgCommentId: "ig-u1",
+      authorUsername: "colabcolibri",
+      text: "resposta apagada",
+      igTimestamp: "2026-08-10T11:00:00.000Z",
+      createdAt: "2026-08-10T11:00:00.000Z",
+      deletedAt: "2026-08-10T12:00:00.000Z",
+    }),
+  ];
+
+  const plan = planCommentThreadReconciliation(
+    postId,
+    "colabcolibri",
+    () => comments,
+    () => false,
+  );
+
+  assert.equal(plan.links.length, 0);
+  assert.equal(plan.skippedBrandCommentIds.length, 0);
 });

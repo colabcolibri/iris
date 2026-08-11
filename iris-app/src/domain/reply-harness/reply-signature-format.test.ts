@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   formatReplyWithSignature,
+  formatCommentTextForDisplay,
   SIGNATURE_SEPARATOR,
 } from "./reply-signature-format.ts";
 import { buildSignatureVerificationBlock } from "./prompt-language.ts";
@@ -20,6 +21,11 @@ test("formatReplyWithSignature joins body and sign-off with separator", () => {
 
 test("formatReplyWithSignature returns body when sign-off is empty", () => {
   assert.equal(formatReplyWithSignature("Só o corpo.", ""), "Só o corpo.");
+});
+
+test("formatCommentTextForDisplay shows body and sign-off as paragraphs", () => {
+  const raw = formatReplyWithSignature("Obrigado!", "— Iris");
+  assert.equal(formatCommentTextForDisplay(raw), "Obrigado!\n\n— Iris");
 });
 
 test("buildSignatureVerificationBlock documents dot-on-own-line layout", () => {
