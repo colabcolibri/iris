@@ -10,6 +10,7 @@ import {
   threadForTier,
 } from "./prompt-sections.ts";
 import type { ReplyTier } from "./reply-tier.ts";
+import { SIGNATURE_SEPARATOR } from "./reply-signature-format.ts";
 
 const TRIAGE_TIER_GUIDE = [
   "Classify the target comment:",
