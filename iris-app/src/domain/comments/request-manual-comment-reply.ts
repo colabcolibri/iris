@@ -31,6 +31,21 @@ export function validateManualCommentReply(
     return "comment was removed from instagram";
   }
 
+  if (isBrandAuthor(comment.authorUsername, brandUsername)) {
+    return "cannot reply to brand comments";
+  }
+
+  if (!ctx.resolveLlmCompleter()) {
+    return "LLM is not configured";
+  }
+
+  if (mode === "draft") {
+    if (comment.status === "skipped") {
+      return "comment was skipped by automation";
+    }
+    return null;
+  }
+
   if (comment.status === "replied" || comment.status === "skipped") {
     return "comment already handled";
   }
@@ -39,17 +54,9 @@ export function validateManualCommentReply(
     return "comment cannot receive manual AI reply";
   }
 
-  if (isBrandAuthor(comment.authorUsername, brandUsername)) {
-    return "cannot reply to brand comments";
-  }
-
   const sent = ctx.comments.findLatestSentReply(commentId);
   if (sent?.sentText) {
     return "comment already has a sent reply";
-  }
-
-  if (!ctx.resolveLlmCompleter()) {
-    return "LLM is not configured";
   }
 
   if (mode === "auto") {

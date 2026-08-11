@@ -741,6 +741,55 @@ test("POST ai-reply generates draft for pending comment", async () => {
   });
 });
 
+test("POST ai-reply draft works on already replied comment", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.resolveLlmCompleter = () =>
+      createHarnessLlmMock({ draftText: "Nova resposta manual" });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post replied",
+      igMediaId: "media-replied-draft",
+      publishedAt: new Date().toISOString(),
+      replyMode: "off",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-replied-draft-1",
+      postId: post.id,
+      text: "Comentário já respondido",
+    });
+
+    ctx.comments.createReply({
+      commentId: comment.id,
+      sentText: "Resposta anterior",
+      status: "sent",
+      replyToIgCommentId: comment.igCommentId,
+    });
+    ctx.comments.markReplied(comment.id);
+
+    const response = await fetch(`${baseUrl}/api/comments/${comment.id}/ai-reply`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mode: "draft" }),
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      draft_text: string | null;
+      status: string;
+      linked_reply_text: string | null;
+    };
+    assert.equal(body.draft_text, "Nova resposta manual");
+    assert.equal(body.status, "replied");
+    assert.equal(body.linked_reply_text, "Resposta anterior");
+  });
+});
+
 test("DELETE draft removes stored draft", async () => {
   await withServer(async (baseUrl, ctx) => {
     ctx.resolveLlmCompleter = () => createHarnessLlmMock({ draftText: "Draft to remove" });

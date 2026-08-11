@@ -685,8 +685,8 @@ export async function handleCommentsRoute(
         return true;
       }
 
-      if (comment.status !== "pending") {
-        sendError(res, 422, "only pending comments can update draft");
+      if (comment.status !== "pending" && comment.status !== "replied") {
+        sendError(res, 422, "only pending or replied comments can update draft");
         return true;
       }
 
@@ -775,13 +775,13 @@ export async function handleCommentsRoute(
         return true;
       }
 
-      if (comment.status === "replied") {
-        sendJson(res, 200, serializeCommentWithDraft(comment, ctx));
+      if (comment.deletedAt) {
+        sendError(res, 410, "comment was removed from instagram");
         return true;
       }
 
-      if (comment.status !== "pending") {
-        sendError(res, 422, "only pending comments can be approved");
+      if (comment.status !== "pending" && comment.status !== "replied") {
+        sendError(res, 422, "only pending or replied comments can be approved");
         return true;
       }
 
@@ -831,7 +831,10 @@ export async function handleCommentsRoute(
           sentText: message,
           status: "failed",
         });
-        const updated = ctx.comments.markFailed(commentId, errorMessage);
+        const updated =
+          comment.status === "replied"
+            ? ctx.comments.findById(commentId)
+            : ctx.comments.markFailed(commentId, errorMessage);
         notifyCommentsChanged({ post_id: comment.postId });
         sendJson(res, 200, serializeCommentWithDraft(updated!, ctx));
       }

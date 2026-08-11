@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ScrollText } from "lucide-react";
+import { BrainCircuit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { fetchReplyAudit } from "@/lib/api";
@@ -56,15 +56,15 @@ export function ReplyAuditTrigger({ active = false, className, onClick }: ReplyA
     <button
       type="button"
       className={cn(
-        "shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-        active && "bg-muted/80 text-primary",
+        "shrink-0 rounded-md p-1.5 text-sky-600/80 transition-colors hover:bg-sky-500/10 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300",
+        active && "bg-sky-500/15 text-sky-700 dark:text-sky-300",
         className,
       )}
       aria-label="Ver decisão do agente"
-      title="Decisão do agente"
+      title="Ver decisão do agente"
       onClick={onClick}
     >
-      <ScrollText className="size-3.5" />
+      <BrainCircuit className="size-3.5" />
     </button>
   );
 }

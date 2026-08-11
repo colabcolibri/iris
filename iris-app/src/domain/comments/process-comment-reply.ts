@@ -82,14 +82,18 @@ async function processCommentReplyCore(
       harnessResult.terminalStatus === "blocked_harmful"
     ) {
       const reason = harnessResult.steps[0]?.reason ?? "blocked";
-      ctx.comments.markSkipped(commentId, guardrailMessage(reason));
+      if (comment.status !== "replied") {
+        ctx.comments.markSkipped(commentId, guardrailMessage(reason));
+      }
       notifyCommentsChanged({ post_id: comment.postId });
       return false;
     }
 
     if (harnessResult.terminalStatus === "rejected_verify" || !harnessResult.finalText) {
       const reason = harnessResult.steps.at(-1)?.reason ?? "verify_rejected";
-      ctx.comments.markFailed(commentId, guardrailMessage(reason));
+      if (comment.status !== "replied") {
+        ctx.comments.markFailed(commentId, guardrailMessage(reason));
+      }
       notifyCommentsChanged({ post_id: comment.postId });
       return false;
     }
@@ -97,6 +101,7 @@ async function processCommentReplyCore(
     const message = harnessResult.finalText;
 
     if (effectiveReplyMode === "draft") {
+      ctx.comments.clearDraft(commentId);
       ctx.comments.createReply({
         commentId,
         draftText: message,
@@ -148,7 +153,9 @@ async function processCommentReplyCore(
       status: "failed",
       agentRunId: run.id,
     });
-    ctx.comments.markFailed(commentId, errorMessage);
+    if (comment.status !== "replied") {
+      ctx.comments.markFailed(commentId, errorMessage);
+    }
     notifyCommentsChanged({ post_id: comment.postId });
     return false;
   }
@@ -165,6 +172,7 @@ export async function processCommentReply(
   }
 
   const isManual = options.replyModeOverride != null;
+  const isManualDraft = options.replyModeOverride === "draft";
 
   if (!isManual) {
     if (comment.status !== "pending") {
@@ -172,6 +180,10 @@ export async function processCommentReply(
     }
 
     if (ctx.comments.hasReplyRecord(commentId)) {
+      return false;
+    }
+  } else if (isManualDraft) {
+    if (comment.status === "skipped") {
       return false;
     }
   } else {

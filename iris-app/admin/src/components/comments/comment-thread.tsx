@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, FileText, Loader2, MessageCircle, Pin } from "lucide-react";
+import { Copy, Loader2, MessageCircle, Pin, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AppAccordion } from "@/components/templates/app-accordion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -134,11 +134,8 @@ function canRequestManualAiReply(
   if (isBrandAuthor(comment.author_username, brandUsername)) {
     return false;
   }
-  if (comment.linked_reply_text) {
-    return false;
-  }
   const status = comment.status ?? "";
-  return status === "pending" || status === "failed";
+  return status === "pending" || status === "failed" || status === "replied";
 }
 
 type CommentDraftPanelProps = {
@@ -177,7 +174,10 @@ function CommentDraftPanel({
     approvingId === comment.id ||
     removingDraftId === comment.id ||
     savingDraftId === comment.id;
-  const canAct = comment.status === "pending";
+  const canAct =
+    comment.status === "pending" ||
+    comment.status === "replied" ||
+    Boolean(comment.draft_text);
 
   if (editing) {
     return (
@@ -310,16 +310,16 @@ function CommentActions({
       {showGenerateDraft ? (
         <button
           type="button"
-          className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+          className="shrink-0 rounded-md p-1.5 text-violet-600/80 hover:bg-violet-500/10 hover:text-violet-700 disabled:opacity-50 dark:text-violet-400 dark:hover:text-violet-300"
           aria-label="Gerar rascunho"
-          title="Gerar rascunho"
+          title="Gerar rascunho com IA"
           disabled={generating}
           onClick={onGenerateDraft}
         >
           {generating ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
-            <FileText className="size-3.5" />
+            <Sparkles className="size-3.5" />
           )}
         </button>
       ) : null}
