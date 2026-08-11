@@ -1,41 +1,23 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
 import { sendError, sendJson } from "../json.ts";
+import { createRouter, route } from "../router.ts";
+import { routeParam } from "../route-resources.ts";
 import { serializeReplyAudit } from "../../domain/reply-audit/serialize-reply-audit.ts";
 
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
+export const handleAgentRunsRoute = createRouter([
+  route("GET", "/api/agent-runs", { admin: true }, async (match) => {
+    const limit = Number.parseInt(match.searchParams.get("limit") ?? "50", 10);
+    const cursor = match.searchParams.get("cursor");
+    const terminalStatus = match.searchParams.get("terminal_status");
+    const replyTier = match.searchParams.get("reply_tier");
 
-export async function handleAgentRunsRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
-
-  if (pathname === "/api/agent-runs" && req.method === "GET") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
-
-    const url = new URL(req.url ?? "", "http://localhost");
-    const limit = Number.parseInt(url.searchParams.get("limit") ?? "50", 10);
-    const cursor = url.searchParams.get("cursor");
-    const terminalStatus = url.searchParams.get("terminal_status");
-    const replyTier = url.searchParams.get("reply_tier");
-
-    const result = ctx.agentRuns.listRecent({
+    const result = match.ctx.agentRuns.listRecent({
       limit: Number.isFinite(limit) ? limit : 50,
       cursor,
       terminalStatus,
       replyTier,
     });
 
-    sendJson(res, 200, {
+    sendJson(match.res, 200, {
       items: result.items.map((item) => ({
         id: item.id,
         flow_id: item.flowId,
@@ -55,41 +37,37 @@ export async function handleAgentRunsRoute(request: RouteRequest): Promise<boole
       })),
       next_cursor: result.nextCursor,
     });
-    return true;
-  }
+  }),
 
-  const detailMatch = /^\/api\/agent-runs\/([^/]+)$/.exec(pathname);
-  if (detailMatch && req.method === "GET") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
+  route(
+    "GET",
+    /^\/api\/agent-runs\/([^/]+)$/,
+    { admin: true },
+    async (match) => {
+      const runId = routeParam(match, "runId");
+      const run = match.ctx.agentRuns.findById(runId);
+      if (!run) {
+        sendError(match.res, 404, "agent run not found");
+        return;
+      }
 
-    const runId = detailMatch[1];
-    const run = ctx.agentRuns.findById(runId);
-    if (!run) {
-      sendError(res, 404, "agent run not found");
-      return true;
-    }
+      const steps = match.ctx.agentRunSteps.listByAgentRunId(runId);
+      const commentId = steps[0]?.commentId ?? null;
 
-    const steps = ctx.agentRunSteps.listByAgentRunId(runId);
-    const commentId = steps[0]?.commentId ?? null;
-
-    sendJson(res, 200, {
-      run: {
-        id: run.id,
-        flowId: run.flowId,
-        trigger: run.trigger,
-        inputSummary: run.inputSummary,
-        outputSummary: run.outputSummary,
-        status: run.status,
-        createdAt: run.createdAt,
-      },
-      comment_id: commentId,
-      audit: serializeReplyAudit(run, steps),
-    });
-    return true;
-  }
-
-  return false;
-}
+      sendJson(match.res, 200, {
+        run: {
+          id: run.id,
+          flowId: run.flowId,
+          trigger: run.trigger,
+          inputSummary: run.inputSummary,
+          outputSummary: run.outputSummary,
+          status: run.status,
+          createdAt: run.createdAt,
+        },
+        comment_id: commentId,
+        audit: serializeReplyAudit(run, steps),
+      });
+    },
+    { paramNames: ["runId"] },
+  ),
+]);

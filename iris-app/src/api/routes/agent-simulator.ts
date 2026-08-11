@@ -1,38 +1,10 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
-import {
-  BodyTooLargeError,
-  readJsonBody,
-  sendError,
-  sendJson,
-  ValidationError,
-} from "../json.ts";
+import { readJsonBody, sendJson } from "../json.ts";
+import { createRouter, route } from "../router.ts";
 import { simulateReply } from "../../domain/agent-simulator/simulate-reply.ts";
 
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
-
-export async function handleAgentSimulatorRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
-
-  if (pathname !== "/api/agent/simulate" || req.method !== "POST") {
-    return false;
-  }
-
-  if (!requireAdmin(auth)) {
-    sendError(res, 403, "admin token required");
-    return true;
-  }
-
-  try {
-    const body = await readJsonBody<Record<string, unknown>>(req);
+export const handleAgentSimulatorRoute = createRouter([
+  route("POST", "/api/agent/simulate", { admin: true }, async (match) => {
+    const body = await readJsonBody<Record<string, unknown>>(match.req);
     const result = await simulateReply(
       {
         caption: typeof body.caption === "string" ? body.caption : null,
@@ -71,26 +43,14 @@ export async function handleAgentSimulatorRoute(request: RouteRequest): Promise<
         },
       },
       {
-        personaStore: ctx.replyPersonaStore,
-        agentContentStore: ctx.agentContentStore,
-        llm: ctx.resolveLlmCompleter(),
-        agentRuns: ctx.agentRuns,
-        agentRunSteps: ctx.agentRunSteps,
+        personaStore: match.ctx.replyPersonaStore,
+        agentContentStore: match.ctx.agentContentStore,
+        llm: match.ctx.resolveLlmCompleter(),
+        agentRuns: match.ctx.agentRuns,
+        agentRunSteps: match.ctx.agentRunSteps,
       },
     );
 
-    sendJson(res, 200, result);
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      sendError(res, 422, error.message);
-      return true;
-    }
-    if (error instanceof BodyTooLargeError) {
-      sendError(res, 413, error.message);
-      return true;
-    }
-    sendError(res, 500, "internal server error");
-  }
-
-  return true;
-}
+    sendJson(match.res, 200, result);
+  }),
+]);

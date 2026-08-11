@@ -1,14 +1,11 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
+import { readJsonBody, sendError, sendJson } from "../json.ts";
+import { createRouter, route } from "../router.ts";
+import { requirePost, routeParam } from "../route-resources.ts";
 import { getImageLimits } from "../../domain/image-limits.ts";
-import { BodyTooLargeError, readJsonBody, sendError, sendJson, ValidationError } from "../json.ts";
-import { MultipartParseError, parseMultipart } from "../multipart.ts";
-import { ImageOptimizationError } from "../../ports/image-optimizer.ts";
+import { parseMultipart } from "../multipart.ts";
 import { serializeAsset } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import {
-  AssetIngestError,
   ingestPostAsset,
 } from "../../domain/asset-ingest.ts";
 import {
@@ -16,178 +13,132 @@ import {
   reorderPostAssets,
 } from "../../domain/post-assets.ts";
 
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
-
-export async function handleAssetsRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
-
-  const listMatch = /^\/api\/posts\/([^/]+)\/assets$/.exec(pathname);
-  if (listMatch) {
-    const postId = listMatch[1];
-
-    if (req.method === "GET") {
-      const post = ctx.posts.findById(postId);
-      if (!post) {
-        sendError(res, 404, "post not found");
-        return true;
+export const handleAssetsRoute = createRouter([
+  route(
+    "GET",
+    /^\/api\/posts\/([^/]+)\/assets$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      if (!requirePost(match, postId)) {
+        return;
       }
 
-      const assets = ctx.assets.listByPostId(postId).map(serializeAsset);
-      sendJson(res, 200, { assets });
-      return true;
-    }
+      const assets = match.ctx.assets.listByPostId(postId).map(serializeAsset);
+      sendJson(match.res, 200, { assets });
+    },
+    { paramNames: ["postId"] },
+  ),
 
-    if (req.method === "POST") {
-      try {
-        const limits = getImageLimits();
-        const parsed = await parseMultipart(req, limits.uploadMaxBytes);
-        const file = parsed.files.find((item) => item.fieldName === "file");
+  route(
+    "POST",
+    /^\/api\/posts\/([^/]+)\/assets$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const limits = getImageLimits();
+      const parsed = await parseMultipart(match.req, limits.uploadMaxBytes);
+      const file = parsed.files.find((item) => item.fieldName === "file");
 
-        if (!file) {
-          sendError(res, 422, "file field is required");
-          return true;
-        }
-
-        const sortOrder = Number.parseInt(parsed.fields.sort_order ?? "1", 10);
-
-        const asset = await ingestPostAsset(
-          {
-            posts: ctx.posts,
-            assets: ctx.assets,
-            mediaStorage: ctx.mediaStorage,
-            imageOptimizer: ctx.imageOptimizer,
-          },
-          {
-            postId,
-            buffer: file.data,
-            filename: file.filename,
-            sortOrder,
-          },
-        );
-
-        notifyPostsChanged({ post_id: postId });
-        sendJson(res, 201, serializeAsset(asset));
-      } catch (error) {
-        handleAssetsError(res, error);
+      if (!file) {
+        sendError(match.res, 422, "file field is required");
+        return;
       }
-      return true;
-    }
 
-    return false;
-  }
+      const sortOrder = Number.parseInt(parsed.fields.sort_order ?? "1", 10);
+      const asset = await ingestPostAsset(
+        {
+          posts: match.ctx.posts,
+          assets: match.ctx.assets,
+          mediaStorage: match.ctx.mediaStorage,
+          imageOptimizer: match.ctx.imageOptimizer,
+        },
+        {
+          postId,
+          buffer: file.data,
+          filename: file.filename,
+          sortOrder,
+        },
+      );
 
-  const reorderMatch = /^\/api\/posts\/([^/]+)\/assets\/reorder$/.exec(pathname);
-  if (reorderMatch && req.method === "PUT") {
-    const postId = reorderMatch[1];
-    try {
-      const body = await readJsonBody<{ asset_ids?: unknown }>(req);
+      notifyPostsChanged({ post_id: postId });
+      sendJson(match.res, 201, serializeAsset(asset));
+    },
+    { paramNames: ["postId"] },
+  ),
+
+  route(
+    "PUT",
+    /^\/api\/posts\/([^/]+)\/assets\/reorder$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const body = await readJsonBody<{ asset_ids?: unknown }>(match.req);
       if (!Array.isArray(body.asset_ids)) {
-        sendError(res, 422, "asset_ids must be an array");
-        return true;
+        sendError(match.res, 422, "asset_ids must be an array");
+        return;
       }
 
       const assetIds = body.asset_ids.filter((id): id is string => typeof id === "string");
       if (assetIds.length !== body.asset_ids.length) {
-        sendError(res, 422, "asset_ids must contain strings only");
-        return true;
+        sendError(match.res, 422, "asset_ids must contain strings only");
+        return;
       }
 
       const assets = reorderPostAssets(postId, assetIds, {
-        posts: ctx.posts,
-        assets: ctx.assets,
-        mediaStorage: ctx.mediaStorage,
+        posts: match.ctx.posts,
+        assets: match.ctx.assets,
+        mediaStorage: match.ctx.mediaStorage,
       });
 
       notifyPostsChanged({ post_id: postId });
-      sendJson(res, 200, { assets: assets.map(serializeAsset) });
-    } catch (error) {
-      handleAssetsError(res, error);
-    }
-    return true;
-  }
+      sendJson(match.res, 200, { assets: assets.map(serializeAsset) });
+    },
+    { paramNames: ["postId"] },
+  ),
 
-  const assetMatch = /^\/api\/posts\/([^/]+)\/assets\/([^/]+)$/.exec(pathname);
-  if (assetMatch && req.method === "DELETE") {
-    const postId = assetMatch[1];
-    const assetId = assetMatch[2];
+  route(
+    "DELETE",
+    /^\/api\/posts\/([^/]+)\/assets\/([^/]+)$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const assetId = routeParam(match, "assetId");
 
-    try {
       await deletePostAsset(postId, assetId, {
-        posts: ctx.posts,
-        assets: ctx.assets,
-        mediaStorage: ctx.mediaStorage,
+        posts: match.ctx.posts,
+        assets: match.ctx.assets,
+        mediaStorage: match.ctx.mediaStorage,
       });
       notifyPostsChanged({ post_id: postId });
-      res.writeHead(204);
-      res.end();
-    } catch (error) {
-      handleAssetsError(res, error);
-    }
-    return true;
-  }
+      match.res.writeHead(204);
+      match.res.end();
+    },
+    { paramNames: ["postId", "assetId"] },
+  ),
 
-  const fileMatch = /^\/api\/posts\/([^/]+)\/assets\/([^/]+)$/.exec(pathname);
-  if (fileMatch && req.method === "GET") {
-    const postId = fileMatch[1];
-    const filename = fileMatch[2];
-    const post = ctx.posts.findById(postId);
+  route(
+    "GET",
+    /^\/api\/posts\/([^/]+)\/assets\/([^/]+)$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const filename = routeParam(match, "assetId");
 
-    if (!post) {
-      sendError(res, 404, "post not found");
-      return true;
-    }
+      if (!requirePost(match, postId)) {
+        return;
+      }
 
-    const asset = ctx.assets.findByPostIdAndFilename(postId, filename);
-    if (!asset) {
-      sendError(res, 404, "asset not found");
-      return true;
-    }
+      const asset = match.ctx.assets.findByPostIdAndFilename(postId, filename);
+      if (!asset) {
+        sendError(match.res, 404, "asset not found");
+        return;
+      }
 
-    const file = await ctx.mediaStorage.read(postId, filename);
-    if (!file) {
-      sendError(res, 404, "asset not found");
-      return true;
-    }
+      const file = await match.ctx.mediaStorage.read(postId, filename);
+      if (!file) {
+        sendError(match.res, 404, "asset not found");
+        return;
+      }
 
-    res.writeHead(200, { "Content-Type": file.mime });
-    res.end(file.buffer);
-    return true;
-  }
-
-  return false;
-}
-
-function handleAssetsError(res: ServerResponse, error: unknown): void {
-  if (error instanceof ValidationError) {
-    sendError(res, 422, error.message);
-    return;
-  }
-
-  if (error instanceof AssetIngestError) {
-    sendError(res, error.status, error.message);
-    return;
-  }
-
-  if (error instanceof ImageOptimizationError) {
-    sendError(res, error.status, error.message);
-    return;
-  }
-
-  if (error instanceof MultipartParseError) {
-    sendError(res, 422, error.message);
-    return;
-  }
-
-  if (error instanceof BodyTooLargeError) {
-    sendError(res, 413, error.message);
-    return;
-  }
-
-  sendError(res, 500, "internal server error");
-}
+      match.res.writeHead(200, { "Content-Type": file.mime });
+      match.res.end(file.buffer);
+    },
+    { paramNames: ["postId", "assetId"] },
+  ),
+]);

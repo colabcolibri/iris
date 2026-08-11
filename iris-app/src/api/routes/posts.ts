@@ -1,167 +1,125 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
 import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
-import {
-  BodyTooLargeError,
-  readJsonBody,
-  sendApiError,
-  sendError,
-  sendJson,
-  ValidationError,
-} from "../json.ts";
+import { readJsonBody, sendError, sendJson } from "../json.ts";
+import { createRouter, route } from "../router.ts";
+import { requirePost, routeParam } from "../route-resources.ts";
 import {
   normalizeCreatePost,
   normalizeUpdatePost,
 } from "../../domain/post-mutations.ts";
 import { parseIsoDateParam } from "../../domain/datetime-ui.ts";
 import { applyScheduleRules } from "../../domain/schedule.ts";
-import { assertMetaReadyForSchedule, MetaNotConnectedError } from "../../domain/meta-readiness.ts";
+import { assertMetaReadyForSchedule } from "../../domain/meta-readiness.ts";
 import type { PostStatus } from "../../domain/post.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import { generateCarouselSummaryForPost } from "../../domain/carousel-summary/generate-carousel-summary.ts";
-import {
-  PublishNotConfiguredError,
-  publishPostNow,
-} from "../../domain/publish-post.ts";
+import { publishPostNow } from "../../domain/publish-post.ts";
 
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-  postId?: string;
-};
+export const handlePostsRoute = createRouter([
+  route("GET", "/api/posts", async (match) => {
+    const status = match.searchParams.get("status") as PostStatus | null;
+    const fromRaw = match.searchParams.get("from");
+    const toRaw = match.searchParams.get("to");
+    const from = fromRaw ? parseIsoDateParam(fromRaw, "from") : undefined;
+    const to = toRaw ? parseIsoDateParam(toRaw, "to") : undefined;
+    const calendarOnly = match.searchParams.get("calendar_only") === "1";
 
-export async function handlePostsRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname, searchParams } = new URL(req.url ?? "/", "http://localhost");
+    const posts = match.ctx.posts.list({
+      status: status ?? undefined,
+      from,
+      to,
+      calendarOnly,
+    });
+    sendJson(match.res, 200, { posts: posts.map(serializePost) });
+  }),
 
-  if (pathname === "/api/posts" && req.method === "GET") {
-    try {
-      const status = searchParams.get("status") as PostStatus | null;
-      const fromRaw = searchParams.get("from");
-      const toRaw = searchParams.get("to");
-      const from = fromRaw ? parseIsoDateParam(fromRaw, "from") : undefined;
-      const to = toRaw ? parseIsoDateParam(toRaw, "to") : undefined;
+  route("POST", "/api/posts", async (match) => {
+    const body = await readJsonBody<Record<string, unknown>>(match.req);
+    const input = normalizeCreatePost(body);
+    const post = match.ctx.posts.create({
+      caption: input.caption,
+      channel: input.channel,
+      scheduledAt: input.scheduledAt,
+      sourceNote: input.sourceNote,
+      status: input.status,
+    });
+    notifyPostsChanged({ post_id: post.id });
+    sendJson(match.res, 201, serializePost(post));
+  }),
 
-      const calendarOnly = searchParams.get("calendar_only") === "1";
-
-      const posts = ctx.posts.list({
-        status: status ?? undefined,
-        from,
-        to,
-        calendarOnly,
-      });
-      sendJson(res, 200, { posts: posts.map(serializePost) });
-    } catch (error) {
-      handlePostsError(res, error);
-    }
-    return true;
-  }
-
-  if (pathname === "/api/posts" && req.method === "POST") {
-    try {
-      const body = await readJsonBody<Record<string, unknown>>(req);
-      const input = normalizeCreatePost(body);
-      const post = ctx.posts.create({
-        caption: input.caption,
-        channel: input.channel,
-        scheduledAt: input.scheduledAt,
-        sourceNote: input.sourceNote,
-        status: input.status,
-      });
-      notifyPostsChanged({ post_id: post.id });
-      sendJson(res, 201, serializePost(post));
-    } catch (error) {
-      handlePostsError(res, error);
-    }
-    return true;
-  }
-
-  const carouselMatch = /^\/api\/posts\/([^/]+)\/generate-carousel-summary$/.exec(pathname);
-  if (carouselMatch && req.method === "POST") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
-
-    try {
-      const postId = carouselMatch[1];
-      const llmConfig = ctx.llmConfigResolver.resolve();
-      const persona = ctx.replyPersonaStore.get();
+  route(
+    "POST",
+    /^\/api\/posts\/([^/]+)\/generate-carousel-summary$/,
+    { admin: true },
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const llmConfig = match.ctx.llmConfigResolver.resolve();
+      const persona = match.ctx.replyPersonaStore.get();
       const summary = await generateCarouselSummaryForPost(postId, {
-        posts: ctx.posts,
-        assets: ctx.assets,
-        metaCommentReader: ctx.metaCommentReader,
-        publicBaseUrl: ctx.publicBaseUrl,
-        publishUrlSecret: ctx.publishUrlSecret,
-        mediaStorage: ctx.mediaStorage,
-        llm: ctx.resolveLlmCompleter(),
+        posts: match.ctx.posts,
+        assets: match.ctx.assets,
+        metaCommentReader: match.ctx.metaCommentReader,
+        publicBaseUrl: match.ctx.publicBaseUrl,
+        publishUrlSecret: match.ctx.publishUrlSecret,
+        mediaStorage: match.ctx.mediaStorage,
+        llm: match.ctx.resolveLlmCompleter(),
         responseLanguage: persona?.responseLanguage,
         visionEnabled: llmConfig?.supportsVision ?? false,
       });
       notifyPostsChanged({ post_id: postId });
-      sendJson(res, 200, { carousel_summary: summary });
-    } catch (error) {
-      handlePostsError(res, error);
-    }
-    return true;
-  }
+      sendJson(match.res, 200, { carousel_summary: summary });
+    },
+    { paramNames: ["postId"] },
+  ),
 
-  const publishMatch = /^\/api\/posts\/([^/]+)\/publish$/.exec(pathname);
-  if (publishMatch && req.method === "POST") {
-    try {
-      const publishPostId = publishMatch[1];
-      const current = ctx.posts.findById(publishPostId);
-      if (!current) {
-        sendError(res, 404, "post not found");
-        return true;
+  route(
+    "POST",
+    /^\/api\/posts\/([^/]+)\/publish$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      if (!requirePost(match, postId)) {
+        return;
       }
 
-      const updated = await publishPostNow(ctx, publishPostId);
-      sendJson(res, 200, serializePost(updated));
-    } catch (error) {
-      handlePostsError(res, error);
-    }
-    return true;
-  }
+      const updated = await publishPostNow(match.ctx, postId);
+      sendJson(match.res, 200, serializePost(updated));
+    },
+    { paramNames: ["postId"] },
+  ),
 
-  const match = /^\/api\/posts\/([^/]+)$/.exec(pathname);
-  if (!match) {
-    return false;
-  }
+  route(
+    "GET",
+    /^\/api\/posts\/([^/]+)$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const post = requirePost(match, postId);
+      if (!post) {
+        return;
+      }
+      sendJson(match.res, 200, serializePost(post));
+    },
+    { paramNames: ["postId"] },
+  ),
 
-  const postId = match[1];
+  route(
+    "PATCH",
+    /^\/api\/posts\/([^/]+)$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const body = await readJsonBody<Record<string, unknown>>(match.req);
 
-  if (req.method === "GET") {
-    const post = ctx.posts.findById(postId);
-    if (!post) {
-      sendError(res, 404, "post not found");
-      return true;
-    }
-    sendJson(res, 200, serializePost(post));
-    return true;
-  }
-
-  if (req.method === "PATCH") {
-    try {
-      const body = await readJsonBody<Record<string, unknown>>(req);
-
-      if ("auto_reply_enabled" in body && !requireAdmin(auth)) {
-        sendError(res, 403, "admin token required");
-        return true;
+      if ("auto_reply_enabled" in body && !requireAdmin(match.auth)) {
+        sendError(match.res, 403, "admin token required");
+        return;
       }
 
       const update = normalizeUpdatePost(body);
-      const current = ctx.posts.findById(postId);
+      const current = requirePost(match, postId);
       if (!current) {
-        sendError(res, 404, "post not found");
-        return true;
+        return;
       }
 
-      const assetsCount = ctx.assets.listByPostId(postId).length;
+      const assetsCount = match.ctx.assets.listByPostId(postId).length;
       const scheduling =
         update.status === "scheduled" || update.scheduledAt !== undefined;
 
@@ -184,14 +142,13 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
           };
 
       if (schedule.status === "scheduled") {
-        assertMetaReadyForSchedule(ctx);
+        assertMetaReadyForSchedule(match.ctx);
       }
 
       const nextStatus = schedule.status;
-      const clearError =
-        nextStatus === "draft" && current.status === "failed";
+      const clearError = nextStatus === "draft" && current.status === "failed";
 
-      const updated = ctx.posts.update(postId, {
+      const updated = match.ctx.posts.update(postId, {
         ...update,
         status: nextStatus,
         scheduledAt: schedule.scheduledAt,
@@ -199,53 +156,26 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
       });
 
       notifyPostsChanged({ post_id: postId });
-      sendJson(res, 200, serializePost(updated!));
-    } catch (error) {
-      handlePostsError(res, error);
-    }
-    return true;
-  }
+      sendJson(match.res, 200, serializePost(updated!));
+    },
+    { paramNames: ["postId"] },
+  ),
 
-  if (req.method === "DELETE") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
+  route(
+    "DELETE",
+    /^\/api\/posts\/([^/]+)$/,
+    { admin: true },
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const cancelled = match.ctx.posts.cancel(postId);
+      if (!cancelled) {
+        sendError(match.res, 404, "post not found");
+        return;
+      }
 
-    const cancelled = ctx.posts.cancel(postId);
-    if (!cancelled) {
-      sendError(res, 404, "post not found");
-      return true;
-    }
-
-    notifyPostsChanged({ post_id: postId });
-    sendJson(res, 200, serializePost(cancelled));
-    return true;
-  }
-
-  return false;
-}
-
-function handlePostsError(res: ServerResponse, error: unknown): void {
-  if (error instanceof MetaNotConnectedError) {
-    sendApiError(res, 422, error.message, error.code);
-    return;
-  }
-
-  if (error instanceof PublishNotConfiguredError) {
-    sendApiError(res, 503, error.message, error.code);
-    return;
-  }
-
-  if (error instanceof ValidationError) {
-    sendError(res, 422, error.message);
-    return;
-  }
-
-  if (error instanceof BodyTooLargeError) {
-    sendError(res, 413, error.message);
-    return;
-  }
-
-  sendError(res, 500, "internal server error");
-}
+      notifyPostsChanged({ post_id: postId });
+      sendJson(match.res, 200, serializePost(cancelled));
+    },
+    { paramNames: ["postId"] },
+  ),
+]);

@@ -1,14 +1,5 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
-import {
-  BodyTooLargeError,
-  readJsonBody,
-  sendError,
-  sendJson,
-  ValidationError,
-} from "../json.ts";
+import { readJsonBody, sendError, sendJson, ValidationError } from "../json.ts";
+import { composeRouters, createAdminPathRouter, createRouter, route } from "../router.ts";
 import {
   DEFAULT_API_URL,
   DEFAULT_MODEL,
@@ -21,13 +12,7 @@ import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
 import { summarizeWebhookPayload } from "../../domain/webhook-event-summary.ts";
 import { parseWebhookEventListFilter } from "../../domain/webhook-event-query.ts";
 import type { WebhookEventRecord } from "../../ports/webhook-event-repository.ts";
-
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
+import type { AppContext } from "../app-context.ts";
 
 function serializeLlmSettings(ctx: AppContext) {
   const resolver = createLlmConfigResolver(ctx.llmSettingsStore);
@@ -93,49 +78,6 @@ function normalizeLlmBody(
   };
 }
 
-export async function handleLlmSettingsRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
-
-  if (pathname !== "/api/settings/llm") {
-    return false;
-  }
-
-  if (!requireAdmin(auth)) {
-    sendError(res, 403, "admin token required");
-    return true;
-  }
-
-  if (req.method === "GET") {
-    sendJson(res, 200, serializeLlmSettings(ctx));
-    return true;
-  }
-
-  if (req.method === "PUT") {
-    try {
-      const body = await readJsonBody<Record<string, unknown>>(req);
-      const existing = ctx.llmSettingsStore.get();
-      const input = normalizeLlmBody(body, existing?.apiKey ?? null);
-      ctx.llmSettingsStore.upsert(input);
-      sendJson(res, 200, serializeLlmSettings(ctx));
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        sendError(res, 422, error.message);
-        return true;
-      }
-      if (error instanceof BodyTooLargeError) {
-        sendError(res, 413, error.message);
-        return true;
-      }
-      sendError(res, 500, "internal server error");
-    }
-    return true;
-  }
-
-  sendError(res, 405, "method not allowed");
-  return true;
-}
-
 function serializeWebhookEvent(
   event: WebhookEventRecord,
   options: { truncatePayload: boolean },
@@ -161,49 +103,60 @@ function serializeWebhookEvent(
   };
 }
 
-export async function handleWebhookEventsSettingsRoute(
-  request: RouteRequest,
-): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
+export const handleLlmSettingsRoute = createAdminPathRouter("/api/settings/llm", {
+  GET: async (match) => {
+    sendJson(match.res, 200, serializeLlmSettings(match.ctx));
+  },
+  PUT: async (match) => {
+    const body = await readJsonBody<Record<string, unknown>>(match.req);
+    const existing = match.ctx.llmSettingsStore.get();
+    const input = normalizeLlmBody(body, existing?.apiKey ?? null);
+    match.ctx.llmSettingsStore.upsert(input);
+    sendJson(match.res, 200, serializeLlmSettings(match.ctx));
+  },
+});
 
-  if (pathname === "/api/settings/webhook-events/export") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
+const webhookEventsListRouter = createRouter([
+  route("GET", "/api/settings/webhook-events", { admin: true }, async (match) => {
+    const limitRaw = Number(match.searchParams.get("limit") ?? "50");
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 50;
+    const filter = parseWebhookEventListFilter(match.searchParams);
 
-    if (req.method !== "GET") {
-      sendError(res, 405, "method not allowed");
-      return true;
-    }
+    const events = match.ctx.webhookEvents.listRecent(limit, filter).map((event) =>
+      serializeWebhookEvent(event, { truncatePayload: true }),
+    );
 
-    const url = new URL(req.url ?? "/", "http://localhost");
-    const limitParam = url.searchParams.get("limit");
+    sendJson(match.res, 200, { events });
+  }),
+]);
+
+const webhookEventsExportRouter = createRouter([
+  route("GET", "/api/settings/webhook-events/export", { admin: true }, async (match) => {
+    const limitParam = match.searchParams.get("limit");
     if (!limitParam) {
-      sendError(res, 422, "limit query parameter is required");
-      return true;
+      sendError(match.res, 422, "limit query parameter is required");
+      return;
     }
 
     const limitRaw = Number(limitParam);
     if (!Number.isFinite(limitRaw) || limitRaw < 1) {
-      sendError(res, 422, "limit must be a positive number");
-      return true;
+      sendError(match.res, 422, "limit must be a positive number");
+      return;
     }
 
     const limit = Math.min(Math.trunc(limitRaw), 10_000);
-    const filter = parseWebhookEventListFilter(url.searchParams);
-    const events = ctx.webhookEvents.listForExport(limit, filter).map((event) =>
+    const filter = parseWebhookEventListFilter(match.searchParams);
+    const events = match.ctx.webhookEvents.listForExport(limit, filter).map((event) =>
       serializeWebhookEvent(event, { truncatePayload: false }),
     );
 
     const exportedAt = new Date().toISOString();
     const filename = `iris-webhooks-${exportedAt.slice(0, 10)}.json`;
-    res.writeHead(200, {
+    match.res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
     });
-    res.end(
+    match.res.end(
       JSON.stringify(
         {
           exported_at: exportedAt,
@@ -214,32 +167,10 @@ export async function handleWebhookEventsSettingsRoute(
         2,
       ),
     );
-    return true;
-  }
+  }),
+]);
 
-  if (pathname !== "/api/settings/webhook-events") {
-    return false;
-  }
-
-  if (!requireAdmin(auth)) {
-    sendError(res, 403, "admin token required");
-    return true;
-  }
-
-  if (req.method !== "GET") {
-    sendError(res, 405, "method not allowed");
-    return true;
-  }
-
-  const url = new URL(req.url ?? "/", "http://localhost");
-  const limitRaw = Number(url.searchParams.get("limit") ?? "50");
-  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 50;
-  const filter = parseWebhookEventListFilter(url.searchParams);
-
-  const events = ctx.webhookEvents.listRecent(limit, filter).map((event) =>
-    serializeWebhookEvent(event, { truncatePayload: true }),
-  );
-
-  sendJson(res, 200, { events });
-  return true;
-}
+export const handleWebhookEventsSettingsRoute = composeRouters([
+  webhookEventsExportRouter,
+  webhookEventsListRouter,
+]);

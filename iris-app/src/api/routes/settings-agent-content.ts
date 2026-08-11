@@ -1,24 +1,8 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
-import {
-  BodyTooLargeError,
-  readJsonBody,
-  sendError,
-  sendJson,
-  ValidationError,
-} from "../json.ts";
+import { readJsonBody, sendJson } from "../json.ts";
+import { createAdminPathRouter } from "../router.ts";
 import { defaultAgentContent } from "../../domain/agent-content-defaults.ts";
 import { normalizeAgentContentBody } from "../../domain/agent-content.ts";
 import type { AgentContent } from "../../ports/agent-content-store.ts";
-
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
 
 function serializeAgentContent(content: AgentContent) {
   return {
@@ -30,56 +14,27 @@ function serializeAgentContent(content: AgentContent) {
   };
 }
 
-export async function handleAgentContentSettingsRoute(
-  request: RouteRequest,
-): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
+export const handleAgentContentSettingsRoute = createAdminPathRouter(
+  "/api/settings/agent-content",
+  {
+    GET: async (match) => {
+      const stored = match.ctx.agentContentStore.get();
+      if (stored) {
+        sendJson(match.res, 200, serializeAgentContent(stored));
+        return;
+      }
 
-  if (pathname !== "/api/settings/agent-content") {
-    return false;
-  }
-
-  if (!requireAdmin(auth)) {
-    sendError(res, 403, "admin token required");
-    return true;
-  }
-
-  if (req.method === "GET") {
-    const stored = ctx.agentContentStore.get();
-    if (stored) {
-      sendJson(res, 200, serializeAgentContent(stored));
-      return true;
-    }
-
-    const defaults = defaultAgentContent();
-    sendJson(res, 200, {
-      ...serializeAgentContent(defaults),
-      updated_at: null,
-    });
-    return true;
-  }
-
-  if (req.method === "PUT") {
-    try {
-      const body = await readJsonBody<Record<string, unknown>>(req);
+      const defaults = defaultAgentContent();
+      sendJson(match.res, 200, {
+        ...serializeAgentContent(defaults),
+        updated_at: null,
+      });
+    },
+    PUT: async (match) => {
+      const body = await readJsonBody<Record<string, unknown>>(match.req);
       const input = normalizeAgentContentBody(body);
-      const saved = ctx.agentContentStore.upsert(input);
-      sendJson(res, 200, serializeAgentContent(saved));
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        sendError(res, 422, error.message);
-        return true;
-      }
-      if (error instanceof BodyTooLargeError) {
-        sendError(res, 413, error.message);
-        return true;
-      }
-      sendError(res, 500, "internal server error");
-    }
-    return true;
-  }
-
-  sendError(res, 405, "method not allowed");
-  return true;
-}
+      const saved = match.ctx.agentContentStore.upsert(input);
+      sendJson(match.res, 200, serializeAgentContent(saved));
+    },
+  },
+);

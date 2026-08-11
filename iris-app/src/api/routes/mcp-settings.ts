@@ -1,20 +1,12 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
+import type { IncomingMessage } from "node:http";
+import { sendJson } from "../json.ts";
+import { createAdminPathRouter } from "../router.ts";
 import type { AppContext } from "../app-context.ts";
-import { sendError, sendJson } from "../json.ts";
 import {
   generateMcpConnectionCode,
   hashMcpConnectionCode,
   mcpConnectionCodeHint,
 } from "../../domain/mcp-connection-verifier.ts";
-
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
 
 function resolveMcpUrl(req: IncomingMessage, ctx: AppContext): string {
   const publicBase = ctx.publicBaseUrl?.trim();
@@ -49,47 +41,27 @@ function serializeMcpSettings(req: IncomingMessage, ctx: AppContext) {
   };
 }
 
-export async function handleMcpSettingsRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
-
-  if (pathname !== "/api/settings/mcp") {
-    return false;
-  }
-
-  if (!requireAdmin(auth)) {
-    sendError(res, 403, "admin token required");
-    return true;
-  }
-
-  if (req.method === "GET") {
-    sendJson(res, 200, serializeMcpSettings(req, ctx));
-    return true;
-  }
-
-  if (req.method === "POST") {
+export const handleMcpSettingsRoute = createAdminPathRouter("/api/settings/mcp", {
+  GET: async (match) => {
+    sendJson(match.res, 200, serializeMcpSettings(match.req, match.ctx));
+  },
+  POST: async (match) => {
     const connectionCode = generateMcpConnectionCode();
-    const saved = ctx.mcpConnectionStore.upsert({
+    const saved = match.ctx.mcpConnectionStore.upsert({
       codeHash: hashMcpConnectionCode(connectionCode),
       codeHint: mcpConnectionCodeHint(connectionCode),
     });
 
-    sendJson(res, 200, {
+    sendJson(match.res, 200, {
       connection_code: connectionCode,
       code_hint: saved.codeHint,
       mcp_path: "/mcp",
-      mcp_url: resolveMcpUrl(req, ctx),
+      mcp_url: resolveMcpUrl(match.req, match.ctx),
       updated_at: saved.updatedAt,
     });
-    return true;
-  }
-
-  if (req.method === "DELETE") {
-    ctx.mcpConnectionStore.clear();
-    sendJson(res, 200, serializeMcpSettings(req, ctx));
-    return true;
-  }
-
-  sendError(res, 405, "method not allowed");
-  return true;
-}
+  },
+  DELETE: async (match) => {
+    match.ctx.mcpConnectionStore.clear();
+    sendJson(match.res, 200, serializeMcpSettings(match.req, match.ctx));
+  },
+});

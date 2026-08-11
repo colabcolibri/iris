@@ -1,18 +1,8 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
 import { sendError } from "../json.ts";
+import type { RouteRequest } from "../route-types.ts";
 import { eventBus } from "../../adapters/sse/event-bus.ts";
 
 const HEARTBEAT_MS = 25_000;
-
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
 
 export function handleEventsRoute(request: RouteRequest): boolean {
   const { req, res, auth } = request;
@@ -22,7 +12,7 @@ export function handleEventsRoute(request: RouteRequest): boolean {
     return false;
   }
 
-  if (!requireAdmin(auth)) {
+  if (auth.role !== "admin") {
     sendError(res, 403, "admin token required");
     return true;
   }

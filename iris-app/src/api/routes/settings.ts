@@ -1,24 +1,8 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AuthContext } from "../auth.ts";
-import { requireAdmin } from "../auth.ts";
-import type { AppContext } from "../app-context.ts";
-import {
-  BodyTooLargeError,
-  readJsonBody,
-  sendError,
-  sendJson,
-  ValidationError,
-} from "../json.ts";
+import { readJsonBody, sendJson, ValidationError } from "../json.ts";
+import { createAdminPathRouter } from "../router.ts";
 import { defaultReplyPersona } from "../../domain/reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../../domain/reply-language/response-languages.ts";
 import type { ReplyPersona } from "../../ports/reply-persona-store.ts";
-
-type RouteRequest = {
-  req: IncomingMessage;
-  res: ServerResponse;
-  ctx: AppContext;
-  auth: AuthContext;
-};
 
 function serializePersona(persona: ReplyPersona) {
   return {
@@ -84,54 +68,24 @@ function normalizePersonaBody(body: Record<string, unknown>): Omit<ReplyPersona,
   };
 }
 
-export async function handleSettingsRoute(request: RouteRequest): Promise<boolean> {
-  const { req, res, ctx, auth } = request;
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
-
-  if (pathname !== "/api/settings/reply-persona") {
-    return false;
-  }
-
-  if (!requireAdmin(auth)) {
-    sendError(res, 403, "admin token required");
-    return true;
-  }
-
-  if (req.method === "GET") {
-    const stored = ctx.replyPersonaStore.get();
+export const handleSettingsRoute = createAdminPathRouter("/api/settings/reply-persona", {
+  GET: async (match) => {
+    const stored = match.ctx.replyPersonaStore.get();
     if (stored) {
-      sendJson(res, 200, serializePersona(stored));
-      return true;
+      sendJson(match.res, 200, serializePersona(stored));
+      return;
     }
 
     const defaults = defaultReplyPersona();
-    sendJson(res, 200, {
+    sendJson(match.res, 200, {
       ...serializePersona(defaults),
       updated_at: null,
     });
-    return true;
-  }
-
-  if (req.method === "PUT") {
-    try {
-      const body = await readJsonBody<Record<string, unknown>>(req);
-      const input = normalizePersonaBody(body);
-      const saved = ctx.replyPersonaStore.upsert(input);
-      sendJson(res, 200, serializePersona(saved));
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        sendError(res, 422, error.message);
-        return true;
-      }
-      if (error instanceof BodyTooLargeError) {
-        sendError(res, 413, error.message);
-        return true;
-      }
-      sendError(res, 500, "internal server error");
-    }
-    return true;
-  }
-
-  sendError(res, 405, "method not allowed");
-  return true;
-}
+  },
+  PUT: async (match) => {
+    const body = await readJsonBody<Record<string, unknown>>(match.req);
+    const input = normalizePersonaBody(body);
+    const saved = match.ctx.replyPersonaStore.upsert(input);
+    sendJson(match.res, 200, serializePersona(saved));
+  },
+});
