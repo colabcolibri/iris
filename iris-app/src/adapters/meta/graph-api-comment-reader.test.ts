@@ -206,3 +206,123 @@ test("graph api comment reader skips media without comments", async () => {
   assert.equal(media.length, 0);
   assert.ok(!calls.some((call) => call.includes("/comments")));
 });
+
+test("graph api comment reader deduplicates nested and flat replies", async () => {
+  const reader = createGraphApiCommentReader({
+    metaTokenStore: {
+      getActiveToken() {
+        return "token-123";
+      },
+      upsertToken() {
+        return undefined;
+      },
+      clear() {
+        return undefined;
+      },
+    },
+    config: {
+      resolveIgUserId: () => "ig-user-1",
+      graphApiVersion: "v21.0",
+      async fetchImpl(input) {
+        const url = typeof input === "string" ? input : input.toString();
+
+        if (url.includes("/media-dup?")) {
+          return new Response(
+            JSON.stringify({
+              id: "media-dup",
+              caption: "Dup",
+              timestamp: new Date().toISOString(),
+              comments_count: 2,
+            }),
+            { status: 200 },
+          );
+        }
+
+        if (url.includes("/media-dup/comments")) {
+          return new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "comment-parent",
+                  text: "Pai",
+                  from: { username: "fan" },
+                  timestamp: "2026-08-10T10:00:00+0000",
+                  replies: {
+                    data: [
+                      {
+                        id: "comment-child",
+                        text: "Filho",
+                        from: { username: "brand" },
+                        timestamp: "2026-08-10T10:05:00+0000",
+                        parent_id: "comment-parent",
+                      },
+                    ],
+                  },
+                },
+                {
+                  id: "comment-child",
+                  text: "Filho duplicado",
+                  from: { username: "brand" },
+                  timestamp: "2026-08-10T10:05:00+0000",
+                  parent_id: "comment-parent",
+                },
+              ],
+            }),
+            { status: 200 },
+          );
+        }
+
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      },
+    },
+  });
+
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const media = await reader.listRecentMediaWithComments(since, {
+    igMediaId: "media-dup",
+  });
+
+  assert.equal(media[0]?.comments.length, 2);
+  assert.equal(media[0]?.comments[1]?.igCommentId, "comment-child");
+  assert.equal(media[0]?.comments[1]?.timestamp, "2026-08-10T10:05:00.000Z");
+});
+
+test("graph api comment reader fetches comment timestamp by id", async () => {
+  const reader = createGraphApiCommentReader({
+    metaTokenStore: {
+      getActiveToken() {
+        return "token-123";
+      },
+      upsertToken() {
+        return undefined;
+      },
+      clear() {
+        return undefined;
+      },
+    },
+    config: {
+      resolveIgUserId: () => "ig-user-1",
+      graphApiVersion: "v21.0",
+      async fetchImpl(input) {
+        const url = typeof input === "string" ? input : input.toString();
+
+        if (url.includes("/comment-ts?")) {
+          return new Response(
+            JSON.stringify({
+              timestamp: "2026-08-10T14:30:00+0000",
+              id: "comment-ts",
+            }),
+            { status: 200 },
+          );
+        }
+
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      },
+    },
+  });
+
+  const timestamp = await reader.fetchCommentTimestamp("comment-ts");
+  assert.equal(timestamp, "2026-08-10T14:30:00.000Z");
+});

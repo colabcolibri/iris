@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { normalizeCommentTimestamp } from "./comments/normalize-comment-timestamp.ts";
 
 export type ParsedCommentEntry = {
   igCommentId: string;
@@ -6,6 +7,7 @@ export type ParsedCommentEntry = {
   parentIgCommentId: string | null;
   text: string | null;
   authorUsername: string | null;
+  igTimestamp: string | null;
 };
 
 export function verifySubscribeToken(
@@ -63,6 +65,28 @@ function readMediaId(value: unknown): string | null {
 
   if (typeof record.media_id === "string") {
     return record.media_id;
+  }
+
+  return null;
+}
+
+function readCommentTimestamp(record: Record<string, unknown>): string | null {
+  const candidates = [record.timestamp, record.created_time, record.created_at];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string") {
+      const normalized = normalizeCommentTimestamp(candidate);
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      const normalized = normalizeCommentTimestamp(new Date(candidate * 1000).toISOString());
+      if (normalized) {
+        return normalized;
+      }
+    }
   }
 
   return null;
@@ -137,6 +161,7 @@ export function parseCommentEntries(payload: unknown): ParsedCommentEntry[] {
         text: typeof record.text === "string" ? record.text : null,
         authorUsername:
           from && typeof from.username === "string" ? from.username : null,
+        igTimestamp: readCommentTimestamp(record),
       });
     }
   }

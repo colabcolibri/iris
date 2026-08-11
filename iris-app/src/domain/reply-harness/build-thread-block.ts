@@ -1,11 +1,13 @@
-import type { CommentThreadContext } from "../reply-context/thread-context.ts";
+import {
+  sortThreadEntriesChronologically,
+  type CommentThreadContext,
+} from "../reply-context/thread-context.ts";
 
 export type BuildThreadBlockOptions = {
   maxEntries?: number;
   truncateCommentChars?: number;
   brandName?: string | null;
   brandUsername?: string | null;
-  showDepth?: boolean;
   targetIgCommentId?: string | null;
 };
 
@@ -56,8 +58,8 @@ export function buildThreadBlock(
 ): string {
   const maxEntries = options.maxEntries;
   const truncateCommentChars = options.truncateCommentChars ?? 400;
-  const sorted = [...thread.entries].sort((a, b) => a.at.localeCompare(b.at));
-  const slice = maxEntries ? sorted.slice(-maxEntries) : sorted;
+  const ordered = sortThreadEntriesChronologically(thread.entries);
+  const slice = maxEntries ? ordered.slice(-maxEntries) : ordered;
 
   if (slice.length === 0) {
     return "(no prior comments in thread)";
@@ -67,17 +69,13 @@ export function buildThreadBlock(
     .map((entry) => {
       const who = authorLabel(entry, options);
       const text = truncateText(entry.text ?? "", truncateCommentChars);
-      const depth =
-        options.showDepth && typeof entry.depth === "number"
-          ? `[depth=${entry.depth}] `
-          : "";
       const target =
         options.targetIgCommentId &&
         entry.igCommentId &&
         entry.igCommentId === options.targetIgCommentId
           ? ">>> TARGET "
           : "";
-      return `${target}${depth}[${formatTimestamp(entry.at)}] ${who}: ${text}`;
+      return `${target}[${formatTimestamp(entry.at)}] ${who}: ${text}`;
     })
     .join("\n");
 }

@@ -24,7 +24,11 @@ import {
   subscribeRealtimeEvents,
   syncPostComments,
 } from "@/lib/api";
-import { buildCommentTree } from "@/lib/build-comment-tree";
+import {
+  buildCommentThreadGroups,
+  sortCommentThreadGroups,
+  type ThreadSortMode,
+} from "@/lib/build-comment-tree";
 import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
 
 export function CommentsPage() {
@@ -49,6 +53,7 @@ export function CommentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [addingPost, setAddingPost] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [threadSort, setThreadSort] = useState<ThreadSortMode>("activity_desc");
   const [liveConnected, setLiveConnected] = useState(true);
   const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
 
@@ -72,7 +77,10 @@ export function CommentsPage() {
     });
   }, [posts, searchQuery]);
 
-  const commentRoots = useMemo(() => buildCommentTree(comments), [comments]);
+  const threadGroups = useMemo(
+    () => sortCommentThreadGroups(buildCommentThreadGroups(comments), threadSort),
+    [comments, threadSort],
+  );
 
   const loadPosts = useCallback(async () => {
     setLoadingPosts(true);
@@ -453,9 +461,11 @@ export function CommentsPage() {
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <PostDetailPanel
                 post={selectedPost}
-                commentRoots={commentRoots}
+                threadGroups={threadGroups}
                 allComments={comments}
                 brandUsername={meta?.igUsername}
+                threadSort={threadSort}
+                onThreadSortChange={setThreadSort}
                 insights={insights}
                 loadingComments={loadingComments}
                 loadingInsights={loadingInsights}

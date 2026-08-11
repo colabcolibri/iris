@@ -1,29 +1,34 @@
-import { useCallback, useState } from "react";
-import { Loader2, MoreHorizontal } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Copy, Loader2, MessageCircle, Pin } from "lucide-react";
 import { toast } from "sonner";
+import { AppAccordion } from "@/components/templates/app-accordion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { commentStatusBadgeLabel, commentStatusHint } from "@/lib/comment-status";
-import type { CommentTreeNode } from "@/lib/build-comment-tree";
-import { indexCommentsByIgId } from "@/lib/build-comment-tree";
+import type { CommentThreadGroup } from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
+import {
+  commentTimestamp,
+  defaultCollapsedThreadIds,
+  formatCommentExactTime,
+  indexCommentsByIgId,
+  isBrandAuthor,
+  shouldShowLinkedReply,
+  threadNeedsAttention,
+} from "@/lib/build-comment-tree";
 import type { Comment } from "@/lib/types";
-import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
+import {
+  ReplyAuditPanel,
+  ReplyAuditTrigger,
+  useReplyAudit,
+} from "@/components/comments/reply-audit-section";
 
-function shouldShowReplyAudit(node: Comment): boolean {
-  if (node.draft_text) {
+function shouldShowReplyAudit(comment: Comment): boolean {
+  if (comment.draft_text) {
     return true;
   }
-  const status = node.status ?? "";
+  const status = comment.status ?? "";
   return status === "skipped" || status === "failed" || status === "replied";
 }
 
@@ -37,35 +42,6 @@ function formatHandle(username: string | undefined): string {
   return value.startsWith("@") ? value : `@${value}`;
 }
 
-function formatRelativeTime(value: string): string {
-  const date = new Date(value);
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-
-  if (diffMinutes < 1) {
-    return "agora";
-  }
-  if (diffMinutes < 60) {
-    return `há ${diffMinutes} min`;
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) {
-    return `há ${diffHours} hora${diffHours === 1 ? "" : "s"}`;
-  }
-
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) {
-    return `há ${diffDays} dia${diffDays === 1 ? "" : "s"}`;
-  }
-
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-  });
-}
-
 function statusVariant(status: string): "default" | "secondary" | "outline" | "destructive" {
   if (status === "pending") {
     return "secondary";
@@ -77,6 +53,14 @@ function statusVariant(status: string): "default" | "secondary" | "outline" | "d
     return "outline";
   }
   return "outline";
+}
+
+function previewText(text: string | undefined, max = 140): string {
+  const value = text?.trim() || "(sem texto)";
+  if (value.length <= max) {
+    return value;
+  }
+  return `${value.slice(0, max - 1)}…`;
 }
 
 async function copyToClipboard(value: string, label: string) {
@@ -112,195 +96,181 @@ function replyToHandle(
   return fallbackHandle;
 }
 
-function countDescendants(node: CommentTreeNode): number {
-  return node.children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
-}
-
-function hasChildWithIgId(node: CommentTreeNode, igCommentId: string | null | undefined): boolean {
-  if (!igCommentId) {
-    return false;
-  }
-  if (node.ig_comment_id === igCommentId) {
-    return true;
-  }
-  return node.children.some((child) => hasChildWithIgId(child, igCommentId));
-}
-
-function threadBranchClass(depth: number): string | null {
-  if (depth <= 0) {
-    return null;
-  }
-
-  return cn(
-    "border-l-2 border-border/60 ps-3 ms-2 sm:ms-3 pt-3",
-    depth > 1 && "border-border/45",
+function PinnedPostCommentBadge() {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary"
+      title="Comentário fixo no post"
+    >
+      <Pin className="size-3 shrink-0" aria-hidden />
+      No post
+    </span>
   );
 }
 
-function avatarSizeClass(depth: number): string {
-  if (depth <= 0) {
-    return "size-9";
-  }
-  if (depth === 1) {
-    return "size-8";
-  }
-  return "size-7";
+const brandReplySurfaceClass =
+  "border-primary/30 bg-primary/8 dark:border-primary/35 dark:bg-primary/12";
+const brandReplyLinkedSurfaceClass =
+  "border border-primary/25 bg-primary/10 dark:bg-primary/15";
+
+type CommentActionsProps = {
+  comment: Comment;
+  showAudit: boolean;
+  auditActive?: boolean;
+  onAuditClick?: () => void;
+  alwaysShowActions?: boolean;
+};
+
+function CommentActions({
+  comment,
+  showAudit,
+  auditActive = false,
+  onAuditClick,
+  alwaysShowActions = false,
+}: CommentActionsProps) {
+  return (
+    <div
+      className={
+        alwaysShowActions
+          ? "flex shrink-0 items-center gap-0.5"
+          : "flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/comment:opacity-100 focus-within:opacity-100"
+      }
+    >
+      {showAudit && onAuditClick ? (
+        <ReplyAuditTrigger active={auditActive} onClick={onAuditClick} />
+      ) : null}
+      <button
+        type="button"
+        className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        aria-label="Copiar texto"
+        title="Copiar texto"
+        onClick={() => void copyToClipboard(comment.text ?? "", "Texto")}
+      >
+        <Copy className="size-3.5" />
+      </button>
+    </div>
+  );
 }
 
 type CommentThreadProps = {
-  roots: CommentTreeNode[];
+  groups: CommentThreadGroup[];
   allComments: Comment[];
   brandUsername?: string | null;
   approvingId: string | null;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
 };
 
-type CommentItemProps = {
-  node: CommentTreeNode;
-  depth: number;
+type CommentBodyProps = {
+  comment: Comment;
   byIgId: Map<string, Comment>;
   brandUsername?: string | null;
   approvingId: string | null;
-  collapsedIds: Set<string>;
-  onToggleCollapse: (commentId: string) => void;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  group: CommentThreadGroup;
+  showReplyContext?: boolean;
+  isPinnedOnPost?: boolean;
 };
 
-function CommentItem({
-  node,
-  depth,
+function CommentBody({
+  comment,
   byIgId,
   brandUsername,
   approvingId,
-  collapsedIds,
-  onToggleCollapse,
   onApproveDraft,
-}: CommentItemProps) {
-  const handle = formatHandle(node.author_username);
-  const statusLabel = commentStatusBadgeLabel(node);
-  const replyTarget = parentHandle(node, byIgId);
-  const showLinkedReply =
-    Boolean(node.linked_reply_text) &&
-    !hasChildWithIgId(node, node.linked_reply_ig_comment_id);
-  const linkedReplyTarget = replyToHandle(node.reply_to_ig_comment_id, byIgId, handle);
-  const descendantCount = countDescendants(node);
-  const isCollapsed = collapsedIds.has(node.id);
+  group,
+  showReplyContext = false,
+  isPinnedOnPost = false,
+}: CommentBodyProps) {
+  const handle = formatHandle(comment.author_username);
+  const isBrandReply = isBrandAuthor(comment.author_username, brandUsername);
+  const statusLabel = commentStatusBadgeLabel(comment);
+  const replyTarget = parentHandle(comment, byIgId);
+  const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
+  const linkedReplyTarget = replyToHandle(comment.reply_to_ig_comment_id, byIgId, handle);
   const brandHandle = formatHandle(brandUsername ?? "marca");
-  const branchClass = threadBranchClass(depth);
+  const showAudit = shouldShowReplyAudit(comment);
+  const auditState = useReplyAudit(comment.id);
 
-  const body = (
-    <>
-      <div className="flex gap-2.5">
+  return (
+    <div className="group/comment min-w-0">
+      <div className="flex items-start gap-3">
         <Avatar
           className={cn(
-            "shrink-0 border border-border/30",
-            avatarSizeClass(depth),
+            "size-9 shrink-0 border",
+            isBrandReply ? "border-primary/35 bg-primary/10" : "border-border/40",
           )}
         >
-          <AvatarFallback className="text-[10px] font-semibold">
-            {initials(node.author_username)}
+          <AvatarFallback
+            className={cn(
+              "text-[10px] font-semibold",
+              isBrandReply && "text-primary",
+            )}
+          >
+            {initials(comment.author_username)}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className="text-sm font-semibold text-foreground">{handle}</span>
-                <span className="text-xs text-muted-foreground">
-                  {formatRelativeTime(node.created_at)}
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span
+                  className={cn(
+                    "text-sm font-semibold",
+                    isBrandReply ? "text-primary" : "text-foreground",
+                  )}
+                >
+                  {handle}
+                </span>
+                {isPinnedOnPost ? <PinnedPostCommentBadge /> : null}
+                <span className="text-xs text-muted-foreground" title={commentTimestamp(comment)}>
+                  {formatCommentExactTime(commentTimestamp(comment))}
                 </span>
                 {statusLabel ? (
                   <Badge
-                    variant={statusVariant(node.status ?? "")}
+                    variant={statusVariant(comment.status ?? "")}
                     className="text-[10px]"
-                    title={commentStatusHint(node)}
+                    title={commentStatusHint(comment)}
                   >
                     {statusLabel}
                   </Badge>
                 ) : null}
               </div>
-              {replyTarget && depth > 0 ? (
-                <p className="mt-0.5 text-xs text-muted-foreground">
+              {replyTarget && showReplyContext ? (
+                <p className="text-xs text-muted-foreground">
                   Em resposta a{" "}
                   <span className="font-medium text-foreground/80">{replyTarget}</span>
                 </p>
               ) : null}
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <button
-                    type="button"
-                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    aria-label="Mais opções"
-                  />
-                }
-              >
-                <MoreHorizontal className="size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => void copyToClipboard(node.text ?? "", "Texto")}
-                  >
-                    Copiar texto
-                  </DropdownMenuItem>
-                  {node.ig_comment_id ? (
-                    <DropdownMenuItem
-                      onClick={() => void copyToClipboard(node.ig_comment_id!, "ID Meta")}
-                    >
-                      Copiar ID do comentário
-                    </DropdownMenuItem>
-                  ) : null}
-                  {node.parent_ig_comment_id ? (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        void copyToClipboard(node.parent_ig_comment_id!, "ID respondido")
-                      }
-                    >
-                      Copiar ID respondido
-                    </DropdownMenuItem>
-                  ) : null}
-                  {node.reply_to_ig_comment_id &&
-                  node.reply_to_ig_comment_id !== node.parent_ig_comment_id ? (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        void copyToClipboard(node.reply_to_ig_comment_id!, "ID vinculado")
-                      }
-                    >
-                      Copiar ID da resposta vinculada
-                    </DropdownMenuItem>
-                  ) : null}
-                  {descendantCount > 0 ? (
-                    <DropdownMenuItem onClick={() => onToggleCollapse(node.id)}>
-                      {isCollapsed ? "Mostrar conversa" : "Ocultar conversa"}
-                    </DropdownMenuItem>
-                  ) : null}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <CommentActions
+              comment={comment}
+              showAudit={showAudit}
+              auditActive={auditState.open}
+              onAuditClick={() => void auditState.toggle()}
+            />
           </div>
 
-          <p className="mt-1 wrap-break-word text-[15px] leading-relaxed text-foreground">
-            {node.text ?? "(sem texto)"}
+          <p className="mt-1.5 wrap-break-word text-[15px] leading-relaxed text-foreground">
+            {comment.text ?? "(sem texto)"}
           </p>
 
-          {node.draft_text ? (
-            <div className="mt-2 rounded-2xl border border-primary/25 bg-primary/5 px-3 py-2.5">
-              <p className="text-xs font-semibold text-primary">Sugestão da IA</p>
-              <p className="mt-1 wrap-break-word text-sm leading-relaxed">{node.draft_text}</p>
-              {node.status === "pending" ? (
-                <div className="mt-2 flex justify-end">
+          {comment.draft_text ? (
+            <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Sugestão da IA
+              </p>
+              <p className="mt-1.5 wrap-break-word text-sm leading-relaxed">{comment.draft_text}</p>
+              {comment.status === "pending" ? (
+                <div className="mt-3 flex justify-end">
                   <Button
                     type="button"
                     size="sm"
-                    disabled={approvingId === node.id}
-                    onClick={() => onApproveDraft(node.id, node.draft_text)}
+                    disabled={approvingId === comment.id}
+                    onClick={() => onApproveDraft(comment.id, comment.draft_text)}
                   >
-                    {approvingId === node.id ? (
+                    {approvingId === comment.id ? (
                       <Loader2 className="mr-2 size-4 animate-spin" />
                     ) : null}
                     Aprovar e publicar
@@ -310,26 +280,22 @@ function CommentItem({
             </div>
           ) : null}
 
-          {shouldShowReplyAudit(node) ? (
-            <ReplyAuditSection commentId={node.id} className="mt-2" />
-          ) : null}
-
-          {node.error_message ? (
-            <p className="mt-2 text-xs text-muted-foreground">{node.error_message}</p>
+          {comment.error_message ? (
+            <p className="mt-2 text-xs text-muted-foreground">{comment.error_message}</p>
           ) : null}
 
           {showLinkedReply ? (
-            <div className="mt-2 border-l-2 border-primary/30 ps-3 ms-1">
+            <div className={cn("mt-3 rounded-xl px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
               <div className="flex gap-2.5">
-                <Avatar className="size-7 shrink-0 border border-border/30">
-                  <AvatarFallback className="text-[9px] font-semibold">
+                <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
+                  <AvatarFallback className="text-[9px] font-semibold text-primary">
                     {initials(brandUsername ?? "marca")}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 rounded-2xl bg-muted/55 px-3 py-2">
-                  <p className="text-xs font-semibold text-foreground">{brandHandle}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-primary">{brandHandle}</p>
                   <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
-                    {node.linked_reply_text}
+                    {comment.linked_reply_text}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Em resposta a{" "}
@@ -340,95 +306,352 @@ function CommentItem({
             </div>
           ) : null}
 
-          {descendantCount > 0 && isCollapsed ? (
-            <button
-              type="button"
-              className="mt-2 text-xs font-semibold text-primary hover:underline"
-              onClick={() => onToggleCollapse(node.id)}
-            >
-              Ver {descendantCount} resposta{descendantCount === 1 ? "" : "s"}
-            </button>
-          ) : null}
-
-          {node.children.length > 0 && !isCollapsed ? (
-            <div className={cn(depth === 0 ? "mt-3" : "mt-2")}>
-              {node.children.map((child) => (
-                <CommentItem
-                  key={child.id}
-                  node={child}
-                  depth={depth + 1}
-                  byIgId={byIgId}
-                  brandUsername={brandUsername}
-                  approvingId={approvingId}
-                  collapsedIds={collapsedIds}
-                  onToggleCollapse={onToggleCollapse}
-                  onApproveDraft={onApproveDraft}
-                />
-              ))}
-            </div>
-          ) : null}
+          {showAudit ? <ReplyAuditPanel {...auditState} className="mt-3" /> : null}
         </div>
       </div>
-    </>
-  );
-
-  if (branchClass) {
-    return (
-      <div className={branchClass} role="listitem" aria-level={depth + 1}>
-        {body}
-      </div>
-    );
-  }
-
-  return (
-    <div role="listitem" aria-level={depth + 1}>
-      {body}
     </div>
   );
 }
 
+type CommentRootExtrasProps = {
+  comment: Comment;
+  byIgId: Map<string, Comment>;
+  brandUsername?: string | null;
+  approvingId: string | null;
+  onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  group: CommentThreadGroup;
+  auditState: ReturnType<typeof useReplyAudit>;
+};
+
+function CommentRootExtras({
+  comment,
+  byIgId,
+  brandUsername,
+  approvingId,
+  onApproveDraft,
+  group,
+  auditState,
+}: CommentRootExtrasProps) {
+  const handle = formatHandle(comment.author_username);
+  const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
+  const linkedReplyTarget = replyToHandle(comment.reply_to_ig_comment_id, byIgId, handle);
+  const brandHandle = formatHandle(brandUsername ?? "marca");
+  const showAudit = shouldShowReplyAudit(comment);
+
+  const hasExtras =
+    Boolean(comment.draft_text) ||
+    Boolean(comment.error_message) ||
+    showLinkedReply ||
+    (showAudit && auditState.open);
+
+  if (!hasExtras) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3 border-b border-border/40 pb-4">
+      {comment.draft_text ? (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            Sugestão da IA
+          </p>
+          <p className="mt-1.5 wrap-break-word text-sm leading-relaxed">{comment.draft_text}</p>
+          {comment.status === "pending" ? (
+            <div className="mt-3 flex justify-end">
+              <Button
+                type="button"
+                size="sm"
+                disabled={approvingId === comment.id}
+                onClick={() => onApproveDraft(comment.id, comment.draft_text)}
+              >
+                {approvingId === comment.id ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : null}
+                Aprovar e publicar
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {comment.error_message ? (
+        <p className="text-xs text-muted-foreground">{comment.error_message}</p>
+      ) : null}
+
+      {showLinkedReply ? (
+        <div className={cn("rounded-xl px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
+          <div className="flex gap-2.5">
+            <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
+              <AvatarFallback className="text-[9px] font-semibold text-primary">
+                {initials(brandUsername ?? "marca")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-primary">{brandHandle}</p>
+              <p className="mt-0.5 wrap-break-word text-sm leading-relaxed text-foreground/90">
+                {comment.linked_reply_text}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Em resposta a{" "}
+                <span className="font-medium text-foreground/80">{linkedReplyTarget}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showAudit ? <ReplyAuditPanel {...auditState} /> : null}
+    </div>
+  );
+}
+
+type ThreadCardProps = {
+  group: CommentThreadGroup;
+  byIgId: Map<string, Comment>;
+  brandUsername?: string | null;
+  approvingId: string | null;
+  onApproveDraft: (commentId: string, draftText?: string | null) => void;
+};
+
+function ThreadCard({
+  group,
+  byIgId,
+  brandUsername,
+  approvingId,
+  onApproveDraft,
+}: ThreadCardProps) {
+  const isBrandRoot = isBrandAuthor(group.root.author_username, brandUsername);
+
+  return (
+    <article
+      className={cn(
+        "rounded-xl border p-4 shadow-sm",
+        isBrandRoot ? brandReplySurfaceClass : "border-border/60 bg-card",
+      )}
+    >
+      <CommentBody
+        comment={group.root}
+        byIgId={byIgId}
+        brandUsername={brandUsername}
+        approvingId={approvingId}
+        onApproveDraft={onApproveDraft}
+        group={group}
+        isPinnedOnPost
+      />
+    </article>
+  );
+}
+
+type ThreadAccordionItemProps = ThreadCardProps;
+
+function ThreadAccordionHeader({
+  group,
+  showAudit,
+  auditActive,
+  onAuditClick,
+  comment,
+}: {
+  group: CommentThreadGroup;
+  showAudit: boolean;
+  auditActive: boolean;
+  onAuditClick: () => void;
+  comment: Comment;
+}) {
+  const root = group.root;
+  const handle = formatHandle(root.author_username);
+  const statusLabel = commentStatusBadgeLabel(root);
+  const replyCount = group.replies.length;
+  const needsAttention = threadNeedsAttention(group);
+
+  return (
+    <AppAccordion.Header className="transition-colors hover:bg-muted/30 has-data-panel-open:bg-muted/20">
+      <div className="flex w-full min-w-0 items-start gap-2 px-4 py-4">
+        <AppAccordion.PanelTrigger>
+          <Avatar className="size-9 shrink-0 border border-border/40">
+            <AvatarFallback className="text-[10px] font-semibold">
+              {initials(root.author_username)}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-sm font-semibold text-foreground">{handle}</span>
+              <span className="text-xs text-muted-foreground" title={commentTimestamp(root)}>
+                {formatCommentExactTime(commentTimestamp(root))}
+              </span>
+              {statusLabel ? (
+                <Badge variant={statusVariant(root.status ?? "")} className="text-[10px]">
+                  {statusLabel}
+                </Badge>
+              ) : null}
+              {needsAttention ? (
+                <Badge variant="secondary" className="text-[10px]">
+                  Atenção
+                </Badge>
+              ) : null}
+            </div>
+
+            <p className="line-clamp-2 text-sm leading-relaxed text-foreground/90">
+              {previewText(root.text)}
+            </p>
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <MessageCircle className="size-3.5" />
+              {replyCount} resposta{replyCount === 1 ? "" : "s"} na conversa
+            </span>
+          </div>
+        </AppAccordion.PanelTrigger>
+
+        <div className="flex shrink-0 items-center gap-0.5 self-start">
+          <CommentActions
+            comment={comment}
+            showAudit={showAudit}
+            auditActive={auditActive}
+            onAuditClick={onAuditClick}
+            alwaysShowActions
+          />
+          <AppAccordion.ChevronTrigger />
+        </div>
+      </div>
+    </AppAccordion.Header>
+  );
+}
+
+function ThreadAccordionItem({
+  group,
+  byIgId,
+  brandUsername,
+  approvingId,
+  onApproveDraft,
+}: ThreadAccordionItemProps) {
+  const root = group.root;
+  const showAudit = shouldShowReplyAudit(root);
+  const auditState = useReplyAudit(root.id);
+
+  return (
+    <AppAccordion.Item
+      value={root.id}
+      className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+    >
+      <ThreadAccordionHeader
+        group={group}
+        comment={root}
+        showAudit={showAudit}
+        auditActive={auditState.open}
+        onAuditClick={() => void auditState.toggle()}
+      />
+
+      <AppAccordion.Content className="space-y-4 border-t border-border/50 bg-muted/15 px-4 pb-4 pt-4">
+        <CommentRootExtras
+          comment={root}
+          byIgId={byIgId}
+          brandUsername={brandUsername}
+          approvingId={approvingId}
+          onApproveDraft={onApproveDraft}
+          group={group}
+          auditState={auditState}
+        />
+
+        <div className="space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Conversa
+          </p>
+          <div className="space-y-3">
+            {group.replies.map((reply) => {
+              const isBrandReply = isBrandAuthor(reply.author_username, brandUsername);
+
+              return (
+                <div
+                  key={reply.id}
+                  className={cn(
+                    "rounded-lg border px-3 py-3",
+                    isBrandReply
+                      ? brandReplySurfaceClass
+                      : "border-border/50 bg-background/80",
+                  )}
+                >
+                  <CommentBody
+                    comment={reply}
+                    byIgId={byIgId}
+                    brandUsername={brandUsername}
+                    approvingId={approvingId}
+                    onApproveDraft={onApproveDraft}
+                    group={group}
+                    showReplyContext
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </AppAccordion.Content>
+    </AppAccordion.Item>
+  );
+}
+
 export function CommentThread({
-  roots,
+  groups,
   allComments,
   brandUsername,
   approvingId,
   onApproveDraft,
 }: CommentThreadProps) {
   const byIgId = indexCommentsByIgId(allComments);
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
+  const groupsKey = useMemo(() => groups.map((group) => group.root.id).join("|"), [groups]);
+  const [openIds, setOpenIds] = useState<string[]>(() =>
+    groups
+      .filter((group) => !defaultCollapsedThreadIds(groups).has(group.root.id))
+      .map((group) => group.root.id),
+  );
 
-  const onToggleCollapse = useCallback((commentId: string) => {
-    setCollapsedIds((current) => {
-      const next = new Set(current);
-      if (next.has(commentId)) {
-        next.delete(commentId);
-      } else {
-        next.add(commentId);
-      }
-      return next;
-    });
+  useEffect(() => {
+    const collapsed = defaultCollapsedThreadIds(groups);
+    setOpenIds(groups.filter((group) => !collapsed.has(group.root.id)).map((group) => group.root.id));
+  }, [groupsKey, groups]);
+
+  const onOpenChange = useCallback((next: string | string[] | undefined) => {
+    const values = Array.isArray(next) ? next : next ? [next] : [];
+    setOpenIds(values);
   }, []);
 
-  if (roots.length === 0) {
+  const withReplies = groups.filter((group) => group.replies.length > 0);
+  const withoutReplies = groups.filter((group) => group.replies.length === 0);
+
+  if (groups.length === 0) {
     return null;
   }
 
   return (
-    <div className="flex flex-col gap-6" role="list">
-      {roots.map((root) => (
-        <article key={root.id} className="min-w-0 border-b border-border/40 pb-6 last:border-b-0 last:pb-0">
-          <CommentItem
-            node={root}
-            depth={0}
-            byIgId={byIgId}
-            brandUsername={brandUsername}
-            approvingId={approvingId}
-            collapsedIds={collapsedIds}
-            onToggleCollapse={onToggleCollapse}
-            onApproveDraft={onApproveDraft}
-          />
-        </article>
+    <div className="flex flex-col gap-3">
+      {withoutReplies.map((group) => (
+        <ThreadCard
+          key={group.root.id}
+          group={group}
+          byIgId={byIgId}
+          brandUsername={brandUsername}
+          approvingId={approvingId}
+          onApproveDraft={onApproveDraft}
+        />
       ))}
+
+      {withReplies.length > 0 ? (
+        <AppAccordion
+          multiple
+          value={openIds}
+          onValueChange={onOpenChange}
+          className="gap-3"
+        >
+          {withReplies.map((group) => (
+            <ThreadAccordionItem
+              key={group.root.id}
+              group={group}
+              byIgId={byIgId}
+              brandUsername={brandUsername}
+              approvingId={approvingId}
+              onApproveDraft={onApproveDraft}
+            />
+          ))}
+        </AppAccordion>
+      ) : null}
     </div>
   );
 }

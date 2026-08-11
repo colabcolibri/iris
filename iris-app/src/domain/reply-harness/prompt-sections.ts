@@ -67,12 +67,11 @@ export function buildTriageContextSection(context: ReplyContext): string {
     "",
     buildTriageAudienceDirective(context),
     "",
-    "Thread (chronological, nested — depth shows reply chain):",
+    "Thread (chronological — oldest to newest):",
     buildThreadBlock(context.thread, {
       maxEntries: SIMPLE_THREAD_MAX,
       brandName: context.persona.brandName,
       brandUsername: context.brandUsername,
-      showDepth: true,
       targetIgCommentId: context.targetComment.igCommentId,
     }),
     "",

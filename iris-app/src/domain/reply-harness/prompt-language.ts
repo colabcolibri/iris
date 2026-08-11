@@ -84,7 +84,7 @@ export function buildTriageAudienceDirective(context: ReplyContext): string {
   const lines = [
     "## Reply audience (MANDATORY)",
     "Decide whether the TARGET comment expects a reply from the brand account.",
-    "Read the thread structure: depth shows nesting, @mentions show who each message addresses.",
+    "Read the thread chronologically; @mentions show who each message addresses.",
   ];
 
   if (brandHandle) {
@@ -95,10 +95,13 @@ export function buildTriageAudienceDirective(context: ReplyContext): string {
   }
 
   lines.push(
-    "Reply ONLY when the target comment is directed at the brand — e.g. question to the brand, thanks aimed at the brand, or a reply to the brand's message in the thread.",
-    "Do NOT reply when users are talking to each other and the brand is not addressed.",
-    "Brand IS addressed: @mention of the brand handle, direct question to the brand, praise/thanks clearly aimed at the brand voice, or continuing a exchange where the brand spoke last.",
-    "Brand is NOT addressed: @mention of another user without the brand, side conversation between followers, answer meant for another commenter, banter that does not invite the brand.",
+    "Use conversational intent from the full thread — not @mentions alone.",
+    "An @mention of the brand does NOT automatically mean the comment is for the brand (it may be accidental, quoted, or secondary while the message is really for someone else).",
+    "The target may be for the brand even with NO @mention — e.g. a question on the brand's post, thanks/praise aimed at the page, or a direct reply to the brand's last message in the thread.",
+    "Reply when the target clearly expects the brand to respond.",
+    "Do NOT reply when the target is mainly for another participant — even if the brand handle appears incidentally.",
+    "Signals the brand IS addressed: question or thanks clearly aimed at the brand/page, continuing an exchange where the brand spoke last, or content that only the brand can answer.",
+    "Signals the brand is NOT addressed: reply to another user's handle, side conversation between followers, answer meant for another commenter, agreement with someone else (@other_user …), banter that does not invite the brand.",
     'If not for the brand: shouldReply=false, replyTier="none", blockCategory="not_for_brand".',
   );
 

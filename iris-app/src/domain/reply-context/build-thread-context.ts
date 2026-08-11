@@ -1,5 +1,10 @@
+import type { Comment } from "../comment.ts";
 import type { CommentRepository } from "../../ports/comment-repository.ts";
-import type { CommentThreadContext, CommentThreadEntry } from "./thread-context.ts";
+import {
+  sortThreadEntriesChronologically,
+  type CommentThreadContext,
+  type CommentThreadEntry,
+} from "./thread-context.ts";
 import {
   buildCommentTree,
   findCommentTreePath,
@@ -40,7 +45,7 @@ export function buildCommentThreadContext(
 
   appendCommentSubtree(entries, path.node, replyByCommentId, path.ancestors.length);
 
-  return { entries };
+  return { entries: sortThreadEntriesChronologically(entries) };
 }
 
 function appendCommentSubtree(
@@ -56,17 +61,31 @@ function appendCommentSubtree(
   }
 }
 
+function commentTimestamp(comment: Comment): string {
+  return comment.igTimestamp ?? comment.createdAt;
+}
+
+function brandReplyTimestamp(parentAt: string): string {
+  const parentMs = new Date(parentAt).getTime();
+  if (Number.isNaN(parentMs)) {
+    return parentAt;
+  }
+  return new Date(parentMs + 1).toISOString();
+}
+
 function appendCommentNode(
   entries: CommentThreadEntry[],
   node: CommentTreeNode,
   replyByCommentId: Map<string, string>,
   depth: number,
 ): void {
+  const at = commentTimestamp(node.comment);
+
   entries.push({
     author: node.comment.authorUsername,
     text: node.comment.text,
     isBrandReply: false,
-    at: node.comment.createdAt,
+    at,
     igCommentId: node.comment.igCommentId,
     depth,
   });
@@ -77,7 +96,7 @@ function appendCommentNode(
       author: "marca",
       text: sentText,
       isBrandReply: true,
-      at: node.comment.createdAt,
+      at: brandReplyTimestamp(at),
       depth,
     });
   }

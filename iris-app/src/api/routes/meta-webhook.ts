@@ -138,12 +138,22 @@ async function handleMetaWebhookPost(
         continue;
       }
 
+      let igTimestamp = entry.igTimestamp;
+      if (!igTimestamp) {
+        try {
+          igTimestamp = await ctx.metaCommentReader.fetchCommentTimestamp(entry.igCommentId);
+        } catch {
+          igTimestamp = null;
+        }
+      }
+
       const result = ctx.comments.upsertFromWebhook({
         igCommentId: entry.igCommentId,
         postId: post.id,
         parentIgCommentId: entry.parentIgCommentId,
         authorUsername: entry.authorUsername,
         text: entry.text,
+        igTimestamp,
       });
 
       processed = true;

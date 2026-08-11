@@ -12,12 +12,16 @@ test("reply audit UI is wired in comment surfaces", () => {
   assert.match(timeline, /Ver JSON estruturado/);
 
   const section = readFileSync("admin/src/components/comments/reply-audit-section.tsx", "utf8");
+  const thread = readFileSync("admin/src/components/comments/comment-thread.tsx", "utf8");
   assert.match(section, /Ver decisão do agente/);
+  assert.match(thread, /ReplyAuditTrigger/);
   assert.match(section, /fetchReplyAudit/);
 
-  const thread = readFileSync("admin/src/components/comments/comment-thread.tsx", "utf8");
-  assert.match(thread, /ReplyAuditSection/);
-  assert.match(thread, /border-l-2/);
+  assert.match(thread, /ReplyAuditPanel/);
+  assert.match(thread, /PinnedPostCommentBadge/);
+  assert.match(thread, /Pin/);
+  assert.match(thread, /AppAccordion/);
+  assert.doesNotMatch(thread, /depth \+ 1/);
 
   const dialog = readFileSync("admin/src/components/posts/post-dialog.tsx", "utf8");
   assert.match(dialog, /ReplyAuditSection/);

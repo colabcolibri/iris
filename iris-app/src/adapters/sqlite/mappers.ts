@@ -97,6 +97,7 @@ export function serializeComment(comment: Comment) {
     status: comment.status,
     error_message: comment.errorMessage,
     created_at: comment.createdAt,
+    ig_timestamp: comment.igTimestamp,
   };
 }
 

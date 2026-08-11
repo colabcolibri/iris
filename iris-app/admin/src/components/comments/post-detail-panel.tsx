@@ -24,14 +24,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { resolveMediaSlides } from "@/hooks/use-post-preview";
 import { formatInsightValue, insightMetricValue } from "@/lib/insights";
 import { cn } from "@/lib/utils";
-import type { CommentTreeNode } from "@/lib/build-comment-tree";
+import type { CommentThreadGroup, ThreadSortMode } from "@/lib/build-comment-tree";
 import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
+import { ThreadSortSelect } from "@/components/comments/thread-sort-select";
 
 type PostDetailPanelProps = {
   post: CommentPostSummary;
-  commentRoots: CommentTreeNode[];
+  threadGroups: CommentThreadGroup[];
   allComments: Comment[];
   brandUsername?: string | null;
+  threadSort: ThreadSortMode;
+  onThreadSortChange: (mode: ThreadSortMode) => void;
   insights: PostInsightsResult | null;
   loadingComments: boolean;
   loadingInsights: boolean;
@@ -133,9 +136,11 @@ function InsightStat({
 
 export function PostDetailPanel({
   post,
-  commentRoots,
+  threadGroups,
   allComments,
   brandUsername,
+  threadSort,
+  onThreadSortChange,
   insights,
   loadingComments,
   loadingInsights,
@@ -333,41 +338,47 @@ export function PostDetailPanel({
             </Button>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setActiveTab("comments")}
-              className={cn(
-                "inline-flex items-center gap-1.5 pb-1 text-sm font-semibold transition-colors",
-                activeTab === "comments"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Comentários
-              <span
+          <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-2">
+            <div className="flex min-w-0 items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab("comments")}
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+                  "inline-flex items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
                   activeTab === "comments"
-                    ? "bg-primary/15 text-primary"
-                    : "bg-muted text-muted-foreground",
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {post.comments_count}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("caption")}
-              className={cn(
-                "pb-1 text-sm font-semibold transition-colors",
-                activeTab === "caption"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Legenda
-            </button>
+                Comentários
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+                    activeTab === "comments"
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {post.comments_count}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("caption")}
+                className={cn(
+                  "pb-0.5 text-sm font-semibold transition-colors",
+                  activeTab === "caption"
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Legenda
+              </button>
+            </div>
+
+            {activeTab === "comments" && !loadingComments && threadGroups.length > 0 ? (
+              <ThreadSortSelect value={threadSort} onChange={onThreadSortChange} />
+            ) : null}
           </div>
         </div>
 
@@ -385,7 +396,7 @@ export function PostDetailPanel({
                   <Skeleton className="h-24 w-full rounded-md" />
                   <Skeleton className="h-24 w-full rounded-md" />
                 </div>
-              ) : commentRoots.length === 0 ? (
+              ) : threadGroups.length === 0 ? (
                 <div className="px-4 py-12 text-center">
                   <MessageCircle className="mx-auto mb-3 size-8 text-muted-foreground/40" />
                   <p className="font-medium">Nenhum comentário ainda</p>
@@ -395,7 +406,7 @@ export function PostDetailPanel({
                 </div>
               ) : (
                 <CommentThread
-                  roots={commentRoots}
+                  groups={threadGroups}
                   allComments={allComments}
                   brandUsername={brandUsername}
                   approvingId={approvingId}

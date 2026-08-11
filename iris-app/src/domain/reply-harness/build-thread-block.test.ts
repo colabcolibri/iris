@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildThreadBlock } from "./build-thread-block.ts";
 
-test("buildThreadBlock orders entries chronologically", () => {
+test("buildThreadBlock sorts entries chronologically by timestamp", () => {
   const block = buildThreadBlock(
     {
       entries: [
@@ -11,7 +11,7 @@ test("buildThreadBlock orders entries chronologically", () => {
           text: "segundo",
           isBrandReply: false,
           at: "2026-08-10T12:00:00.000Z",
-          depth: 0,
+          depth: 1,
         },
         {
           author: "a",
@@ -30,6 +30,34 @@ test("buildThreadBlock orders entries chronologically", () => {
   assert.ok(firstIndex >= 0 && secondIndex > firstIndex);
 });
 
+test("buildThreadBlock places brand reply after user comment at the same second", () => {
+  const block = buildThreadBlock(
+    {
+      entries: [
+        {
+          author: "marca",
+          text: "obrigado!",
+          isBrandReply: true,
+          at: "2026-08-10T11:00:00.001Z",
+          depth: 0,
+        },
+        {
+          author: "fan",
+          text: "valeu!",
+          isBrandReply: false,
+          at: "2026-08-10T11:00:00.000Z",
+          depth: 0,
+        },
+      ],
+    },
+    { brandName: "Iris" },
+  );
+
+  const userIndex = block.indexOf("valeu!");
+  const brandIndex = block.indexOf("obrigado!");
+  assert.ok(userIndex >= 0 && brandIndex > userIndex);
+});
+
 test("buildThreadBlock limits entries for simple tier usage", () => {
   const entries = Array.from({ length: 8 }, (_, index) => ({
     author: `u${index}`,
@@ -44,7 +72,7 @@ test("buildThreadBlock limits entries for simple tier usage", () => {
   assert.doesNotMatch(block, /msg 2/);
 });
 
-test("buildThreadBlock marks depth and target comment for triage", () => {
+test("buildThreadBlock marks target comment for triage without depth markers", () => {
   const block = buildThreadBlock(
     {
       entries: [
@@ -68,12 +96,11 @@ test("buildThreadBlock marks depth and target comment for triage", () => {
     },
     {
       brandUsername: "colabcolibri",
-      showDepth: true,
       targetIgCommentId: "target",
     },
   );
 
-  assert.match(block, /\[depth=1\]/);
+  assert.doesNotMatch(block, /\[depth=/);
   assert.match(block, />>> TARGET/);
   assert.match(block, /@fan: @other_user concordo/);
 });

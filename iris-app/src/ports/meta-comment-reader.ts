@@ -3,7 +3,7 @@ export type RemoteComment = {
   parentIgCommentId: string | null;
   authorUsername: string | null;
   text: string | null;
-  timestamp: string;
+  timestamp: string | null;
 };
 
 export type RemoteMediaWithComments = {
@@ -72,4 +72,5 @@ export type MetaCommentReader = {
   fetchMediaPreview(igMediaId: string): Promise<RemoteMediaPreview>;
   listBrowsableMedia(options?: ListBrowsableMediaOptions): Promise<ListBrowsableMediaResult>;
   findMediaByPermalink(permalink: string): Promise<RemoteMediaMetadata | null>;
+  fetchCommentTimestamp(igCommentId: string): Promise<string | null>;
 };

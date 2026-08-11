@@ -5,6 +5,19 @@ export type CommentTreeNode = {
   children: CommentTreeNode[];
 };
 
+function compareCommentTime(left: Comment, right: Comment): number {
+  const leftAt = left.igTimestamp ?? left.createdAt;
+  const rightAt = right.igTimestamp ?? right.createdAt;
+  return leftAt.localeCompare(rightAt);
+}
+
+function sortCommentTree(nodes: CommentTreeNode[]): void {
+  nodes.sort((left, right) => compareCommentTime(left.comment, right.comment));
+  for (const node of nodes) {
+    sortCommentTree(node.children);
+  }
+}
+
 export function buildCommentTree(comments: Comment[]): CommentTreeNode[] {
   const nodes = new Map<string, CommentTreeNode>();
 
@@ -30,6 +43,7 @@ export function buildCommentTree(comments: Comment[]): CommentTreeNode[] {
     }
   }
 
+  sortCommentTree(roots);
   return roots;
 }
 

@@ -77,6 +77,9 @@ test("triage prompt includes thread audience rules and not_for_brand category", 
   assert.match(prompt, /Reply audience \(MANDATORY\)/);
   assert.match(prompt, /@colabcolibri/);
   assert.match(prompt, /not_for_brand/);
+  assert.match(prompt, /not @mentions alone/i);
+  assert.match(prompt, /NO @mention/i);
   assert.match(prompt, />>> TARGET/);
-  assert.match(prompt, /\[depth=2\]/);
+  assert.match(prompt, /oldest to newest/i);
+  assert.doesNotMatch(prompt, /\[depth=/);
 });

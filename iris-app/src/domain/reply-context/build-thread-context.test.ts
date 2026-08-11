@@ -20,6 +20,7 @@ test("buildCommentThreadContext includes branch with brand reply", () => {
       postId: post.id,
       authorUsername: "fan",
       text: "Primeiro",
+      igTimestamp: "2026-08-10T10:00:00.000Z",
     }).comment;
 
     comments.upsertFromWebhook({
@@ -28,6 +29,7 @@ test("buildCommentThreadContext includes branch with brand reply", () => {
       parentIgCommentId: "ig-1",
       authorUsername: "fan2",
       text: "Segundo",
+      igTimestamp: "2026-08-10T10:00:05.000Z",
     }).comment;
 
     comments.upsertFromWebhook({
@@ -47,6 +49,12 @@ test("buildCommentThreadContext includes branch with brand reply", () => {
     assert.equal(thread!.entries.some((entry) => entry.text === "Irrelevante"), false);
     assert.ok(thread!.entries.some((entry) => entry.isBrandReply && entry.text === "Resposta da marca"));
     assert.ok(thread!.entries.some((entry) => entry.text === "Segundo" && entry.depth === 1));
+
+    const texts = thread!.entries.map((entry) => entry.text);
+    const primeiroIndex = texts.indexOf("Primeiro");
+    const marcaIndex = texts.indexOf("Resposta da marca");
+    const segundoIndex = texts.indexOf("Segundo");
+    assert.ok(primeiroIndex >= 0 && marcaIndex > primeiroIndex && segundoIndex > marcaIndex);
   } finally {
     db.close();
   }

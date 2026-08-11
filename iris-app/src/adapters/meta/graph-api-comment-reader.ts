@@ -4,6 +4,7 @@ import type {
   RemoteComment,
   RemoteMediaWithComments,
 } from "../../ports/meta-comment-reader.ts";
+import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { normalizeInstagramPermalink } from "../../domain/comments/parse-instagram-media-input.ts";
 
 export type GraphApiCommentReaderConfig = {
@@ -98,30 +99,36 @@ export function createGraphApiCommentReader(
 
   function flattenComments(comments: GraphComment[], parentId: string | null = null): RemoteComment[] {
     const flattened: RemoteComment[] = [];
+    const seen = new Set<string>();
 
-    for (const comment of comments) {
-      if (!comment.id) {
-        continue;
-      }
+    function walk(items: GraphComment[], walkParentId: string | null): void {
+      for (const comment of items) {
+        if (!comment.id || seen.has(comment.id)) {
+          continue;
+        }
 
-      const from =
-        comment.from && typeof comment.from === "object"
-          ? (comment.from as { username?: string })
-          : null;
+        seen.add(comment.id);
 
-      flattened.push({
-        igCommentId: comment.id,
-        parentIgCommentId: comment.parent_id ?? parentId,
-        authorUsername: from?.username ?? comment.username ?? null,
-        text: comment.text ?? null,
-        timestamp: comment.timestamp ?? new Date().toISOString(),
-      });
+        const from =
+          comment.from && typeof comment.from === "object"
+            ? (comment.from as { username?: string })
+            : null;
 
-      if (comment.replies?.data?.length) {
-        flattened.push(...flattenComments(comment.replies.data, comment.id));
+        flattened.push({
+          igCommentId: comment.id,
+          parentIgCommentId: comment.parent_id ?? walkParentId,
+          authorUsername: from?.username ?? comment.username ?? null,
+          text: comment.text ?? null,
+          timestamp: normalizeCommentTimestamp(comment.timestamp),
+        });
+
+        if (comment.replies?.data?.length) {
+          walk(comment.replies.data, comment.id);
+        }
       }
     }
 
+    walk(comments, parentId);
     return flattened;
   }
 
@@ -415,6 +422,20 @@ export function createGraphApiCommentReader(
       }
 
       return null;
+    },
+
+    async fetchCommentTimestamp(igCommentId: string) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        return null;
+      }
+
+      const commentUrl = new URL(`${base}/${igCommentId}`);
+      commentUrl.searchParams.set("fields", "timestamp");
+      commentUrl.searchParams.set("access_token", token);
+
+      const comment = await fetchGraph<{ timestamp?: string }>(commentUrl.toString());
+      return normalizeCommentTimestamp(comment.timestamp);
     },
   };
 }

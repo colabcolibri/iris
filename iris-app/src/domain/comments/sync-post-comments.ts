@@ -1,5 +1,6 @@
 import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
 import type { Comment } from "../comment.ts";
+import { normalizeCommentTimestamp } from "./normalize-comment-timestamp.ts";
 
 export type SyncPostCommentsDeps = {
   metaCommentReader: MetaCommentReader;
@@ -63,7 +64,7 @@ export async function syncPostComments(
       parentIgCommentId: remoteComment.parentIgCommentId,
       authorUsername: remoteComment.authorUsername,
       text: remoteComment.text,
-      igTimestamp: remoteComment.timestamp,
+      igTimestamp: normalizeCommentTimestamp(remoteComment.timestamp),
     });
     comments.push(upserted.comment);
   }

@@ -51,5 +51,30 @@ test("parseCommentEntries extracts instagram comment payload", () => {
     parentIgCommentId: null,
     text: "ótimo post",
     authorUsername: "fan_user",
+    igTimestamp: null,
   });
+});
+
+test("parseCommentEntries normalizes comment timestamp when present", () => {
+  const entries = parseCommentEntries({
+    object: "instagram",
+    entry: [
+      {
+        changes: [
+          {
+            field: "comments",
+            value: {
+              id: "comment-2",
+              text: "com hora",
+              timestamp: "2026-08-10T12:00:00+0000",
+              from: { username: "fan_user" },
+              media: { id: "media-99" },
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(entries[0]?.igTimestamp, "2026-08-10T12:00:00.000Z");
 });

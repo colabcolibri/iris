@@ -5,6 +5,7 @@ import type {
   UpsertCommentInput,
 } from "../../ports/comment-repository.ts";
 import type { Comment } from "../../domain/comment.ts";
+import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { mapCommentRow } from "./mappers.ts";
 
 export function createSqliteCommentRepository(db: DatabaseSync): CommentRepository {
@@ -19,7 +20,9 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
   );
   const selectById = db.prepare("SELECT * FROM comments WHERE id = ?");
   const listByPostId = db.prepare(`
-    SELECT * FROM comments WHERE post_id = ? ORDER BY datetime(created_at) ASC
+    SELECT * FROM comments
+    WHERE post_id = ?
+    ORDER BY datetime(COALESCE(ig_timestamp, created_at)) ASC, ig_comment_id ASC
   `);
   const countByPostIdStmt = db.prepare(`
     SELECT
@@ -128,7 +131,10 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
   const updateFromWebhookStmt = db.prepare(`
     UPDATE comments
-    SET parent_ig_comment_id = ?, text = ?, author_username = COALESCE(?, author_username), ig_timestamp = COALESCE(?, ig_timestamp)
+    SET parent_ig_comment_id = ?,
+        text = ?,
+        author_username = COALESCE(?, author_username),
+        ig_timestamp = CASE WHEN ? IS NOT NULL THEN ? ELSE ig_timestamp END
     WHERE ig_comment_id = ?
   `);
 
@@ -140,7 +146,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
         const current = mapCommentRow(existing as never);
         const nextParent = input.parentIgCommentId ?? null;
         const nextText = input.text ?? null;
-        const nextTimestamp = input.igTimestamp ?? null;
+        const nextTimestamp = normalizeCommentTimestamp(input.igTimestamp);
         const parentChanged = nextParent !== current.parentIgCommentId;
         const textChanged = nextText !== current.text;
         const timestampChanged =
@@ -152,6 +158,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
             nextText,
             input.authorUsername ?? null,
             nextTimestamp,
+            nextTimestamp,
             input.igCommentId,
           );
           const updated = selectByIgCommentId.get(input.igCommentId);
@@ -162,7 +169,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       }
 
       const now = new Date().toISOString();
-      const igTimestamp = input.igTimestamp ?? now;
+      const igTimestamp = normalizeCommentTimestamp(input.igTimestamp);
       const id = randomUUID();
 
       insert.run(

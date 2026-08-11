@@ -38,6 +38,7 @@ export type Comment = {
   author_username?: string;
   parent_ig_comment_id?: string | null;
   created_at: string;
+  ig_timestamp?: string | null;
   error_message?: string | null;
   draft_text?: string | null;
   draft_status?: string | null;
