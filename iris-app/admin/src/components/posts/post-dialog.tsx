@@ -46,6 +46,7 @@ type PostDialogProps = {
   onFilesChange: (files: FileList | null) => void;
   onSaveDraft: () => void;
   onSchedule: () => void;
+  onPublishNow?: () => void;
   onRevertToDraft?: () => void;
   onRetryDraft?: () => void;
   onRetrySchedule?: () => void;
@@ -70,6 +71,7 @@ export function PostDialog({
   onFilesChange,
   onSaveDraft,
   onSchedule,
+  onPublishNow,
   onRevertToDraft,
   onRetryDraft,
   onRetrySchedule,
@@ -108,6 +110,11 @@ export function PostDialog({
   const isFailed = status === "failed";
   const isCancelled = status === "cancelled";
   const isDraft = !status || status === "draft";
+  const canPublishNow =
+    Boolean(onPublishNow) &&
+    !isReadOnly &&
+    !isCancelled &&
+    (isDraft || isScheduled || isFailed);
   const effectiveReply = resolveEffectivePostReplyStatus(globalReplyMode, replyMode);
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
 
@@ -447,6 +454,16 @@ export function PostDialog({
           ) : null}
           {!isReadOnly && !isCancelled ? (
             <>
+              {canPublishNow ? (
+                <Button
+                  type="button"
+                  onClick={onPublishNow}
+                  disabled={saving || !metaConnected}
+                >
+                  {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                  Publicar agora
+                </Button>
+              ) : null}
               {(isDraft || mode === "create") ? (
                 <Button
                   type="button"

@@ -15,6 +15,7 @@ import { handleEventsRoute } from "./routes/events.ts";
 import { handlePublishMediaRoute } from "./routes/publish-media.ts";
 import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments.ts";
+import { handleInsightsRoute } from "./routes/insights.ts";
 import { handleAuthRoute } from "./routes/auth.ts";
 import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
@@ -255,6 +256,10 @@ async function handleRequest(
     }
 
     if (handleEventsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleInsightsRoute(routeRequest)) {
       return;
     }
 

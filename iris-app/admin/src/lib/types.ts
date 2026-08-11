@@ -96,6 +96,7 @@ export type PostInsightsResult = {
   post_id?: string;
   ig_media_id?: string;
   fetched_at?: string;
+  from_cache?: boolean;
   insights?: PostInsightMetric[];
   media?: PostInsightsMedia;
 };
@@ -351,6 +352,13 @@ export type WebhookEvent = {
   signature_valid: boolean;
   object: string | null;
   field: string | null;
+  webhook_type: string;
+  verb: string | null;
+  ig_comment_id: string | null;
+  ig_media_id: string | null;
+  author_username: string | null;
+  text_preview: string | null;
+  entries_count: number;
   processing_status: WebhookProcessingStatus;
   comment_id: string | null;
   post_id: string | null;

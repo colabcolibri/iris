@@ -101,13 +101,7 @@ async function processCommentReplyCore(
     const message = harnessResult.finalText;
 
     if (effectiveReplyMode === "draft") {
-      ctx.comments.clearDraft(commentId);
-      ctx.comments.createReply({
-        commentId,
-        draftText: message,
-        status: "draft",
-        agentRunId: run.id,
-      });
+      ctx.comments.upsertDraft(commentId, message, { agentRunId: run.id });
       notifyCommentsChanged({ post_id: comment.postId });
       return true;
     }

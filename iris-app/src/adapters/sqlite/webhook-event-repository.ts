@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type {
   InsertWebhookEventInput,
   UpdateWebhookEventInput,
+  WebhookEventListFilter,
   WebhookEventRecord,
   WebhookEventRepository,
   WebhookProcessingStatus,
@@ -59,11 +60,35 @@ export function createSqliteWebhookEventRepository(
     SELECT * FROM meta_webhook_events WHERE id = ?
   `);
 
-  const listRecentStmt = db.prepare(`
-    SELECT * FROM meta_webhook_events
-    ORDER BY datetime(received_at) DESC
-    LIMIT ?
-  `);
+  function listWithFilter(limit: number, filter?: WebhookEventListFilter) {
+    const clauses: string[] = [];
+    const params: unknown[] = [];
+
+    if (filter?.status) {
+      clauses.push("processing_status = ?");
+      params.push(filter.status);
+    }
+
+    if (filter?.field) {
+      clauses.push("field = ?");
+      params.push(filter.field);
+    }
+
+    if (filter?.signatureValid === false) {
+      clauses.push("signature_valid = 0");
+    } else if (filter?.signatureValid === true) {
+      clauses.push("signature_valid = 1");
+    }
+
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const rows = db
+      .prepare(
+        `SELECT * FROM meta_webhook_events ${where} ORDER BY datetime(received_at) DESC LIMIT ?`,
+      )
+      .all(...params, limit);
+
+    return rows.map((row) => mapRow(row as never));
+  }
 
   const countStmt = db.prepare(`
     SELECT COUNT(*) AS total FROM meta_webhook_events
@@ -109,8 +134,12 @@ export function createSqliteWebhookEventRepository(
       return row ? mapRow(row) : null;
     },
 
-    listRecent(limit: number) {
-      return listRecentStmt.all(limit).map((row) => mapRow(row as never));
+    listRecent(limit: number, filter?: WebhookEventListFilter) {
+      return listWithFilter(limit, filter);
+    },
+
+    listForExport(limit: number, filter?: WebhookEventListFilter) {
+      return listWithFilter(limit, filter);
     },
 
     count() {

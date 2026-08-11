@@ -31,10 +31,17 @@ export type WebhookEventRecord = {
   errorMessage: string | null;
 };
 
+export type WebhookEventListFilter = {
+  status?: WebhookProcessingStatus;
+  field?: string;
+  signatureValid?: boolean;
+};
+
 export type WebhookEventRepository = {
   insert(input: InsertWebhookEventInput): WebhookEventRecord;
   update(id: string, input: UpdateWebhookEventInput): WebhookEventRecord | null;
-  listRecent(limit: number): WebhookEventRecord[];
+  listRecent(limit: number, filter?: WebhookEventListFilter): WebhookEventRecord[];
+  listForExport(limit: number, filter?: WebhookEventListFilter): WebhookEventRecord[];
   count(): number;
   deleteOlderThan(cutoffIso: string): number;
 };

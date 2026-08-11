@@ -154,61 +154,8 @@ export async function handleCommentsRoute(
   }
 
   const insightsMatch = /^\/api\/posts\/([^/]+)\/insights$/.exec(pathname);
-  if (insightsMatch && req.method === "GET") {
-    if (!requireAdmin(auth)) {
-      sendError(res, 403, "admin token required");
-      return true;
-    }
-
-    const readiness = getMetaReadiness(ctx);
-    if (!readiness.ready) {
-      sendError(res, 503, metaReadinessMessage(readiness));
-      return true;
-    }
-
-    const postId = insightsMatch[1];
-    const post = ctx.posts.findById(postId);
-    if (!post) {
-      sendError(res, 404, "post not found");
-      return true;
-    }
-
-    if (!post.igMediaId) {
-      sendError(res, 422, "post has no ig_media_id");
-      return true;
-    }
-
-    let insights: Awaited<ReturnType<typeof ctx.metaInsightsReader.getMediaInsights>> = [];
-    let insightsMessage: string | null = null;
-
-    try {
-      insights = await ctx.metaInsightsReader.getMediaInsights(post.igMediaId);
-    } catch (error) {
-      insightsMessage =
-        error instanceof Error ? error.message : "Falha ao consultar insights.";
-    }
-
-    const assets = ctx.assets.listByPostId(postId);
-    const resolvedMedia = await resolvePostMedia(postId, {
-      posts: ctx.posts,
-      assets: ctx.assets,
-      metaCommentReader: ctx.metaCommentReader,
-      publicBaseUrl: ctx.publicBaseUrl,
-      publishUrlSecret: ctx.publishUrlSecret,
-    });
-    const media = serializePostMedia(resolvedMedia);
-
-    sendJson(res, 200, {
-      ok: insightsMessage === null,
-      code: insightsMessage ? "insights_failed" : undefined,
-      message: insightsMessage ?? undefined,
-      post_id: postId,
-      ig_media_id: post.igMediaId,
-      fetched_at: new Date().toISOString(),
-      insights,
-      media,
-    });
-    return true;
+  if (insightsMatch) {
+    return false;
   }
 
   if (pathname === "/api/comments/monitored-posts/batch" && req.method === "POST") {
@@ -701,10 +648,7 @@ export async function handleCommentsRoute(
         throw new ValidationError(`message must be at most ${MAX_REPLY_LENGTH} characters`);
       }
 
-      if (!ctx.comments.updateDraft(commentId, message)) {
-        sendError(res, 404, "no draft to update");
-        return true;
-      }
+      ctx.comments.upsertDraft(commentId, message);
 
       const updated = ctx.comments.findById(commentId);
       if (!updated) {

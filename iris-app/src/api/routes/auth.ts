@@ -13,6 +13,12 @@ import {
   requestAdminLoginCode,
 } from "../../domain/admin-login.ts";
 import {
+  authIpRateLimiter,
+  formatAuthIpRateLimitMessage,
+  type AuthIpRateLimitAction,
+} from "../../domain/auth-ip-rate-limit.ts";
+import { resolveClientIp } from "../request-client-ip.ts";
+import {
   appendSessionCookie,
   clearSessionCookie,
   createSessionToken,
@@ -31,6 +37,10 @@ export async function handleAuthRoute(
   }
 
   if (pathname === "/api/auth/request-code" && req.method === "POST") {
+    if (!enforceAuthIpRateLimit(req, res, "request-code")) {
+      return true;
+    }
+
     try {
       const body = await readJsonBody<{ email?: unknown }>(req);
       const email = typeof body.email === "string" ? body.email : "";
@@ -51,6 +61,10 @@ export async function handleAuthRoute(
   }
 
   if (pathname === "/api/auth/confirm" && req.method === "POST") {
+    if (!enforceAuthIpRateLimit(req, res, "confirm")) {
+      return true;
+    }
+
     try {
       const body = await readJsonBody<{ email?: unknown; code?: unknown }>(req);
       const email = typeof body.email === "string" ? body.email : "";
@@ -92,6 +106,37 @@ export async function handleAuthRoute(
 
   sendError(res, 404, "Not found");
   return true;
+}
+
+function enforceAuthIpRateLimit(
+  req: IncomingMessage,
+  res: ServerResponse,
+  action: AuthIpRateLimitAction,
+): boolean {
+  const ip = resolveClientIp(req);
+  const result = authIpRateLimiter.check(action, ip);
+  if (result.allowed) {
+    return true;
+  }
+
+  sendRateLimitError(
+    res,
+    result.retryAfterSeconds,
+    formatAuthIpRateLimitMessage(result.retryAfterSeconds),
+  );
+  return false;
+}
+
+function sendRateLimitError(
+  res: ServerResponse,
+  retryAfterSeconds: number,
+  message: string,
+): void {
+  res.writeHead(429, {
+    "Content-Type": "application/json",
+    "Retry-After": String(retryAfterSeconds),
+  });
+  res.end(JSON.stringify({ error: message }));
 }
 
 function handleAuthError(res: ServerResponse, error: unknown): void {

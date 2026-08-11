@@ -109,6 +109,17 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     WHERE comment_id = ? AND status = 'draft'
   `);
 
+  const updateDraftByIdStmt = db.prepare(`
+    UPDATE comment_replies
+    SET draft_text = ?
+    WHERE id = ? AND status = 'draft'
+  `);
+
+  const deleteExtraDraftsStmt = db.prepare(`
+    DELETE FROM comment_replies
+    WHERE comment_id = ? AND status = 'draft' AND id <> ?
+  `);
+
   const listPendingForAgentReplyStmt = db.prepare(`
     SELECT c.*, p.caption AS post_caption, p.reply_mode AS reply_mode
     FROM comments c
@@ -347,6 +358,56 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     updateDraft(commentId, draftText) {
       const result = updateDraftStmt.run(draftText, commentId);
       return (result.changes ?? 0) > 0;
+    },
+
+    upsertDraft(commentId, draftText, options = {}) {
+      const existing = findLatestDraftStmt.get(commentId) as
+        | {
+            id: string;
+            comment_id: string;
+            draft_text: string | null;
+            sent_text: string | null;
+            status: string;
+            source_ig_comment_id?: string | null;
+            reply_to_ig_comment_id?: string | null;
+          }
+        | undefined;
+
+      if (existing) {
+        updateDraftByIdStmt.run(draftText, existing.id);
+        deleteExtraDraftsStmt.run(commentId, existing.id);
+        return {
+          id: existing.id,
+          commentId,
+          draftText,
+          sentText: existing.sent_text,
+          status: existing.status,
+          sourceIgCommentId: existing.source_ig_comment_id ?? null,
+          replyToIgCommentId: existing.reply_to_ig_comment_id ?? null,
+        };
+      }
+
+      const id = randomUUID();
+      insertReply.run(
+        id,
+        commentId,
+        draftText,
+        null,
+        "draft",
+        options.agentRunId ?? null,
+        null,
+        null,
+      );
+
+      return {
+        id,
+        commentId,
+        draftText,
+        sentText: null,
+        status: "draft",
+        sourceIgCommentId: null,
+        replyToIgCommentId: null,
+      };
     },
 
     markDeletedFromInstagram(commentId) {

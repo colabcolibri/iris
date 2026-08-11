@@ -36,8 +36,12 @@ import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/type
 import {
   COMMENTS_CACHE_STALE_MS,
   CommentsPostCache,
+  derivePostCountsFromComments,
   INSIGHTS_CACHE_STALE_MS,
   isCacheFresh,
+  patchPostSummaryCounts,
+  POSTS_CACHE_STALE_MS,
+  postsHaveChanged,
 } from "@/lib/comments-post-cache";
 
 const COMMENTS_FALLBACK_POLL_MS = 60_000;
@@ -75,6 +79,7 @@ export function CommentsPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [insights, setInsights] = useState<PostInsightsResult | null>(null);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [refreshingPosts, setRefreshingPosts] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -120,15 +125,31 @@ export function CommentsPage() {
     [comments, threadSort],
   );
 
-  const loadPosts = useCallback(async () => {
-    setLoadingPosts(true);
+  const loadPosts = useCallback(async (options: { silent?: boolean; force?: boolean } = {}) => {
+    const { silent = false, force = false } = options;
+    const cached = postCacheRef.current.getPosts();
+
+    if (cached) {
+      setPosts((current) => (current.length === 0 ? cached.data : current));
+      if (!force && isCacheFresh(cached.fetchedAt, POSTS_CACHE_STALE_MS)) {
+        setLoadingPosts(false);
+        return cached.data;
+      }
+    }
+
+    if (!silent) {
+      setRefreshingPosts(true);
+    }
+
     setError("");
 
     try {
       const nextPosts = await fetchCommentPosts();
-      setPosts(nextPosts);
+      const fetchedAt = Date.now();
+      postCacheRef.current.setPosts(nextPosts, fetchedAt);
       const activePostIds = new Set(nextPosts.map((post) => post.post_id));
       postCacheRef.current.pruneInactivePostIds(activePostIds);
+      setPosts((current) => (postsHaveChanged(current, nextPosts) ? nextPosts : current));
       setThumbnailOverrides((current) => {
         const next: Record<string, string> = {};
         for (const [postId, url] of Object.entries(current)) {
@@ -138,14 +159,39 @@ export function CommentsPage() {
         }
         return Object.keys(next).length === Object.keys(current).length ? current : next;
       });
+      return nextPosts;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao carregar postagens.";
       setError(message);
-      toast.error(message);
+      if (!silent) {
+        toast.error(message);
+      }
+      return null;
     } finally {
       setLoadingPosts(false);
+      setRefreshingPosts(false);
     }
   }, []);
+
+  const syncPostCountsFromComments = useCallback(
+    (postId: string, nextComments: Comment[]) => {
+      const counts = derivePostCountsFromComments(nextComments);
+      setPosts((current) => {
+        const patched = patchPostSummaryCounts(current, postId, counts);
+        if (patched === current) {
+          return current;
+        }
+
+        const postsCache = postCacheRef.current.getPosts();
+        if (postsCache) {
+          postCacheRef.current.setPosts(patched, postsCache.fetchedAt);
+        }
+
+        return patched;
+      });
+    },
+    [],
+  );
 
   const loadComments = useCallback(
     async (postId: string, options: { silent?: boolean; force?: boolean } = {}) => {
@@ -175,6 +221,7 @@ export function CommentsPage() {
         setComments((current) =>
           commentsHaveChanged(current, nextComments) ? nextComments : current,
         );
+        syncPostCountsFromComments(postId, nextComments);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Falha ao carregar comentários.";
         setError(message);
@@ -183,7 +230,7 @@ export function CommentsPage() {
         setLoadingComments(false);
       }
     },
-    [],
+    [syncPostCountsFromComments],
   );
 
   const loadInsights = useCallback(
@@ -252,7 +299,8 @@ export function CommentsPage() {
         ? { ig_media_id: value }
         : { permalink: value };
       const post = await registerMonitoredPost(payload);
-      await loadPosts();
+      postCacheRef.current.invalidatePosts();
+      await loadPosts({ force: true });
       setSearchParams({ post_id: post.id });
       setAddDialogOpen(false);
       setMediaInput("");
@@ -272,7 +320,6 @@ export function CommentsPage() {
         await approveCommentReply(commentId, draftText ?? undefined);
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
-          await loadPosts();
         }
         toast.success("Resposta publicada na Meta.");
       } catch (err) {
@@ -282,7 +329,7 @@ export function CommentsPage() {
         setApprovingId(null);
       }
     },
-    [loadComments, loadPosts, selectedPostId],
+    [loadComments, selectedPostId],
   );
 
   const handleGenerateDraft = useCallback(
@@ -319,7 +366,6 @@ export function CommentsPage() {
         const updated = await requestCommentAiReply(commentId, "draft");
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
-          await loadPosts();
         }
         if (updated.status === "failed" || updated.status === "skipped") {
           toast.error(updated.error_message ?? "A IA não conseguiu gerar o rascunho.");
@@ -337,7 +383,7 @@ export function CommentsPage() {
         setGeneratingId(null);
       }
     },
-    [comments, confirm, loadComments, loadPosts, selectedPostId],
+    [comments, confirm, loadComments, selectedPostId],
   );
 
   const handleRemoveDraft = useCallback(
@@ -374,7 +420,6 @@ export function CommentsPage() {
         await removeCommentDraft(commentId);
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
-          await loadPosts();
         }
         toast.success("Rascunho deletado.");
       } catch (err) {
@@ -384,7 +429,7 @@ export function CommentsPage() {
         setRemovingDraftId(null);
       }
     },
-    [comments, confirm, loadComments, loadPosts, selectedPostId],
+    [comments, confirm, loadComments, selectedPostId],
   );
 
   const handleSaveDraft = useCallback(
@@ -420,9 +465,9 @@ export function CommentsPage() {
       const result = await syncPostComments(selectedPostId);
       postCacheRef.current.setComments(selectedPostId, result.comments, Date.now());
       setComments(result.comments);
+      syncPostCountsFromComments(selectedPostId, result.comments);
       setSyncWarning(result.warning);
       await loadInsights(selectedPostId, { silent: true, force: true });
-      await loadPosts();
 
       const syncedAt = Date.now();
       postCacheRef.current.setLastSyncedAt(selectedPostId, syncedAt);
@@ -435,7 +480,7 @@ export function CommentsPage() {
     } finally {
       setSyncing(false);
     }
-  }, [loadInsights, loadPosts, selectedPostId]);
+  }, [loadInsights, selectedPostId, syncPostCountsFromComments]);
 
   const handleReconcile = useCallback(async () => {
     if (!selectedPostId) {
@@ -478,7 +523,7 @@ export function CommentsPage() {
       const reconciledAt = Date.now();
       postCacheRef.current.setComments(selectedPostId, result.comments, reconciledAt);
       setComments(result.comments);
-      await loadPosts();
+      syncPostCountsFromComments(selectedPostId, result.comments);
       toast.success(
         result.linked_count > 0
           ? `${result.linked_count} comentário${result.linked_count === 1 ? "" : "s"} vinculado${result.linked_count === 1 ? "" : "s"} à resposta existente no Instagram.`
@@ -492,10 +537,22 @@ export function CommentsPage() {
     } finally {
       setReconciling(false);
     }
-  }, [confirm, loadPosts, selectedPostId]);
+  }, [confirm, selectedPostId, syncPostCountsFromComments]);
+
+  const handleSelectPost = useCallback(
+    (postId: string) => {
+      setSearchParams({ post_id: postId });
+    },
+    [setSearchParams],
+  );
 
   useEffect(() => {
-    void loadPosts();
+    const cached = postCacheRef.current.getPosts();
+    if (cached) {
+      setPosts(cached.data);
+      setLoadingPosts(false);
+    }
+    void loadPosts({ silent: Boolean(cached) });
   }, [loadPosts]);
 
   useEffect(() => {
@@ -543,7 +600,6 @@ export function CommentsPage() {
       commentsRefreshTimerRef.current = setTimeout(() => {
         commentsRefreshTimerRef.current = null;
         void loadComments(postId, { silent: true });
-        void loadPosts();
       }, COMMENTS_REALTIME_DEBOUNCE_MS);
     };
 
@@ -555,7 +611,7 @@ export function CommentsPage() {
         }
       },
     });
-  }, [loadComments, loadPosts, selectedPostId]);
+  }, [loadComments, selectedPostId]);
 
   useEffect(() => {
     if (!selectedPostId || liveConnected) {
@@ -646,11 +702,11 @@ export function CommentsPage() {
                     variant="outline"
                     size="icon-sm"
                     className="size-8 shrink-0"
-                    onClick={() => void loadPosts()}
-                    disabled={loadingPosts}
+                    onClick={() => void loadPosts({ force: true })}
+                    disabled={refreshingPosts}
                     aria-label="Recarregar lista"
                   >
-                    {loadingPosts ? (
+                    {refreshingPosts ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <RefreshCw className="size-4" />
@@ -685,7 +741,7 @@ export function CommentsPage() {
                   posts={filteredPosts}
                   selectedPostId={selectedPostId}
                   thumbnailOverrides={thumbnailOverrides}
-                  onSelect={(postId) => setSearchParams({ post_id: postId })}
+                  onSelect={handleSelectPost}
                 />
               )}
             </div>
@@ -769,7 +825,10 @@ export function CommentsPage() {
       <ImportPostsDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
-        onImported={() => void loadPosts()}
+        onImported={() => {
+          postCacheRef.current.invalidatePosts();
+          void loadPosts({ force: true });
+        }}
       />
     </PageContainer>
   );

@@ -23,6 +23,7 @@ import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-
 import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-repository.ts";
 import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connection-repository.ts";
 import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-event-repository.ts";
+import { createSqlitePostInsightsStore } from "../adapters/sqlite/post-insights-store.ts";
 import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
 import { createSqliteAgentContentStore } from "../adapters/sqlite/agent-content-repository.ts";
 import { createSqliteAgentRunStepRepository } from "../adapters/sqlite/agent-run-step-repository.ts";
@@ -58,6 +59,7 @@ import type { AgentContentStore } from "../ports/agent-content-store.ts";
 import type { AgentRunStepRepository } from "../ports/agent-run-step-repository.ts";
 import type { LlmSettingsStore } from "../ports/llm-settings-store.ts";
 import type { WebhookEventRepository } from "../ports/webhook-event-repository.ts";
+import type { PostInsightsStore } from "../ports/post-insights-store.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 import {
   loadMcpConnectionCodeFromEnv,
@@ -93,6 +95,7 @@ export type AppContext = {
   llmSettingsStore: LlmSettingsStore;
   llmConfigResolver: LlmConfigResolver;
   webhookEvents: WebhookEventRepository;
+  postInsightsStore: PostInsightsStore;
   resolveLlmCompleter(): LlmCompleter | null;
   publishUrlSecret: string | null;
   metaAppSecret: string | null;
@@ -225,6 +228,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
   const webhookEvents = createSqliteWebhookEventRepository(options.db);
+  const postInsightsStore = createSqlitePostInsightsStore(options.db);
   const nodeEnv = process.env.NODE_ENV ?? "development";
   const envMcpCode = (
     options.mcpConnectionCode ?? process.env.IRIS_MCP_CONNECTION_CODE ?? ""
@@ -278,6 +282,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     llmSettingsStore,
     llmConfigResolver,
     webhookEvents,
+    postInsightsStore,
     resolveLlmCompleter: () => llmConfigResolver.createCompleter(),
     publishUrlSecret: publishUrlSecret || null,
     metaAppSecret: metaAppSecret || null,

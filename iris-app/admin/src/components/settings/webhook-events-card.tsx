@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { ChevronDown, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { fetchWebhookEvents } from "@/lib/api";
+import { downloadWebhookEventsExport, fetchWebhookEvents } from "@/lib/api";
 import type { WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -42,12 +42,28 @@ function truncateId(id: string | null): string {
   return `${id.slice(0, 8)}…`;
 }
 
-function payloadPreview(payload: string): string {
-  const oneLine = payload.replace(/\s+/g, " ").trim();
-  return oneLine.length > 120 ? `${oneLine.slice(0, 119)}…` : oneLine;
+function verbLabel(verb: string | null): string | null {
+  if (!verb) {
+    return null;
+  }
+
+  switch (verb.toLowerCase()) {
+    case "add":
+      return "novo";
+    case "edited":
+    case "edit":
+      return "editado";
+    case "remove":
+    case "delete":
+      return "removido";
+    default:
+      return verb;
+  }
 }
 
 function StatusBadges({ event }: { event: WebhookEvent }) {
+  const verb = verbLabel(event.verb);
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span
@@ -58,6 +74,11 @@ function StatusBadges({ event }: { event: WebhookEvent }) {
       >
         {STATUS_LABELS[event.processing_status]}
       </span>
+      {verb ? (
+        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+          {verb}
+        </span>
+      ) : null}
       {!event.signature_valid ? (
         <span className="rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
           assinatura inválida
@@ -74,6 +95,8 @@ function EntityLinks({ event }: { event: WebhookEvent }) {
         <Link to={`/comments?post_id=${event.post_id}`} className="text-primary hover:underline">
           post {truncateId(event.post_id)}
         </Link>
+      ) : event.ig_media_id ? (
+        <span className="font-mono text-[11px] text-muted-foreground">mídia {truncateId(event.ig_media_id)}</span>
       ) : (
         <span>post —</span>
       )}
@@ -84,6 +107,10 @@ function EntityLinks({ event }: { event: WebhookEvent }) {
         >
           coment. {truncateId(event.comment_id)}
         </Link>
+      ) : event.ig_comment_id ? (
+        <span className="font-mono text-[11px] text-muted-foreground">
+          ig {truncateId(event.ig_comment_id)}
+        </span>
       ) : (
         <span>coment. —</span>
       )}
@@ -100,7 +127,9 @@ type WebhookEventDetailsProps = {
 function WebhookEventDetails({ event, open, onToggle }: WebhookEventDetailsProps) {
   return (
     <div className="space-y-1">
-      <p className="font-mono text-[11px] text-muted-foreground">{payloadPreview(event.payload_json)}</p>
+      {event.text_preview ? (
+        <p className="text-sm text-foreground/90">“{event.text_preview}”</p>
+      ) : null}
       {event.error_message ? <p className="text-destructive">{event.error_message}</p> : null}
       <button
         type="button"
@@ -113,7 +142,7 @@ function WebhookEventDetails({ event, open, onToggle }: WebhookEventDetailsProps
       {open ? (
         <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-muted/40 p-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
           {event.payload_json}
-          {event.payload_truncated ? "\n… (truncado)" : ""}
+          {event.payload_truncated ? "\n… (truncado na listagem — use exportar para o JSON completo)" : ""}
         </pre>
       ) : null}
     </div>
@@ -131,7 +160,11 @@ function WebhookEventMobileCard({ event }: { event: WebhookEvent }) {
           {new Date(event.received_at).toLocaleString("pt-BR")}
         </span>
       </div>
-      <p className="mt-2 text-muted-foreground">{event.field ?? "—"}</p>
+      <p className="mt-2 font-medium text-foreground">{event.webhook_type}</p>
+      <p className="mt-1 text-muted-foreground">
+        {event.author_username ? `@${event.author_username}` : "autor —"}
+        {event.entries_count > 1 ? ` · ${event.entries_count} entradas` : ""}
+      </p>
       <div className="mt-1">
         <EntityLinks event={event} />
       </div>
@@ -142,40 +175,55 @@ function WebhookEventMobileCard({ event }: { event: WebhookEvent }) {
   );
 }
 
+const EXPORT_LIMIT_OPTIONS = [100, 500, 1000, 5000] as const;
+
 export function WebhookEventsPanel() {
   const [events, setEvents] = useState<WebhookEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportLimit, setExportLimit] = useState<number>(500);
   const [statusFilter, setStatusFilter] = useState<WebhookProcessingStatus | "all">("all");
+  const [fieldFilter, setFieldFilter] = useState<"all" | "comments">("all");
   const [invalidOnly, setInvalidOnly] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchWebhookEvents(100);
+      const data = await fetchWebhookEvents(100, {
+        status: statusFilter === "all" ? undefined : statusFilter,
+        field: fieldFilter === "all" ? undefined : fieldFilter,
+        signatureValid: invalidOnly ? false : undefined,
+      });
       setEvents(data);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao carregar webhooks.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fieldFilter, invalidOnly, statusFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const filtered = useMemo(() => {
-    return events.filter((event) => {
-      if (statusFilter !== "all" && event.processing_status !== statusFilter) {
-        return false;
-      }
-      if (invalidOnly && event.signature_valid) {
-        return false;
-      }
-      return true;
-    });
-  }, [events, invalidOnly, statusFilter]);
+  const filtered = useMemo(() => events, [events]);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await downloadWebhookEventsExport(exportLimit, {
+        status: statusFilter === "all" ? undefined : statusFilter,
+        field: fieldFilter === "all" ? undefined : fieldFilter,
+        signatureValid: invalidOnly ? false : undefined,
+      });
+      toast.success(`Exportados os últimos ${exportLimit} webhooks.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao exportar webhooks.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -198,6 +246,18 @@ export function WebhookEventsPanel() {
               </option>
             ))}
           </select>
+          <label className="text-xs text-muted-foreground" htmlFor="webhook-field-filter">
+            Tipo
+          </label>
+          <select
+            id="webhook-field-filter"
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+            value={fieldFilter}
+            onChange={(event) => setFieldFilter(event.target.value as "all" | "comments")}
+          >
+            <option value="all">todos</option>
+            <option value="comments">comentários</option>
+          </select>
           <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <input
               type="checkbox"
@@ -207,10 +267,38 @@ export function WebhookEventsPanel() {
             só assinatura inválida
           </label>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
-          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" htmlFor="webhook-export-limit">
+            Exportar últimos
+          </label>
+          <select
+            id="webhook-export-limit"
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+            value={exportLimit}
+            onChange={(event) => setExportLimit(Number(event.target.value))}
+            disabled={exporting}
+          >
+            {EXPORT_LIMIT_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleExport()}
+            disabled={exporting}
+          >
+            <Download className={`mr-1.5 h-3.5 w-3.5 ${exporting ? "animate-pulse" : ""}`} />
+            Exportar JSON
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
@@ -220,15 +308,16 @@ export function WebhookEventsPanel() {
           <p className="text-sm text-muted-foreground">Nenhum webhook encontrado com os filtros atuais.</p>
         ) : (
           <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[720px] border-collapse text-left text-xs">
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full min-w-[960px] border-collapse text-left text-xs">
                 <thead>
                   <tr className="border-b border-border/70 text-muted-foreground">
                     <th className="px-2 py-2 font-medium">Recebido</th>
+                    <th className="px-2 py-2 font-medium">Tipo</th>
                     <th className="px-2 py-2 font-medium">Status</th>
-                    <th className="px-2 py-2 font-medium">Field</th>
+                    <th className="px-2 py-2 font-medium">Autor / resumo</th>
                     <th className="px-2 py-2 font-medium">Post / comentário</th>
-                    <th className="px-2 py-2 font-medium">Preview</th>
+                    <th className="px-2 py-2 font-medium">Detalhes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -238,9 +327,27 @@ export function WebhookEventsPanel() {
                         {new Date(event.received_at).toLocaleString("pt-BR")}
                       </td>
                       <td className="px-2 py-3">
+                        <p className="font-medium text-foreground">{event.webhook_type}</p>
+                        {event.field ? (
+                          <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">{event.field}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-2 py-3">
                         <StatusBadges event={event} />
                       </td>
-                      <td className="px-2 py-3 text-muted-foreground">{event.field ?? "—"}</td>
+                      <td className="px-2 py-3">
+                        <p className="font-medium text-foreground">
+                          {event.author_username ? `@${event.author_username}` : "—"}
+                        </p>
+                        {event.text_preview ? (
+                          <p className="mt-1 max-w-xs text-muted-foreground">“{event.text_preview}”</p>
+                        ) : null}
+                        {event.entries_count > 1 ? (
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            {event.entries_count} entradas no payload
+                          </p>
+                        ) : null}
+                      </td>
                       <td className="px-2 py-3">
                         <EntityLinks event={event} />
                       </td>
@@ -259,7 +366,7 @@ export function WebhookEventsPanel() {
               </table>
             </div>
 
-            <div className="space-y-2 md:hidden">
+            <div className="space-y-2 lg:hidden">
               {filtered.map((event) => (
                 <WebhookEventMobileCard key={event.id} event={event} />
               ))}

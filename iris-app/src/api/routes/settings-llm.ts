@@ -18,6 +18,9 @@ import {
   llmKeyHint,
 } from "../../domain/llm/resolve-llm-config.ts";
 import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
+import { summarizeWebhookPayload } from "../../domain/webhook-event-summary.ts";
+import { parseWebhookEventListFilter } from "../../domain/webhook-event-query.ts";
+import type { WebhookEventRecord } from "../../ports/webhook-event-repository.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -133,11 +136,86 @@ export async function handleLlmSettingsRoute(request: RouteRequest): Promise<boo
   return true;
 }
 
+function serializeWebhookEvent(
+  event: WebhookEventRecord,
+  options: { truncatePayload: boolean },
+) {
+  const summary = summarizeWebhookPayload(event.payloadJson, event.object, event.field);
+  const payloadJson = options.truncatePayload
+    ? truncateWebhookPayload(event.payloadJson)
+    : event.payloadJson;
+
+  return {
+    id: event.id,
+    received_at: event.receivedAt,
+    signature_valid: event.signatureValid,
+    object: event.object,
+    field: event.field,
+    processing_status: event.processingStatus,
+    comment_id: event.commentId,
+    post_id: event.postId,
+    error_message: event.errorMessage,
+    payload_json: payloadJson,
+    payload_truncated: options.truncatePayload && event.payloadJson.length > 2048,
+    ...summary,
+  };
+}
+
 export async function handleWebhookEventsSettingsRoute(
   request: RouteRequest,
 ): Promise<boolean> {
   const { req, res, ctx, auth } = request;
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
+
+  if (pathname === "/api/settings/webhook-events/export") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    if (req.method !== "GET") {
+      sendError(res, 405, "method not allowed");
+      return true;
+    }
+
+    const url = new URL(req.url ?? "/", "http://localhost");
+    const limitParam = url.searchParams.get("limit");
+    if (!limitParam) {
+      sendError(res, 422, "limit query parameter is required");
+      return true;
+    }
+
+    const limitRaw = Number(limitParam);
+    if (!Number.isFinite(limitRaw) || limitRaw < 1) {
+      sendError(res, 422, "limit must be a positive number");
+      return true;
+    }
+
+    const limit = Math.min(Math.trunc(limitRaw), 10_000);
+    const filter = parseWebhookEventListFilter(url.searchParams);
+    const events = ctx.webhookEvents.listForExport(limit, filter).map((event) =>
+      serializeWebhookEvent(event, { truncatePayload: false }),
+    );
+
+    const exportedAt = new Date().toISOString();
+    const filename = `iris-webhooks-${exportedAt.slice(0, 10)}.json`;
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    });
+    res.end(
+      JSON.stringify(
+        {
+          exported_at: exportedAt,
+          total: events.length,
+          events,
+        },
+        null,
+        2,
+      ),
+    );
+    return true;
+  }
 
   if (pathname !== "/api/settings/webhook-events") {
     return false;
@@ -156,20 +234,11 @@ export async function handleWebhookEventsSettingsRoute(
   const url = new URL(req.url ?? "/", "http://localhost");
   const limitRaw = Number(url.searchParams.get("limit") ?? "50");
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 50;
+  const filter = parseWebhookEventListFilter(url.searchParams);
 
-  const events = ctx.webhookEvents.listRecent(limit).map((event) => ({
-    id: event.id,
-    received_at: event.receivedAt,
-    signature_valid: event.signatureValid,
-    object: event.object,
-    field: event.field,
-    processing_status: event.processingStatus,
-    comment_id: event.commentId,
-    post_id: event.postId,
-    error_message: event.errorMessage,
-    payload_json: truncateWebhookPayload(event.payloadJson),
-    payload_truncated: event.payloadJson.length > 2048,
-  }));
+  const events = ctx.webhookEvents.listRecent(limit, filter).map((event) =>
+    serializeWebhookEvent(event, { truncatePayload: true }),
+  );
 
   sendJson(res, 200, { events });
   return true;

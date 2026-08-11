@@ -1,7 +1,7 @@
 import type { AppContext } from "../api/app-context.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
+import { publishPostNow } from "../domain/publish-post.ts";
 import { isDueForPublish } from "../domain/schedule.ts";
-import { notifyPostsChanged } from "../adapters/sse/event-bus.ts";
 
 export type PublishSchedulerOptions = {
   intervalMs?: number;
@@ -40,25 +40,9 @@ export function startPublishScheduler(
         }
 
         try {
-          const { igMediaId } = await publisher.publish(post.id);
-          ctx.posts.update(post.id, {
-            status: "published",
-            publishedAt: new Date().toISOString(),
-            igMediaId,
-            errorMessage: null,
-          });
-          notifyPostsChanged({ post_id: post.id });
-        } catch (error) {
-          const message =
-            error instanceof Error
-              ? error.message.slice(0, 500)
-              : "publish failed";
-
-          ctx.posts.update(post.id, {
-            status: "failed",
-            errorMessage: message,
-          });
-          notifyPostsChanged({ post_id: post.id });
+          await publishPostNow(ctx, post.id, publisher);
+        } catch {
+          // publishPostNow already persisted failed status and notified SSE.
         }
       }
     } catch (error) {

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Heart, ImageIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postPreviewUrl } from "@/hooks/use-post-preview";
@@ -61,7 +62,7 @@ function statusBadge(post: CommentPostSummary): { label: string; className: stri
   };
 }
 
-function PostInboxItem({
+const PostInboxItem = memo(function PostInboxItem({
   post,
   selected,
   thumbnailOverrides,
@@ -153,7 +154,7 @@ function PostInboxItem({
       </div>
     </button>
   );
-}
+});
 
 export function PostInboxList({
   posts,

@@ -15,6 +15,7 @@ import {
   fetchPost,
   fetchPosts,
   listAssets,
+  publishPostNow,
   subscribeRealtimeEvents,
   UnauthorizedError,
   updatePost,
@@ -232,6 +233,79 @@ export function DashboardPage() {
     }
   }
 
+  async function publishNow() {
+    const bypassSchedule = selectedPost?.status === "scheduled";
+    const ok = await confirm({
+      title: "Publicar agora no Instagram?",
+      description: bypassSchedule
+        ? "A postagem sai imediatamente, sem aguardar o horário agendado. Isso não pode ser desfeito pelo Iris."
+        : "A postagem será publicada na sua conta do Instagram imediatamente. Isso não pode ser desfeito pelo Iris.",
+      confirmLabel: "Publicar agora",
+      confirmPhrase: "PUBLICAR",
+    });
+    if (!ok) return;
+
+    setSaving(true);
+    setError("");
+    let postId = selectedPost?.id;
+    try {
+      if (!meta?.connected) {
+        throw new Error("Conecte Instagram antes de publicar.");
+      }
+
+      if (!postId) {
+        const created = await createPost({
+          caption,
+          channel: "instagram",
+        });
+        postId = created.id;
+      }
+
+      if (files && files.length > 0) {
+        let sortOrder = (await listAssets(postId)).length + 1;
+        for (const file of [...files]) {
+          await uploadAsset(postId, file, sortOrder);
+          sortOrder += 1;
+        }
+      }
+
+      await updatePost(postId, {
+        caption,
+        reply_mode: replyMode,
+      });
+
+      const assets = await listAssets(postId);
+      if (assets.length < 1) {
+        throw new Error("Adicione pelo menos uma mídia antes de publicar.");
+      }
+
+      const post = await publishPostNow(postId);
+      await loadPosts();
+      setSelectedPost(post);
+      setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
+      setDialogMode("edit");
+      setFiles(null);
+      toast.success("Postagem publicada no Instagram.");
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        const message = err instanceof Error ? err.message : "Falha ao publicar.";
+        setError(message);
+        toast.error(message);
+        if (postId) {
+          try {
+            const refreshed = await fetchPost(postId);
+            setSelectedPost(refreshed);
+            await loadPosts();
+          } catch {
+            // ignore refresh errors after failed publish
+          }
+        }
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <>
       {view === "kanban" && (
@@ -318,6 +392,7 @@ export function DashboardPage() {
         }}
         onSaveDraft={() => void savePost(false)}
         onSchedule={() => void savePost(true)}
+        onPublishNow={() => void publishNow()}
         onRevertToDraft={
           selectedPost?.status === "scheduled" || selectedPost?.status === "cancelled"
             ? () => void revertToDraft()

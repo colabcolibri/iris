@@ -166,3 +166,31 @@ test("GET /api/auth/me returns email with valid session cookie", async () => {
     });
   });
 });
+
+test("request-code returns 429 when IP rate limit is exceeded", async () => {
+  const { AUTH_REQUEST_CODE_IP_MAX, resetAuthIpRateLimiterForTests } = await import(
+    "../../domain/auth-ip-rate-limit.ts"
+  );
+  resetAuthIpRateLimiterForTests();
+
+  await withAuthServer(async ({ baseUrl }) => {
+    for (let i = 0; i < AUTH_REQUEST_CODE_IP_MAX; i += 1) {
+      const response = await fetch(`${baseUrl}/api/auth/request-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: `probe-${i}@example.com` }),
+      });
+      assert.equal(response.status, 200, `attempt ${i + 1}`);
+    }
+
+    const blocked = await fetch(`${baseUrl}/api/auth/request-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "probe-blocked@example.com" }),
+    });
+    assert.equal(blocked.status, 429);
+    const body = (await blocked.json()) as { error?: string };
+    assert.match(body.error ?? "", /Muitas tentativas deste endereço/);
+    assert.ok(blocked.headers.get("retry-after"));
+  });
+});

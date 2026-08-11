@@ -21,6 +21,10 @@ import type { PostStatus } from "../../domain/post.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import { generateCarouselSummaryForPost } from "../../domain/carousel-summary/generate-carousel-summary.ts";
+import {
+  PublishNotConfiguredError,
+  publishPostNow,
+} from "../../domain/publish-post.ts";
 
 type RouteRequest = {
   req: IncomingMessage;
@@ -100,6 +104,24 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
       });
       notifyPostsChanged({ post_id: postId });
       sendJson(res, 200, { carousel_summary: summary });
+    } catch (error) {
+      handlePostsError(res, error);
+    }
+    return true;
+  }
+
+  const publishMatch = /^\/api\/posts\/([^/]+)\/publish$/.exec(pathname);
+  if (publishMatch && req.method === "POST") {
+    try {
+      const publishPostId = publishMatch[1];
+      const current = ctx.posts.findById(publishPostId);
+      if (!current) {
+        sendError(res, 404, "post not found");
+        return true;
+      }
+
+      const updated = await publishPostNow(ctx, publishPostId);
+      sendJson(res, 200, serializePost(updated));
     } catch (error) {
       handlePostsError(res, error);
     }
@@ -207,6 +229,11 @@ export async function handlePostsRoute(request: RouteRequest): Promise<boolean> 
 function handlePostsError(res: ServerResponse, error: unknown): void {
   if (error instanceof MetaNotConnectedError) {
     sendApiError(res, 422, error.message, error.code);
+    return;
+  }
+
+  if (error instanceof PublishNotConfiguredError) {
+    sendApiError(res, 503, error.message, error.code);
     return;
   }
 

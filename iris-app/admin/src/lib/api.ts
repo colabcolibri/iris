@@ -1,4 +1,4 @@
-import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyMode, ReplyPersona, SyncPostCommentsResult, WebhookEvent } from "@/lib/types";
+import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyMode, ReplyPersona, SyncPostCommentsResult, WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -71,6 +71,12 @@ export function updatePost(postId: string, body: Record<string, unknown>) {
   return apiFetch<Post>(`/api/posts/${postId}`, {
     method: "PATCH",
     body: JSON.stringify(body),
+  });
+}
+
+export function publishPostNow(postId: string) {
+  return apiFetch<Post>(`/api/posts/${postId}/publish`, {
+    method: "POST",
   });
 }
 
@@ -456,11 +462,103 @@ export function updateLlmSettings(body: {
   });
 }
 
-export function fetchWebhookEvents(limit = 30) {
+export function fetchWebhookEvents(
+  limit = 30,
+  filter: {
+    status?: WebhookProcessingStatus;
+    field?: string;
+    signatureValid?: boolean;
+  } = {},
+) {
   const safeLimit = Math.min(Math.max(limit, 1), 100);
-  return apiFetch<{ events: WebhookEvent[] }>(`/api/settings/webhook-events?limit=${safeLimit}`).then(
+  const params = new URLSearchParams({ limit: String(safeLimit) });
+  if (filter.status) {
+    params.set("status", filter.status);
+  }
+  if (filter.field) {
+    params.set("field", filter.field);
+  }
+  if (filter.signatureValid === false) {
+    params.set("signature_valid", "0");
+  } else if (filter.signatureValid === true) {
+    params.set("signature_valid", "1");
+  }
+  return apiFetch<{ events: WebhookEvent[] }>(`/api/settings/webhook-events?${params}`).then(
     (payload) => payload.events,
   );
+}
+
+export function fetchPostInsightsHistory(postId: string, limit = 30) {
+  const safeLimit = Math.min(Math.max(limit, 1), 200);
+  return apiFetch<{
+    post_id: string;
+    ig_media_id: string | null;
+    snapshots: PostInsightsResult[];
+  }>(`/api/posts/${postId}/insights/history?limit=${safeLimit}`);
+}
+
+export function refreshAllPostInsights(body: {
+  limit?: number;
+  delay_ms?: number;
+  force?: boolean;
+} = {}) {
+  return apiFetch<{
+    requested: number;
+    refreshed: string[];
+    failed: Array<{ post_id: string; error: string }>;
+    skipped: string[];
+    delay_ms: number;
+  }>("/api/insights/refresh-all", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function downloadWebhookEventsExport(
+  limit: number,
+  filter: {
+    status?: WebhookProcessingStatus;
+    field?: string;
+    signatureValid?: boolean;
+  } = {},
+) {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 10_000);
+  const params = new URLSearchParams({ limit: String(safeLimit) });
+  if (filter.status) {
+    params.set("status", filter.status);
+  }
+  if (filter.field) {
+    params.set("field", filter.field);
+  }
+  if (filter.signatureValid === false) {
+    params.set("signature_valid", "0");
+  } else if (filter.signatureValid === true) {
+    params.set("signature_valid", "1");
+  }
+  const response = await fetch(`/api/settings/webhook-events/export?${params}`, {
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    notifyUnauthorized();
+    throw new UnauthorizedError();
+  }
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(payload.error ?? `Request failed (${response.status})`);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="([^"]+)"/.exec(disposition);
+  const filename = match?.[1] ?? `iris-webhooks-${new Date().toISOString().slice(0, 10)}.json`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 export function fetchAgentRuns(params: {
