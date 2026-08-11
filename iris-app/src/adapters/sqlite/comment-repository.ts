@@ -5,6 +5,8 @@ import type {
   UpsertCommentInput,
 } from "../../ports/comment-repository.ts";
 import type { Comment } from "../../domain/comment.ts";
+import type { CommentActivityKind } from "../../domain/comments/list-comment-activity.ts";
+import type { CommentActivityRow } from "../../domain/comments/list-comment-activity.ts";
 import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { mapCommentRow } from "./mappers.ts";
 
@@ -156,6 +158,153 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     INNER JOIN comments c ON c.id = cr.comment_id
     WHERE c.post_id = ? AND cr.status = 'sent' AND cr.sent_text IS NOT NULL
   `);
+
+  const postPendingCountSql = `
+    (
+      SELECT COUNT(*)
+      FROM comments pc
+      WHERE pc.post_id = p.id
+        AND pc.status = 'pending'
+        AND pc.deleted_at IS NULL
+    ) AS post_pending_count
+  `;
+
+  const managedPostFilterSql = `
+    p.ig_media_id IS NOT NULL
+    AND p.status IN ('published', 'monitored')
+  `;
+
+  const listPendingApprovalActivityStmt = db.prepare(`
+    SELECT
+      c.id AS comment_id,
+      c.post_id AS post_id,
+      p.ig_media_id AS ig_media_id,
+      c.author_username AS author_username,
+      c.text AS text,
+      c.status AS comment_status,
+      COALESCE(c.ig_timestamp, c.created_at) AS occurred_at,
+      cr.draft_text AS draft_text,
+      NULL AS sent_text,
+      p.caption AS post_caption,
+      ${postPendingCountSql}
+    FROM comments c
+    INNER JOIN comment_replies cr ON cr.comment_id = c.id AND cr.status = 'draft'
+    INNER JOIN posts p ON p.id = c.post_id
+    WHERE c.status = 'pending'
+      AND c.deleted_at IS NULL
+      AND cr.draft_text IS NOT NULL
+      AND ${managedPostFilterSql}
+    ORDER BY cr.rowid DESC
+    LIMIT ?
+  `);
+
+  const listRecentPublicActivityWithBrandStmt = db.prepare(`
+    SELECT
+      c.id AS comment_id,
+      c.post_id AS post_id,
+      p.ig_media_id AS ig_media_id,
+      c.author_username AS author_username,
+      c.text AS text,
+      c.status AS comment_status,
+      COALESCE(c.ig_timestamp, c.created_at) AS occurred_at,
+      NULL AS draft_text,
+      NULL AS sent_text,
+      p.caption AS post_caption,
+      ${postPendingCountSql}
+    FROM comments c
+    INNER JOIN posts p ON p.id = c.post_id
+    WHERE c.deleted_at IS NULL
+      AND ${managedPostFilterSql}
+      AND NOT EXISTS (
+        SELECT 1 FROM comment_replies cr
+        WHERE cr.comment_id = c.id AND cr.status = 'draft' AND cr.draft_text IS NOT NULL
+      )
+      AND (
+        c.author_username IS NULL
+        OR lower(trim(c.author_username)) != lower(trim(?))
+      )
+    ORDER BY datetime(COALESCE(c.ig_timestamp, c.created_at)) DESC
+    LIMIT ?
+  `);
+
+  const listRecentPublicActivityWithoutBrandStmt = db.prepare(`
+    SELECT
+      c.id AS comment_id,
+      c.post_id AS post_id,
+      p.ig_media_id AS ig_media_id,
+      c.author_username AS author_username,
+      c.text AS text,
+      c.status AS comment_status,
+      COALESCE(c.ig_timestamp, c.created_at) AS occurred_at,
+      NULL AS draft_text,
+      NULL AS sent_text,
+      p.caption AS post_caption,
+      ${postPendingCountSql}
+    FROM comments c
+    INNER JOIN posts p ON p.id = c.post_id
+    WHERE c.deleted_at IS NULL
+      AND ${managedPostFilterSql}
+      AND NOT EXISTS (
+        SELECT 1 FROM comment_replies cr
+        WHERE cr.comment_id = c.id AND cr.status = 'draft' AND cr.draft_text IS NOT NULL
+      )
+    ORDER BY datetime(COALESCE(c.ig_timestamp, c.created_at)) DESC
+    LIMIT ?
+  `);
+
+  const listRecentIrisActivityStmt = db.prepare(`
+    SELECT
+      c.id AS comment_id,
+      c.post_id AS post_id,
+      p.ig_media_id AS ig_media_id,
+      c.author_username AS author_username,
+      c.text AS text,
+      c.status AS comment_status,
+      COALESCE(c.ig_timestamp, c.created_at) AS occurred_at,
+      NULL AS draft_text,
+      cr.sent_text AS sent_text,
+      p.caption AS post_caption,
+      ${postPendingCountSql}
+    FROM comment_replies cr
+    INNER JOIN comments c ON c.id = cr.comment_id
+    INNER JOIN posts p ON p.id = c.post_id
+    WHERE cr.status = 'sent'
+      AND cr.sent_text IS NOT NULL
+      AND c.deleted_at IS NULL
+      AND ${managedPostFilterSql}
+    ORDER BY cr.rowid DESC
+    LIMIT ?
+  `);
+
+  type ActivityRowRecord = {
+    comment_id: string;
+    post_id: string;
+    ig_media_id: string | null;
+    author_username: string | null;
+    text: string | null;
+    comment_status: string;
+    occurred_at: string;
+    draft_text: string | null;
+    sent_text: string | null;
+    post_caption: string | null;
+    post_pending_count: number;
+  };
+
+  function mapActivityRow(row: ActivityRowRecord): CommentActivityRow {
+    return {
+      commentId: row.comment_id,
+      postId: row.post_id,
+      igMediaId: row.ig_media_id,
+      authorUsername: row.author_username,
+      text: row.text,
+      commentStatus: row.comment_status,
+      occurredAt: row.occurred_at,
+      draftText: row.draft_text,
+      sentText: row.sent_text,
+      postCaption: row.post_caption,
+      postPendingCount: Number(row.post_pending_count ?? 0),
+    };
+  }
 
   const updateFromWebhookStmt = db.prepare(`
     UPDATE comments
@@ -495,6 +644,25 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       );
       markRepliedStmt.run(input.userCommentId);
       return true;
+    },
+
+    listActivityRows(kind: CommentActivityKind, limit: number, brandUsername: string | null) {
+      if (kind === "pending_approval") {
+        return listPendingApprovalActivityStmt
+          .all(limit)
+          .map((row) => mapActivityRow(row as ActivityRowRecord));
+      }
+
+      if (kind === "recent_public") {
+        const rows = brandUsername?.trim()
+          ? listRecentPublicActivityWithBrandStmt.all(brandUsername.trim(), limit)
+          : listRecentPublicActivityWithoutBrandStmt.all(limit);
+        return rows.map((row) => mapActivityRow(row as ActivityRowRecord));
+      }
+
+      return listRecentIrisActivityStmt
+        .all(limit)
+        .map((row) => mapActivityRow(row as ActivityRowRecord));
     },
   };
 }

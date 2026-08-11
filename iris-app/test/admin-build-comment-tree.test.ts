@@ -4,6 +4,7 @@ import {
   buildCommentThreadGroups,
   commentTimeMs,
   defaultCollapsedThreadIds,
+  findThreadGroupContainingComment,
   shouldShowLinkedReply,
   sortCommentThreadGroups,
 } from "../admin/src/lib/build-comment-tree.ts";
@@ -273,6 +274,28 @@ test("shouldShowLinkedReply hides inline reply when brand comment is already syn
 
   const group = groups[0]!;
   assert.equal(shouldShowLinkedReply(group.root, group, "colabcolibri"), false);
+});
+
+test("findThreadGroupContainingComment locates root and reply comments", () => {
+  const groups = buildCommentThreadGroups([
+    comment({
+      id: "root",
+      ig_comment_id: "ig-root",
+      text: "raiz",
+      status: "pending",
+    }),
+    comment({
+      id: "reply",
+      ig_comment_id: "ig-reply",
+      parent_ig_comment_id: "ig-root",
+      text: "resposta",
+      status: "pending",
+    }),
+  ]);
+
+  assert.equal(findThreadGroupContainingComment(groups, "root")?.root.id, "root");
+  assert.equal(findThreadGroupContainingComment(groups, "reply")?.root.id, "root");
+  assert.equal(findThreadGroupContainingComment(groups, "missing"), null);
 });
 
 test("commentTimeMs prefers ig_timestamp over created_at for ordering", () => {

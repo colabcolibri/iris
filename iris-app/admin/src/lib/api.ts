@@ -1,4 +1,4 @@
-import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyMode, ReplyPersona, SyncPostCommentsResult, WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
+import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentActivityItem, CommentActivityKind, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyMode, ReplyPersona, SyncPostCommentsResult, WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -112,6 +112,14 @@ export async function reorderPostAssets(postId: string, assetIds: string[]) {
 export async function fetchCommentPosts() {
   const payload = await apiFetch<{ posts: CommentPostSummary[] }>("/api/comments/posts");
   return payload.posts ?? [];
+}
+
+export async function fetchCommentActivity(kind: CommentActivityKind, limit = 20) {
+  const query = new URLSearchParams({ kind, limit: String(limit) });
+  const payload = await apiFetch<{ kind: CommentActivityKind; items: CommentActivityItem[] }>(
+    `/api/comments/activity?${query}`,
+  );
+  return payload.items ?? [];
 }
 
 export function syncPostComments(postId: string) {

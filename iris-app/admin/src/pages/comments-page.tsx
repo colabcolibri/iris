@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Loader2, Plus, RefreshCw, Search, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ImportPostsDialog } from "@/components/comments/import-posts-dialog";
+import { CommentActivityPanel } from "@/components/comments/comment-activity-panel";
 import { PostDetailPanel } from "@/components/comments/post-detail-panel";
 import { PostInboxList } from "@/components/comments/post-inbox-list";
 import { PageContainer } from "@/components/templates/page-container";
@@ -34,8 +35,9 @@ import {
   sortCommentThreadGroups,
   type ThreadSortMode,
 } from "@/lib/build-comment-tree";
-import type { Comment, CommentPostSummary, PostInsightsResult, PostReplyModeSetting } from "@/lib/types";
+import type { Comment, CommentActivityItem, CommentPostSummary, PostInsightsResult, PostReplyModeSetting } from "@/lib/types";
 import { postReplyModeOption } from "@/lib/reply-mode-options";
+import { cn } from "@/lib/utils";
 import {
   COMMENTS_CACHE_STALE_MS,
   CommentsPostCache,
@@ -49,6 +51,8 @@ import {
 
 const COMMENTS_FALLBACK_POLL_MS = 60_000;
 const COMMENTS_REALTIME_DEBOUNCE_MS = 750;
+
+type LeftPanelMode = "posts" | "activity";
 
 function commentsHaveChanged(current: Comment[], next: Comment[]): boolean {
   if (current.length !== next.length) {
@@ -77,6 +81,9 @@ export function CommentsPage() {
   const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedPostId = searchParams.get("post_id")?.trim() ?? "";
+  const selectedCommentId = searchParams.get("comment_id")?.trim() ?? "";
+  const [leftPanelMode, setLeftPanelMode] = useState<LeftPanelMode>("posts");
+  const [activityRefreshToken, setActivityRefreshToken] = useState(0);
 
   const [posts, setPosts] = useState<CommentPostSummary[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -348,6 +355,10 @@ export function CommentsPage() {
     }
   }, [loadPosts, mediaInput, setSearchParams]);
 
+  const bumpActivityRefresh = useCallback(() => {
+    setActivityRefreshToken((current) => current + 1);
+  }, []);
+
   const handleApproveDraft = useCallback(
     async (commentId: string, draftText?: string | null) => {
       setApprovingId(commentId);
@@ -357,6 +368,7 @@ export function CommentsPage() {
           await loadComments(selectedPostId, { silent: true, force: true });
         }
         toast.success("Resposta publicada na Meta.");
+        bumpActivityRefresh();
       } catch (err) {
         const message = err instanceof Error ? err.message : "Falha ao aprovar resposta.";
         toast.error(message);
@@ -364,7 +376,7 @@ export function CommentsPage() {
         setApprovingId(null);
       }
     },
-    [loadComments, selectedPostId],
+    [bumpActivityRefresh, loadComments, selectedPostId],
   );
 
   const handleGenerateDraft = useCallback(
@@ -637,6 +649,13 @@ export function CommentsPage() {
     [setSearchParams],
   );
 
+  const handleActivitySelect = useCallback(
+    (item: CommentActivityItem) => {
+      setSearchParams({ post_id: item.post_id, comment_id: item.comment_id });
+    },
+    [setSearchParams],
+  );
+
   useEffect(() => {
     const cached = postCacheRef.current.getPosts();
     if (cached) {
@@ -647,10 +666,35 @@ export function CommentsPage() {
   }, [loadPosts]);
 
   useEffect(() => {
-    if (!selectedPostId && posts[0]) {
+    if (!selectedPostId && posts[0] && !selectedCommentId) {
       setSearchParams({ post_id: posts[0].post_id });
     }
-  }, [posts, selectedPostId, setSearchParams]);
+  }, [posts, selectedCommentId, selectedPostId, setSearchParams]);
+
+  useEffect(() => {
+    if (!selectedCommentId || loadingComments) {
+      return;
+    }
+
+    if (comments.length === 0) {
+      return;
+    }
+
+    const exists = comments.some((comment) => comment.id === selectedCommentId);
+    if (!exists) {
+      toast.error("Comentário não encontrado nesta publicação.");
+      setSearchParams(
+        selectedPostId ? { post_id: selectedPostId } : {},
+        { replace: true },
+      );
+    }
+  }, [
+    comments,
+    loadingComments,
+    selectedCommentId,
+    selectedPostId,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     if (!selectedPostId) {
@@ -697,12 +741,13 @@ export function CommentsPage() {
     return subscribeRealtimeEvents({
       onConnectionChange: setLiveConnected,
       onCommentsChanged: (data) => {
+        bumpActivityRefresh();
         if (data.post_id && data.post_id === selectedPostId) {
           scheduleCommentsRefresh(selectedPostId);
         }
       },
     });
-  }, [loadComments, selectedPostId]);
+  }, [bumpActivityRefresh, loadComments, selectedPostId]);
 
   useEffect(() => {
     if (!selectedPostId || liveConnected) {
@@ -761,6 +806,35 @@ export function CommentsPage() {
             className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-b border-border lg:w-[340px] lg:max-w-[340px] lg:border-b-0 lg:border-r"
           >
             <div className="shrink-0 border-b p-4">
+              <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
+                <button
+                  type="button"
+                  onClick={() => setLeftPanelMode("posts")}
+                  className={cn(
+                    "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
+                    leftPanelMode === "posts"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Publicações
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeftPanelMode("activity")}
+                  className={cn(
+                    "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
+                    leftPanelMode === "activity"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Atividade
+                </button>
+              </div>
+
+              {leftPanelMode === "posts" ? (
+                <>
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="font-display text-xl font-semibold leading-tight text-foreground">
                   Publicações
@@ -816,10 +890,17 @@ export function CommentsPage() {
                   className="h-10 border-border bg-muted/30 pl-10 text-sm focus-visible:ring-primary/40"
                 />
               </div>
+                </>
+              ) : null}
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-              {loadingPosts ? (
+              {leftPanelMode === "activity" ? (
+                <CommentActivityPanel
+                  onSelect={handleActivitySelect}
+                  refreshToken={activityRefreshToken}
+                />
+              ) : loadingPosts ? (
                 <p className="px-4 py-6 text-sm text-muted-foreground">Carregando…</p>
               ) : filteredPosts.length === 0 ? (
                 <p className="px-4 py-6 text-sm text-muted-foreground">
@@ -845,6 +926,7 @@ export function CommentsPage() {
                 threadGroups={threadGroups}
                 allComments={comments}
                 brandUsername={meta?.igUsername}
+                focusCommentId={selectedCommentId || null}
                 threadSort={threadSort}
                 onThreadSortChange={setThreadSort}
                 insights={insights}

@@ -1,4 +1,4 @@
-const PUBLIC_SPA_PATHS = new Set(["/", "/privacy", "/privacy-policy"]);
+const PUBLIC_SPA_PATHS = new Set(["/", "/en", "/privacy", "/privacy-policy"]);
 
 const ADMIN_LOGIN_PATHS = new Set(["/admin/login", "/admin/login.html"]);
 

@@ -349,6 +349,7 @@ type CommentThreadProps = {
   groups: CommentThreadGroup[];
   allComments: Comment[];
   brandUsername?: string | null;
+  focusCommentId?: string | null;
   approvingId: string | null;
   removingDraftId: string | null;
   savingDraftId: string | null;
@@ -374,6 +375,7 @@ type CommentBodyProps = {
   group: CommentThreadGroup;
   showReplyContext?: boolean;
   isPinnedOnPost?: boolean;
+  highlightCommentId?: string | null;
 };
 
 function CommentBody({
@@ -391,6 +393,7 @@ function CommentBody({
   group,
   showReplyContext = false,
   isPinnedOnPost = false,
+  highlightCommentId = null,
 }: CommentBodyProps) {
   const handle = formatHandle(comment.author_username);
   const isBrandReply = isBrandAuthor(comment.author_username, brandUsername);
@@ -404,7 +407,14 @@ function CommentBody({
   const isDeletedOnInstagram = isCommentDeletedOnInstagram(comment);
 
   return (
-    <div className="group/comment min-w-0">
+    <div
+      id={`comment-focus-${comment.id}`}
+      className={cn(
+        "group/comment min-w-0 scroll-mt-24",
+        highlightCommentId === comment.id &&
+          "rounded-lg ring-2 ring-primary/60 ring-offset-2 ring-offset-background transition-shadow",
+      )}
+    >
       <div className="flex items-start gap-3">
         <Avatar
           className={cn(
@@ -649,14 +659,18 @@ function ThreadCard({
   onRemoveDraft,
   onSaveDraft,
   onGenerateDraft,
-}: ThreadCardProps) {
+  highlightCommentId = null,
+}: ThreadCardProps & { highlightCommentId?: string | null }) {
   const isBrandRoot = isBrandAuthor(group.root.author_username, brandUsername);
   const isDeletedRoot = isCommentDeletedOnInstagram(group.root);
 
   return (
     <article
+      id={`comment-focus-${group.root.id}`}
       className={cn(
-        "rounded-xl border p-4 shadow-sm",
+        "scroll-mt-24 rounded-xl border p-4 shadow-sm",
+        highlightCommentId === group.root.id &&
+          "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
         isDeletedRoot
           ? deletedCommentSurfaceClass
           : isBrandRoot
@@ -678,6 +692,7 @@ function ThreadCard({
         onGenerateDraft={onGenerateDraft}
         group={group}
         isPinnedOnPost
+        highlightCommentId={highlightCommentId}
       />
     </article>
   );
@@ -818,7 +833,8 @@ function ThreadAccordionItem({
   onRemoveDraft,
   onSaveDraft,
   onGenerateDraft,
-}: ThreadAccordionItemProps) {
+  highlightCommentId = null,
+}: ThreadAccordionItemProps & { highlightCommentId?: string | null }) {
   const root = group.root;
   const showAudit = shouldShowReplyAudit(root);
   const auditState = useReplyAudit(root.id);
@@ -827,8 +843,11 @@ function ThreadAccordionItem({
   return (
     <AppAccordion.Item
       value={root.id}
+      id={`comment-focus-${root.id}`}
       className={cn(
-        "overflow-hidden rounded-xl border shadow-sm",
+        "scroll-mt-24 overflow-hidden rounded-xl border shadow-sm",
+        highlightCommentId === root.id &&
+          "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
         isDeletedRoot
           ? deletedCommentSurfaceClass
           : "border-border/60 bg-card",
@@ -900,6 +919,7 @@ function ThreadAccordionItem({
                     onGenerateDraft={onGenerateDraft}
                     group={group}
                     showReplyContext
+                    highlightCommentId={highlightCommentId}
                   />
                 </div>
               );
@@ -915,6 +935,7 @@ export function CommentThread({
   groups,
   allComments,
   brandUsername,
+  focusCommentId = null,
   approvingId,
   removingDraftId,
   savingDraftId,
@@ -927,12 +948,51 @@ export function CommentThread({
   const byIgId = indexCommentsByIgId(allComments);
   const groupsKey = useMemo(() => groups.map((group) => group.root.id).join("|"), [groups]);
   const [openIds, setOpenIds] = useState<string[]>([]);
+  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
 
   useEffect(() => {
     setOpenIds((current) =>
       current.filter((id) => groups.some((group) => group.root.id === id)),
     );
   }, [groupsKey, groups]);
+
+  useEffect(() => {
+    if (!focusCommentId) {
+      return;
+    }
+
+    const group = groups.find(
+      (entry) =>
+        entry.root.id === focusCommentId ||
+        entry.replies.some((reply) => reply.id === focusCommentId),
+    );
+    if (!group) {
+      return;
+    }
+
+    if (group.replies.length > 0) {
+      setOpenIds((current) =>
+        current.includes(group.root.id) ? current : [...current, group.root.id],
+      );
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`comment-focus-${focusCommentId}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      setHighlightCommentId(focusCommentId);
+    });
+
+    const timeout = window.setTimeout(() => {
+      setHighlightCommentId(null);
+    }, 3000);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [focusCommentId, groupsKey, groups]);
 
   const onOpenChange = useCallback((next: string | string[] | undefined) => {
     const values = Array.isArray(next) ? next : next ? [next] : [];
@@ -962,6 +1022,7 @@ export function CommentThread({
           onRemoveDraft={onRemoveDraft}
           onSaveDraft={onSaveDraft}
           onGenerateDraft={onGenerateDraft}
+          highlightCommentId={highlightCommentId}
         />
       ))}
 
@@ -986,6 +1047,7 @@ export function CommentThread({
               onRemoveDraft={onRemoveDraft}
               onSaveDraft={onSaveDraft}
               onGenerateDraft={onGenerateDraft}
+              highlightCommentId={highlightCommentId}
             />
           ))}
         </AppAccordion>

@@ -26,6 +26,7 @@
   <img src="https://img.shields.io/badge/sqlite-embedded-003B57?logo=sqlite&logoColor=white" alt="SQLite" />
   <img src="https://img.shields.io/badge/MCP-native-8B5CF6?logo=openai&logoColor=white" alt="MCP" />
   <img src="https://img.shields.io/badge/instagram-graph_API-E4405F?logo=instagram&logoColor=white" alt="Instagram Graph API" />
+  <img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue" alt="PolyForm Noncommercial 1.0.0" />
 </p>
 
 <p align="center">
@@ -345,7 +346,9 @@ Reporte vulnerabilidades pelo canal privado do mantenedor — não abra issue p�
 
 ## Licença
 
-Código proprietário — **Colab Colibri**. Uso, cópia e distribuição apenas com autorização explícita. Ver [`iris-app/package.json`](iris-app/package.json) (`UNLICENSED`).
+Este projeto está sob [PolyForm Noncommercial License 1.0.0](LICENSE) — **Colab Colibri**.
+
+Uso, modificação e distribuição gratuitos para fins **não comerciais** (pessoal, hobby, pesquisa, ONGs, educação, governo). Uso comercial (venda, SaaS pago, produto interno de empresa etc.) requer autorização explícita do mantenedor.
 
 ---
 

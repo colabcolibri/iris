@@ -1,4 +1,8 @@
 import type { Comment, CommentStatus } from "../domain/comment.ts";
+import type {
+  CommentActivityKind,
+  CommentActivityRow,
+} from "../domain/comments/list-comment-activity.ts";
 
 export type UpsertCommentInput = {
   igCommentId: string;
@@ -77,4 +81,9 @@ export type CommentRepository = {
   scheduleAgentReply(commentId: string, notBeforeIso: string): boolean;
   createReply(input: CreateReplyInput): CommentReplyRecord;
   linkInstagramReply(input: LinkInstagramReplyInput): boolean;
+  listActivityRows(
+    kind: CommentActivityKind,
+    limit: number,
+    brandUsername: string | null,
+  ): CommentActivityRow[];
 };

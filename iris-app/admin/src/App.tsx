@@ -36,7 +36,8 @@ export function App() {
         <AppSettingsProvider>
           <BrowserRouter>
             <Routes>
-              <Route path={ROUTES.home} element={<LandingPage />} />
+              <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
+              <Route path="/en" element={<LandingPage locale="en" />} />
               <Route path={ROUTES.privacy} element={<PrivacyPolicyPage />} />
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 

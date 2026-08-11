@@ -16,6 +16,7 @@ test("shouldGateSpaGet protects admin routes only", () => {
 
 test("shouldGateSpaGet allows landing and public routes", () => {
   assert.equal(shouldGateSpaGet("/", "GET"), false);
+  assert.equal(shouldGateSpaGet("/en", "GET"), false);
   assert.equal(shouldGateSpaGet("/privacy", "GET"), false);
   assert.equal(shouldGateSpaGet("/admin/login", "GET"), false);
   assert.equal(shouldGateSpaGet("/health", "GET"), false);

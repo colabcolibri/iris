@@ -224,6 +224,21 @@ export function threadNeedsAttention(group: CommentThreadGroup): boolean {
   );
 }
 
+export function findThreadGroupContainingComment(
+  groups: CommentThreadGroup[],
+  commentId: string,
+): CommentThreadGroup | null {
+  for (const group of groups) {
+    if (group.root.id === commentId) {
+      return group;
+    }
+    if (group.replies.some((reply) => reply.id === commentId)) {
+      return group;
+    }
+  }
+  return null;
+}
+
 export function sortCommentThreadGroups(
   groups: CommentThreadGroup[],
   mode: ThreadSortMode,

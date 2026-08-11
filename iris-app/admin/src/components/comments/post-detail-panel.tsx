@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bookmark,
   ExternalLink,
@@ -40,6 +40,7 @@ type PostDetailPanelProps = {
   threadGroups: CommentThreadGroup[];
   allComments: Comment[];
   brandUsername?: string | null;
+  focusCommentId?: string | null;
   threadSort: ThreadSortMode;
   onThreadSortChange: (mode: ThreadSortMode) => void;
   insights: PostInsightsResult | null;
@@ -298,6 +299,7 @@ export function PostDetailPanel({
   threadGroups,
   allComments,
   brandUsername,
+  focusCommentId = null,
   threadSort,
   onThreadSortChange,
   insights,
@@ -327,6 +329,12 @@ export function PostDetailPanel({
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
   const [activeTab, setActiveTab] = useState<DetailTab>("performance");
   const slides = resolveMediaSlides(post.post_id, insights?.media);
+
+  useEffect(() => {
+    if (focusCommentId) {
+      setActiveTab("comments");
+    }
+  }, [focusCommentId, post.post_id]);
   const permalink = insights?.media?.permalink ?? null;
   const metricRows = insights?.insights ?? [];
   const igMediaStatus =
@@ -556,6 +564,7 @@ export function PostDetailPanel({
                   groups={threadGroups}
                   allComments={allComments}
                   brandUsername={brandUsername}
+                  focusCommentId={focusCommentId}
                   approvingId={approvingId}
                   removingDraftId={removingDraftId}
                   savingDraftId={savingDraftId}

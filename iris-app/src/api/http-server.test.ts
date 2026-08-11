@@ -56,11 +56,13 @@ test("protected spa routes redirect to login without session", async () => {
 
 test("landing page remains accessible without session", async () => {
   await withServer(async (port) => {
-    const response = await fetch(`http://127.0.0.1:${port}/`);
-    assert.equal(response.status, 200);
-    const html = await response.text();
-    assert.match(html, /<title>Iris<\/title>/);
-    assert.match(html, /id="root"/);
+    for (const path of ["/", "/en"]) {
+      const response = await fetch(`http://127.0.0.1:${port}${path}`);
+      assert.equal(response.status, 200, path);
+      const html = await response.text();
+      assert.match(html, /<title>Iris<\/title>/, path);
+      assert.match(html, /id="root"/, path);
+    }
   });
 });
 

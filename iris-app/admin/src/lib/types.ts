@@ -50,6 +50,21 @@ export type Comment = {
 
 export type IgMediaStatus = "on_feed" | "archived" | "unavailable";
 
+export type CommentActivityKind = "pending_approval" | "recent_public" | "recent_iris";
+
+export type CommentActivityItem = {
+  comment_id: string;
+  post_id: string;
+  ig_media_id: string | null;
+  text_preview: string;
+  author_username: string | null;
+  occurred_at: string;
+  post_caption_preview: string | null;
+  post_pending_count: number;
+  draft_text_preview?: string | null;
+  sent_text_preview?: string | null;
+};
+
 export type CommentPostSummary = {
   post_id: string;
   caption: string | null;
