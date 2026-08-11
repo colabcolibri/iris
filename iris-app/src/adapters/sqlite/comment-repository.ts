@@ -38,6 +38,12 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     WHERE id = ?
   `);
 
+  const markPendingStmt = db.prepare(`
+    UPDATE comments
+    SET status = 'pending', error_message = NULL
+    WHERE id = ?
+  `);
+
   const markFailedStmt = db.prepare(`
     UPDATE comments
     SET status = 'failed', error_message = ?
@@ -91,6 +97,17 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     LIMIT 1
   `);
 
+  const clearDraftStmt = db.prepare(`
+    DELETE FROM comment_replies
+    WHERE comment_id = ? AND status = 'draft'
+  `);
+
+  const updateDraftStmt = db.prepare(`
+    UPDATE comment_replies
+    SET draft_text = ?
+    WHERE comment_id = ? AND status = 'draft'
+  `);
+
   const listPendingForAgentReplyStmt = db.prepare(`
     SELECT c.*, p.caption AS post_caption, p.reply_mode AS reply_mode
     FROM comments c
@@ -106,10 +123,8 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       AND NOT EXISTS (
         SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
       )
-      AND (
-        c.agent_reply_not_before IS NULL
-        OR datetime(c.agent_reply_not_before) <= datetime('now')
-      )
+      AND c.agent_reply_not_before IS NOT NULL
+      AND datetime(c.agent_reply_not_before) <= datetime('now')
       AND (
         c.author_username IS NULL
         OR NOT EXISTS (
@@ -295,6 +310,16 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       };
     },
 
+    clearDraft(commentId) {
+      const result = clearDraftStmt.run(commentId);
+      return (result.changes ?? 0) > 0;
+    },
+
+    updateDraft(commentId, draftText) {
+      const result = updateDraftStmt.run(draftText, commentId);
+      return (result.changes ?? 0) > 0;
+    },
+
     findById(id) {
       const row = selectById.get(id);
       return row ? mapCommentRow(row as never) : null;
@@ -302,6 +327,11 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
     markReplied(id) {
       markRepliedStmt.run(id);
+      return this.findById(id);
+    },
+
+    markPending(id) {
+      markPendingStmt.run(id);
       return this.findById(id);
     },
 

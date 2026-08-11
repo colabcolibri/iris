@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, Loader2, MessageCircle, Pin } from "lucide-react";
+import { Copy, FileText, Loader2, MessageCircle, Pin } from "lucide-react";
 import { toast } from "sonner";
 import { AppAccordion } from "@/components/templates/app-accordion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { commentStatusBadgeLabel, commentStatusHint } from "@/lib/comment-status";
 import type { CommentThreadGroup } from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
@@ -113,21 +114,178 @@ const brandReplySurfaceClass =
 const brandReplyLinkedSurfaceClass =
   "border border-primary/25 bg-primary/10 dark:bg-primary/15";
 
+function canRequestManualAiReply(
+  comment: Comment,
+  brandUsername?: string | null,
+): boolean {
+  if (isBrandAuthor(comment.author_username, brandUsername)) {
+    return false;
+  }
+  if (comment.linked_reply_text) {
+    return false;
+  }
+  const status = comment.status ?? "";
+  return status === "pending" || status === "failed";
+}
+
+type CommentDraftPanelProps = {
+  comment: Comment;
+  approvingId: string | null;
+  removingDraftId: string | null;
+  savingDraftId: string | null;
+  onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  onRemoveDraft: (commentId: string) => void;
+  onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
+};
+
+function CommentDraftPanel({
+  comment,
+  approvingId,
+  removingDraftId,
+  savingDraftId,
+  onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
+}: CommentDraftPanelProps) {
+  const [editing, setEditing] = useState(false);
+  const [draftValue, setDraftValue] = useState(comment.draft_text ?? "");
+
+  useEffect(() => {
+    if (!editing) {
+      setDraftValue(comment.draft_text ?? "");
+    }
+  }, [comment.draft_text, editing]);
+
+  if (!comment.draft_text && !editing) {
+    return null;
+  }
+
+  const busy =
+    approvingId === comment.id ||
+    removingDraftId === comment.id ||
+    savingDraftId === comment.id;
+  const canAct = comment.status === "pending";
+
+  if (editing) {
+    return (
+      <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
+        <Textarea
+          value={draftValue}
+          onChange={(event) => setDraftValue(event.target.value)}
+          disabled={busy}
+          rows={4}
+          className="mt-2 min-h-24 resize-y bg-background/80 text-sm leading-relaxed"
+        />
+        <div className="mt-3 flex flex-row flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setDraftValue(comment.draft_text ?? "");
+              setEditing(false);
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={busy || !draftValue.trim()}
+            onClick={() => {
+              void (async () => {
+                try {
+                  await onSaveDraft(comment.id, draftValue.trim());
+                  setEditing(false);
+                } catch {
+                  // Mantém edição aberta em caso de erro.
+                }
+              })();
+            }}
+          >
+            {savingDraftId === comment.id ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : null}
+            Salvar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
+      <p className="mt-1.5 wrap-break-word text-sm leading-relaxed">{comment.draft_text}</p>
+      {canAct ? (
+        <div className="mt-3 flex flex-row flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => onRemoveDraft(comment.id)}
+          >
+            {removingDraftId === comment.id ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : null}
+            Deletar
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setDraftValue(comment.draft_text ?? "");
+              setEditing(true);
+            }}
+          >
+            Editar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={busy}
+            onClick={() => onApproveDraft(comment.id, comment.draft_text)}
+          >
+            {approvingId === comment.id ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : null}
+            Publicar
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 type CommentActionsProps = {
   comment: Comment;
+  brandUsername?: string | null;
   showAudit: boolean;
   auditActive?: boolean;
   onAuditClick?: () => void;
   alwaysShowActions?: boolean;
+  generating?: boolean;
+  onGenerateDraft?: () => void;
 };
 
 function CommentActions({
   comment,
+  brandUsername,
   showAudit,
   auditActive = false,
   onAuditClick,
   alwaysShowActions = false,
+  generating = false,
+  onGenerateDraft,
 }: CommentActionsProps) {
+  const showGenerateDraft =
+    canRequestManualAiReply(comment, brandUsername) && onGenerateDraft;
+
   return (
     <div
       className={
@@ -136,6 +294,22 @@ function CommentActions({
           : "flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/comment:opacity-100 focus-within:opacity-100"
       }
     >
+      {showGenerateDraft ? (
+        <button
+          type="button"
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+          aria-label="Gerar rascunho"
+          title="Gerar rascunho"
+          disabled={generating}
+          onClick={onGenerateDraft}
+        >
+          {generating ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <FileText className="size-3.5" />
+          )}
+        </button>
+      ) : null}
       {showAudit && onAuditClick ? (
         <ReplyAuditTrigger active={auditActive} onClick={onAuditClick} />
       ) : null}
@@ -157,7 +331,13 @@ type CommentThreadProps = {
   allComments: Comment[];
   brandUsername?: string | null;
   approvingId: string | null;
+  removingDraftId: string | null;
+  savingDraftId: string | null;
+  generatingId: string | null;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  onRemoveDraft: (commentId: string) => void;
+  onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
+  onGenerateDraft: (commentId: string) => void;
 };
 
 type CommentBodyProps = {
@@ -165,7 +345,13 @@ type CommentBodyProps = {
   byIgId: Map<string, Comment>;
   brandUsername?: string | null;
   approvingId: string | null;
+  removingDraftId: string | null;
+  savingDraftId: string | null;
+  generatingId: string | null;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  onRemoveDraft: (commentId: string) => void;
+  onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
+  onGenerateDraft: (commentId: string) => void;
   group: CommentThreadGroup;
   showReplyContext?: boolean;
   isPinnedOnPost?: boolean;
@@ -176,7 +362,13 @@ function CommentBody({
   byIgId,
   brandUsername,
   approvingId,
+  removingDraftId,
+  savingDraftId,
+  generatingId,
   onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
+  onGenerateDraft,
   group,
   showReplyContext = false,
   isPinnedOnPost = false,
@@ -246,9 +438,12 @@ function CommentBody({
 
             <CommentActions
               comment={comment}
+              brandUsername={brandUsername}
               showAudit={showAudit}
               auditActive={auditState.open}
               onAuditClick={() => void auditState.toggle()}
+              generating={generatingId === comment.id}
+              onGenerateDraft={() => onGenerateDraft(comment.id)}
             />
           </div>
 
@@ -256,29 +451,15 @@ function CommentBody({
             {comment.text ?? "(sem texto)"}
           </p>
 
-          {comment.draft_text ? (
-            <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                Sugestão da IA
-              </p>
-              <p className="mt-1.5 wrap-break-word text-sm leading-relaxed">{comment.draft_text}</p>
-              {comment.status === "pending" ? (
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={approvingId === comment.id}
-                    onClick={() => onApproveDraft(comment.id, comment.draft_text)}
-                  >
-                    {approvingId === comment.id ? (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    ) : null}
-                    Aprovar e publicar
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <CommentDraftPanel
+            comment={comment}
+            approvingId={approvingId}
+            removingDraftId={removingDraftId}
+            savingDraftId={savingDraftId}
+            onApproveDraft={onApproveDraft}
+            onRemoveDraft={onRemoveDraft}
+            onSaveDraft={onSaveDraft}
+          />
 
           {comment.error_message ? (
             <p className="mt-2 text-xs text-muted-foreground">{comment.error_message}</p>
@@ -318,7 +499,11 @@ type CommentRootExtrasProps = {
   byIgId: Map<string, Comment>;
   brandUsername?: string | null;
   approvingId: string | null;
+  removingDraftId: string | null;
+  savingDraftId: string | null;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  onRemoveDraft: (commentId: string) => void;
+  onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
   group: CommentThreadGroup;
   auditState: ReturnType<typeof useReplyAudit>;
 };
@@ -328,7 +513,11 @@ function CommentRootExtras({
   byIgId,
   brandUsername,
   approvingId,
+  removingDraftId,
+  savingDraftId,
   onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
   group,
   auditState,
 }: CommentRootExtrasProps) {
@@ -350,29 +539,15 @@ function CommentRootExtras({
 
   return (
     <div className="space-y-3 border-b border-border/40 pb-4">
-      {comment.draft_text ? (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Sugestão da IA
-          </p>
-          <p className="mt-1.5 wrap-break-word text-sm leading-relaxed">{comment.draft_text}</p>
-          {comment.status === "pending" ? (
-            <div className="mt-3 flex justify-end">
-              <Button
-                type="button"
-                size="sm"
-                disabled={approvingId === comment.id}
-                onClick={() => onApproveDraft(comment.id, comment.draft_text)}
-              >
-                {approvingId === comment.id ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
-                Aprovar e publicar
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <CommentDraftPanel
+        comment={comment}
+        approvingId={approvingId}
+        removingDraftId={removingDraftId}
+        savingDraftId={savingDraftId}
+        onApproveDraft={onApproveDraft}
+        onRemoveDraft={onRemoveDraft}
+        onSaveDraft={onSaveDraft}
+      />
 
       {comment.error_message ? (
         <p className="text-xs text-muted-foreground">{comment.error_message}</p>
@@ -410,7 +585,13 @@ type ThreadCardProps = {
   byIgId: Map<string, Comment>;
   brandUsername?: string | null;
   approvingId: string | null;
+  removingDraftId: string | null;
+  savingDraftId: string | null;
+  generatingId: string | null;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  onRemoveDraft: (commentId: string) => void;
+  onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
+  onGenerateDraft: (commentId: string) => void;
 };
 
 function ThreadCard({
@@ -418,7 +599,13 @@ function ThreadCard({
   byIgId,
   brandUsername,
   approvingId,
+  removingDraftId,
+  savingDraftId,
+  generatingId,
   onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
+  onGenerateDraft,
 }: ThreadCardProps) {
   const isBrandRoot = isBrandAuthor(group.root.author_username, brandUsername);
 
@@ -434,7 +621,13 @@ function ThreadCard({
         byIgId={byIgId}
         brandUsername={brandUsername}
         approvingId={approvingId}
+        removingDraftId={removingDraftId}
+        savingDraftId={savingDraftId}
+        generatingId={generatingId}
         onApproveDraft={onApproveDraft}
+        onRemoveDraft={onRemoveDraft}
+        onSaveDraft={onSaveDraft}
+        onGenerateDraft={onGenerateDraft}
         group={group}
         isPinnedOnPost
       />
@@ -450,12 +643,18 @@ function ThreadAccordionHeader({
   auditActive,
   onAuditClick,
   comment,
+  brandUsername,
+  generatingId,
+  onGenerateDraft,
 }: {
   group: CommentThreadGroup;
   showAudit: boolean;
   auditActive: boolean;
   onAuditClick: () => void;
   comment: Comment;
+  brandUsername?: string | null;
+  generatingId: string | null;
+  onGenerateDraft: (commentId: string) => void;
 }) {
   const root = group.root;
   const handle = formatHandle(root.author_username);
@@ -504,10 +703,13 @@ function ThreadAccordionHeader({
         <div className="flex shrink-0 items-center gap-0.5 self-start">
           <CommentActions
             comment={comment}
+            brandUsername={brandUsername}
             showAudit={showAudit}
             auditActive={auditActive}
             onAuditClick={onAuditClick}
             alwaysShowActions
+            generating={generatingId === comment.id}
+            onGenerateDraft={() => onGenerateDraft(comment.id)}
           />
           <AppAccordion.ChevronTrigger />
         </div>
@@ -521,7 +723,13 @@ function ThreadAccordionItem({
   byIgId,
   brandUsername,
   approvingId,
+  removingDraftId,
+  savingDraftId,
+  generatingId,
   onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
+  onGenerateDraft,
 }: ThreadAccordionItemProps) {
   const root = group.root;
   const showAudit = shouldShowReplyAudit(root);
@@ -538,6 +746,9 @@ function ThreadAccordionItem({
         showAudit={showAudit}
         auditActive={auditState.open}
         onAuditClick={() => void auditState.toggle()}
+        brandUsername={brandUsername}
+        generatingId={generatingId}
+        onGenerateDraft={onGenerateDraft}
       />
 
       <AppAccordion.Content className="space-y-4 border-t border-border/50 bg-muted/15 px-4 pb-4 pt-4">
@@ -546,7 +757,11 @@ function ThreadAccordionItem({
           byIgId={byIgId}
           brandUsername={brandUsername}
           approvingId={approvingId}
+          removingDraftId={removingDraftId}
+          savingDraftId={savingDraftId}
           onApproveDraft={onApproveDraft}
+          onRemoveDraft={onRemoveDraft}
+          onSaveDraft={onSaveDraft}
           group={group}
           auditState={auditState}
         />
@@ -574,7 +789,13 @@ function ThreadAccordionItem({
                     byIgId={byIgId}
                     brandUsername={brandUsername}
                     approvingId={approvingId}
+                    removingDraftId={removingDraftId}
+                    savingDraftId={savingDraftId}
+                    generatingId={generatingId}
                     onApproveDraft={onApproveDraft}
+                    onRemoveDraft={onRemoveDraft}
+                    onSaveDraft={onSaveDraft}
+                    onGenerateDraft={onGenerateDraft}
                     group={group}
                     showReplyContext
                   />
@@ -593,7 +814,13 @@ export function CommentThread({
   allComments,
   brandUsername,
   approvingId,
+  removingDraftId,
+  savingDraftId,
+  generatingId,
   onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
+  onGenerateDraft,
 }: CommentThreadProps) {
   const byIgId = indexCommentsByIgId(allComments);
   const groupsKey = useMemo(() => groups.map((group) => group.root.id).join("|"), [groups]);
@@ -629,7 +856,13 @@ export function CommentThread({
           byIgId={byIgId}
           brandUsername={brandUsername}
           approvingId={approvingId}
+          removingDraftId={removingDraftId}
+          savingDraftId={savingDraftId}
+          generatingId={generatingId}
           onApproveDraft={onApproveDraft}
+          onRemoveDraft={onRemoveDraft}
+          onSaveDraft={onSaveDraft}
+          onGenerateDraft={onGenerateDraft}
         />
       ))}
 
@@ -647,7 +880,13 @@ export function CommentThread({
               byIgId={byIgId}
               brandUsername={brandUsername}
               approvingId={approvingId}
+              removingDraftId={removingDraftId}
+              savingDraftId={savingDraftId}
+              generatingId={generatingId}
               onApproveDraft={onApproveDraft}
+              onRemoveDraft={onRemoveDraft}
+              onSaveDraft={onSaveDraft}
+              onGenerateDraft={onGenerateDraft}
             />
           ))}
         </AppAccordion>

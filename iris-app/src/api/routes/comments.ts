@@ -33,6 +33,9 @@ import {
   planCommentThreadReconciliation,
   reconcileCommentThreadStatuses,
 } from "../../domain/comments/reconcile-comment-thread-statuses.ts";
+import {
+  requestManualCommentReply,
+} from "../../domain/comments/request-manual-comment-reply.ts";
 
 function brandUsername(ctx: AppContext): string | null {
   return ctx.metaConnectionStore.get()?.igUsername ?? null;
@@ -477,6 +480,10 @@ export async function handleCommentsRoute(
         },
       );
 
+      reconcileCommentThreadStatuses(postId, brandUsername(ctx), commentReconcileDeps(ctx));
+
+      const comments = ctx.comments.listByPostId(postId);
+
       notifyCommentsChanged({ post_id: postId });
 
       sendJson(res, 200, {
@@ -487,7 +494,7 @@ export async function handleCommentsRoute(
         comments_fetched: result.commentsFetched,
         access_limited: result.accessLimited,
         warning: result.warning,
-        comments: result.comments.map((comment) =>
+        comments: comments.map((comment) =>
           serializeCommentWithDraft(comment, ctx),
         ),
       });
@@ -601,6 +608,134 @@ export async function handleCommentsRoute(
     }
 
     sendJson(res, 200, serializeReplyAudit(run, steps));
+    return true;
+  }
+
+  const aiReplyMatch = /^\/api\/comments\/([^/]+)\/ai-reply$/.exec(pathname);
+  if (aiReplyMatch && req.method === "POST") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    try {
+      const commentId = aiReplyMatch[1];
+      const comment = ctx.comments.findById(commentId);
+      if (!comment) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      const body = await readJsonBody<{ mode?: unknown }>(req);
+      const mode = body.mode;
+      if (mode !== "auto" && mode !== "draft") {
+        throw new ValidationError('mode must be "auto" or "draft"');
+      }
+
+      await requestManualCommentReply(
+        ctx,
+        commentId,
+        mode,
+        {},
+        brandUsername(ctx),
+      );
+
+      const updated = ctx.comments.findById(commentId);
+      if (!updated) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      sendJson(res, 200, serializeCommentWithDraft(updated, ctx));
+    } catch (error) {
+      handleCommentsError(res, error);
+    }
+
+    return true;
+  }
+
+  const draftMatch = /^\/api\/comments\/([^/]+)\/draft$/.exec(pathname);
+  if (draftMatch && req.method === "PATCH") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    try {
+      const commentId = draftMatch[1];
+      const comment = ctx.comments.findById(commentId);
+      if (!comment) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      if (comment.status !== "pending") {
+        sendError(res, 422, "only pending comments can update draft");
+        return true;
+      }
+
+      const body = await readJsonBody<{ message?: unknown }>(req);
+      const message = typeof body.message === "string" ? body.message.trim() : "";
+
+      if (!message) {
+        throw new ValidationError("message is required");
+      }
+
+      if (message.length > MAX_REPLY_LENGTH) {
+        throw new ValidationError(`message must be at most ${MAX_REPLY_LENGTH} characters`);
+      }
+
+      if (!ctx.comments.updateDraft(commentId, message)) {
+        sendError(res, 404, "no draft to update");
+        return true;
+      }
+
+      const updated = ctx.comments.findById(commentId);
+      if (!updated) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      notifyCommentsChanged({ post_id: comment.postId });
+      sendJson(res, 200, serializeCommentWithDraft(updated, ctx));
+    } catch (error) {
+      handleCommentsError(res, error);
+    }
+
+    return true;
+  }
+
+  if (draftMatch && req.method === "DELETE") {
+    if (!requireAdmin(auth)) {
+      sendError(res, 403, "admin token required");
+      return true;
+    }
+
+    try {
+      const commentId = draftMatch[1];
+      const comment = ctx.comments.findById(commentId);
+      if (!comment) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      if (!ctx.comments.clearDraft(commentId)) {
+        sendError(res, 404, "no draft to remove");
+        return true;
+      }
+
+      const updated = ctx.comments.findById(commentId);
+      if (!updated) {
+        sendError(res, 404, "comment not found");
+        return true;
+      }
+
+      notifyCommentsChanged({ post_id: comment.postId });
+      sendJson(res, 200, serializeCommentWithDraft(updated, ctx));
+    } catch (error) {
+      handleCommentsError(res, error);
+    }
+
     return true;
   }
 

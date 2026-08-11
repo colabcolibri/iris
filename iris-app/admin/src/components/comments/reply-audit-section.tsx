@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { ScrollText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { fetchReplyAudit } from "@/lib/api";
@@ -64,7 +64,7 @@ export function ReplyAuditTrigger({ active = false, className, onClick }: ReplyA
       title="Decisão do agente"
       onClick={onClick}
     >
-      <Sparkles className="size-3.5" />
+      <ScrollText className="size-3.5" />
     </button>
   );
 }

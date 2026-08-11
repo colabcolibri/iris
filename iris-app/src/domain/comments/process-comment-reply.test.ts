@@ -254,3 +254,104 @@ test("processCommentReply honors explicit post auto when global is off", async (
     db.close();
   }
 });
+
+test("processCommentReply manual draft bypasses reply_mode off", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      encryptionKey: "f".repeat(64),
+      metaAccessToken: "meta",
+    });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post",
+      igMediaId: "media-manual-draft",
+      publishedAt: new Date().toISOString(),
+      replyMode: "off",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-manual-draft-1",
+      postId: post.id,
+      text: "Pergunta manual",
+    });
+
+    let metaCalled = false;
+    await processCommentReply(ctx, comment.id, {
+      trigger: "manual",
+      replyModeOverride: "draft",
+      llmCompleter: createHarnessLlmMock({ draftText: "Rascunho manual" }),
+      metaCommentReplier: {
+        async reply() {
+          metaCalled = true;
+        },
+      },
+    });
+
+    assert.equal(metaCalled, false);
+    assert.equal(ctx.comments.findLatestDraft(comment.id)?.draftText, "Rascunho manual");
+    assert.equal(ctx.comments.findById(comment.id)?.status, "pending");
+  } finally {
+    db.close();
+  }
+});
+
+test("processCommentReply manual auto publishes even when global is off", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      encryptionKey: "g".repeat(64),
+      metaAccessToken: "meta",
+    });
+
+    ctx.appSettingsStore.upsert({
+      timezone: "America/Sao_Paulo",
+      replyMode: "off",
+      autoReplyEnabled: false,
+      replyDelaySeconds: 0,
+    });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post",
+      igMediaId: "media-manual-auto",
+      publishedAt: new Date().toISOString(),
+      replyMode: "inherit",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-manual-auto-1",
+      postId: post.id,
+      text: "Oi manual",
+    });
+
+    let published = false;
+    await processCommentReply(ctx, comment.id, {
+      trigger: "manual",
+      replyModeOverride: "auto",
+      llmCompleter: createHarnessLlmMock({ draftText: "Resposta manual" }),
+      metaCommentReplier: {
+        async reply() {
+          published = true;
+          return { publishedIgCommentId: "reply-manual-1" };
+        },
+      },
+    });
+
+    assert.equal(published, true);
+    assert.equal(ctx.comments.findById(comment.id)?.status, "replied");
+  } finally {
+    db.close();
+  }
+});

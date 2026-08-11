@@ -21,6 +21,9 @@ import {
   fetchReconcileCommentsPreview,
   registerMonitoredPost,
   reconcilePostComments,
+  removeCommentDraft,
+  requestCommentAiReply,
+  updateCommentDraft,
   subscribeRealtimeEvents,
   syncPostComments,
 } from "@/lib/api";
@@ -53,6 +56,9 @@ export function CommentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [addingPost, setAddingPost] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [removingDraftId, setRemovingDraftId] = useState<string | null>(null);
+  const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [threadSort, setThreadSort] = useState<ThreadSortMode>("activity_desc");
   const [liveConnected, setLiveConnected] = useState(true);
   const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
@@ -209,6 +215,128 @@ export function CommentsPage() {
       }
     },
     [loadComments, loadPosts, selectedPostId],
+  );
+
+  const handleGenerateDraft = useCallback(
+    async (commentId: string) => {
+      const comment = comments.find((item) => item.id === commentId);
+      const preview = comment?.text?.trim()
+        ? comment.text.trim().length > 120
+          ? `${comment.text.trim().slice(0, 119)}…`
+          : comment.text.trim()
+        : "(sem texto)";
+
+      const ok = await confirm({
+        title: "Gerar rascunho?",
+        description: (
+          <>
+            A Iris vai analisar este comentário e gerar uma sugestão de resposta. Nada será
+            publicado no Instagram até você aprovar.
+            {comment ? (
+              <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
+                “{preview}”
+              </span>
+            ) : null}
+          </>
+        ),
+        confirmLabel: "Gerar rascunho",
+      });
+
+      if (!ok) {
+        return;
+      }
+
+      setGeneratingId(commentId);
+      try {
+        const updated = await requestCommentAiReply(commentId, "draft");
+        if (selectedPostId) {
+          await loadComments(selectedPostId, true);
+          await loadPosts();
+        }
+        if (updated.status === "failed" || updated.status === "skipped") {
+          toast.error(updated.error_message ?? "A IA não conseguiu gerar o rascunho.");
+          return;
+        }
+        toast.success("Rascunho gerado.");
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Falha ao gerar rascunho.";
+        toast.error(message);
+        if (selectedPostId) {
+          await loadComments(selectedPostId, true);
+        }
+      } finally {
+        setGeneratingId(null);
+      }
+    },
+    [comments, confirm, loadComments, loadPosts, selectedPostId],
+  );
+
+  const handleRemoveDraft = useCallback(
+    async (commentId: string) => {
+      const comment = comments.find((item) => item.id === commentId);
+      const preview = comment?.draft_text?.trim()
+        ? comment.draft_text.trim().length > 120
+          ? `${comment.draft_text.trim().slice(0, 119)}…`
+          : comment.draft_text.trim()
+        : null;
+
+      const ok = await confirm({
+        title: "Deletar rascunho?",
+        description: (
+          <>
+            O rascunho será descartado. Nada será publicado no Instagram.
+            {preview ? (
+              <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
+                “{preview}”
+              </span>
+            ) : null}
+          </>
+        ),
+        confirmLabel: "Deletar",
+        variant: "destructive",
+      });
+
+      if (!ok) {
+        return;
+      }
+
+      setRemovingDraftId(commentId);
+      try {
+        await removeCommentDraft(commentId);
+        if (selectedPostId) {
+          await loadComments(selectedPostId, true);
+          await loadPosts();
+        }
+        toast.success("Rascunho deletado.");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Falha ao remover rascunho.";
+        toast.error(message);
+      } finally {
+        setRemovingDraftId(null);
+      }
+    },
+    [comments, confirm, loadComments, loadPosts, selectedPostId],
+  );
+
+  const handleSaveDraft = useCallback(
+    async (commentId: string, draftText: string) => {
+      setSavingDraftId(commentId);
+      try {
+        await updateCommentDraft(commentId, draftText);
+        if (selectedPostId) {
+          await loadComments(selectedPostId, true);
+        }
+        toast.success("Rascunho salvo.");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Falha ao salvar rascunho.";
+        toast.error(message);
+        throw err;
+      } finally {
+        setSavingDraftId(null);
+      }
+    },
+    [loadComments, selectedPostId],
   );
 
   const handleSync = useCallback(async () => {
@@ -474,12 +602,20 @@ export function CommentsPage() {
                 syncWarning={syncWarning}
                 metaConnected={Boolean(meta?.connected)}
                 approvingId={approvingId}
+                removingDraftId={removingDraftId}
+                savingDraftId={savingDraftId}
+                generatingId={generatingId}
                 onSync={() => void handleSync()}
                 onReconcile={() => void handleReconcile()}
                 onRefreshInsights={() => void loadInsights(selectedPostId)}
                 onApproveDraft={(commentId, draftText) =>
                   void handleApproveDraft(commentId, draftText)
                 }
+                onRemoveDraft={(commentId) => void handleRemoveDraft(commentId)}
+                onSaveDraft={(commentId, draftText) =>
+                  handleSaveDraft(commentId, draftText)
+                }
+                onGenerateDraft={(commentId) => void handleGenerateDraft(commentId)}
               />
             </section>
           ) : (

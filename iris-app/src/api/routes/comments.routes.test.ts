@@ -705,3 +705,122 @@ test("GET agent-runs lists recent runs", async () => {
     assert.ok(detailBody.audit.steps.some((step) => step.structured));
   });
 });
+
+test("POST ai-reply generates draft for pending comment", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.resolveLlmCompleter = () => createHarnessLlmMock({ draftText: "Draft via API" });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post ai-reply",
+      igMediaId: "media-ai-reply",
+      publishedAt: new Date().toISOString(),
+      replyMode: "off",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-ai-reply-1",
+      postId: post.id,
+      text: "Pergunta API",
+    });
+
+    const response = await fetch(`${baseUrl}/api/comments/${comment.id}/ai-reply`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mode: "draft" }),
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { draft_text: string | null; status: string };
+    assert.equal(body.draft_text, "Draft via API");
+    assert.equal(body.status, "pending");
+  });
+});
+
+test("DELETE draft removes stored draft", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.resolveLlmCompleter = () => createHarnessLlmMock({ draftText: "Draft to remove" });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post draft delete",
+      igMediaId: "media-draft-delete",
+      publishedAt: new Date().toISOString(),
+      replyMode: "draft",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-draft-delete-1",
+      postId: post.id,
+      text: "Pergunta",
+    });
+
+    const createResponse = await fetch(`${baseUrl}/api/comments/${comment.id}/ai-reply`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mode: "draft" }),
+    });
+    assert.equal(createResponse.status, 200);
+
+    const deleteResponse = await fetch(`${baseUrl}/api/comments/${comment.id}/draft`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(deleteResponse.status, 200);
+    const body = (await deleteResponse.json()) as { draft_text: string | null };
+    assert.equal(body.draft_text, null);
+    assert.equal(ctx.comments.findLatestDraft(comment.id), null);
+  });
+});
+
+test("PATCH draft updates stored draft text", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.resolveLlmCompleter = () => createHarnessLlmMock({ draftText: "Draft original" });
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post draft patch",
+      igMediaId: "media-draft-patch",
+      publishedAt: new Date().toISOString(),
+      replyMode: "draft",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-draft-patch-1",
+      postId: post.id,
+      text: "Pergunta",
+    });
+
+    await fetch(`${baseUrl}/api/comments/${comment.id}/ai-reply`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mode: "draft" }),
+    });
+
+    const patchResponse = await fetch(`${baseUrl}/api/comments/${comment.id}/draft`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: "Draft editado" }),
+    });
+
+    assert.equal(patchResponse.status, 200);
+    const body = (await patchResponse.json()) as { draft_text: string | null };
+    assert.equal(body.draft_text, "Draft editado");
+  });
+});

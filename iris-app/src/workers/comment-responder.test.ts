@@ -39,6 +39,7 @@ test("comment responder replies to pending comments with auto_reply enabled", as
       text: "Quanto custa?",
       authorUsername: "lead",
     });
+    ctx.comments.scheduleAgentReply(comment.id, new Date(Date.now() - 1000).toISOString());
 
     const replies: string[] = [];
     const prompts: string[] = [];
@@ -191,6 +192,48 @@ test("comment responder skips comments before agent_reply_not_before", async () 
     stopAgain();
 
     assert.equal(called, true);
+  } finally {
+    db.close();
+  }
+});
+
+test("comment responder ignores pending comments not scheduled by webhook", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      agentToken: "agent",
+      encryptionKey: "h".repeat(64),
+      metaAccessToken: "meta",
+    });
+
+    const post = ctx.posts.create({ channel: "instagram", replyMode: "auto" });
+    ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-sync-only",
+      postId: post.id,
+      text: "importado via sync",
+      authorUsername: "fan",
+    });
+
+    let called = false;
+    const stop = startCommentResponder(ctx, {
+      intervalMs: 50,
+      llmCompleter: createHarnessLlmMock({ draftText: "não deveria rodar" }),
+      metaCommentReplier: {
+        async reply() {
+          called = true;
+          return {};
+        },
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    stop();
+
+    assert.equal(called, false);
+    assert.equal(ctx.comments.listPendingForAgentReply().length, 0);
   } finally {
     db.close();
   }

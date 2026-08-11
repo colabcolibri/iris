@@ -43,10 +43,16 @@ type PostDetailPanelProps = {
   syncWarning: string | null;
   metaConnected: boolean;
   approvingId: string | null;
+  removingDraftId: string | null;
+  savingDraftId: string | null;
+  generatingId: string | null;
   onSync: () => void;
   onReconcile: () => void;
   onRefreshInsights: () => void;
   onApproveDraft: (commentId: string, draftText?: string | null) => void;
+  onRemoveDraft: (commentId: string) => void;
+  onSaveDraft: (commentId: string, draftText: string) => void | Promise<void>;
+  onGenerateDraft: (commentId: string) => void;
 };
 
 const STAT_CONFIG: Array<{
@@ -149,10 +155,16 @@ export function PostDetailPanel({
   syncWarning,
   metaConnected,
   approvingId,
+  removingDraftId,
+  savingDraftId,
+  generatingId,
   onSync,
   onReconcile,
   onRefreshInsights,
   onApproveDraft,
+  onRemoveDraft,
+  onSaveDraft,
+  onGenerateDraft,
 }: PostDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<"comments" | "caption">("comments");
   const slides = resolveMediaSlides(post.post_id, insights?.media);
@@ -410,7 +422,13 @@ export function PostDetailPanel({
                   allComments={allComments}
                   brandUsername={brandUsername}
                   approvingId={approvingId}
+                  removingDraftId={removingDraftId}
+                  savingDraftId={savingDraftId}
+                  generatingId={generatingId}
                   onApproveDraft={onApproveDraft}
+                  onRemoveDraft={onRemoveDraft}
+                  onSaveDraft={onSaveDraft}
+                  onGenerateDraft={onGenerateDraft}
                 />
               )}
             </div>

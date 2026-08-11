@@ -168,6 +168,26 @@ export function approveCommentReply(commentId: string, message?: string) {
   });
 }
 
+export function requestCommentAiReply(commentId: string, mode: "auto" | "draft") {
+  return apiFetch<Comment>(`/api/comments/${commentId}/ai-reply`, {
+    method: "POST",
+    body: JSON.stringify({ mode }),
+  });
+}
+
+export function removeCommentDraft(commentId: string) {
+  return apiFetch<Comment>(`/api/comments/${commentId}/draft`, {
+    method: "DELETE",
+  });
+}
+
+export function updateCommentDraft(commentId: string, message: string) {
+  return apiFetch<Comment>(`/api/comments/${commentId}/draft`, {
+    method: "PATCH",
+    body: JSON.stringify({ message }),
+  });
+}
+
 export function fetchReplyInspection(postId: string) {
   return apiFetch<ReplyInspection>(`/api/posts/${postId}/reply-inspection`);
 }

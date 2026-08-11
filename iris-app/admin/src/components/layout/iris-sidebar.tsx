@@ -19,6 +19,7 @@ type IrisSidebarProviderProps = {
 export function IrisSidebarProvider({ children, className }: IrisSidebarProviderProps) {
   return (
     <SidebarProvider
+      defaultOpen={false}
       className={cn("flex h-svh flex-col overflow-hidden bg-background", className)}
       style={{ "--sidebar-width": IRIS_SIDEBAR_WIDTH } as CSSProperties}
     >

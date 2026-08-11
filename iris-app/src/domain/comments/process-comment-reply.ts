@@ -20,13 +20,15 @@ import { getAgentContentOrDefault } from "../agent-content-defaults.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
+  type ReplyMode,
 } from "../reply-mode.ts";
 import { commentReplyLimiter } from "./comment-reply-limiter.ts";
 
 export type ProcessCommentReplyOptions = {
-  trigger: "worker" | "webhook";
+  trigger: "worker" | "webhook" | "manual";
   llmCompleter?: LlmCompleter | null;
   metaCommentReplier?: MetaCommentReplier;
+  replyModeOverride?: Extract<ReplyMode, "auto" | "draft">;
 };
 
 function guardrailMessage(reason: string): string {
@@ -158,12 +160,29 @@ export async function processCommentReply(
   options: ProcessCommentReplyOptions,
 ): Promise<boolean> {
   const comment = ctx.comments.findById(commentId);
-  if (!comment || comment.status !== "pending") {
+  if (!comment) {
     return false;
   }
 
-  if (ctx.comments.hasReplyRecord(commentId)) {
-    return false;
+  const isManual = options.replyModeOverride != null;
+
+  if (!isManual) {
+    if (comment.status !== "pending") {
+      return false;
+    }
+
+    if (ctx.comments.hasReplyRecord(commentId)) {
+      return false;
+    }
+  } else {
+    if (comment.status !== "pending" && comment.status !== "failed") {
+      return false;
+    }
+
+    const sent = ctx.comments.findLatestSentReply(commentId);
+    if (sent?.sentText) {
+      return false;
+    }
   }
 
   const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
@@ -172,12 +191,11 @@ export async function processCommentReply(
     return false;
   }
 
-  const effectiveReplyMode = resolveEffectiveReplyMode(
-    appSettings.replyMode,
-    post.replyMode,
-  );
+  const effectiveReplyMode =
+    options.replyModeOverride ??
+    resolveEffectiveReplyMode(appSettings.replyMode, post.replyMode);
 
-  if (!shouldScheduleCommentReply(effectiveReplyMode)) {
+  if (!isManual && !shouldScheduleCommentReply(effectiveReplyMode)) {
     return false;
   }
 

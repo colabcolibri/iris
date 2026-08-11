@@ -60,8 +60,11 @@ export type CommentRepository = {
   ): boolean;
   findLatestDraft(commentId: string): CommentReplyRecord | null;
   findLatestSentReply(commentId: string): CommentReplyRecord | null;
+  clearDraft(commentId: string): boolean;
+  updateDraft(commentId: string, draftText: string): boolean;
   findById(id: string): Comment | null;
   markReplied(id: string): Comment | null;
+  markPending(id: string): Comment | null;
   markSkipped(id: string, errorMessage?: string | null): Comment | null;
   markFailed(id: string, errorMessage: string): Comment | null;
   scheduleAgentReply(commentId: string, notBeforeIso: string): boolean;
