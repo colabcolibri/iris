@@ -57,9 +57,12 @@ export function ConfirmDialog({
     }
   }, [open]);
 
-  const expectedPhrase = confirmPhrase ? normalizeConfirmPhrase(confirmPhrase) : "";
+  const expectedPhrase = confirmPhrase
+    ? normalizeConfirmPhrase(confirmPhrase)
+    : "";
   const phraseRequired = Boolean(expectedPhrase);
-  const phraseOk = !phraseRequired || normalizeConfirmPhrase(typed) === expectedPhrase;
+  const phraseOk =
+    !phraseRequired || normalizeConfirmPhrase(typed) === expectedPhrase;
   const busy = loading || pending;
 
   async function handleConfirm() {
@@ -84,15 +87,23 @@ export function ConfirmDialog({
           <AlertDialogTitle className="font-display text-lg font-semibold tracking-tight">
             {title}
           </AlertDialogTitle>
-          {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
+          {description ? (
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          ) : null}
         </AlertDialogHeader>
 
         {phraseRequired ? (
           <div className="space-y-2">
-            <Label htmlFor={inputId} className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor={inputId}
+              className="text-sm font-medium text-foreground"
+            >
               {confirmPhraseHint ?? (
                 <>
-                  Digite <span className="font-mono font-semibold lowercase">{expectedPhrase}</span>{" "}
+                  Digite{" "}
+                  <span className="font-mono font-semibold lowercase">
+                    {expectedPhrase}
+                  </span>{" "}
                   para confirmar
                 </>
               )}
@@ -116,7 +127,9 @@ export function ConfirmDialog({
             type="button"
             variant={variant === "destructive" ? "destructive" : "default"}
             disabled={!phraseOk || busy}
-            className={cn(variant === "destructive" && "bg-destructive text-white")}
+            className={cn(
+              variant === "destructive" && "bg-destructive text-white",
+            )}
             onClick={() => void handleConfirm()}
           >
             {busy ? "Aguarde…" : confirmLabel}

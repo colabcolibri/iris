@@ -11,7 +11,10 @@ type CarouselSummaryEditorProps = {
   initialSummary?: string | null;
 };
 
-export function CarouselSummaryEditor({ postId, initialSummary }: CarouselSummaryEditorProps) {
+export function CarouselSummaryEditor({
+  postId,
+  initialSummary,
+}: CarouselSummaryEditorProps) {
   const [summary, setSummary] = useState(initialSummary ?? "");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -26,7 +29,9 @@ export function CarouselSummaryEditor({ postId, initialSummary }: CarouselSummar
       await updatePost(postId, { carousel_summary: summary.trim() || null });
       toast.success("Resumo do carrossel salvo.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar resumo.");
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao salvar resumo.",
+      );
     } finally {
       setSaving(false);
     }
@@ -39,7 +44,9 @@ export function CarouselSummaryEditor({ postId, initialSummary }: CarouselSummar
       setSummary(result.carousel_summary);
       toast.success("Resumo gerado com IA (visão nas imagens).");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao gerar resumo.");
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao gerar resumo.",
+      );
     } finally {
       setGenerating(false);
     }
@@ -51,7 +58,13 @@ export function CarouselSummaryEditor({ postId, initialSummary }: CarouselSummar
       description="O harness usa este texto em vez das imagens. Para posts do Iris usa os arquivos locais; para publicações externas, busca as URLs do Instagram na Meta."
       action={
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => void handleGenerate()} disabled={generating}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleGenerate()}
+            disabled={generating}
+          >
             {generating ? (
               <Loader2 className="mr-1.5 size-3.5 animate-spin" />
             ) : (
@@ -59,8 +72,15 @@ export function CarouselSummaryEditor({ postId, initialSummary }: CarouselSummar
             )}
             Gerar com IA
           </Button>
-          <Button type="button" size="sm" onClick={() => void handleSave()} disabled={saving}>
-            {saving ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : null}
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={saving}
+          >
+            {saving ? (
+              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+            ) : null}
             Salvar resumo
           </Button>
         </div>

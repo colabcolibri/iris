@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { cn } from "@/lib/utils";
 
 type PageContainerProps = {
@@ -9,14 +10,26 @@ type PageContainerProps = {
 };
 
 /** Wrapper externo padrão das páginas autenticadas (padding, scroll, altura). */
-export function PageContainer({ children, variant = "scroll", className }: PageContainerProps) {
+export function PageContainer({
+  children,
+  variant = "scroll",
+  className,
+}: PageContainerProps) {
+  if (variant === "scroll") {
+    return (
+      <PageScrollArea
+        className={cn("min-w-0", className)}
+        contentClassName="px-4 py-6 sm:px-6 md:px-10 md:py-8"
+      >
+        {children}
+      </PageScrollArea>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "min-w-0",
-        variant === "scroll"
-          ? "flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 md:px-10 md:py-8"
-          : "flex min-h-0 flex-1 flex-col overflow-hidden",
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
         className,
       )}
     >
@@ -79,16 +92,18 @@ PageContainer.Header = function PageContainerHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="font-display text-[34px] font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl">
           {title}
         </h1>
         {description ? (
-          <p className="max-w-2xl text-[17px] leading-[1.47] tracking-[-0.374px] text-muted-foreground">
+          <p className="max-w-2xl text-base leading-normal text-muted-foreground">
             {description}
           </p>
         ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
     </header>
   );
 };

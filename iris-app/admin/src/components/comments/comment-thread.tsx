@@ -6,7 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { commentStatusBadgeLabel, commentStatusHint, isCommentDeletedOnInstagram } from "@/lib/comment-status";
+import {
+  commentStatusBadgeLabel,
+  commentStatusHint,
+  isCommentDeletedOnInstagram,
+} from "@/lib/comment-status";
 import type { CommentThreadGroup } from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +22,10 @@ import {
   threadNeedsAttention,
 } from "@/lib/build-comment-tree";
 import type { Comment } from "@/lib/types";
-import { commentTextClassName, displayCommentText } from "@/lib/comment-text-display";
+import {
+  commentTextClassName,
+  displayCommentText,
+} from "@/lib/comment-text-display";
 import {
   ReplyAuditPanel,
   ReplyAuditTrigger,
@@ -43,7 +50,9 @@ function formatHandle(username: string | undefined): string {
   return value.startsWith("@") ? value : `@${value}`;
 }
 
-function statusVariant(status: string): "default" | "secondary" | "outline" | "destructive" {
+function statusVariant(
+  status: string,
+): "default" | "secondary" | "outline" | "destructive" {
   if (status === "pending") {
     return "secondary";
   }
@@ -83,7 +92,10 @@ async function copyToClipboard(value: string, label: string) {
   }
 }
 
-function parentHandle(comment: Comment, byIgId: Map<string, Comment>): string | null {
+function parentHandle(
+  comment: Comment,
+  byIgId: Map<string, Comment>,
+): string | null {
   const parentId = comment.parent_ig_comment_id;
   if (!parentId) {
     return null;
@@ -110,7 +122,7 @@ function replyToHandle(
 function PinnedPostCommentBadge() {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary"
+      className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary"
       title="Comentário fixo no post"
     >
       <Pin className="size-3 shrink-0" aria-hidden />
@@ -186,7 +198,9 @@ function CommentDraftPanel({
   if (editing) {
     return (
       <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+          Sugestão da IA
+        </p>
         <Textarea
           value={draftValue}
           onChange={(event) => setDraftValue(event.target.value)}
@@ -234,7 +248,9 @@ function CommentDraftPanel({
 
   return (
     <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+        Sugestão da IA
+      </p>
       <p className="mt-1.5 wrap-break-word text-sm leading-relaxed whitespace-pre-wrap">
         {displayCommentText(comment.draft_text)}
       </p>
@@ -400,7 +416,11 @@ function CommentBody({
   const statusLabel = commentStatusBadgeLabel(comment);
   const replyTarget = parentHandle(comment, byIgId);
   const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
-  const linkedReplyTarget = replyToHandle(comment.reply_to_ig_comment_id, byIgId, handle);
+  const linkedReplyTarget = replyToHandle(
+    comment.reply_to_ig_comment_id,
+    byIgId,
+    handle,
+  );
   const brandHandle = formatHandle(brandUsername ?? "marca");
   const showAudit = shouldShowReplyAudit(comment);
   const auditState = useReplyAudit(comment.id);
@@ -428,7 +448,7 @@ function CommentBody({
         >
           <AvatarFallback
             className={cn(
-              "text-[10px] font-semibold",
+              "text-xs font-semibold",
               isDeletedOnInstagram
                 ? "text-muted-foreground"
                 : isBrandReply && "text-primary",
@@ -455,13 +475,16 @@ function CommentBody({
                   {handle}
                 </span>
                 {isPinnedOnPost ? <PinnedPostCommentBadge /> : null}
-                <span className="text-xs text-muted-foreground" title={commentTimestamp(comment)}>
+                <span
+                  className="text-xs text-muted-foreground"
+                  title={commentTimestamp(comment)}
+                >
                   {formatCommentExactTime(commentTimestamp(comment))}
                 </span>
                 {statusLabel ? (
                   <Badge
                     variant={statusVariant(comment.status ?? "")}
-                    className={cn("text-[10px]", statusBadgeClassName(comment))}
+                    className={cn("text-xs", statusBadgeClassName(comment))}
                     title={commentStatusHint(comment)}
                   >
                     {statusLabel}
@@ -470,13 +493,16 @@ function CommentBody({
               </div>
               {isDeletedOnInstagram ? (
                 <p className="text-xs text-muted-foreground">
-                  Este comentário foi removido no Instagram e não pode receber respostas.
+                  Este comentário foi removido no Instagram e não pode receber
+                  respostas.
                 </p>
               ) : null}
               {replyTarget && showReplyContext ? (
                 <p className="text-xs text-muted-foreground">
                   Em resposta a{" "}
-                  <span className="font-semibold text-foreground/80">{replyTarget}</span>
+                  <span className="font-semibold text-foreground/80">
+                    {replyTarget}
+                  </span>
                 </p>
               ) : null}
             </div>
@@ -496,7 +522,7 @@ function CommentBody({
 
           <p
             className={cn(
-              "mt-1.5 text-[15px]",
+              "mt-1.5 text-sm leading-normal",
               commentTextClassName,
               isDeletedOnInstagram
                 ? "text-muted-foreground/80 line-through decoration-muted-foreground/60"
@@ -519,25 +545,41 @@ function CommentBody({
           ) : null}
 
           {comment.error_message ? (
-            <p className="mt-2 text-xs text-muted-foreground">{comment.error_message}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {comment.error_message}
+            </p>
           ) : null}
 
           {showLinkedReply ? (
-            <div className={cn("mt-3 rounded-[var(--iris-radius-lg)] px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
+            <div
+              className={cn(
+                "mt-3 rounded-[var(--iris-radius-lg)] px-3 py-2.5",
+                brandReplyLinkedSurfaceClass,
+              )}
+            >
               <div className="flex gap-2.5">
                 <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
-                  <AvatarFallback className="text-[9px] font-semibold text-primary">
+                  <AvatarFallback className="text-xs font-semibold text-primary">
                     {initials(brandUsername ?? "marca")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-primary">{brandHandle}</p>
-                  <p className={cn("mt-0.5 text-sm text-foreground/90", commentTextClassName)}>
+                  <p className="text-xs font-semibold text-primary">
+                    {brandHandle}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-0.5 text-sm text-foreground/90",
+                      commentTextClassName,
+                    )}
+                  >
                     {displayCommentText(comment.linked_reply_text)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Em resposta a{" "}
-                    <span className="font-semibold text-foreground/80">{linkedReplyTarget}</span>
+                    <span className="font-semibold text-foreground/80">
+                      {linkedReplyTarget}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -580,7 +622,11 @@ function CommentRootExtras({
 }: CommentRootExtrasProps) {
   const handle = formatHandle(comment.author_username);
   const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
-  const linkedReplyTarget = replyToHandle(comment.reply_to_ig_comment_id, byIgId, handle);
+  const linkedReplyTarget = replyToHandle(
+    comment.reply_to_ig_comment_id,
+    byIgId,
+    handle,
+  );
   const brandHandle = formatHandle(brandUsername ?? "marca");
 
   const hasExtras =
@@ -609,21 +655,35 @@ function CommentRootExtras({
       ) : null}
 
       {showLinkedReply ? (
-        <div className={cn("rounded-[var(--iris-radius-lg)] px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
+        <div
+          className={cn(
+            "rounded-[var(--iris-radius-lg)] px-3 py-2.5",
+            brandReplyLinkedSurfaceClass,
+          )}
+        >
           <div className="flex gap-2.5">
             <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
-              <AvatarFallback className="text-[9px] font-semibold text-primary">
+              <AvatarFallback className="text-xs font-semibold text-primary">
                 {initials(brandUsername ?? "marca")}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-primary">{brandHandle}</p>
-              <p className={cn("mt-0.5 text-sm text-foreground/90", commentTextClassName)}>
+              <p className="text-xs font-semibold text-primary">
+                {brandHandle}
+              </p>
+              <p
+                className={cn(
+                  "mt-0.5 text-sm text-foreground/90",
+                  commentTextClassName,
+                )}
+              >
                 {displayCommentText(comment.linked_reply_text)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Em resposta a{" "}
-                <span className="font-semibold text-foreground/80">{linkedReplyTarget}</span>
+                <span className="font-semibold text-foreground/80">
+                  {linkedReplyTarget}
+                </span>
               </p>
             </div>
           </div>
@@ -730,7 +790,8 @@ function ThreadAccordionHeader({
     <AppAccordion.Header
       className={cn(
         "transition-colors hover:bg-muted/30 has-data-panel-open:bg-muted/20",
-        isDeletedRoot && "bg-muted/40 hover:bg-muted/50 has-data-panel-open:bg-muted/45",
+        isDeletedRoot &&
+          "bg-muted/40 hover:bg-muted/50 has-data-panel-open:bg-muted/45",
       )}
     >
       <div className="flex w-full min-w-0 items-start gap-2 px-4 py-4">
@@ -745,7 +806,7 @@ function ThreadAccordionHeader({
           >
             <AvatarFallback
               className={cn(
-                "text-[10px] font-semibold",
+                "text-xs font-semibold",
                 isDeletedRoot && "text-muted-foreground",
               )}
             >
@@ -765,20 +826,23 @@ function ThreadAccordionHeader({
               >
                 {handle}
               </span>
-              <span className="text-xs text-muted-foreground" title={commentTimestamp(root)}>
+              <span
+                className="text-xs text-muted-foreground"
+                title={commentTimestamp(root)}
+              >
                 {formatCommentExactTime(commentTimestamp(root))}
               </span>
               {statusLabel ? (
                 <Badge
                   variant={statusVariant(root.status ?? "")}
-                  className={cn("text-[10px]", statusBadgeClassName(root))}
+                  className={cn("text-xs", statusBadgeClassName(root))}
                   title={commentStatusHint(root)}
                 >
                   {statusLabel}
                 </Badge>
               ) : null}
               {needsAttention && !isDeletedRoot ? (
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-xs">
                   Atenção
                 </Badge>
               ) : null}
@@ -848,9 +912,7 @@ function ThreadAccordionItem({
         "scroll-mt-24 overflow-hidden rounded-[var(--iris-radius-lg)] border",
         highlightCommentId === root.id &&
           "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
-        isDeletedRoot
-          ? deletedCommentSurfaceClass
-          : "border-border/60 bg-card",
+        isDeletedRoot ? deletedCommentSurfaceClass : "border-border/60 bg-card",
       )}
     >
       <ThreadAccordionHeader
@@ -866,7 +928,10 @@ function ThreadAccordionItem({
 
       {showAudit && auditState.open ? (
         <div className="border-b border-border/40 bg-muted/10 px-4 py-3">
-          <ReplyAuditPanel {...auditState} className="border-0 bg-transparent p-0 shadow-none" />
+          <ReplyAuditPanel
+            {...auditState}
+            className="border-0 bg-transparent p-0 shadow-none"
+          />
         </div>
       ) : null}
 
@@ -885,12 +950,15 @@ function ThreadAccordionItem({
         />
 
         <div className="space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Conversa
           </p>
           <div className="space-y-3">
             {group.replies.map((reply) => {
-              const isBrandReply = isBrandAuthor(reply.author_username, brandUsername);
+              const isBrandReply = isBrandAuthor(
+                reply.author_username,
+                brandUsername,
+              );
               const isDeletedReply = isCommentDeletedOnInstagram(reply);
 
               return (
@@ -946,9 +1014,14 @@ export function CommentThread({
   onGenerateDraft,
 }: CommentThreadProps) {
   const byIgId = indexCommentsByIgId(allComments);
-  const groupsKey = useMemo(() => groups.map((group) => group.root.id).join("|"), [groups]);
+  const groupsKey = useMemo(
+    () => groups.map((group) => group.root.id).join("|"),
+    [groups],
+  );
   const [openIds, setOpenIds] = useState<string[]>([]);
-  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
+  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     setOpenIds((current) =>
@@ -977,10 +1050,12 @@ export function CommentThread({
     }
 
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`comment-focus-${focusCommentId}`)?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      document
+        .getElementById(`comment-focus-${focusCommentId}`)
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       setHighlightCommentId(focusCommentId);
     });
 

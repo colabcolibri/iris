@@ -39,6 +39,7 @@ export type AgentRunListItem = {
   totalPromptTokens: number | null;
   totalCompletionTokens: number | null;
   totalTokens: number | null;
+  models: string[];
 };
 
 export type ListAgentRunsOptions = {

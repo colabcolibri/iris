@@ -51,7 +51,11 @@ type ReplyAuditTriggerProps = {
   onClick: () => void;
 };
 
-export function ReplyAuditTrigger({ active = false, className, onClick }: ReplyAuditTriggerProps) {
+export function ReplyAuditTrigger({
+  active = false,
+  className,
+  onClick,
+}: ReplyAuditTriggerProps) {
   return (
     <button
       type="button"
@@ -91,7 +95,12 @@ export function ReplyAuditPanel({
   }
 
   return (
-    <div className={cn("rounded-[var(--iris-radius-lg)] border border-border/60 bg-background/90 p-3", className)}>
+    <div
+      className={cn(
+        "rounded-[var(--iris-radius-lg)] border border-border/60 bg-background/90 p-3",
+        className,
+      )}
+    >
       {loading ? (
         <div className="space-y-2">
           <Skeleton className="h-4 w-2/3" />
@@ -123,7 +132,10 @@ export function ReplyAuditSection({
 
   return (
     <div className={className}>
-      <ReplyAuditTrigger active={auditState.open} onClick={() => void auditState.toggle()} />
+      <ReplyAuditTrigger
+        active={auditState.open}
+        onClick={() => void auditState.toggle()}
+      />
       <ReplyAuditPanel {...auditState} className="mt-3" />
     </div>
   );

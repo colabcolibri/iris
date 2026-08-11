@@ -16,8 +16,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (status === "anonymous") {
-    const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-    return <Navigate to={`${ROUTES.admin.login}?returnUrl=${returnUrl}`} replace />;
+    const returnUrl = encodeURIComponent(
+      `${location.pathname}${location.search}`,
+    );
+    return (
+      <Navigate to={`${ROUTES.admin.login}?returnUrl=${returnUrl}`} replace />
+    );
   }
 
   return children;

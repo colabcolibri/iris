@@ -2,8 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Clock3, Loader2, MessageCircle, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { fetchCommentActivity } from "@/lib/api";
-import { formatRelativeTimeAgo, useRelativeTimeTick } from "@/lib/format-relative-time";
+import {
+  formatRelativeTimeAgo,
+  useRelativeTimeTick,
+} from "@/lib/format-relative-time";
 import { cn } from "@/lib/utils";
 import type { CommentActivityItem, CommentActivityKind } from "@/lib/types";
 
@@ -43,7 +47,7 @@ function ActivityTimestamp({ value }: { value: string }) {
   useRelativeTimeTick();
   const relative = formatRelativeTimeAgo(value);
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
       <Clock3 className="size-3 shrink-0" aria-hidden />
       <span>{relative || "agora"}</span>
     </span>
@@ -61,9 +65,9 @@ function ActivityListItem({
 }) {
   const preview =
     kind === "pending_approval"
-      ? item.draft_text_preview ?? item.text_preview
+      ? (item.draft_text_preview ?? item.text_preview)
       : kind === "recent_iris"
-        ? item.sent_text_preview ?? item.text_preview
+        ? (item.sent_text_preview ?? item.text_preview)
         : item.text_preview;
 
   return (
@@ -77,7 +81,9 @@ function ActivityListItem({
           <p className="truncate text-sm font-semibold text-foreground">
             {formatHandle(item.author_username)}
           </p>
-          <p className="mt-1 line-clamp-2 text-sm text-foreground/90">{preview}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-foreground/90">
+            {preview}
+          </p>
         </div>
         {item.post_pending_count > 0 ? (
           <Badge className="shrink-0 bg-amber-500 text-white hover:bg-amber-500/90">
@@ -96,8 +102,12 @@ function ActivityListItem({
   );
 }
 
-export function CommentActivityPanel({ onSelect, refreshToken = 0 }: CommentActivityPanelProps) {
-  const [activeKind, setActiveKind] = useState<CommentActivityKind>("pending_approval");
+export function CommentActivityPanel({
+  onSelect,
+  refreshToken = 0,
+}: CommentActivityPanelProps) {
+  const [activeKind, setActiveKind] =
+    useState<CommentActivityKind>("pending_approval");
   const [items, setItems] = useState<CommentActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +119,8 @@ export function CommentActivityPanel({ onSelect, refreshToken = 0 }: CommentActi
       const nextItems = await fetchCommentActivity(kind);
       setItems(nextItems);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao carregar atividade.";
+      const message =
+        err instanceof Error ? err.message : "Falha ao carregar atividade.";
       setError(message);
       setItems([]);
     } finally {
@@ -133,7 +144,7 @@ export function CommentActivityPanel({ onSelect, refreshToken = 0 }: CommentActi
               type="button"
               onClick={() => setActiveKind(tab.kind)}
               className={cn(
-                "rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
+                "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
                 activeKind === tab.kind
                   ? "bg-background text-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -145,16 +156,21 @@ export function CommentActivityPanel({ onSelect, refreshToken = 0 }: CommentActi
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+      <PageScrollArea>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 px-4 py-10 text-base text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             Carregando…
           </div>
         ) : error ? (
           <div className="space-y-3 px-4 py-6 text-center">
-            <p className="text-sm text-destructive">{error}</p>
-            <Button type="button" size="sm" variant="outline" onClick={() => void loadActivity(activeKind)}>
+            <p className="text-base text-destructive">{error}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void loadActivity(activeKind)}
+            >
               Tentar novamente
             </Button>
           </div>
@@ -165,14 +181,19 @@ export function CommentActivityPanel({ onSelect, refreshToken = 0 }: CommentActi
             ) : (
               <MessageCircle className="mx-auto mb-3 size-8 text-muted-foreground/40" />
             )}
-            <p className="text-sm text-muted-foreground">{activeTab.empty}</p>
+            <p className="text-base text-muted-foreground">{activeTab.empty}</p>
           </div>
         ) : (
           items.map((item) => (
-            <ActivityListItem key={`${activeKind}-${item.comment_id}`} item={item} kind={activeKind} onSelect={onSelect} />
+            <ActivityListItem
+              key={`${activeKind}-${item.comment_id}`}
+              item={item}
+              kind={activeKind}
+              onSelect={onSelect}
+            />
           ))
         )}
-      </div>
+      </PageScrollArea>
     </div>
   );
 }

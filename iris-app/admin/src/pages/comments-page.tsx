@@ -1,12 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, RefreshCw, Search, Download, PanelLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Search,
+  Download,
+  PanelLeft,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ImportPostsDialog } from "@/components/comments/import-posts-dialog";
 import { CommentActivityPanel } from "@/components/comments/comment-activity-panel";
 import { PostDetailPanel } from "@/components/comments/post-detail-panel";
 import { PostInboxList } from "@/components/comments/post-inbox-list";
 import { PageContainer } from "@/components/templates/page-container";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,7 +57,13 @@ import {
   sortCommentThreadGroups,
   type ThreadSortMode,
 } from "@/lib/build-comment-tree";
-import type { Comment, CommentActivityItem, CommentPostSummary, PostInsightsResult, PostReplyModeSetting } from "@/lib/types";
+import type {
+  Comment,
+  CommentActivityItem,
+  CommentPostSummary,
+  PostInsightsResult,
+  PostReplyModeSetting,
+} from "@/lib/types";
 import { postReplyModeOption } from "@/lib/reply-mode-options";
 import { cn } from "@/lib/utils";
 import {
@@ -115,8 +137,12 @@ export function CommentsPage() {
   const [savingReplyMode, setSavingReplyMode] = useState(false);
   const [threadSort, setThreadSort] = useState<ThreadSortMode>("activity_desc");
   const [liveConnected, setLiveConnected] = useState(true);
-  const [thumbnailOverrides, setThumbnailOverrides] = useState<Record<string, string>>({});
-  const commentsRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [thumbnailOverrides, setThumbnailOverrides] = useState<
+    Record<string, string>
+  >({});
+  const commentsRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const postCacheRef = useRef(new CommentsPostCache());
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
 
@@ -150,57 +176,66 @@ export function CommentsPage() {
   }, [posts, searchQuery]);
 
   const threadGroups = useMemo(
-    () => sortCommentThreadGroups(buildCommentThreadGroups(comments), threadSort),
+    () =>
+      sortCommentThreadGroups(buildCommentThreadGroups(comments), threadSort),
     [comments, threadSort],
   );
 
-  const loadPosts = useCallback(async (options: { silent?: boolean; force?: boolean } = {}) => {
-    const { silent = false, force = false } = options;
-    const cached = postCacheRef.current.getPosts();
+  const loadPosts = useCallback(
+    async (options: { silent?: boolean; force?: boolean } = {}) => {
+      const { silent = false, force = false } = options;
+      const cached = postCacheRef.current.getPosts();
 
-    if (cached) {
-      setPosts((current) => (current.length === 0 ? cached.data : current));
-      if (!force && isCacheFresh(cached.fetchedAt, POSTS_CACHE_STALE_MS)) {
-        setLoadingPosts(false);
-        return cached.data;
-      }
-    }
-
-    if (!silent) {
-      setRefreshingPosts(true);
-    }
-
-    setError("");
-
-    try {
-      const nextPosts = await fetchCommentPosts();
-      const fetchedAt = Date.now();
-      postCacheRef.current.setPosts(nextPosts, fetchedAt);
-      const activePostIds = new Set(nextPosts.map((post) => post.post_id));
-      postCacheRef.current.pruneInactivePostIds(activePostIds);
-      setPosts((current) => (postsHaveChanged(current, nextPosts) ? nextPosts : current));
-      setThumbnailOverrides((current) => {
-        const next: Record<string, string> = {};
-        for (const [postId, url] of Object.entries(current)) {
-          if (activePostIds.has(postId)) {
-            next[postId] = url;
-          }
+      if (cached) {
+        setPosts((current) => (current.length === 0 ? cached.data : current));
+        if (!force && isCacheFresh(cached.fetchedAt, POSTS_CACHE_STALE_MS)) {
+          setLoadingPosts(false);
+          return cached.data;
         }
-        return Object.keys(next).length === Object.keys(current).length ? current : next;
-      });
-      return nextPosts;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao carregar postagens.";
-      setError(message);
-      if (!silent) {
-        toast.error(message);
       }
-      return null;
-    } finally {
-      setLoadingPosts(false);
-      setRefreshingPosts(false);
-    }
-  }, []);
+
+      if (!silent) {
+        setRefreshingPosts(true);
+      }
+
+      setError("");
+
+      try {
+        const nextPosts = await fetchCommentPosts();
+        const fetchedAt = Date.now();
+        postCacheRef.current.setPosts(nextPosts, fetchedAt);
+        const activePostIds = new Set(nextPosts.map((post) => post.post_id));
+        postCacheRef.current.pruneInactivePostIds(activePostIds);
+        setPosts((current) =>
+          postsHaveChanged(current, nextPosts) ? nextPosts : current,
+        );
+        setThumbnailOverrides((current) => {
+          const next: Record<string, string> = {};
+          for (const [postId, url] of Object.entries(current)) {
+            if (activePostIds.has(postId)) {
+              next[postId] = url;
+            }
+          }
+          return Object.keys(next).length === Object.keys(current).length
+            ? current
+            : next;
+        });
+        return nextPosts;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Falha ao carregar postagens.";
+        setError(message);
+        if (!silent) {
+          toast.error(message);
+        }
+        return null;
+      } finally {
+        setLoadingPosts(false);
+        setRefreshingPosts(false);
+      }
+    },
+    [],
+  );
 
   const syncPostCountsFromComments = useCallback(
     (postId: string, nextComments: Comment[]) => {
@@ -223,7 +258,10 @@ export function CommentsPage() {
   );
 
   const loadComments = useCallback(
-    async (postId: string, options: { silent?: boolean; force?: boolean } = {}) => {
+    async (
+      postId: string,
+      options: { silent?: boolean; force?: boolean } = {},
+    ) => {
       const { silent = false, force = false } = options;
       if (!postId) {
         setComments([]);
@@ -235,7 +273,11 @@ export function CommentsPage() {
         setComments(cached.data);
       }
 
-      if (!force && cached && isCacheFresh(cached.fetchedAt, COMMENTS_CACHE_STALE_MS)) {
+      if (
+        !force &&
+        cached &&
+        isCacheFresh(cached.fetchedAt, COMMENTS_CACHE_STALE_MS)
+      ) {
         return;
       }
 
@@ -252,7 +294,8 @@ export function CommentsPage() {
         );
         syncPostCountsFromComments(postId, nextComments);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Falha ao carregar comentários.";
+        const message =
+          err instanceof Error ? err.message : "Falha ao carregar comentários.";
         setError(message);
         toast.error(message);
       } finally {
@@ -263,7 +306,10 @@ export function CommentsPage() {
   );
 
   const loadInsights = useCallback(
-    async (postId: string, options: { silent?: boolean; force?: boolean } = {}) => {
+    async (
+      postId: string,
+      options: { silent?: boolean; force?: boolean } = {},
+    ) => {
       const { silent = false, force = false } = options;
       if (!postId || !meta?.connected) {
         setInsights(null);
@@ -275,7 +321,11 @@ export function CommentsPage() {
         setInsights(cached.data);
       }
 
-      if (!force && cached && isCacheFresh(cached.fetchedAt, INSIGHTS_CACHE_STALE_MS)) {
+      if (
+        !force &&
+        cached &&
+        isCacheFresh(cached.fetchedAt, INSIGHTS_CACHE_STALE_MS)
+      ) {
         return;
       }
 
@@ -295,9 +345,11 @@ export function CommentsPage() {
               item.post_id === postId
                 ? {
                     ...item,
-                    ig_media_status: result.ig_media_status ?? item.ig_media_status,
+                    ig_media_status:
+                      result.ig_media_status ?? item.ig_media_status,
                     ig_media_status_detail:
-                      result.ig_media_status_detail ?? item.ig_media_status_detail,
+                      result.ig_media_status_detail ??
+                      item.ig_media_status_detail,
                   }
                 : item,
             );
@@ -312,16 +364,28 @@ export function CommentsPage() {
         const previewUrl = firstMediaSlideSrc(postId, result.media);
         if (previewUrl) {
           setThumbnailOverrides((current) =>
-            current[postId] === previewUrl ? current : { ...current, [postId]: previewUrl },
+            current[postId] === previewUrl
+              ? current
+              : { ...current, [postId]: previewUrl },
           );
         }
 
-        if (!result.ok && result.message && !silent && !result.insights?.length) {
+        if (
+          !result.ok &&
+          result.message &&
+          !silent &&
+          !result.insights?.length
+        ) {
           toast.error(result.message);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Falha ao carregar insights.";
-        const fallback = { ok: false, message, post_id: postId } satisfies PostInsightsResult;
+        const message =
+          err instanceof Error ? err.message : "Falha ao carregar insights.";
+        const fallback = {
+          ok: false,
+          message,
+          post_id: postId,
+        } satisfies PostInsightsResult;
         if (!cached) {
           setInsights(fallback);
         }
@@ -355,7 +419,8 @@ export function CommentsPage() {
       setMediaInput("");
       toast.success("Publicação adicionada para monitoramento.");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao adicionar publicação.";
+      const message =
+        err instanceof Error ? err.message : "Falha ao adicionar publicação.";
       toast.error(message);
     } finally {
       setAddingPost(false);
@@ -377,7 +442,8 @@ export function CommentsPage() {
         toast.success("Resposta publicada na Meta.");
         bumpActivityRefresh();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Falha ao aprovar resposta.";
+        const message =
+          err instanceof Error ? err.message : "Falha ao aprovar resposta.";
         toast.error(message);
       } finally {
         setApprovingId(null);
@@ -399,8 +465,8 @@ export function CommentsPage() {
         title: "Gerar rascunho?",
         description: (
           <>
-            A Iris vai analisar este comentário e gerar uma sugestão de resposta. Nada será
-            publicado no Instagram até você aprovar.
+            A Iris vai analisar este comentário e gerar uma sugestão de
+            resposta. Nada será publicado no Instagram até você aprovar.
             {comment ? (
               <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
                 “{preview}”
@@ -422,7 +488,9 @@ export function CommentsPage() {
           await loadComments(selectedPostId, { silent: true, force: true });
         }
         if (updated.status === "failed" || updated.status === "skipped") {
-          toast.error(updated.error_message ?? "A IA não conseguiu gerar o rascunho.");
+          toast.error(
+            updated.error_message ?? "A IA não conseguiu gerar o rascunho.",
+          );
           return;
         }
         toast.success("Rascunho gerado.");
@@ -460,10 +528,14 @@ export function CommentsPage() {
               : post,
           ),
         );
-        toast.success(`Modo deste post: ${postReplyModeOption(next).label.toLowerCase()}.`);
+        toast.success(
+          `Modo deste post: ${postReplyModeOption(next).label.toLowerCase()}.`,
+        );
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Não foi possível atualizar o modo de resposta.";
+          err instanceof Error
+            ? err.message
+            : "Não foi possível atualizar o modo de resposta.";
         toast.error(message);
       } finally {
         setSavingReplyMode(false);
@@ -509,7 +581,8 @@ export function CommentsPage() {
         }
         toast.success("Rascunho deletado.");
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Falha ao remover rascunho.";
+        const message =
+          err instanceof Error ? err.message : "Falha ao remover rascunho.";
         toast.error(message);
       } finally {
         setRemovingDraftId(null);
@@ -528,7 +601,8 @@ export function CommentsPage() {
         }
         toast.success("Rascunho salvo.");
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Falha ao salvar rascunho.";
+        const message =
+          err instanceof Error ? err.message : "Falha ao salvar rascunho.";
         toast.error(message);
         throw err;
       } finally {
@@ -549,7 +623,11 @@ export function CommentsPage() {
 
     try {
       const result = await syncPostComments(selectedPostId);
-      postCacheRef.current.setComments(selectedPostId, result.comments, Date.now());
+      postCacheRef.current.setComments(
+        selectedPostId,
+        result.comments,
+        Date.now(),
+      );
       setComments(result.comments);
       syncPostCountsFromComments(selectedPostId, result.comments);
       setSyncWarning(result.warning);
@@ -560,7 +638,8 @@ export function CommentsPage() {
       setLastSyncedAt(syncedAt);
       toast.success("Publicação sincronizada com o Instagram.");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao sincronizar publicação.";
+      const message =
+        err instanceof Error ? err.message : "Falha ao sincronizar publicação.";
       setError(message);
       toast.error(message);
     } finally {
@@ -578,7 +657,11 @@ export function CommentsPage() {
     try {
       const preview = await fetchReconcileCommentsPreview(selectedPostId);
       const previewAt = Date.now();
-      postCacheRef.current.setComments(selectedPostId, preview.comments, previewAt);
+      postCacheRef.current.setComments(
+        selectedPostId,
+        preview.comments,
+        previewAt,
+      );
       setComments(preview.comments);
       syncPostCountsFromComments(selectedPostId, preview.comments);
       if (preview.marked_deleted > 0) {
@@ -610,8 +693,9 @@ export function CommentsPage() {
             Sincronizamos com o Instagram agora. Encontramos{" "}
             <strong>{preview.linkable_count}</strong> comentário
             {preview.linkable_count === 1 ? "" : "s"} já respondido
-            {preview.linkable_count === 1 ? "" : "s"} por {brandHandle}. O Iris vai vincular cada
-            um à resposta real do thread (texto e ID no IG), sem publicar nada novo.
+            {preview.linkable_count === 1 ? "" : "s"} por {brandHandle}. O Iris
+            vai vincular cada um à resposta real do thread (texto e ID no IG),
+            sem publicar nada novo.
           </>
         ),
         confirmLabel: "Vincular respostas",
@@ -624,7 +708,11 @@ export function CommentsPage() {
       setReconciling(true);
       const result = await reconcilePostComments(selectedPostId);
       const reconciledAt = Date.now();
-      postCacheRef.current.setComments(selectedPostId, result.comments, reconciledAt);
+      postCacheRef.current.setComments(
+        selectedPostId,
+        result.comments,
+        reconciledAt,
+      );
       setComments(result.comments);
       syncPostCountsFromComments(selectedPostId, result.comments);
       if (result.warning) {
@@ -641,7 +729,9 @@ export function CommentsPage() {
       );
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Falha ao vincular respostas do Instagram.";
+        err instanceof Error
+          ? err.message
+          : "Falha ao vincular respostas do Instagram.";
       setError(message);
       toast.error(message);
     } finally {
@@ -691,10 +781,9 @@ export function CommentsPage() {
     const exists = comments.some((comment) => comment.id === selectedCommentId);
     if (!exists) {
       toast.error("Comentário não encontrado nesta publicação.");
-      setSearchParams(
-        selectedPostId ? { post_id: selectedPostId } : {},
-        { replace: true },
-      );
+      setSearchParams(selectedPostId ? { post_id: selectedPostId } : {}, {
+        replace: true,
+      });
     }
   }, [
     comments,
@@ -714,7 +803,8 @@ export function CommentsPage() {
 
     const cachedComments = postCacheRef.current.getComments(selectedPostId);
     const cachedInsights = postCacheRef.current.getInsights(selectedPostId);
-    const cachedLastSyncedAt = postCacheRef.current.getLastSyncedAt(selectedPostId) ?? null;
+    const cachedLastSyncedAt =
+      postCacheRef.current.getLastSyncedAt(selectedPostId) ?? null;
 
     if (cachedComments) {
       setComments(cachedComments.data);
@@ -877,7 +967,10 @@ export function CommentsPage() {
 
   const listBody: ReactNode =
     leftPanelMode === "activity" ? (
-      <CommentActivityPanel onSelect={handleActivitySelect} refreshToken={activityRefreshToken} />
+      <CommentActivityPanel
+        onSelect={handleActivitySelect}
+        refreshToken={activityRefreshToken}
+      />
     ) : loadingPosts ? (
       <p className="px-4 py-6 text-sm text-muted-foreground">Carregando…</p>
     ) : filteredPosts.length === 0 ? (
@@ -897,120 +990,129 @@ export function CommentsPage() {
 
   return (
     <PageContainer variant="fill">
-        {!meta?.connected && (
-          <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
-            Conecte o Instagram em{" "}
-            <Link to={ROUTES.admin.settings} className="text-primary underline-offset-4 hover:underline">
-              configurações
-            </Link>{" "}
-            para sincronizar comentários e atualizar insights.
+      {!meta?.connected && (
+        <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
+          Conecte o Instagram em{" "}
+          <Link
+            to={ROUTES.admin.settings}
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            configurações
+          </Link>{" "}
+          para sincronizar comentários e atualizar insights.
+        </div>
+      )}
+
+      {error ? (
+        <p className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive sm:px-6">
+          {error}
+        </p>
+      ) : null}
+
+      {!liveConnected ? (
+        <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
+          Atualização em tempo real indisponível. A lista local será recarregada
+          a cada minuto nesta aba, ou use o botão de sincronizar para buscar
+          comentários no Instagram.
+        </p>
+      ) : null}
+
+      {!inStage ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+          <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
+            <div className="shrink-0 border-b p-4 sm:px-6">{listChrome}</div>
+            <PageScrollArea>{listBody}</PageScrollArea>
           </div>
-        )}
-
-        {error ? (
-          <p className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive sm:px-6">
-            {error}
-          </p>
-        ) : null}
-
-        {!liveConnected ? (
-          <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
-            Atualização em tempo real indisponível. A lista local será recarregada a cada minuto
-            nesta aba, ou use o botão de sincronizar para buscar comentários no Instagram.
-          </p>
-        ) : null}
-
-        {!inStage ? (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-            <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
-              <div className="shrink-0 border-b p-4 sm:px-6">{listChrome}</div>
-              <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{listBody}</div>
-            </div>
+        </div>
+      ) : selectedPost ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 sm:px-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="min-h-11 gap-2"
+              onClick={clearStage}
+            >
+              <ArrowLeft className="size-4" />
+              Todas as publicações
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-11 gap-2"
+              onClick={() => setListSheetOpen(true)}
+            >
+              <PanelLeft className="size-4" />
+              Lista
+            </Button>
+            <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              {selectedPost.caption?.trim() ||
+                selectedPost.ig_media_id ||
+                selectedPost.post_id}
+            </p>
           </div>
-        ) : selectedPost ? (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-            <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 sm:px-4">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="min-h-11 gap-2"
-                onClick={clearStage}
-              >
-                <ArrowLeft className="size-4" />
-                Todas as publicações
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="min-h-11 gap-2"
-                onClick={() => setListSheetOpen(true)}
-              >
-                <PanelLeft className="size-4" />
-                Lista
-              </Button>
-              <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-                {selectedPost.caption?.trim() || selectedPost.ig_media_id || selectedPost.post_id}
-              </p>
-            </div>
 
-            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              <PostDetailPanel
-                post={selectedPost}
-                threadGroups={threadGroups}
-                allComments={comments}
-                brandUsername={meta?.igUsername}
-                focusCommentId={selectedCommentId || null}
-                threadSort={threadSort}
-                onThreadSortChange={setThreadSort}
-                insights={insights}
-                lastSyncedAt={lastSyncedAt}
-                loadingComments={loadingComments}
-                loadingInsights={loadingInsights}
-                syncing={syncing}
-                reconciling={reconciling}
-                syncWarning={syncWarning}
-                metaConnected={Boolean(meta?.connected)}
-                approvingId={approvingId}
-                removingDraftId={removingDraftId}
-                savingDraftId={savingDraftId}
-                generatingId={generatingId}
-                onSync={() => void handleSync()}
-                onReconcile={() => void handleReconcile()}
-                onApproveDraft={(commentId, draftText) =>
-                  void handleApproveDraft(commentId, draftText)
-                }
-                onRemoveDraft={(commentId) => void handleRemoveDraft(commentId)}
-                onSaveDraft={(commentId, draftText) =>
-                  handleSaveDraft(commentId, draftText)
-                }
-                onGenerateDraft={(commentId) => void handleGenerateDraft(commentId)}
-                replyMode={selectedReplyMode}
-                savingReplyMode={savingReplyMode}
-                onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
-              />
-            </section>
+          <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <PostDetailPanel
+              post={selectedPost}
+              threadGroups={threadGroups}
+              allComments={comments}
+              brandUsername={meta?.igUsername}
+              focusCommentId={selectedCommentId || null}
+              threadSort={threadSort}
+              onThreadSortChange={setThreadSort}
+              insights={insights}
+              lastSyncedAt={lastSyncedAt}
+              loadingComments={loadingComments}
+              loadingInsights={loadingInsights}
+              syncing={syncing}
+              reconciling={reconciling}
+              syncWarning={syncWarning}
+              metaConnected={Boolean(meta?.connected)}
+              approvingId={approvingId}
+              removingDraftId={removingDraftId}
+              savingDraftId={savingDraftId}
+              generatingId={generatingId}
+              onSync={() => void handleSync()}
+              onReconcile={() => void handleReconcile()}
+              onApproveDraft={(commentId, draftText) =>
+                void handleApproveDraft(commentId, draftText)
+              }
+              onRemoveDraft={(commentId) => void handleRemoveDraft(commentId)}
+              onSaveDraft={(commentId, draftText) =>
+                handleSaveDraft(commentId, draftText)
+              }
+              onGenerateDraft={(commentId) =>
+                void handleGenerateDraft(commentId)
+              }
+              replyMode={selectedReplyMode}
+              savingReplyMode={savingReplyMode}
+              onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
+            />
+          </section>
 
-            <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-              <SheetContent side="left" className="w-full max-w-md gap-0 p-0 sm:max-w-md">
-                <SheetHeader className="border-b border-border">
-                  <SheetTitle className="font-display text-lg font-semibold">
-                    Publicações
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                  <div className="shrink-0 border-b p-4">{listChrome}</div>
-                  <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{listBody}</div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-            Carregando publicação…
-          </div>
-        )}
+          <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
+            <SheetContent
+              side="left"
+              className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
+            >
+              <SheetHeader className="border-b border-border">
+                <SheetTitle className="font-display text-lg font-semibold">
+                  Publicações
+                </SheetTitle>
+              </SheetHeader>
+              <div className="shrink-0 border-b p-4">{listChrome}</div>
+              <PageScrollArea>{listBody}</PageScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+          Carregando publicação…
+        </div>
+      )}
 
       {addDialogOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -1018,7 +1120,8 @@ export function CommentsPage() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Adicionar publicação</h2>
               <p className="text-sm text-muted-foreground">
-                Cole o link do post no Instagram (ex.: instagram.com/p/…) ou o ID numérico da Meta.
+                Cole o link do post no Instagram (ex.: instagram.com/p/…) ou o
+                ID numérico da Meta.
               </p>
             </div>
             <div className="space-y-2">
@@ -1031,7 +1134,11 @@ export function CommentsPage() {
               />
             </div>
             <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAddDialogOpen(false)}
+              >
                 Cancelar
               </Button>
               <Button
@@ -1039,7 +1146,9 @@ export function CommentsPage() {
                 onClick={() => void handleAddMonitoredPost()}
                 disabled={addingPost}
               >
-                {addingPost ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                {addingPost ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : null}
                 Adicionar
               </Button>
             </div>

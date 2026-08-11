@@ -34,6 +34,7 @@ export const handleAgentRunsRoute = createRouter([
         total_prompt_tokens: item.totalPromptTokens,
         total_completion_tokens: item.totalCompletionTokens,
         total_tokens: item.totalTokens,
+        models: item.models,
       })),
       next_cursor: result.nextCursor,
     });
@@ -53,6 +54,7 @@ export const handleAgentRunsRoute = createRouter([
 
       const steps = match.ctx.agentRunSteps.listByAgentRunId(runId);
       const commentId = steps[0]?.commentId ?? null;
+      const comment = commentId ? match.ctx.comments.findById(commentId) : null;
 
       sendJson(match.res, 200, {
         run: {
@@ -65,6 +67,7 @@ export const handleAgentRunsRoute = createRouter([
           createdAt: run.createdAt,
         },
         comment_id: commentId,
+        post_id: comment?.postId ?? null,
         audit: serializeReplyAudit(run, steps),
       });
     },

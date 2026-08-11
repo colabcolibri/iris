@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { fetchLlmSettings, updateLlmSettings, type LlmSettings } from "@/lib/api";
+import {
+  fetchLlmSettings,
+  updateLlmSettings,
+  type LlmSettings,
+} from "@/lib/api";
 
 export function LlmSettingsCard() {
   const [settings, setSettings] = useState<LlmSettings | null>(null);
@@ -25,7 +29,9 @@ export function LlmSettingsCard() {
       setSupportsVision(data.supports_vision);
       setApiKey("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao carregar LLM.");
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao carregar LLM.",
+      );
     } finally {
       setLoading(false);
     }
@@ -57,17 +63,19 @@ export function LlmSettingsCard() {
   return (
     <Card className="space-y-5 border-border bg-card p-6 shadow-none">
       <header className="space-y-1">
-        <h2 className="text-sm font-semibold">Provedor de IA (respostas automáticas)</h2>
+        <h2 className="text-sm font-semibold">
+          Provedor de IA (respostas automáticas)
+        </h2>
         <p className="text-xs text-muted-foreground">
-          API key, URL e modelo usados pelo agente de comentários. Valores do servidor em{" "}
-          <code className="text-[11px]">.env</code> servem de fallback.
+          API key, URL e modelo usados pelo agente de comentários. Valores do
+          servidor em <code className="text-xs">.env</code> servem de fallback.
         </p>
       </header>
 
       {settings?.env_override && (
         <p className="rounded-[var(--iris-radius-sm)] border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-          Variáveis <code className="text-[11px]">LLM_*</code> no ambiente estão definidas. O banco
-          tem prioridade quando configurado aqui.
+          Variáveis <code className="text-xs">LLM_*</code> no ambiente estão
+          definidas. O banco tem prioridade quando configurado aqui.
         </p>
       )}
 
@@ -114,7 +122,9 @@ export function LlmSettingsCard() {
             {settings?.configured && settings.key_hint ? (
               <p className="text-xs text-muted-foreground">
                 Configurado — termina em{" "}
-                <span className="font-mono text-foreground">{settings.key_hint}</span>
+                <span className="font-mono text-foreground">
+                  {settings.key_hint}
+                </span>
                 {settings.source ? ` (${settings.source})` : ""}
               </p>
             ) : null}
@@ -130,7 +140,11 @@ export function LlmSettingsCard() {
             Modelo suporta visão (analisa imagens do post)
           </label>
 
-          <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+          <Button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={saving}
+          >
             {saving ? "Salvando…" : "Salvar provedor de IA"}
           </Button>
         </div>

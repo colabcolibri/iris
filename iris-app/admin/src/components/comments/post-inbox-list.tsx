@@ -59,24 +59,24 @@ function igMediaBadge(
 
   return {
     label: copy.label,
-    className:
-      "border-destructive/25 bg-destructive/10 text-destructive",
+    className: "border-destructive/25 bg-destructive/10 text-destructive",
   };
 }
 
-function statusBadge(post: CommentPostSummary): { label: string; className: string } {
+function statusBadge(post: CommentPostSummary): {
+  label: string;
+  className: string;
+} {
   if (post.status === "scheduled") {
     return {
       label: "Agendada",
-      className:
-        "border-border/60 bg-muted/80 text-muted-foreground",
+      className: "border-border/60 bg-muted/80 text-muted-foreground",
     };
   }
   if (post.is_external || post.status === "monitored") {
     return {
       label: "Externa",
-      className:
-        "border-border/60 bg-muted/80 text-muted-foreground",
+      className: "border-border/60 bg-muted/80 text-muted-foreground",
     };
   }
   return {
@@ -122,16 +122,12 @@ const PostInboxItem = memo(function PostInboxItem({
             loading="lazy"
           />
         ) : (
-          <div
-            className="flex size-16 items-center justify-center rounded-md border border-border/50 bg-muted"
-          >
+          <div className="flex size-16 items-center justify-center rounded-md border border-border/50 bg-muted">
             <ImageIcon className="size-5 text-muted-foreground/70" />
           </div>
         )}
         {post.pending_count > 0 ? (
-          <span
-            className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
-          >
+          <span className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-xs font-semibold text-white">
             {post.pending_count > 9 ? "9+" : post.pending_count}
           </span>
         ) : null}
@@ -142,7 +138,7 @@ const PostInboxItem = memo(function PostInboxItem({
           <div className="flex min-w-0 flex-wrap items-center gap-1">
             <span
               className={cn(
-                "rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                "rounded-sm border px-1.5 py-0.5 text-xs font-semibold leading-none",
                 badge.className,
               )}
             >
@@ -151,7 +147,7 @@ const PostInboxItem = memo(function PostInboxItem({
             {mediaBadge ? (
               <span
                 className={cn(
-                  "rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                  "rounded-sm border px-1.5 py-0.5 text-xs font-semibold leading-none",
                   mediaBadge.className,
                 )}
                 title={post.ig_media_status_detail ?? undefined}
@@ -167,7 +163,7 @@ const PostInboxItem = memo(function PostInboxItem({
 
         <p
           className={cn(
-            "truncate text-sm text-foreground",
+            "truncate text-base text-foreground",
             selected ? "font-semibold" : "font-normal",
           )}
         >

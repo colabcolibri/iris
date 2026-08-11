@@ -24,7 +24,11 @@ export function KanbanColumn({
   onStatusChange,
 }: KanbanColumnProps) {
   return (
-    <KanbanColumnShell status={column.id} label={column.label} count={posts.length}>
+    <KanbanColumnShell
+      status={column.id}
+      label={column.label}
+      count={posts.length}
+    >
       {posts.length === 0 ? (
         <KanbanColumnShell.Empty message={EMPTY_MESSAGES[column.id]} />
       ) : (

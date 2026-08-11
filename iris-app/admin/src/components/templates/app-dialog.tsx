@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { cn } from "@/lib/utils";
 
 const SIZE_CLASS = {
@@ -76,15 +77,24 @@ AppDialog.Header = function AppDialogHeader({
           {title}
         </DialogTitle>
         {description ? (
-          <DialogDescription className="text-sm leading-relaxed">{description}</DialogDescription>
+          <DialogDescription className="text-sm leading-relaxed">
+            {description}
+          </DialogDescription>
         ) : null}
         {children ? (
-          <div className="flex flex-wrap items-center justify-end gap-2 pt-2">{children}</div>
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+            {children}
+          </div>
         ) : null}
       </DialogHeader>
       <DialogClose
         render={
-          <Button variant="ghost" size="icon" className="shrink-0" aria-label="Fechar" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label="Fechar"
+          />
         }
       >
         <X className="size-4" />
@@ -98,11 +108,17 @@ type AppDialogBodyProps = {
   className?: string;
 };
 
-AppDialog.Body = function AppDialogBody({ children, className }: AppDialogBodyProps) {
+AppDialog.Body = function AppDialogBody({
+  children,
+  className,
+}: AppDialogBodyProps) {
   return (
-    <div className={cn("min-h-0 flex-1 overflow-x-hidden overflow-y-auto", className)}>
-      <div className="min-w-0 px-6 py-5">{children}</div>
-    </div>
+    <PageScrollArea
+      className={cn(className)}
+      contentClassName="min-w-0 px-6 py-5"
+    >
+      {children}
+    </PageScrollArea>
   );
 };
 
@@ -111,7 +127,10 @@ type AppDialogFooterProps = {
   className?: string;
 };
 
-AppDialog.Footer = function AppDialogFooter({ children, className }: AppDialogFooterProps) {
+AppDialog.Footer = function AppDialogFooter({
+  children,
+  className,
+}: AppDialogFooterProps) {
   return (
     <div
       className={cn(

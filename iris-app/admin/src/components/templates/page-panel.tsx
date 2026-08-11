@@ -36,11 +36,19 @@ PagePanel.Header = function PagePanelHeader({
   return (
     <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
       <div className="space-y-1">
-        {title ? <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2> : null}
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {title ? (
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            {title}
+          </h2>
+        ) : null}
+        {description ? (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        ) : null}
         {children}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
     </header>
   );
 };
@@ -50,6 +58,9 @@ type PagePanelBodyProps = {
   className?: string;
 };
 
-PagePanel.Body = function PagePanelBody({ children, className }: PagePanelBodyProps) {
+PagePanel.Body = function PagePanelBody({
+  children,
+  className,
+}: PagePanelBodyProps) {
   return <div className={cn("min-h-0 flex-1", className)}>{children}</div>;
 };

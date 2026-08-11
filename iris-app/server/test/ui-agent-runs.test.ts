@@ -7,6 +7,7 @@ test("agent runs page and api are wired", () => {
   assert.match(page, /AgentRunsPage/);
   assert.match(page, /fetchAgentRuns/);
   assert.match(page, /ReplyAuditTimeline/);
+  assert.match(page, /run_id/);
 
   const app = readFileSync("../admin/src/App.tsx", "utf8");
   assert.match(app, /agent-runs/);
@@ -16,4 +17,7 @@ test("agent runs page and api are wired", () => {
 
   const api = readFileSync("../admin/src/lib/api.ts", "utf8");
   assert.match(api, /\/api\/agent-runs/);
+
+  const route = readFileSync("../server/src/api/routes/agent-runs.ts", "utf8");
+  assert.match(route, /models/);
 });

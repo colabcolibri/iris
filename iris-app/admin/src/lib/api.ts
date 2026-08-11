@@ -1,4 +1,32 @@
-import type { AgentRunDetail, AgentRunListItem, AppSettings, AgentContent, Asset, BrowseMediaPage, Comment, CommentActivityItem, CommentActivityKind, CommentPostSummary, CommentsInbox, ImportMonitoredPostsBatchResult, LlmSettings, MetaStatus, McpSettings, McpSettingsGenerateResult, Post, PostInsightsResult, ReconcileCommentsPreview, ReconcileCommentsResult, ReplyAudit, ReplyInspection, ReplyMode, ReplyPersona, SyncPostCommentsResult, WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
+import type {
+  AgentRunDetail,
+  AgentRunListItem,
+  AppSettings,
+  AgentContent,
+  Asset,
+  BrowseMediaPage,
+  Comment,
+  CommentActivityItem,
+  CommentActivityKind,
+  CommentPostSummary,
+  CommentsInbox,
+  ImportMonitoredPostsBatchResult,
+  LlmSettings,
+  MetaStatus,
+  McpSettings,
+  McpSettingsGenerateResult,
+  Post,
+  PostInsightsResult,
+  ReconcileCommentsPreview,
+  ReconcileCommentsResult,
+  ReplyAudit,
+  ReplyInspection,
+  ReplyMode,
+  ReplyPersona,
+  SyncPostCommentsResult,
+  WebhookEvent,
+  WebhookProcessingStatus,
+} from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 
 export class UnauthorizedError extends Error {
@@ -8,7 +36,10 @@ export class UnauthorizedError extends Error {
   }
 }
 
-async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T = unknown>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const headers = new Headers(options.headers ?? {});
 
   if (options.body && !(options.body instanceof FormData)) {
@@ -27,7 +58,9 @@ async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): P
   }
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
     throw new Error(payload.error ?? `Request failed (${response.status})`);
   }
 
@@ -44,7 +77,12 @@ async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): P
 }
 
 export async function fetchPosts(
-  params: { from?: string; to?: string; status?: string; calendarOnly?: boolean } = {},
+  params: {
+    from?: string;
+    to?: string;
+    status?: string;
+    calendarOnly?: boolean;
+  } = {},
 ) {
   const query = new URLSearchParams();
   if (params.from) query.set("from", params.from);
@@ -88,7 +126,9 @@ export function publishPostNow(postId: string) {
 }
 
 export async function listAssets(postId: string) {
-  const payload = await apiFetch<{ assets: Asset[] }>(`/api/posts/${postId}/assets`);
+  const payload = await apiFetch<{ assets: Asset[] }>(
+    `/api/posts/${postId}/assets`,
+  );
   return payload.assets ?? [];
 }
 
@@ -109,30 +149,42 @@ export function deletePostAsset(postId: string, assetId: string) {
 }
 
 export async function reorderPostAssets(postId: string, assetIds: string[]) {
-  const payload = await apiFetch<{ assets: Asset[] }>(`/api/posts/${postId}/assets/reorder`, {
-    method: "PUT",
-    body: JSON.stringify({ asset_ids: assetIds }),
-  });
+  const payload = await apiFetch<{ assets: Asset[] }>(
+    `/api/posts/${postId}/assets/reorder`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ asset_ids: assetIds }),
+    },
+  );
   return payload.assets ?? [];
 }
 
 export async function fetchCommentPosts() {
-  const payload = await apiFetch<{ posts: CommentPostSummary[] }>("/api/comments/posts");
+  const payload = await apiFetch<{ posts: CommentPostSummary[] }>(
+    "/api/comments/posts",
+  );
   return payload.posts ?? [];
 }
 
-export async function fetchCommentActivity(kind: CommentActivityKind, limit = 20) {
+export async function fetchCommentActivity(
+  kind: CommentActivityKind,
+  limit = 20,
+) {
   const query = new URLSearchParams({ kind, limit: String(limit) });
-  const payload = await apiFetch<{ kind: CommentActivityKind; items: CommentActivityItem[] }>(
-    `/api/comments/activity?${query}`,
-  );
+  const payload = await apiFetch<{
+    kind: CommentActivityKind;
+    items: CommentActivityItem[];
+  }>(`/api/comments/activity?${query}`);
   return payload.items ?? [];
 }
 
 export function syncPostComments(postId: string) {
-  return apiFetch<SyncPostCommentsResult>(`/api/posts/${postId}/comments/sync`, {
-    method: "POST",
-  });
+  return apiFetch<SyncPostCommentsResult>(
+    `/api/posts/${postId}/comments/sync`,
+    {
+      method: "POST",
+    },
+  );
 }
 
 export function fetchReconcileCommentsPreview(postId: string) {
@@ -142,13 +194,18 @@ export function fetchReconcileCommentsPreview(postId: string) {
 }
 
 export function reconcilePostComments(postId: string) {
-  return apiFetch<ReconcileCommentsResult>(`/api/posts/${postId}/comments/reconcile`, {
-    method: "POST",
-  });
+  return apiFetch<ReconcileCommentsResult>(
+    `/api/posts/${postId}/comments/reconcile`,
+    {
+      method: "POST",
+    },
+  );
 }
 
 export async function fetchComments(postId: string) {
-  const payload = await apiFetch<{ comments: Comment[] }>(`/api/posts/${postId}/comments`);
+  const payload = await apiFetch<{ comments: Comment[] }>(
+    `/api/posts/${postId}/comments`,
+  );
   return payload.comments ?? [];
 }
 
@@ -156,14 +213,19 @@ export function fetchPostInsights(postId: string) {
   return apiFetch<PostInsightsResult>(`/api/posts/${postId}/insights`);
 }
 
-export function registerMonitoredPost(body: { ig_media_id?: string; permalink?: string }) {
+export function registerMonitoredPost(body: {
+  ig_media_id?: string;
+  permalink?: string;
+}) {
   return apiFetch<Post>("/api/comments/monitored-posts", {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-export function browseMetaMedia(params: { limit?: number; after?: string | null } = {}) {
+export function browseMetaMedia(
+  params: { limit?: number; after?: string | null } = {},
+) {
   const query = new URLSearchParams();
   if (params.limit) {
     query.set("limit", String(params.limit));
@@ -176,10 +238,13 @@ export function browseMetaMedia(params: { limit?: number; after?: string | null 
 }
 
 export function importMonitoredPostsBatch(igMediaIds: string[]) {
-  return apiFetch<ImportMonitoredPostsBatchResult>("/api/comments/monitored-posts/batch", {
-    method: "POST",
-    body: JSON.stringify({ ig_media_ids: igMediaIds }),
-  });
+  return apiFetch<ImportMonitoredPostsBatchResult>(
+    "/api/comments/monitored-posts/batch",
+    {
+      method: "POST",
+      body: JSON.stringify({ ig_media_ids: igMediaIds }),
+    },
+  );
 }
 
 export function approveCommentReply(commentId: string, message?: string) {
@@ -189,7 +254,10 @@ export function approveCommentReply(commentId: string, message?: string) {
   });
 }
 
-export function requestCommentAiReply(commentId: string, mode: "auto" | "draft") {
+export function requestCommentAiReply(
+  commentId: string,
+  mode: "auto" | "draft",
+) {
   return apiFetch<Comment>(`/api/comments/${commentId}/ai-reply`, {
     method: "POST",
     body: JSON.stringify({ mode }),
@@ -248,14 +316,19 @@ export function logout() {
   return apiFetch("/api/auth/logout", { method: "POST" });
 }
 
-export async function fetchAuthMe(): Promise<{ authenticated: true; email: string } | null> {
+export async function fetchAuthMe(): Promise<{
+  authenticated: true;
+  email: string;
+} | null> {
   const response = await fetch("/api/auth/me", { credentials: "include" });
   if (response.status === 401) {
     return null;
   }
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
     throw new Error(payload.error ?? `Request failed (${response.status})`);
   }
 
@@ -282,7 +355,8 @@ export async function fetchAssetBlob(postId: string, filename: string) {
     notifyUnauthorized();
     throw new UnauthorizedError();
   }
-  if (!response.ok) throw new Error(`Failed to load asset (${response.status})`);
+  if (!response.ok)
+    throw new Error(`Failed to load asset (${response.status})`);
   return response.blob();
 }
 
@@ -346,7 +420,9 @@ export function subscribeRealtimeEvents(handlers: {
 
     source.addEventListener("comments-changed", (event) => {
       try {
-        handlers.onCommentsChanged?.(JSON.parse(event.data) as { post_id?: string });
+        handlers.onCommentsChanged?.(
+          JSON.parse(event.data) as { post_id?: string },
+        );
       } catch {
         // ignore malformed frames
       }
@@ -403,7 +479,9 @@ export function updateAgentContent(body: {
   });
 }
 
-export async function fetchReplyAudit(commentId: string): Promise<ReplyAudit | null> {
+export async function fetchReplyAudit(
+  commentId: string,
+): Promise<ReplyAudit | null> {
   const response = await fetch(`/api/comments/${commentId}/reply-audit`, {
     credentials: "include",
   });
@@ -418,7 +496,9 @@ export async function fetchReplyAudit(commentId: string): Promise<ReplyAudit | n
   }
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
     throw new Error(payload.error ?? `Request failed (${response.status})`);
   }
 
@@ -500,9 +580,9 @@ export function fetchWebhookEvents(
   } else if (filter.signatureValid === true) {
     params.set("signature_valid", "1");
   }
-  return apiFetch<{ events: WebhookEvent[] }>(`/api/settings/webhook-events?${params}`).then(
-    (payload) => payload.events,
-  );
+  return apiFetch<{ events: WebhookEvent[] }>(
+    `/api/settings/webhook-events?${params}`,
+  ).then((payload) => payload.events);
 }
 
 export function fetchPostInsightsHistory(postId: string, limit = 30) {
@@ -514,11 +594,13 @@ export function fetchPostInsightsHistory(postId: string, limit = 30) {
   }>(`/api/posts/${postId}/insights/history?limit=${safeLimit}`);
 }
 
-export function refreshAllPostInsights(body: {
-  limit?: number;
-  delay_ms?: number;
-  force?: boolean;
-} = {}) {
+export function refreshAllPostInsights(
+  body: {
+    limit?: number;
+    delay_ms?: number;
+    force?: boolean;
+  } = {},
+) {
   return apiFetch<{
     requested: number;
     refreshed: string[];
@@ -552,9 +634,12 @@ export async function downloadWebhookEventsExport(
   } else if (filter.signatureValid === true) {
     params.set("signature_valid", "1");
   }
-  const response = await fetch(`/api/settings/webhook-events/export?${params}`, {
-    credentials: "include",
-  });
+  const response = await fetch(
+    `/api/settings/webhook-events/export?${params}`,
+    {
+      credentials: "include",
+    },
+  );
 
   if (response.status === 401) {
     notifyUnauthorized();
@@ -562,14 +647,17 @@ export async function downloadWebhookEventsExport(
   }
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
     throw new Error(payload.error ?? `Request failed (${response.status})`);
   }
 
   const blob = await response.blob();
   const disposition = response.headers.get("content-disposition") ?? "";
   const match = /filename="([^"]+)"/.exec(disposition);
-  const filename = match?.[1] ?? `iris-webhooks-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename =
+    match?.[1] ?? `iris-webhooks-${new Date().toISOString().slice(0, 10)}.json`;
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -578,12 +666,14 @@ export async function downloadWebhookEventsExport(
   URL.revokeObjectURL(url);
 }
 
-export function fetchAgentRuns(params: {
-  limit?: number;
-  cursor?: string;
-  terminal_status?: string;
-  reply_tier?: string;
-} = {}) {
+export function fetchAgentRuns(
+  params: {
+    limit?: number;
+    cursor?: string;
+    terminal_status?: string;
+    reply_tier?: string;
+  } = {},
+) {
   const search = new URLSearchParams();
   if (params.limit) {
     search.set("limit", String(params.limit));

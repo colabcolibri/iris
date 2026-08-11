@@ -22,7 +22,9 @@ export function commentStatusBadgeLabel(comment: Comment): string | null {
     return null;
   }
   if (comment.status === "pending") {
-    return comment.draft_text ? "Aguardando aprovação" : COMMENT_STATUS_LABELS.pending;
+    return comment.draft_text
+      ? "Aguardando aprovação"
+      : COMMENT_STATUS_LABELS.pending;
   }
   if (comment.status === "failed") {
     return COMMENT_STATUS_LABELS.failed;

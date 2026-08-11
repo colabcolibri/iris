@@ -1,4 +1,13 @@
-import { CalendarDays, Bot, FlaskConical, LayoutGrid, MessageCircle, Settings, Sparkles, Webhook } from "lucide-react";
+import {
+  CalendarDays,
+  Bot,
+  FlaskConical,
+  LayoutGrid,
+  MessageCircle,
+  Settings,
+  Sparkles,
+  Webhook,
+} from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import type { AppView } from "@/components/layout/app-sidebar";
 import { ROUTES } from "@/lib/routes";
@@ -12,10 +21,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] = [
-  { id: "calendar", label: "Calendário", icon: CalendarDays },
-  { id: "kanban", label: "Kanban", icon: LayoutGrid },
-];
+const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] =
+  [
+    { id: "calendar", label: "Calendário", icon: CalendarDays },
+    { id: "kanban", label: "Kanban", icon: LayoutGrid },
+  ];
 
 const MAIN_ROUTE_ITEMS = [
   { to: ROUTES.admin.comments, label: "Comentários", icon: MessageCircle },
@@ -30,7 +40,7 @@ const FOOTER_ROUTE_ITEMS = [
 ] as const;
 
 const MENU_BUTTON_CLASS =
-  "h-11 min-h-11 text-[12px] font-normal tracking-[-0.12px] text-sidebar-foreground/70 transition-transform active:scale-95 group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-primary data-active:shadow-none";
+  "h-11 min-h-11 text-xs font-normal text-sidebar-foreground/70 transition-transform active:scale-95 group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-primary data-active:shadow-none";
 
 const MENU_LABEL_CLASS = "group-data-[collapsible=icon]:hidden";
 
@@ -76,7 +86,11 @@ export function AppNavigation({
                       if (onDashboard && onViewChange) {
                         onViewChange(item.id);
                       } else {
-                        navigate(item.id === "kanban" ? `${ROUTES.admin.root}?view=kanban` : ROUTES.admin.root);
+                        navigate(
+                          item.id === "kanban"
+                            ? `${ROUTES.admin.root}?view=kanban`
+                            : ROUTES.admin.root,
+                        );
                       }
                       handleNavigate();
                     }}

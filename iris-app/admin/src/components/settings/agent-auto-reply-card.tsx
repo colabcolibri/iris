@@ -13,8 +13,13 @@ const DELAY_MAX = 600;
 const DELAY_SUGGESTED = 90;
 
 export function AgentAutoReplyCard() {
-  const { replyMode, replyDelaySeconds, loading, saveReplyMode, saveReplyDelaySeconds } =
-    useAppSettings();
+  const {
+    replyMode,
+    replyDelaySeconds,
+    loading,
+    saveReplyMode,
+    saveReplyDelaySeconds,
+  } = useAppSettings();
   const [saving, setSaving] = useState(false);
   const [savingDelay, setSavingDelay] = useState(false);
   const [delayEnabled, setDelayEnabled] = useState(false);
@@ -31,7 +36,9 @@ export function AgentAutoReplyCard() {
     setSaving(true);
     try {
       await saveReplyMode(next);
-      toast.success(`Modo global do agente: ${replyModeOption(next).label.toLowerCase()}.`);
+      toast.success(
+        `Modo global do agente: ${replyModeOption(next).label.toLowerCase()}.`,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
     } finally {
@@ -44,7 +51,13 @@ export function AgentAutoReplyCard() {
       setSavingDelay(true);
       try {
         const seconds = enabled
-          ? Math.min(DELAY_MAX, Math.max(DELAY_MIN, Number.parseInt(rawSeconds, 10) || DELAY_SUGGESTED))
+          ? Math.min(
+              DELAY_MAX,
+              Math.max(
+                DELAY_MIN,
+                Number.parseInt(rawSeconds, 10) || DELAY_SUGGESTED,
+              ),
+            )
           : 0;
         await saveReplyDelaySeconds(seconds);
         toast.success(
@@ -53,7 +66,9 @@ export function AgentAutoReplyCard() {
             : "Resposta imediata no próximo ciclo do agente.",
         );
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Falha ao salvar delay.");
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao salvar delay.",
+        );
       } finally {
         setSavingDelay(false);
       }
@@ -66,8 +81,8 @@ export function AgentAutoReplyCard() {
       <header className="space-y-1">
         <h2 className="text-sm font-semibold">Agente de comentários</h2>
         <p className="text-xs text-muted-foreground">
-          Modo padrão para posts que seguem a configuração global. Posts com modo próprio têm
-          precedência.
+          Modo padrão para posts que seguem a configuração global. Posts com
+          modo próprio têm precedência.
         </p>
       </header>
 
@@ -76,7 +91,10 @@ export function AgentAutoReplyCard() {
       ) : (
         <div className="max-w-xl space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="global-reply-mode" className="text-sm font-semibold">
+            <Label
+              htmlFor="global-reply-mode"
+              className="text-sm font-semibold"
+            >
               Modo global
             </Label>
             <ReplyModeSelect
@@ -90,10 +108,13 @@ export function AgentAutoReplyCard() {
 
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="space-y-1">
-              <Label className="text-sm font-semibold">Tempo antes de responder</Label>
+              <Label className="text-sm font-semibold">
+                Tempo antes de responder
+              </Label>
               <p className="text-xs text-muted-foreground">
-                Padrão: imediato. Com fila, o agente aguarda o intervalo (sugestão 60–120s) antes
-                do harness — a fila fica no banco e sobrevive a reinícios.
+                Padrão: imediato. Com fila, o agente aguarda o intervalo
+                (sugestão 60–120s) antes do harness — a fila fica no banco e
+                sobrevive a reinícios.
               </p>
             </div>
 
@@ -128,7 +149,10 @@ export function AgentAutoReplyCard() {
 
             {delayEnabled ? (
               <div className="space-y-2">
-                <Label htmlFor="reply-delay-seconds" className="text-sm font-semibold">
+                <Label
+                  htmlFor="reply-delay-seconds"
+                  className="text-sm font-semibold"
+                >
                   Segundos de espera ({DELAY_MIN}–{DELAY_MAX})
                 </Label>
                 <Input

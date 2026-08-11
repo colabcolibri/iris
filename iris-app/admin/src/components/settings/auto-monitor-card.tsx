@@ -58,7 +58,9 @@ export function AutoMonitorCard() {
       setIntervalInput(String(seconds));
       toast.success(`Intervalo do poll: ${Math.round(seconds / 60)} min.`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar intervalo.");
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao salvar intervalo.",
+      );
     } finally {
       setSaving(false);
     }
@@ -67,10 +69,13 @@ export function AutoMonitorCard() {
   return (
     <Card className="space-y-4 border-border bg-card p-6 shadow-none">
       <header className="space-y-1">
-        <h2 className="text-sm font-semibold">Auto-monitoramento de publicações</h2>
+        <h2 className="text-sm font-semibold">
+          Auto-monitoramento de publicações
+        </h2>
         <p className="text-xs text-muted-foreground">
-          Descobre mídias novas no Instagram (poll) e cadastra posts monitorados. Também
-          cadastra no primeiro comentário via webhook se a mídia ainda não existir.
+          Descobre mídias novas no Instagram (poll) e cadastra posts
+          monitorados. Também cadastra no primeiro comentário via webhook se a
+          mídia ainda não existir.
         </p>
       </header>
 
@@ -104,10 +109,12 @@ export function AutoMonitorCard() {
           {autoMonitorEnabled ? (
             <div className="space-y-3 border-t border-border/60 pt-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">Intervalo do poll</Label>
+                <Label className="text-sm font-semibold">
+                  Intervalo do poll
+                </Label>
                 <p className="text-xs text-muted-foreground">
-                  Padrão: 5 minutos. A Meta não avisa post novo por webhook — o Iris consulta a
-                  lista recente neste intervalo.
+                  Padrão: 5 minutos. A Meta não avisa post novo por webhook — o
+                  Iris consulta a lista recente neste intervalo.
                 </p>
               </div>
 
@@ -130,7 +137,10 @@ export function AutoMonitorCard() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="auto-monitor-interval" className="text-sm font-semibold">
+                <Label
+                  htmlFor="auto-monitor-interval"
+                  className="text-sm font-semibold"
+                >
                   Segundos ({INTERVAL_MIN}–{INTERVAL_MAX})
                 </Label>
                 <Input

@@ -16,7 +16,11 @@ export type PostDialogFooterActionId =
   | "retry_draft"
   | "retry_schedule";
 
-export type PostDialogFooterActionVariant = "default" | "outline" | "ghost" | "destructive";
+export type PostDialogFooterActionVariant =
+  | "default"
+  | "outline"
+  | "ghost"
+  | "destructive";
 
 export type PostDialogFooterAction = {
   id: PostDialogFooterActionId;
@@ -59,7 +63,9 @@ export function getPostDialogFooterActions(
   const effectiveStatus: PostDialogFooterStatus | "create" =
     mode === "create" ? "create" : (status ?? "draft");
 
-  const withDelete = (actions: PostDialogFooterAction[]): PostDialogFooterAction[] => {
+  const withDelete = (
+    actions: PostDialogFooterAction[],
+  ): PostDialogFooterAction[] => {
     if (!canDelete) {
       return actions;
     }
@@ -74,33 +80,32 @@ export function getPostDialogFooterActions(
   };
 
   switch (effectiveStatus) {
-    case "create":
-      // create ainda não tem id persistido — sem delete
-      {
-        const actions: PostDialogFooterAction[] = [];
-        if (canPublishNow) {
-          actions.push({
-            id: "publish_now",
-            label: "Publicar agora",
-            variant: "outline",
-            disabled: !metaConnected,
-          });
-        }
-        if (hasSchedule) {
-          actions.push({
-            id: "schedule",
-            label: "Agendar publicação",
-            variant: "outline",
-            disabled: !metaConnected,
-          });
-        }
+    case "create": // create ainda não tem id persistido — sem delete
+    {
+      const actions: PostDialogFooterAction[] = [];
+      if (canPublishNow) {
         actions.push({
-          id: "save_draft",
-          label: "Salvar rascunho",
-          variant: "default",
+          id: "publish_now",
+          label: "Publicar agora",
+          variant: "outline",
+          disabled: !metaConnected,
         });
-        return actions;
       }
+      if (hasSchedule) {
+        actions.push({
+          id: "schedule",
+          label: "Agendar publicação",
+          variant: "outline",
+          disabled: !metaConnected,
+        });
+      }
+      actions.push({
+        id: "save_draft",
+        label: "Salvar rascunho",
+        variant: "default",
+      });
+      return actions;
+    }
 
     case "draft": {
       const actions: PostDialogFooterAction[] = [];
@@ -195,6 +200,8 @@ export function getPostDialogFooterActions(
   }
 }
 
-export function countPrimaryFooterActions(actions: PostDialogFooterAction[]): number {
+export function countPrimaryFooterActions(
+  actions: PostDialogFooterAction[],
+): number {
   return actions.filter((action) => action.variant === "default").length;
 }

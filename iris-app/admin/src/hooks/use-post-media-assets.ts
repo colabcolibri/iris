@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { deletePostAsset, fetchAssetBlob, listAssets, reorderPostAssets } from "@/lib/api";
+import {
+  deletePostAsset,
+  fetchAssetBlob,
+  listAssets,
+  reorderPostAssets,
+} from "@/lib/api";
 
 export type PostMediaAsset = {
   id: string;
@@ -15,7 +20,11 @@ function filenameFromStoragePath(storagePath: string): string | null {
   return parts[parts.length - 1] ?? null;
 }
 
-function reorderById<T extends { id: string }>(items: T[], sourceId: string, targetId: string): T[] | null {
+function reorderById<T extends { id: string }>(
+  items: T[],
+  sourceId: string,
+  targetId: string,
+): T[] | null {
   const sourceIndex = items.findIndex((item) => item.id === sourceId);
   const targetIndex = items.findIndex((item) => item.id === targetId);
   if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) {
@@ -27,7 +36,11 @@ function reorderById<T extends { id: string }>(items: T[], sourceId: string, tar
   return next;
 }
 
-function moveByOffset<T extends { id: string }>(items: T[], assetId: string, offset: -1 | 1): T[] | null {
+function moveByOffset<T extends { id: string }>(
+  items: T[],
+  assetId: string,
+  offset: -1 | 1,
+): T[] | null {
   const index = items.findIndex((item) => item.id === assetId);
   const targetIndex = index + offset;
   if (index < 0 || targetIndex < 0 || targetIndex >= items.length) {
@@ -51,86 +64,94 @@ function revokeUrlList(urls: string[]) {
   }
 }
 
-export function usePostMediaAssets(postId: string | undefined, refreshKey?: string) {
+export function usePostMediaAssets(
+  postId: string | undefined,
+  refreshKey?: string,
+) {
   const [items, setItems] = useState<PostMediaAsset[]>([]);
   const [loading, setLoading] = useState(Boolean(postId));
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const loadAssets = useCallback(async (signal: AbortSignal) => {
-    if (!postId) {
-      setItems((previous) => {
-        revokePreviewUrls(previous);
-        return [];
-      });
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    const createdUrls: string[] = [];
-
-    try {
-      const assets = await listAssets(postId);
-      if (signal.aborted) {
-        return;
-      }
-
-      const sorted = [...assets].sort((a, b) => a.sort_order - b.sort_order);
-      const nextItems: PostMediaAsset[] = [];
-
-      for (const asset of sorted) {
-        if (signal.aborted) {
-          revokeUrlList(createdUrls);
-          return;
-        }
-
-        const filename = filenameFromStoragePath(asset.storage_path);
-        if (!filename) {
-          continue;
-        }
-
-        const blob = await fetchAssetBlob(postId, filename);
-        if (signal.aborted) {
-          revokeUrlList(createdUrls);
-          return;
-        }
-
-        const previewUrl = URL.createObjectURL(blob);
-        createdUrls.push(previewUrl);
-        nextItems.push({
-          id: asset.id,
-          sortOrder: asset.sort_order,
-          previewUrl,
-          width: asset.width ?? null,
-          height: asset.height ?? null,
+  const loadAssets = useCallback(
+    async (signal: AbortSignal) => {
+      if (!postId) {
+        setItems((previous) => {
+          revokePreviewUrls(previous);
+          return [];
         });
-      }
-
-      if (signal.aborted) {
-        revokeUrlList(createdUrls);
-        return;
-      }
-
-      setItems((previous) => {
-        revokePreviewUrls(previous);
-        return nextItems;
-      });
-    } catch (err) {
-      revokeUrlList(createdUrls);
-      if (signal.aborted) {
-        return;
-      }
-      toast.error(err instanceof Error ? err.message : "Falha ao carregar mídia.");
-      setItems((previous) => {
-        revokePreviewUrls(previous);
-        return [];
-      });
-    } finally {
-      if (!signal.aborted) {
         setLoading(false);
+        return;
       }
-    }
-  }, [postId]);
+
+      setLoading(true);
+      const createdUrls: string[] = [];
+
+      try {
+        const assets = await listAssets(postId);
+        if (signal.aborted) {
+          return;
+        }
+
+        const sorted = [...assets].sort((a, b) => a.sort_order - b.sort_order);
+        const nextItems: PostMediaAsset[] = [];
+
+        for (const asset of sorted) {
+          if (signal.aborted) {
+            revokeUrlList(createdUrls);
+            return;
+          }
+
+          const filename = filenameFromStoragePath(asset.storage_path);
+          if (!filename) {
+            continue;
+          }
+
+          const blob = await fetchAssetBlob(postId, filename);
+          if (signal.aborted) {
+            revokeUrlList(createdUrls);
+            return;
+          }
+
+          const previewUrl = URL.createObjectURL(blob);
+          createdUrls.push(previewUrl);
+          nextItems.push({
+            id: asset.id,
+            sortOrder: asset.sort_order,
+            previewUrl,
+            width: asset.width ?? null,
+            height: asset.height ?? null,
+          });
+        }
+
+        if (signal.aborted) {
+          revokeUrlList(createdUrls);
+          return;
+        }
+
+        setItems((previous) => {
+          revokePreviewUrls(previous);
+          return nextItems;
+        });
+      } catch (err) {
+        revokeUrlList(createdUrls);
+        if (signal.aborted) {
+          return;
+        }
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao carregar mídia.",
+        );
+        setItems((previous) => {
+          revokePreviewUrls(previous);
+          return [];
+        });
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [postId],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -170,7 +191,9 @@ export function usePostMediaAssets(postId: string | undefined, refreshKey?: stri
       }
       setItems(nextItems);
       void persistOrder(nextItems).catch((err) => {
-        toast.error(err instanceof Error ? err.message : "Falha ao reordenar mídia.");
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao reordenar mídia.",
+        );
         void loadAssets(new AbortController().signal);
       });
     },
@@ -194,7 +217,9 @@ export function usePostMediaAssets(postId: string | undefined, refreshKey?: stri
         });
         toast.success("Mídia removida.");
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Falha ao remover mídia.");
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao remover mídia.",
+        );
       } finally {
         setBusyId(null);
       }

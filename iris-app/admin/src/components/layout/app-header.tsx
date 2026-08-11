@@ -1,4 +1,10 @@
-import { ChevronDown, LogOut, RefreshCw, UserRound, Unplug } from "lucide-react";
+import {
+  ChevronDown,
+  LogOut,
+  RefreshCw,
+  UserRound,
+  Unplug,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { BrandLogo } from "@/components/layout/brand-logo";
@@ -34,7 +40,8 @@ export function AppHeader() {
   async function handleLogout() {
     const ok = await confirm({
       title: "Sair do Iris?",
-      description: "Você precisará de um novo código por email para entrar novamente.",
+      description:
+        "Você precisará de um novo código por email para entrar novamente.",
       confirmLabel: "Sair",
       variant: "destructive",
     });
@@ -76,7 +83,7 @@ export function AppHeader() {
             <p className="font-display text-xl font-semibold leading-none tracking-tight text-sidebar-foreground sm:text-2xl">
               iris
             </p>
-            <p className="hidden truncate text-xs font-normal tracking-[-0.12px] text-sidebar-foreground/60 sm:block">
+            <p className="hidden truncate text-xs font-normal text-sidebar-foreground/60 sm:block">
               Creative scheduler
             </p>
           </div>
@@ -92,13 +99,16 @@ export function AppHeader() {
       </div>
 
       <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
-        <AgentGlobalStatusBadge replyMode={replyMode} loading={settingsLoading} />
+        <AgentGlobalStatusBadge
+          replyMode={replyMode}
+          loading={settingsLoading}
+        />
 
         {!connected ? (
           <a
             href="/auth/meta"
             className={cn(
-              "inline-flex min-h-11 items-center gap-2 rounded-full px-[22px] py-[11px] text-[17px] font-normal leading-none transition-transform active:scale-95",
+              "inline-flex min-h-11 items-center gap-2 rounded-full px-[22px] py-[11px] text-base font-normal leading-none transition-transform active:scale-95",
               tokenExpired
                 ? "bg-amber-500 text-amber-950 hover:bg-amber-400"
                 : "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -128,13 +138,18 @@ export function AppHeader() {
                 <span className="max-w-[9rem] truncate text-sm font-normal sm:max-w-none">
                   {handle}
                 </span>
-                <span className="size-2 shrink-0 rounded-full bg-emerald-400" aria-hidden />
+                <span
+                  className="size-2 shrink-0 rounded-full bg-emerald-400"
+                  aria-hidden
+                />
                 <ChevronDown className="size-3.5 shrink-0 opacity-70" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Instagram conectado</DropdownMenuLabel>
-                  <p className="px-2 pb-1 text-xs text-muted-foreground">{handle}</p>
+                  <p className="px-2 pb-1 text-xs text-muted-foreground">
+                    {handle}
+                  </p>
                   <DropdownMenuItem onClick={() => void handleMetaHealth()}>
                     <RefreshCw className="size-4" />
                     Testar conexão

@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppSidebar, type AppView } from "@/components/layout/app-sidebar";
-import { IrisSidebarInset, IrisSidebarProvider } from "@/components/layout/iris-sidebar";
+import {
+  IrisSidebarInset,
+  IrisSidebarProvider,
+} from "@/components/layout/iris-sidebar";
 
 type AppShellProps = {
   sidebarView?: AppView;
@@ -9,7 +12,11 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-export function AppShell({ sidebarView, onSidebarViewChange, children }: AppShellProps) {
+export function AppShell({
+  sidebarView,
+  onSidebarViewChange,
+  children,
+}: AppShellProps) {
   return (
     <IrisSidebarProvider>
       <AppHeader />

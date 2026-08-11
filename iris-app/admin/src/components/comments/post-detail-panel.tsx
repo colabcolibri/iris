@@ -18,19 +18,33 @@ import { CommentThread } from "@/components/comments/comment-thread";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { resolveMediaSlides } from "@/hooks/use-post-preview";
-import { formatRelativeTimeAgo, useRelativeTimeTick } from "@/lib/format-relative-time";
+import {
+  formatRelativeTimeAgo,
+  useRelativeTimeTick,
+} from "@/lib/format-relative-time";
 import { formatInsightValue, insightMetricValue } from "@/lib/insights";
 import { cn } from "@/lib/utils";
-import type { CommentThreadGroup, ThreadSortMode } from "@/lib/build-comment-tree";
-import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
+import type {
+  CommentThreadGroup,
+  ThreadSortMode,
+} from "@/lib/build-comment-tree";
+import type {
+  Comment,
+  CommentPostSummary,
+  PostInsightsResult,
+} from "@/lib/types";
 import { ThreadSortSelect } from "@/components/comments/thread-sort-select";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { Label } from "@/components/ui/label";
 import { useAppSettings } from "@/contexts/app-settings-context";
-import { resolveEffectivePostReplyStatus, replyStatusPresentation } from "@iris/domain/reply-effective-status";
+import {
+  resolveEffectivePostReplyStatus,
+  replyStatusPresentation,
+} from "@iris/domain/reply-effective-status";
 import { igMediaStatusPresentation } from "@iris/domain/meta/ig-media-status";
 import type { IgMediaStatus } from "@iris/domain/meta/ig-media-status";
 import type { PostReplyModeSetting } from "@/lib/types";
@@ -72,10 +86,30 @@ const STAT_CONFIG: Array<{
   icon: LucideIcon;
   accent: string;
 }> = [
-  { key: "reach", label: "Alcance", icon: Users, accent: "bg-primary/10 text-primary" },
-  { key: "views", label: "Visualizações", icon: Eye, accent: "bg-primary/10 text-primary" },
-  { key: "likes", label: "Curtidas", icon: Heart, accent: "bg-destructive/10 text-destructive" },
-  { key: "saved", label: "Salvos", icon: Bookmark, accent: "bg-muted text-muted-foreground" },
+  {
+    key: "reach",
+    label: "Alcance",
+    icon: Users,
+    accent: "bg-primary/10 text-primary",
+  },
+  {
+    key: "views",
+    label: "Visualizações",
+    icon: Eye,
+    accent: "bg-primary/10 text-primary",
+  },
+  {
+    key: "likes",
+    label: "Curtidas",
+    icon: Heart,
+    accent: "bg-destructive/10 text-destructive",
+  },
+  {
+    key: "saved",
+    label: "Salvos",
+    icon: Bookmark,
+    accent: "bg-muted text-muted-foreground",
+  },
   {
     key: "comments",
     label: "Comentários",
@@ -131,7 +165,9 @@ function InsightMetricCard({
         >
           <Icon className="size-4" aria-hidden />
         </div>
-        <p className="min-w-0 text-sm font-semibold leading-snug text-muted-foreground">{label}</p>
+        <p className="min-w-0 text-sm font-semibold leading-snug text-muted-foreground">
+          {label}
+        </p>
       </div>
       {loading ? (
         <Skeleton className="h-8 w-20" />
@@ -144,7 +180,11 @@ function InsightMetricCard({
   );
 }
 
-function LastSyncedLabel({ syncedAt }: { syncedAt: number | null | undefined }) {
+function LastSyncedLabel({
+  syncedAt,
+}: {
+  syncedAt: number | null | undefined;
+}) {
   useRelativeTimeTick();
   if (!syncedAt) {
     return null;
@@ -157,7 +197,7 @@ function LastSyncedLabel({ syncedAt }: { syncedAt: number | null | undefined }) 
 
   return (
     <p
-      className="text-[11px] leading-snug text-muted-foreground"
+      className="text-xs leading-snug text-muted-foreground"
       title={new Date(syncedAt).toLocaleString("pt-BR")}
     >
       Última sincronização {relative}
@@ -268,7 +308,12 @@ function PostMetaToolbar({
             <span className="truncate">Ver no IG</span>
           </a>
         ) : (
-          <Button variant="outline" size="sm" className="h-9 gap-1.5 px-2" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 px-2"
+            disabled
+          >
             <InstagramIcon className="size-4 shrink-0 opacity-50" />
             <span className="truncate">Ver no IG</span>
           </Button>
@@ -325,7 +370,10 @@ export function PostDetailPanel({
   onReplyModeChange,
 }: PostDetailPanelProps) {
   const { replyMode: globalReplyMode } = useAppSettings();
-  const effectiveReply = resolveEffectivePostReplyStatus(globalReplyMode, replyMode);
+  const effectiveReply = resolveEffectivePostReplyStatus(
+    globalReplyMode,
+    replyMode,
+  );
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
   const [activeTab, setActiveTab] = useState<DetailTab>("performance");
   const slides = resolveMediaSlides(post.post_id, insights?.media);
@@ -349,87 +397,90 @@ export function PostDetailPanel({
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
-      <div
-        className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto lg:w-[42%] lg:border-r lg:border-border"
-      >
-        <PostMetaToolbar
-          permalink={permalink}
-          metaConnected={metaConnected}
-          syncing={syncing}
-          reconciling={reconciling}
-          onSync={onSync}
-          lastSyncedAt={lastSyncedAt}
-        />
-
-        <div className="shrink-0">
-          <PostMediaCarousel
-            slides={slides}
-            loading={loadingInsights && slides.length === 0}
-            caption={post.caption}
-            layout="hero"
+      <div className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden lg:w-[42%] lg:border-r lg:border-border">
+        <PageScrollArea>
+          <PostMetaToolbar
+            permalink={permalink}
+            metaConnected={metaConnected}
+            syncing={syncing}
+            reconciling={reconciling}
+            onSync={onSync}
+            lastSyncedAt={lastSyncedAt}
           />
-        </div>
 
-        <div className="flex flex-col gap-4 p-4 sm:p-5">
-          <div className="space-y-3">
-            <div className="flex min-w-0 items-center gap-1.5 text-[10px] leading-none">
-              {post.is_external ? (
-                <Badge
-                  variant="outline"
-                  className="h-5 shrink-0 px-1.5 text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-100"
-                >
-                  Externa
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="h-5 shrink-0 px-1.5 text-[10px] border-primary/25 bg-primary/10 text-primary"
-                >
-                  Iris
-                </Badge>
-              )}
-              {post.pending_count > 0 ? (
-                <Badge
-                  className="h-5 shrink-0 px-1.5 text-[10px] bg-amber-500 text-white hover:bg-amber-500/90"
-                  title="Comentários aguardando resposta ou aprovação da Iris"
-                >
-                  {post.pending_count} pendente{post.pending_count === 1 ? "" : "s"}
-                </Badge>
-              ) : null}
-              {igMediaStatus && igMediaStatus !== "on_feed" ? (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "h-5 shrink-0 px-1.5 text-[10px]",
-                    igMediaStatus === "archived"
-                      ? "border-sky-500/30 bg-sky-500/10 text-sky-900 dark:text-sky-100"
-                      : "border-destructive/30 bg-destructive/10 text-destructive",
-                  )}
-                  title={igMediaStatusDetail ?? undefined}
-                >
-                  {igMediaStatusPresentation(igMediaStatus).label}
-                </Badge>
-              ) : null}
-              <span
-                className="inline-flex min-w-0 flex-1 items-center gap-1 truncate font-mono text-muted-foreground"
-                title={post.ig_media_id}
-              >
-                <Hash className="size-3 shrink-0 opacity-70" aria-hidden />
-                <span className="truncate">{post.ig_media_id || post.post_id}</span>
-              </span>
-              <span className="shrink-0 tabular-nums whitespace-nowrap text-muted-foreground">
-                {publishedLabel}
-              </span>
-            </div>
-
-            <h2
-              className="line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl"
-              title={title}
-            >
-              {title}
-            </h2>
+          <div className="shrink-0">
+            <PostMediaCarousel
+              slides={slides}
+              loading={loadingInsights && slides.length === 0}
+              caption={post.caption}
+              layout="hero"
+            />
           </div>
-        </div>
+
+          <div className="flex flex-col gap-4 p-4 sm:p-5">
+            <div className="space-y-3">
+              <div className="flex min-w-0 items-center gap-1.5 text-xs leading-none">
+                {post.is_external ? (
+                  <Badge
+                    variant="outline"
+                    className="h-5 shrink-0 px-1.5 text-xs border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-100"
+                  >
+                    Externa
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="h-5 shrink-0 px-1.5 text-xs border-primary/25 bg-primary/10 text-primary"
+                  >
+                    Iris
+                  </Badge>
+                )}
+                {post.pending_count > 0 ? (
+                  <Badge
+                    className="h-5 shrink-0 px-1.5 text-xs bg-amber-500 text-white hover:bg-amber-500/90"
+                    title="Comentários aguardando resposta ou aprovação da Iris"
+                  >
+                    {post.pending_count} pendente
+                    {post.pending_count === 1 ? "" : "s"}
+                  </Badge>
+                ) : null}
+                {igMediaStatus && igMediaStatus !== "on_feed" ? (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-5 shrink-0 px-1.5 text-xs",
+                      igMediaStatus === "archived"
+                        ? "border-sky-500/30 bg-sky-500/10 text-sky-900 dark:text-sky-100"
+                        : "border-destructive/30 bg-destructive/10 text-destructive",
+                    )}
+                    title={igMediaStatusDetail ?? undefined}
+                  >
+                    {igMediaStatusPresentation(igMediaStatus).label}
+                  </Badge>
+                ) : null}
+                <span
+                  className="inline-flex min-w-0 flex-1 items-center gap-1 truncate font-mono text-muted-foreground"
+                  title={post.ig_media_id}
+                >
+                  <Hash className="size-3 shrink-0 opacity-70" aria-hidden />
+                  <span className="truncate">
+                    {post.ig_media_id || post.post_id}
+                  </span>
+                </span>
+                <span className="shrink-0 tabular-nums whitespace-nowrap text-muted-foreground">
+                  {publishedLabel}
+                </span>
+              </div>
+
+              <h2
+                className="line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl"
+                title={title}
+              >
+                {title}
+              </h2>
+            </div>
+          </div>
+        </PageScrollArea>
       </div>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -460,7 +511,7 @@ export function PostDetailPanel({
               Comentários
               <span
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+                  "rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums",
                   activeTab === "comments"
                     ? "bg-primary/15 text-primary"
                     : "bg-muted text-muted-foreground",
@@ -502,7 +553,7 @@ export function PostDetailPanel({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5">
+        <PageScrollArea contentClassName="p-4 sm:p-5">
           {activeTab === "performance" ? (
             <PerformanceTabContent
               insightsError={insightsError ?? null}
@@ -528,7 +579,9 @@ export function PostDetailPanel({
                   size="sm"
                   className="h-9 shrink-0 gap-1.5 sm:w-auto"
                   onClick={onReconcile}
-                  disabled={!metaConnected || reconciling || syncing || loadingComments}
+                  disabled={
+                    !metaConnected || reconciling || syncing || loadingComments
+                  }
                   title="Sincroniza com o Instagram, marca removidos e vincula respostas da marca já existentes no thread"
                 >
                   {reconciling ? (
@@ -556,7 +609,8 @@ export function PostDetailPanel({
                   <MessageCircle className="mx-auto mb-3 size-8 text-muted-foreground/40" />
                   <p className="font-semibold">Nenhum comentário ainda</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Novos chegam via webhook. Use sincronizar para buscar histórico na Meta.
+                    Novos chegam via webhook. Use sincronizar para buscar
+                    histórico na Meta.
                   </p>
                 </div>
               ) : (
@@ -589,7 +643,9 @@ export function PostDetailPanel({
           ) : (
             <div className="mx-auto flex w-full max-w-lg flex-col gap-5">
               <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">Resposta da Iris</h3>
+                <h3 className="text-base font-semibold text-foreground">
+                  Resposta da Iris
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   {post.is_external
                     ? "Post externo — novos comentários chegam via webhook da Meta."
@@ -599,7 +655,9 @@ export function PostDetailPanel({
 
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 p-4">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Estado efetivo</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Estado efetivo
+                  </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {effectiveReplyCopy.hint ??
                       `Agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
@@ -613,7 +671,10 @@ export function PostDetailPanel({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="comments-post-reply-mode" className="text-sm font-semibold">
+                <Label
+                  htmlFor="comments-post-reply-mode"
+                  className="text-sm font-semibold"
+                >
                   Modo nesta publicação
                 </Label>
                 <ReplyModeSelect
@@ -624,13 +685,14 @@ export function PostDetailPanel({
                   disabled={savingReplyMode}
                 />
                 <p className="text-xs leading-snug text-muted-foreground">
-                  &quot;Seguir global&quot; usa o modo em Configurações → Agente.
-                  &quot;Pausar nesta publicação&quot; desliga a Iris só aqui.
+                  &quot;Seguir global&quot; usa o modo em Configurações →
+                  Agente. &quot;Pausar nesta publicação&quot; desliga a Iris só
+                  aqui.
                 </p>
               </div>
             </div>
           )}
-        </div>
+        </PageScrollArea>
       </div>
     </div>
   );

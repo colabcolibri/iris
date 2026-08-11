@@ -1,6 +1,9 @@
 import { useId, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import {
+  LandingSection,
+  LandingSectionIntro,
+} from "@/components/landing/landing-section";
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
 
@@ -61,7 +64,9 @@ export function LandingContact() {
         return;
       }
 
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
       setErrorMessage(payload?.error ?? form.genericError);
       setState("error");
     } catch {
@@ -78,12 +83,14 @@ export function LandingContact() {
           title={
             <>
               {m.contact.title}{" "}
-              <span className="italic text-[color:var(--iris-primary)]">{m.contact.titleAccent}</span>
+              <span className="italic text-[color:var(--iris-primary)]">
+                {m.contact.titleAccent}
+              </span>
             </>
           }
         />
 
-        <p className="mt-4 text-[17px] leading-[1.47] text-[color:var(--iris-ink-soft)]">
+        <p className="mt-4 text-base leading-normal text-[color:var(--iris-ink-soft)]">
           {m.contact.bodyBeforeEmail}{" "}
           <a
             href={`mailto:${m.contact.email}`}
@@ -96,12 +103,18 @@ export function LandingContact() {
 
         <div className="iris-contact-form-wrap">
           {state === "done" ? (
-            <p role="status" className="text-[17px] leading-[1.47] text-[color:var(--iris-ink)]">
+            <p
+              role="status"
+              className="text-base leading-normal text-[color:var(--iris-ink)]"
+            >
               {form.success}
             </p>
           ) : (
             <form onSubmit={onSubmit} className="iris-contact-form">
-              <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
+              <div
+                className="absolute -left-[9999px] h-px w-px overflow-hidden"
+                aria-hidden
+              >
                 <label htmlFor={honeypotId}>Website</label>
                 <input
                   id={honeypotId}
@@ -184,7 +197,11 @@ export function LandingContact() {
                 </p>
               ) : null}
 
-              <button type="submit" disabled={pending} className="iris-form-submit">
+              <button
+                type="submit"
+                disabled={pending}
+                className="iris-form-submit"
+              >
                 {pending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />

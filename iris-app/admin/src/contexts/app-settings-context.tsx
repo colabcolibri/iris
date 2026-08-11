@@ -1,4 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { DEFAULT_TIMEZONE } from "@iris/domain/timezone";
 import { useAuthSession } from "@/contexts/auth-session-context";
 import { fetchAppSettings, updateAppSettings } from "@/lib/api";
@@ -23,22 +29,31 @@ type AppSettingsContextValue = {
 
 const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
 
-export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
+export function AppSettingsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { status } = useAuthSession();
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
   const [replyMode, setReplyMode] = useState<ReplyMode>("auto");
   const [replyDelaySeconds, setReplyDelaySeconds] = useState(0);
   const [autoMonitorEnabled, setAutoMonitorEnabled] = useState(true);
-  const [autoMonitorIntervalSeconds, setAutoMonitorIntervalSeconds] = useState(300);
+  const [autoMonitorIntervalSeconds, setAutoMonitorIntervalSeconds] =
+    useState(300);
   const [loading, setLoading] = useState(false);
 
   const applySettings = useCallback(
     (settings: Awaited<ReturnType<typeof fetchAppSettings>>) => {
       setTimezone(settings.timezone);
-      setReplyMode(settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"));
+      setReplyMode(
+        settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"),
+      );
       setReplyDelaySeconds(settings.reply_delay_seconds ?? 0);
       setAutoMonitorEnabled(settings.auto_monitor_enabled ?? true);
-      setAutoMonitorIntervalSeconds(settings.auto_monitor_interval_seconds ?? 300);
+      setAutoMonitorIntervalSeconds(
+        settings.auto_monitor_interval_seconds ?? 300,
+      );
     },
     [],
   );
@@ -96,7 +111,9 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
 
   const saveAutoMonitorIntervalSeconds = useCallback(
     async (seconds: number) => {
-      const saved = await updateAppSettings({ auto_monitor_interval_seconds: seconds });
+      const saved = await updateAppSettings({
+        auto_monitor_interval_seconds: seconds,
+      });
       applySettings(saved);
     },
     [applySettings],

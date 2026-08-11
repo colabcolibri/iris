@@ -5,7 +5,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { THREAD_SORT_OPTIONS, type ThreadSortMode } from "@/lib/build-comment-tree";
+import {
+  THREAD_SORT_OPTIONS,
+  type ThreadSortMode,
+} from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
 import { ArrowDownUp } from "lucide-react";
 
@@ -36,18 +39,30 @@ export function ThreadSortSelect({
         size="sm"
         className={cn(
           "gap-1.5 border-border/60 bg-muted/40 px-2.5 text-xs shadow-none",
-          fullWidth ? "h-9 w-full max-w-none" : "h-8 w-auto max-w-[11.5rem] shrink-0",
+          fullWidth
+            ? "h-9 w-full max-w-none"
+            : "h-8 w-auto max-w-[11.5rem] shrink-0",
           className,
         )}
       >
-        <ArrowDownUp className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+        <ArrowDownUp
+          className="size-3.5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
         <SelectValue placeholder="Ordenar">
           <span className="truncate">{selected?.label ?? "Ordenar"}</span>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent align={fullWidth ? "start" : "end"} className="min-w-[12.5rem]">
+      <SelectContent
+        align={fullWidth ? "start" : "end"}
+        className="min-w-[12.5rem]"
+      >
         {THREAD_SORT_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="text-sm">
+          <SelectItem
+            key={option.value}
+            value={option.value}
+            className="text-sm"
+          >
             {option.label}
           </SelectItem>
         ))}

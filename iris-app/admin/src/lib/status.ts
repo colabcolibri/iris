@@ -33,16 +33,30 @@ type PostAction = {
 export function getKanbanActions(status: PostStatus): PostAction[] {
   switch (status) {
     case "draft":
-      return [{ status: "cancelled", label: "Cancelar postagem", variant: "destructive" }];
+      return [
+        {
+          status: "cancelled",
+          label: "Cancelar postagem",
+          variant: "destructive",
+        },
+      ];
     case "scheduled":
       return [
         { status: "draft", label: "Desagendar (voltar a rascunho)" },
-        { status: "cancelled", label: "Cancelar postagem", variant: "destructive" },
+        {
+          status: "cancelled",
+          label: "Cancelar postagem",
+          variant: "destructive",
+        },
       ];
     case "failed":
       return [
         { status: "draft", label: "Voltar a rascunho" },
-        { status: "cancelled", label: "Cancelar postagem", variant: "destructive" },
+        {
+          status: "cancelled",
+          label: "Cancelar postagem",
+          variant: "destructive",
+        },
       ];
     case "cancelled":
       return [{ status: "draft", label: "Restaurar como rascunho" }];

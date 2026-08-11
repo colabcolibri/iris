@@ -53,7 +53,9 @@ export function MetaSessionProvider({ children }: { children: ReactNode }) {
       return true;
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Não foi possível desconectar o Instagram.",
+        err instanceof Error
+          ? err.message
+          : "Não foi possível desconectar o Instagram.",
       );
       return false;
     }
@@ -69,7 +71,11 @@ export function MetaSessionProvider({ children }: { children: ReactNode }) {
     [meta, handleMetaHealth, handleDisconnect],
   );
 
-  return <MetaSessionContext.Provider value={value}>{children}</MetaSessionContext.Provider>;
+  return (
+    <MetaSessionContext.Provider value={value}>
+      {children}
+    </MetaSessionContext.Provider>
+  );
 }
 
 export function useMetaSession() {

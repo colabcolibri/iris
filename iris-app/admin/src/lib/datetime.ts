@@ -13,7 +13,10 @@ export function toIsoFromDatetimeLocal(value: string, timeZone: string) {
   return zonedLocalToUtcIso(value, timeZone);
 }
 
-export function toDatetimeLocalFromIso(iso: string | null | undefined, timeZone: string) {
+export function toDatetimeLocalFromIso(
+  iso: string | null | undefined,
+  timeZone: string,
+) {
   if (!iso) return "";
   return utcIsoToZonedLocal(iso, timeZone);
 }

@@ -1,9 +1,4 @@
-import {
-  Clock,
-  ImageIcon,
-  MoreHorizontal,
-  PlayCircle,
-} from "lucide-react";
+import { Clock, ImageIcon, MoreHorizontal, PlayCircle } from "lucide-react";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
 import { KanbanColumnShell } from "@/components/templates/kanban-column-shell";
@@ -74,7 +69,13 @@ export function KanbanCard({
         actions.length > 0 ? (
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon-sm" aria-label="Ações da postagem" />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Ações da postagem"
+                />
+              }
             >
               <MoreHorizontal className="size-4" />
             </DropdownMenuTrigger>
@@ -110,20 +111,20 @@ export function KanbanCard({
 
       {meta && (
         <div className="mb-3 space-y-0.5">
-          <p className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             {meta.label}
           </p>
           <span
             className={
               meta.tone === "published"
-                ? "inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-700"
+                ? "inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700"
                 : meta.tone === "failed"
-                  ? "inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-[10px] font-semibold text-destructive"
+                  ? "inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive"
                   : meta.tone === "draft"
-                    ? "inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-[10px] font-semibold text-amber-800"
+                    ? "inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-800"
                     : meta.tone === "muted"
-                      ? "inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-[10px] font-semibold text-muted-foreground line-through"
-                      : "inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary"
+                      ? "inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground line-through"
+                      : "inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
             }
           >
             <Clock className="size-3" />
@@ -154,10 +155,7 @@ export function KanbanCard({
         ) : (
           <span className="text-amber-700">Sem mídia</span>
         )}
-        <PostReplyStatusBadge
-          post={post}
-          globalReplyMode={globalReplyMode}
-        />
+        <PostReplyStatusBadge post={post} globalReplyMode={globalReplyMode} />
       </div>
     </KanbanColumnShell.Card>
   );

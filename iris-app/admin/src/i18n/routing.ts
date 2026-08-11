@@ -14,7 +14,9 @@ export function landingHomePath(locale: LandingLocale): string {
   return locale === DEFAULT_LANDING_LOCALE ? "/" : `/${locale}`;
 }
 
-export function parseLandingLocaleFromPath(pathname: string): LandingLocale | null {
+export function parseLandingLocaleFromPath(
+  pathname: string,
+): LandingLocale | null {
   if (pathname === "/" || pathname === "") {
     return DEFAULT_LANDING_LOCALE;
   }

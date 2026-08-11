@@ -36,16 +36,20 @@ export function PostReplyStatusBadge({
       <span
         className={cn(
           "inline-flex max-w-full items-center gap-1 rounded-full border font-semibold",
-          size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-xs",
+          size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs",
           BADGE_STYLES[status.kind],
         )}
         title={copy.hint ?? copy.label}
       >
-        <Bot className={cn("shrink-0", size === "sm" ? "size-3" : "size-3.5")} />
+        <Bot
+          className={cn("shrink-0", size === "sm" ? "size-3" : "size-3.5")}
+        />
         <span className="truncate">{copy.label}</span>
       </span>
       {showHint && copy.hint ? (
-        <span className="text-[10px] leading-snug text-muted-foreground">{copy.hint}</span>
+        <span className="text-xs leading-snug text-muted-foreground">
+          {copy.hint}
+        </span>
       ) : null}
     </span>
   );

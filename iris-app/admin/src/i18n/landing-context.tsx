@@ -14,7 +14,10 @@ type LandingI18nProviderProps = {
   children: ReactNode;
 };
 
-export function LandingI18nProvider({ locale, children }: LandingI18nProviderProps) {
+export function LandingI18nProvider({
+  locale,
+  children,
+}: LandingI18nProviderProps) {
   const m = getLandingMessages(locale);
 
   useEffect(() => {

@@ -46,7 +46,10 @@ export function AgentGlobalStatusBadge({
       <span className="hidden truncate sm:inline">
         {loading ? "Agente…" : `Agente: ${label.toLowerCase()}`}
       </span>
-      <span className="size-2 shrink-0 rounded-full bg-current opacity-70" aria-hidden />
+      <span
+        className="size-2 shrink-0 rounded-full bg-current opacity-70"
+        aria-hidden
+      />
     </Link>
   );
 }

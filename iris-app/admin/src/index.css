@@ -39,6 +39,29 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--iris-font-sans);
   --font-display: var(--iris-font-display);
+
+  /*
+   * Escala Tailwind recalibrada (DESIGN-rules). Markup: text-xs|sm|base|lg|xl|2xl|3xl — nunca text-[Npx].
+   */
+  --text-xs: 12px;
+  --text-xs--line-height: 1;
+  --text-xs--letter-spacing: -0.12px;
+
+  --text-sm: 14px;
+  --text-sm--line-height: 1.43;
+  --text-sm--letter-spacing: -0.224px;
+
+  --text-base: 17px;
+  --text-base--line-height: 1.47;
+  --text-base--letter-spacing: -0.374px;
+
+  --text-xl: 21px;
+  --text-xl--line-height: 1.19;
+  --text-xl--letter-spacing: 0.231px;
+
+  --text-3xl: 34px;
+  --text-3xl--line-height: 1.1;
+  --text-3xl--letter-spacing: -0.374px;
 }
 
 :root {
@@ -81,10 +104,7 @@
   }
 
   body {
-    @apply bg-background font-sans text-foreground antialiased;
-    font-size: var(--iris-body-size);
-    line-height: var(--iris-body-leading);
-    letter-spacing: -0.374px;
+    @apply bg-background font-sans text-base text-foreground antialiased;
     font-weight: 400;
   }
 
@@ -103,19 +123,5 @@
 
   .iris-product-shadow {
     box-shadow: var(--iris-product-shadow);
-  }
-
-  .kanban-scroll::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
-  }
-
-  .kanban-scroll::-webkit-scrollbar-thumb {
-    background-color: var(--border);
-    border-radius: 9999px;
-  }
-
-  .kanban-scroll::-webkit-scrollbar-track {
-    background: transparent;
   }
 }

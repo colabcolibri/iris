@@ -1,6 +1,9 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
-import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import {
+  LandingSection,
+  LandingSectionIntro,
+} from "@/components/landing/landing-section";
 import { cn } from "@/lib/utils";
 
 export function LandingFeatures() {
@@ -13,7 +16,9 @@ export function LandingFeatures() {
         title={
           <>
             {m.features.title}{" "}
-            <span className="italic text-[color:var(--iris-primary)]">{m.features.titleAccent}</span>
+            <span className="italic text-[color:var(--iris-primary)]">
+              {m.features.titleAccent}
+            </span>
           </>
         }
         subtitle={m.features.subtitle}
@@ -68,11 +73,14 @@ function FeatureVisual({ index }: { index: number }) {
         <div className="divide-y divide-[color:var(--iris-hairline)]">
           {[
             "iris_create_post",
-            "iris_upload_post_asset",
+            "iris_prepare_post_asset_upload",
             "iris_list_post_comments",
             "iris_get_post_insights",
           ].map((tool) => (
-            <div key={tool} className="px-5 py-3.5 font-mono text-sm text-[color:var(--iris-ink-soft)]">
+            <div
+              key={tool}
+              className="px-5 py-3.5 font-mono text-sm text-[color:var(--iris-ink-soft)]"
+            >
               {tool}
               <span className="text-[color:var(--iris-primary)]">()</span>
             </div>
@@ -98,7 +106,8 @@ function FeatureVisual({ index }: { index: number }) {
                 key={cell}
                 className={cn(
                   "flex aspect-square items-center justify-center bg-[color:var(--iris-canvas)] text-xs text-[color:var(--iris-ink-muted)]",
-                  marked && "bg-[color:var(--iris-primary)]/10 font-semibold text-[color:var(--iris-primary)]",
+                  marked &&
+                    "bg-[color:var(--iris-primary)]/10 font-semibold text-[color:var(--iris-primary)]",
                 )}
               >
                 {cell + 1}
@@ -129,8 +138,12 @@ function FeatureVisual({ index }: { index: number }) {
                 {String(i + 1).padStart(2, "0")}
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-[color:var(--iris-ink)]">{step}</p>
-                <p className="mt-0.5 truncate text-xs text-[color:var(--iris-ink-muted)]">{detail}</p>
+                <p className="text-sm font-semibold text-[color:var(--iris-ink)]">
+                  {step}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-[color:var(--iris-ink-muted)]">
+                  {detail}
+                </p>
               </div>
             </div>
           ))}
@@ -148,14 +161,19 @@ function FeatureVisual({ index }: { index: number }) {
       </div>
       <div className="p-5">
         <div className="iris-stage-code-block">
-          <p className="font-mono text-xs text-[color:var(--iris-ink-muted)]">X-Hub-Signature-256</p>
+          <p className="font-mono text-xs text-[color:var(--iris-ink-muted)]">
+            X-Hub-Signature-256
+          </p>
           <p className="mt-2 font-mono text-xs break-all text-[color:var(--iris-ink-soft)]">
             sha256=4f2a9c…e81d — assinatura verificada
           </p>
         </div>
         <p className="mt-4 text-sm text-[color:var(--iris-ink-soft)]">
-          Evento <span className="font-medium text-[color:var(--iris-primary)]">comments</span> sincronizado
-          em 340ms.
+          Evento{" "}
+          <span className="font-medium text-[color:var(--iris-primary)]">
+            comments
+          </span>{" "}
+          sincronizado em 340ms.
         </p>
       </div>
     </div>

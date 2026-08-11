@@ -79,7 +79,12 @@ export type LandingMessages = {
     titleLine1: string;
     titleLine2: string;
     subtitle: string;
-    steps: [LandingStepMessages, LandingStepMessages, LandingStepMessages, LandingStepMessages];
+    steps: [
+      LandingStepMessages,
+      LandingStepMessages,
+      LandingStepMessages,
+      LandingStepMessages,
+    ];
   };
   features: {
     sectionLabel: string;
@@ -113,7 +118,11 @@ export type LandingMessages = {
     manifestoNote: string;
     manifestoQuestion: string;
     manifestoAnswer: string;
-    items: [LandingPricingItemMessages, LandingPricingItemMessages, LandingPricingItemMessages];
+    items: [
+      LandingPricingItemMessages,
+      LandingPricingItemMessages,
+      LandingPricingItemMessages,
+    ];
     noteLabel: string;
     note: string;
   };

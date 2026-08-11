@@ -17,7 +17,9 @@ export function formatInsightValue(value: number): string {
 }
 
 export function insightMetricValue(
-  metrics: Array<{ name: string; values: Array<{ value: number }> }> | undefined,
+  metrics:
+    | Array<{ name: string; values: Array<{ value: number }> }>
+    | undefined,
   name: string,
 ): number | null {
   const metric = metrics?.find((item) => item.name === name);

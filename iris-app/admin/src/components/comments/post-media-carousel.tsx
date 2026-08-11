@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, ImageIcon, Loader2, PlayCircle } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
+  Loader2,
+  PlayCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type CarouselSlide = {
@@ -44,11 +50,15 @@ export function PostMediaCarousel({
   }, [slides]);
 
   const goPrev = () => {
-    setIndex((currentIndex) => (currentIndex === 0 ? slides.length - 1 : currentIndex - 1));
+    setIndex((currentIndex) =>
+      currentIndex === 0 ? slides.length - 1 : currentIndex - 1,
+    );
   };
 
   const goNext = () => {
-    setIndex((currentIndex) => (currentIndex === slides.length - 1 ? 0 : currentIndex + 1));
+    setIndex((currentIndex) =>
+      currentIndex === slides.length - 1 ? 0 : currentIndex + 1,
+    );
   };
 
   return (
@@ -102,7 +112,9 @@ export function PostMediaCarousel({
             </div>
             <div className="space-y-1">
               <ImageIcon className="mx-auto size-5 text-muted-foreground/70" />
-              <p className="text-xs text-muted-foreground">Prévia indisponível</p>
+              <p className="text-xs text-muted-foreground">
+                Prévia indisponível
+              </p>
             </div>
           </div>
         )}
@@ -162,7 +174,9 @@ export function PostMediaCarousel({
                 onClick={() => setIndex(slideIndex)}
                 className={cn(
                   "h-1.5 rounded-full transition-[width,background-color]",
-                  slideIndex === index ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/35",
+                  slideIndex === index
+                    ? "w-5 bg-primary"
+                    : "w-1.5 bg-muted-foreground/35",
                 )}
                 aria-label={`Ir para slide ${slideIndex + 1}`}
               />
@@ -180,7 +194,9 @@ export function PostMediaCarousel({
         </div>
       ) : !isHero && slides.length === 1 ? (
         <div className="mt-2 flex h-9 items-center justify-center gap-2">
-          <span className="text-xs text-muted-foreground tabular-nums">1 / 1</span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            1 / 1
+          </span>
         </div>
       ) : null}
     </div>

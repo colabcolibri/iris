@@ -22,7 +22,9 @@ type PendingPreview = {
   height: number | null;
 };
 
-function readImageDimensions(file: File): Promise<{ width: number; height: number }> {
+function readImageDimensions(
+  file: File,
+): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const image = new Image();
@@ -45,10 +47,8 @@ export function PostMediaSection({
   mode,
   onFilesChange,
 }: PostMediaSectionProps) {
-  const { items, loading, busyId, deleteAsset, reorder, move } = usePostMediaAssets(
-    postId,
-    refreshKey,
-  );
+  const { items, loading, busyId, deleteAsset, reorder, move } =
+    usePostMediaAssets(postId, refreshKey);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [pendingPreviews, setPendingPreviews] = useState<PendingPreview[]>([]);

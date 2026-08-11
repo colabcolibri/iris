@@ -13,7 +13,8 @@ export const GLOBAL_REPLY_MODE_OPTIONS: ReplyModeOption<ReplyMode>[] = [
   {
     value: "off",
     label: "Desligado",
-    description: "A Iris não responde comentários em nenhum post que siga o global.",
+    description:
+      "A Iris não responde comentários em nenhum post que siga o global.",
     icon: BotOff,
   },
   {
@@ -25,37 +26,42 @@ export const GLOBAL_REPLY_MODE_OPTIONS: ReplyModeOption<ReplyMode>[] = [
   {
     value: "draft",
     label: "Com aprovação",
-    description: "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
+    description:
+      "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
     icon: ClipboardCheck,
   },
 ];
 
-export const POST_REPLY_MODE_OPTIONS: ReplyModeOption<PostReplyModeSetting>[] = [
-  {
-    value: "inherit",
-    label: "Seguir global",
-    description: "Usa o modo definido nas configurações do agente de comentários.",
-    icon: Globe2,
-  },
-  {
-    value: "off",
-    label: "Pausar nesta publicação",
-    description: "A Iris não responde comentários desta publicação (o modo global continua igual).",
-    icon: BotOff,
-  },
-  {
-    value: "auto",
-    label: "Automático",
-    description: "A Iris responde e publica no Instagram sem revisão.",
-    icon: Zap,
-  },
-  {
-    value: "draft",
-    label: "Com aprovação",
-    description: "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
-    icon: ClipboardCheck,
-  },
-];
+export const POST_REPLY_MODE_OPTIONS: ReplyModeOption<PostReplyModeSetting>[] =
+  [
+    {
+      value: "inherit",
+      label: "Seguir global",
+      description:
+        "Usa o modo definido nas configurações do agente de comentários.",
+      icon: Globe2,
+    },
+    {
+      value: "off",
+      label: "Pausar nesta publicação",
+      description:
+        "A Iris não responde comentários desta publicação (o modo global continua igual).",
+      icon: BotOff,
+    },
+    {
+      value: "auto",
+      label: "Automático",
+      description: "A Iris responde e publica no Instagram sem revisão.",
+      icon: Zap,
+    },
+    {
+      value: "draft",
+      label: "Com aprovação",
+      description:
+        "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
+      icon: ClipboardCheck,
+    },
+  ];
 
 export function replyModeOption(value: ReplyMode): ReplyModeOption<ReplyMode> {
   return (

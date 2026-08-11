@@ -30,12 +30,16 @@ type FieldHintProps = {
 };
 
 function FieldHint({ children }: FieldHintProps) {
-  return <p className="text-xs leading-relaxed text-muted-foreground">{children}</p>;
+  return (
+    <p className="text-xs leading-relaxed text-muted-foreground">{children}</p>
+  );
 }
 
 export function PersonaPage() {
   const [persona, setPersona] = useState<ReplyPersona | null>(null);
-  const [responseLanguage, setResponseLanguage] = useState(DEFAULT_RESPONSE_LANGUAGE);
+  const [responseLanguage, setResponseLanguage] = useState(
+    DEFAULT_RESPONSE_LANGUAGE,
+  );
   const [brandName, setBrandName] = useState("");
   const [signatureInstruction, setSignatureInstruction] = useState("");
   const [maxChars, setMaxChars] = useState(500);
@@ -52,7 +56,9 @@ export function PersonaPage() {
     void Promise.all([fetchReplyPersona(), fetchAgentContent()])
       .then(([personaData, contentData]) => {
         setPersona(personaData);
-        setResponseLanguage(personaData.response_language ?? DEFAULT_RESPONSE_LANGUAGE);
+        setResponseLanguage(
+          personaData.response_language ?? DEFAULT_RESPONSE_LANGUAGE,
+        );
         setBrandName(personaData.brand_name ?? "");
         setSignatureInstruction(personaData.signature_instruction ?? "");
         setMaxChars(personaData.max_chars);
@@ -96,15 +102,17 @@ export function PersonaPage() {
       setAgentContent(saved);
       toast.success("Conteúdo do agente salvo.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar conteúdo.");
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao salvar conteúdo.",
+      );
     } finally {
       setSavingContent(false);
     }
   }
 
   const selectedLanguage =
-    RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)?.label ??
-    responseLanguage;
+    RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)
+      ?.label ?? responseLanguage;
 
   return (
     <PageContainer>
@@ -130,8 +138,13 @@ export function PersonaPage() {
                     }
                   }}
                 >
-                  <SelectTrigger id="response-language" className="w-full bg-background">
-                    <SelectValue placeholder="Selecione o idioma">{selectedLanguage}</SelectValue>
+                  <SelectTrigger
+                    id="response-language"
+                    className="w-full bg-background"
+                  >
+                    <SelectValue placeholder="Selecione o idioma">
+                      {selectedLanguage}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="start">
                     {RESPONSE_LANGUAGE_OPTIONS.map((option) => (
@@ -142,9 +155,9 @@ export function PersonaPage() {
                   </SelectContent>
                 </Select>
                 <FieldHint>
-                  Idioma obrigatório de todas as respostas públicas no Instagram. Os prompts
-                  internos do harness ficam em inglês; este idioma é reforçado em triagem,
-                  rascunho e verificação.
+                  Idioma obrigatório de todas as respostas públicas no
+                  Instagram. Os prompts internos do harness ficam em inglês;
+                  este idioma é reforçado em triagem, rascunho e verificação.
                 </FieldHint>
               </div>
 
@@ -157,13 +170,15 @@ export function PersonaPage() {
                   placeholder="Ex.: Colab Colibri"
                 />
                 <FieldHint>
-                  Nome exibido no topo dos prompts de rascunho, logo após o idioma. Ajuda a IA a se
-                  referir à marca corretamente.
+                  Nome exibido no topo dos prompts de rascunho, logo após o
+                  idioma. Ajuda a IA a se referir à marca corretamente.
                 </FieldHint>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signature-instruction">Instrução de assinatura</Label>
+                <Label htmlFor="signature-instruction">
+                  Instrução de assinatura
+                </Label>
                 <Textarea
                   id="signature-instruction"
                   rows={3}
@@ -172,9 +187,10 @@ export function PersonaPage() {
                   placeholder="Ex.: Assine sempre com “— Equipe Colab” ou use o primeiro nome do atendente."
                 />
                 <FieldHint>
-                  Como a IA deve encerrar a resposta. Na publicação, corpo e assinatura ficam
-                  separados por um ponto em linha própria (texto, depois «.», depois a assinatura) —
-                  formato que funciona bem no Instagram.
+                  Como a IA deve encerrar a resposta. Na publicação, corpo e
+                  assinatura ficam separados por um ponto em linha própria
+                  (texto, depois «.», depois a assinatura) — formato que
+                  funciona bem no Instagram.
                 </FieldHint>
               </div>
 
@@ -189,18 +205,23 @@ export function PersonaPage() {
                   onChange={(e) => setMaxChars(Number(e.target.value))}
                 />
                 <FieldHint>
-                  Teto de caracteres da resposta final no Instagram. O verificador rejeita rascunhos
-                  que ultrapassarem este limite.
+                  Teto de caracteres da resposta final no Instagram. O
+                  verificador rejeita rascunhos que ultrapassarem este limite.
                 </FieldHint>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+                <Button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={saving}
+                >
                   Salvar persona
                 </Button>
                 {persona?.updated_at ? (
                   <span className="self-center text-xs text-muted-foreground">
-                    Atualizado: {new Date(persona.updated_at).toLocaleString("pt-BR")}
+                    Atualizado:{" "}
+                    {new Date(persona.updated_at).toLocaleString("pt-BR")}
                   </span>
                 ) : null}
               </div>
@@ -210,10 +231,13 @@ export function PersonaPage() {
 
         <Card className="mt-6 space-y-5 border-border bg-card p-6 shadow-none">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Conteúdo do agente</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              Conteúdo do agente
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Blocos editoriais usados pelo harness em estágios diferentes. Salvo no mesmo banco da
-              persona — não depende mais de arquivos em disco.
+              Blocos editoriais usados pelo harness em estágios diferentes.
+              Salvo no mesmo banco da persona — não depende mais de arquivos em
+              disco.
             </p>
           </div>
 
@@ -230,8 +254,9 @@ export function PersonaPage() {
                   onChange={(e) => setSoul(e.target.value)}
                 />
                 <FieldHint>
-                  Voz, personalidade e tom da marca. Usado em respostas completas (tier full), não
-                  entra na triagem nem em respostas curtas simples.
+                  Voz, personalidade e tom da marca. Usado em respostas
+                  completas (tier full), não entra na triagem nem em respostas
+                  curtas simples.
                 </FieldHint>
               </div>
 
@@ -244,8 +269,8 @@ export function PersonaPage() {
                   onChange={(e) => setPage(e.target.value)}
                 />
                 <FieldHint>
-                  Contexto do perfil ou campanha: o que é a conta, público-alvo e objetivo editorial.
-                  Reforça o SOUL em respostas elaboradas.
+                  Contexto do perfil ou campanha: o que é a conta, público-alvo
+                  e objetivo editorial. Reforça o SOUL em respostas elaboradas.
                 </FieldHint>
               </div>
 
@@ -258,8 +283,9 @@ export function PersonaPage() {
                   onChange={(e) => setKnowledge(e.target.value)}
                 />
                 <FieldHint>
-                  Fatos, links oficiais, preços, políticas e respostas-modelo. Usado em respostas
-                  simples e completas quando o comentário pede informação concreta.
+                  Fatos, links oficiais, preços, políticas e respostas-modelo.
+                  Usado em respostas simples e completas quando o comentário
+                  pede informação concreta.
                 </FieldHint>
               </div>
 
@@ -272,8 +298,9 @@ export function PersonaPage() {
                   onChange={(e) => setRestrictions(e.target.value)}
                 />
                 <FieldHint>
-                  O que a IA nunca deve fazer ou prometer. Entra na triagem, nos rascunhos e na
-                  verificação final — é o principal filtro de política da marca.
+                  O que a IA nunca deve fazer ou prometer. Entra na triagem, nos
+                  rascunhos e na verificação final — é o principal filtro de
+                  política da marca.
                 </FieldHint>
               </div>
 
@@ -287,7 +314,8 @@ export function PersonaPage() {
                 </Button>
                 {agentContent?.updated_at ? (
                   <span className="self-center text-xs text-muted-foreground">
-                    Atualizado: {new Date(agentContent.updated_at).toLocaleString("pt-BR")}
+                    Atualizado:{" "}
+                    {new Date(agentContent.updated_at).toLocaleString("pt-BR")}
                   </span>
                 ) : null}
               </div>

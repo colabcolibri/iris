@@ -16,11 +16,17 @@ type IrisSidebarProviderProps = {
   className?: string;
 };
 
-export function IrisSidebarProvider({ children, className }: IrisSidebarProviderProps) {
+export function IrisSidebarProvider({
+  children,
+  className,
+}: IrisSidebarProviderProps) {
   return (
     <SidebarProvider
       defaultOpen={false}
-      className={cn("flex h-svh flex-col overflow-hidden bg-background", className)}
+      className={cn(
+        "flex h-svh flex-col overflow-hidden bg-background",
+        className,
+      )}
       style={{ "--sidebar-width": IRIS_SIDEBAR_WIDTH } as CSSProperties}
     >
       {children}
@@ -37,7 +43,10 @@ export function IrisSidebar({ children, className }: IrisSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className={cn("top-14 h-[calc(100svh-3.5rem)] border-sidebar-border bg-sidebar shadow-none", className)}
+      className={cn(
+        "top-14 h-[calc(100svh-3.5rem)] border-sidebar-border bg-sidebar shadow-none",
+        className,
+      )}
     >
       <SidebarContent
         className={cn(
@@ -61,10 +70,16 @@ type IrisSidebarInsetProps = {
   className?: string;
 };
 
-export function IrisSidebarInset({ children, className }: IrisSidebarInsetProps) {
+export function IrisSidebarInset({
+  children,
+  className,
+}: IrisSidebarInsetProps) {
   return (
     <SidebarInset
-      className={cn("flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden", className)}
+      className={cn(
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+        className,
+      )}
     >
       {children}
     </SidebarInset>
@@ -78,7 +93,10 @@ type IrisSidebarTriggerProps = {
 export function IrisSidebarTrigger({ className }: IrisSidebarTriggerProps) {
   return (
     <SidebarTrigger
-      className={cn("text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground size-11", className)}
+      className={cn(
+        "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground size-11",
+        className,
+      )}
       aria-label="Alternar menu lateral"
     />
   );

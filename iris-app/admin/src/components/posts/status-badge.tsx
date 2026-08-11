@@ -2,7 +2,10 @@ import { cn } from "@/lib/utils";
 import { POST_STATUS_LABELS } from "@/lib/status";
 import type { PostStatus } from "@/lib/types";
 
-const STATUS_META: Record<PostStatus, { pill: string; dot: string; ring: string }> = {
+const STATUS_META: Record<
+  PostStatus,
+  { pill: string; dot: string; ring: string }
+> = {
   draft: {
     pill: "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
     dot: "bg-stone-500",

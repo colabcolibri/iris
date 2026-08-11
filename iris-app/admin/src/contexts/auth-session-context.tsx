@@ -105,7 +105,11 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     [status, email, refresh, signOut, invalidateSession],
   );
 
-  return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;
+  return (
+    <AuthSessionContext.Provider value={value}>
+      {children}
+    </AuthSessionContext.Provider>
+  );
 }
 
 export function useAuthSession() {

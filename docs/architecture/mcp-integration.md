@@ -66,8 +66,18 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_get_post` | Post + metadados de assets |
 | `iris_create_post` | Cria rascunho (`caption`, `channel`, `scheduledAt`) |
 | `iris_update_post` | Atualiza legenda, agenda ou status |
-| `iris_upload_post_asset` | Upload de imagem via base64 |
+| `iris_prepare_post_asset_upload` | URL assinada one-shot + `curl` multipart (sem base64) |
 | `iris_list_post_comments` | Comentários sincronizados do post |
+
+### Upload de imagem via MCP
+
+Bytes **não** entram no JSON-RPC. Fluxo:
+
+1. Tool `iris_prepare_post_asset_upload` (`postId`, `filename`, `sortOrder`) → `upload_url`, `curl_command`
+2. Host: `curl -sf -X POST '{upload_url}' -F 'file=@/caminho/local.png'`
+3. Server grava via `ingestPostAsset` (Sharp → `data/media/`)
+
+Requisitos: `IRIS_PUBLIC_BASE_URL` + `IRIS_PUBLISH_URL_SECRET`. URL one-shot (~5 min). Clientes sem shell (ex.: ChatGPT connector puro) devem subir pela UI admin.
 
 Escopo equivalente ao token **agent** REST — sem tokens Meta nem rotas admin-only.
 
@@ -182,6 +192,8 @@ Ver também `docs/02_security.md` — § MCP.
 | ------- | --------- |
 | `401` no validate | Código errado ou não espelhado no `.env` do server |
 | `401` no `/mcp` | Header `Authorization: Bearer` ausente ou incorreto |
+| Prepare upload falha com env | `IRIS_PUBLIC_BASE_URL` e `IRIS_PUBLISH_URL_SECRET` no server |
+| `403` no `/upload/assets/...` | URL expirada, assinatura inválida ou já usada (one-shot) |
 | `406` no `/mcp` | Client sem header `Accept: application/json, text/event-stream` |
 | Connection refused | `pnpm dev` não está rodando |
 | ChatGPT não conecta | URL HTTPS público; reinicie o Iris após deploy; em dev o Host via ngrok era bloqueado (corrigido) |

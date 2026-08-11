@@ -147,7 +147,7 @@ Diagramas: ver § Architecture diagrams (`iris-reply-agent-*`).
 
 1. Client envia `POST /mcp` com `Authorization: Bearer <IRIS_MCP_CONNECTION_CODE>`
 2. Handshake MCP → `tools/list` expõe operações editoriais
-3. Tool invoca use-cases equivalentes ao REST agent (posts, assets, comments)
+3. Tool invoca use-cases equivalentes ao REST agent (posts, comments); assets via prepare + `POST /upload/assets/...` multipart (sem base64 no MCP)
 
 Ver `docs/architecture/mcp-integration.md` para setup por client.
 

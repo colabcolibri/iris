@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 export type LandingSectionTone = "parchment" | "canvas" | "dark" | "pearl";
 
 const TONE_CLASS: Record<LandingSectionTone, string> = {
-  parchment: "bg-[color:var(--iris-canvas-parchment)] text-[color:var(--iris-ink)]",
+  parchment:
+    "bg-[color:var(--iris-canvas-parchment)] text-[color:var(--iris-ink)]",
   canvas: "bg-[color:var(--iris-canvas)] text-[color:var(--iris-ink)]",
   dark: "bg-[color:var(--iris-surface-tile)] text-[color:var(--iris-ink-on-dark)]",
   pearl: "bg-[color:var(--iris-surface-pearl)] text-[color:var(--iris-ink)]",
@@ -59,7 +60,9 @@ export function LandingSectionIntro({
       <p
         className={cn(
           "text-xs font-medium tracking-[0.14em] uppercase",
-          onDark ? "text-[color:var(--iris-ink-muted-on-dark)]" : "text-[color:var(--iris-ink-muted)]",
+          onDark
+            ? "text-[color:var(--iris-ink-muted-on-dark)]"
+            : "text-[color:var(--iris-ink-muted)]",
         )}
       >
         {eyebrow}
@@ -67,7 +70,9 @@ export function LandingSectionIntro({
       <h2
         className={cn(
           "mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.5rem] lg:leading-[1.1]",
-          onDark ? "text-[color:var(--iris-ink-on-dark)]" : "text-[color:var(--iris-ink)]",
+          onDark
+            ? "text-[color:var(--iris-ink-on-dark)]"
+            : "text-[color:var(--iris-ink)]",
         )}
       >
         {title}
@@ -76,7 +81,9 @@ export function LandingSectionIntro({
         <p
           className={cn(
             "mt-4 text-base leading-relaxed sm:text-lg sm:leading-[1.55]",
-            onDark ? "text-[color:var(--iris-ink-muted-on-dark)]" : "text-[color:var(--iris-ink-soft)]",
+            onDark
+              ? "text-[color:var(--iris-ink-muted-on-dark)]"
+              : "text-[color:var(--iris-ink-soft)]",
           )}
         >
           {subtitle}
@@ -99,7 +106,7 @@ export function LandingPrimaryCta({
     <a
       href={href}
       className={cn(
-        "inline-flex h-11 items-center justify-center px-6 text-[15px] font-medium transition-transform active:scale-[0.98]",
+        "inline-flex h-11 items-center justify-center px-6 text-base font-medium transition-transform active:scale-[0.98]",
         variant === "filled"
           ? "rounded-[var(--iris-radius-pill)] bg-[color:var(--iris-primary)] text-[color:var(--iris-on-primary)] hover:opacity-95"
           : "rounded-[var(--iris-radius-pill)] border border-[color:var(--iris-primary)] text-[color:var(--iris-primary)] hover:bg-[color:var(--iris-primary)]/5",

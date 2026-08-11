@@ -12,13 +12,18 @@ import {
   type ConfirmDialogProps,
 } from "@/components/templates/confirm-dialog";
 
-type ConfirmRequest = Omit<ConfirmDialogProps, "open" | "onOpenChange" | "onConfirm" | "loading">;
+type ConfirmRequest = Omit<
+  ConfirmDialogProps,
+  "open" | "onOpenChange" | "onConfirm" | "loading"
+>;
 
 type ConfirmDialogContextValue = {
   confirm: (request: ConfirmRequest) => Promise<boolean>;
 };
 
-const ConfirmDialogContext = createContext<ConfirmDialogContextValue | null>(null);
+const ConfirmDialogContext = createContext<ConfirmDialogContextValue | null>(
+  null,
+);
 
 export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -78,7 +83,9 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
 export function useConfirmDialog() {
   const context = useContext(ConfirmDialogContext);
   if (!context) {
-    throw new Error("useConfirmDialog must be used within ConfirmDialogProvider");
+    throw new Error(
+      "useConfirmDialog must be used within ConfirmDialogProvider",
+    );
   }
   return context;
 }

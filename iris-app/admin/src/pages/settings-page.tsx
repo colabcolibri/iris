@@ -55,7 +55,10 @@ export function SettingsPage() {
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="timezone" className="text-xs font-semibold tracking-wide uppercase">
+                <Label
+                  htmlFor="timezone"
+                  className="text-xs font-semibold tracking-wide uppercase"
+                >
                   Fuso horário editorial
                 </Label>
                 <select
@@ -71,7 +74,10 @@ export function SettingsPage() {
                   ))}
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  Agora neste fuso: <span className="font-semibold text-foreground">{preview}</span>
+                  Agora neste fuso:{" "}
+                  <span className="font-semibold text-foreground">
+                    {preview}
+                  </span>
                 </p>
               </div>
 
@@ -84,20 +90,24 @@ export function SettingsPage() {
                   Salvar alterações
                 </Button>
                 {draft && draft !== timezone && (
-                  <Button type="button" variant="ghost" onClick={() => setDraft(null)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setDraft(null)}
+                  >
                     Descartar
                   </Button>
                 )}
               </div>
             </>
           )}
-          </Card>
+        </Card>
 
-          <AutoMonitorCard />
+        <AutoMonitorCard />
 
-          <AgentAutoReplyCard />
+        <AgentAutoReplyCard />
 
-          <McpConnectionCard />
+        <McpConnectionCard />
 
         <LlmSettingsCard />
       </PageContainer.Content>

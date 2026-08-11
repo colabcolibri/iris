@@ -22,7 +22,11 @@ export const SIMULATOR_SCENARIOS: SimulatorScenario[] = [
     carousel_summary:
       "5 slides: capa do jogo, cartas em mesa, pessoas conversando, close de uma carta com pergunta aberta e cena de grupo em roda.",
     thread: [
-      { author: "renata.psi", text: "Amei a ideia de tirar o celular da mesa!", is_brand_reply: false },
+      {
+        author: "renata.psi",
+        text: "Amei a ideia de tirar o celular da mesa!",
+        is_brand_reply: false,
+      },
       {
         author: "marca",
         text: "Exato — o jogo cria um ritual de presença. Funciona muito em família também 💛",
@@ -41,10 +45,15 @@ export const SIMULATOR_SCENARIOS: SimulatorScenario[] = [
     carousel_summary:
       "Reel vertical em 3 cortes: rosto em silêncio, gesto de atenção, texto na tela com a frase da legenda.",
     thread: [
-      { author: "marcos.coach", text: "Isso mudou minha reunião de equipe hoje.", is_brand_reply: false },
+      {
+        author: "marcos.coach",
+        text: "Isso mudou minha reunião de equipe hoje.",
+        is_brand_reply: false,
+      },
     ],
     target_author: "lucia.hr",
-    target_text: "Tem um exemplo de pergunta que abre sem parecer interrogatório?",
+    target_text:
+      "Tem um exemplo de pergunta que abre sem parecer interrogatório?",
   },
   {
     id: "cnv-formula",
@@ -55,11 +64,20 @@ export const SIMULATOR_SCENARIOS: SimulatorScenario[] = [
     carousel_summary:
       "Quote card em tipografia serif sobre fundo creme, seguido de contraste entre frase julgadora e frase observacional.",
     thread: [
-      { author: "ana.educadora", text: "Sempre confundi sentimento com julgamento.", is_brand_reply: false },
-      { author: "pedro.dev", text: "O segundo exemplo me pegou.", is_brand_reply: false },
+      {
+        author: "ana.educadora",
+        text: "Sempre confundi sentimento com julgamento.",
+        is_brand_reply: false,
+      },
+      {
+        author: "pedro.dev",
+        text: "O segundo exemplo me pegou.",
+        is_brand_reply: false,
+      },
     ],
     target_author: "ana.educadora",
-    target_text: "Como você diferencia julgamento de sentimento num feedback no trabalho?",
+    target_text:
+      "Como você diferencia julgamento de sentimento num feedback no trabalho?",
   },
   {
     id: "livro-trabalho",
@@ -77,34 +95,51 @@ export const SIMULATOR_SCENARIOS: SimulatorScenario[] = [
       },
     ],
     target_author: "carla.gestora",
-    target_text: "Li o capítulo 3 e quero usar numa retrospectiva. O exercício do final é pra duplas ou grupo inteiro?",
+    target_text:
+      "Li o capítulo 3 e quero usar numa retrospectiva. O exercício do final é pra duplas ou grupo inteiro?",
   },
   {
     id: "democracia-profunda",
     label: "Thread — democracia e escuta",
-    description: "Post editorial longo com debate na thread e nova pergunta sensível.",
+    description:
+      "Post editorial longo com debate na thread e nova pergunta sensível.",
     caption:
       "Democracia profunda começa onde a gente para de tratar o outro como ameaça. Escuta não é concordar — é manter a conversa possível.",
     carousel_summary:
       "Carrossel com 4 slides: cena de roda de conversa, citação sobre poder e privilégio, pessoa anotando e convite à reflexão.",
     thread: [
-      { author: "joao.cidadania", text: "Post necessário.", is_brand_reply: false },
-      { author: "marina.politica", text: "Como escutar quem fala com raiva legítima?", is_brand_reply: false },
+      {
+        author: "joao.cidadania",
+        text: "Post necessário.",
+        is_brand_reply: false,
+      },
+      {
+        author: "marina.politica",
+        text: "Como escutar quem fala com raiva legítima?",
+        is_brand_reply: false,
+      },
       {
         author: "marca",
         text: "A raiva também carrega informação. A escuta começa validando o que está vivo antes de pedir calma.",
         is_brand_reply: true,
       },
-      { author: "joao.cidadania", text: "Faz sentido. Difícil na prática.", is_brand_reply: false },
+      {
+        author: "joao.cidadania",
+        text: "Faz sentido. Difícil na prática.",
+        is_brand_reply: false,
+      },
     ],
     target_author: "marina.politica",
-    target_text: "Quando a pessoa só quer confronto, ainda vale insistir na escuta?",
+    target_text:
+      "Quando a pessoa só quer confronto, ainda vale insistir na escuta?",
   },
 ];
 
 export const DEFAULT_SIMULATOR_SCENARIO_ID = SIMULATOR_SCENARIOS[0].id;
 
-export function getSimulatorScenario(id: string): SimulatorScenario | undefined {
+export function getSimulatorScenario(
+  id: string,
+): SimulatorScenario | undefined {
   return SIMULATOR_SCENARIOS.find((scenario) => scenario.id === id);
 }
 

@@ -35,7 +35,11 @@ export function LoginPage() {
       setStep("code");
       if (resend) setFeedback("Código reenviado.");
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : "Não foi possível enviar o código.");
+      setFeedback(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível enviar o código.",
+      );
     } finally {
       setLoading(false);
     }
@@ -67,7 +71,9 @@ export function LoginPage() {
           : ROUTES.admin.root;
       navigate(safeReturn, { replace: true });
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : "Código inválido ou expirado.");
+      setFeedback(
+        err instanceof Error ? err.message : "Código inválido ou expirado.",
+      );
     } finally {
       setLoading(false);
     }
@@ -80,9 +86,13 @@ export function LoginPage() {
           <div className="flex flex-col items-center gap-4 text-center">
             <BrandLogo size="lg" className="ring-0" />
             <div className="space-y-1">
-              <h1 className="font-display text-4xl font-semibold tracking-tight">iris</h1>
+              <h1 className="font-display text-4xl font-semibold tracking-tight">
+                iris
+              </h1>
               <p className="text-base text-muted-foreground">
-                {step === "email" ? "Entrar com seu email" : `Código enviado para ${email}`}
+                {step === "email"
+                  ? "Entrar com seu email"
+                  : `Código enviado para ${email}`}
               </p>
             </div>
           </div>
@@ -157,11 +167,16 @@ export function LoginPage() {
           )}
 
           {feedback && (
-            <p className="text-center text-sm text-muted-foreground">{feedback}</p>
+            <p className="text-center text-sm text-muted-foreground">
+              {feedback}
+            </p>
           )}
 
           <p className="text-center text-xs text-muted-foreground">
-            <Link to={ROUTES.privacy} className="hover:text-foreground hover:underline">
+            <Link
+              to={ROUTES.privacy}
+              className="hover:text-foreground hover:underline"
+            >
               Política de privacidade
             </Link>
           </p>

@@ -1,4 +1,8 @@
-import type { Comment, CommentPostSummary, PostInsightsResult } from "@/lib/types";
+import type {
+  Comment,
+  CommentPostSummary,
+  PostInsightsResult,
+} from "@/lib/types";
 
 export const COMMENTS_CACHE_STALE_MS = 2 * 60 * 1000;
 export const INSIGHTS_CACHE_STALE_MS = 15 * 60 * 1000;
@@ -19,7 +23,11 @@ export type CachedPosts = {
   fetchedAt: number;
 };
 
-export function isCacheFresh(fetchedAt: number, staleMs: number, now = Date.now()): boolean {
+export function isCacheFresh(
+  fetchedAt: number,
+  staleMs: number,
+  now = Date.now(),
+): boolean {
   return now - fetchedAt < staleMs;
 }
 
@@ -30,7 +38,8 @@ export function derivePostCountsFromComments(comments: Comment[]): {
   const active = comments.filter((comment) => !comment.deleted_at);
   return {
     comments_count: active.length,
-    pending_count: active.filter((comment) => comment.status === "pending").length,
+    pending_count: active.filter((comment) => comment.status === "pending")
+      .length,
   };
 }
 
@@ -120,7 +129,11 @@ export class CommentsPostCache {
     return this.insights.get(postId);
   }
 
-  setInsights(postId: string, data: PostInsightsResult, fetchedAt = Date.now()): void {
+  setInsights(
+    postId: string,
+    data: PostInsightsResult,
+    fetchedAt = Date.now(),
+  ): void {
     this.insights.set(postId, { data, fetchedAt });
   }
 

@@ -94,7 +94,7 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_get_post` | `GET /api/posts/:id` | Post + metadados de assets |
 | `iris_create_post` | `POST /api/posts` | Cria rascunho |
 | `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, agenda ou status |
-| `iris_upload_post_asset` | `POST /api/posts/:id/assets` | Upload base64 (MCP) / multipart (REST) |
+| `iris_prepare_post_asset_upload` | `POST /upload/assets/:sig/:postId` | Prepara URL assinada; host faz `curl -F file=@…` (sem base64) |
 | `iris_list_post_comments` | `GET /api/posts/:id/comments` | Comentários sincronizados |
 | `iris_get_reply_context` | `GET /api/comments/:id/reply-context` | Envelope completo para resposta |
 | `iris_get_post_insights` | `GET /api/posts/:id/insights` | Insights com cache 1h (`force`/`refresh`) |
@@ -154,8 +154,11 @@ Data de exibição: `COALESCE(scheduled_at, created_at)`.
 | PUT | `/api/posts/:id/assets/reorder` | admin, agent | Reordena (`asset_ids[]`) |
 | GET | `/api/posts/:id/assets/:filename` | admin | Bytes da imagem (preview UI) |
 | DELETE | `/api/posts/:id/assets/:assetId` | admin | Remove asset |
+| POST | `/upload/assets/:sig/:postId` | URL assinada (query `exp`, `sort`, `fn`, `jti`) | Multipart one-shot para MCP — sem Bearer |
 
 Post só vai para `scheduled` com ≥ 1 asset. Otimização JPEG server-side — ver `docs/architecture/image-optimization.md`.
+
+**MCP upload (sem base64):** a tool `iris_prepare_post_asset_upload` devolve `upload_url` + `curl_command`. O host substitui `LOCAL_IMAGE_PATH` e faz `POST` multipart; a URL é single-use (~5 min), assinada com `IRIS_PUBLISH_URL_SECRET`. Requer `IRIS_PUBLIC_BASE_URL`.
 
 ## Insights
 

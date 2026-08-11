@@ -34,7 +34,8 @@
   --iris-divider-soft: #eceae4;
 
   /* Elevation — product preview only */
-  --iris-product-shadow: 0 3px 5px 0 rgba(26, 24, 20, 0.14), 0 16px 40px -12px rgba(26, 24, 20, 0.2);
+  --iris-product-shadow:
+    0 3px 5px 0 rgba(26, 24, 20, 0.14), 0 16px 40px -12px rgba(26, 24, 20, 0.2);
 
   /* Radius */
   --iris-radius-xs: 5px;
@@ -55,11 +56,9 @@
   --iris-section-y-lg: 7.5rem;
   --iris-container: 72rem;
 
-  /* Typography */
+  /* Typography — families only; sizes live in @theme (text-xs|sm|base|…) */
   --iris-font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   --iris-font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --iris-body-size: 17px;
-  --iris-body-leading: 1.47;
 
   /* Aliases */
   --iris-surface-tile: var(--iris-surface-tile-1);

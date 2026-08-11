@@ -21,12 +21,12 @@ export function LandingFooter() {
               Iris
             </span>
           </Link>
-          <p className="max-w-md text-sm leading-[1.47] text-[color:var(--iris-ink-soft)]">
+          <p className="max-w-md text-sm leading-normal text-[color:var(--iris-ink-soft)]">
             {m.footer.blurb}
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 text-[17px] leading-[2.41]">
+        <div className="flex flex-col gap-3 text-base leading-[2.41]">
           <a
             href={`#${LANDING_SECTIONS.contact}`}
             className="text-[color:var(--iris-ink-soft)] transition-colors hover:text-[color:var(--iris-primary)]"

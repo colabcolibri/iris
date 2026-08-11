@@ -1,13 +1,20 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
-import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import {
+  LandingSection,
+  LandingSectionIntro,
+} from "@/components/landing/landing-section";
 
 export function LandingFaq() {
   const { m } = useLandingI18n();
 
   return (
     <LandingSection id={LANDING_SECTIONS.faq} tone="parchment">
-      <LandingSectionIntro eyebrow={m.faq.sectionLabel} title={m.faq.title} subtitle={m.faq.subtitle} />
+      <LandingSectionIntro
+        eyebrow={m.faq.sectionLabel}
+        title={m.faq.title}
+        subtitle={m.faq.subtitle}
+      />
 
       <div className="mt-10 max-w-3xl divide-y divide-[color:var(--iris-hairline)] border-y border-[color:var(--iris-hairline)]">
         {m.faq.items.map((item) => (
@@ -23,7 +30,7 @@ export function LandingFaq() {
                 </span>
               </span>
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-base sm:leading-[1.47]">
+            <p className="mt-3 text-sm leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-base sm:leading-normal">
               {item.answer}
             </p>
           </details>

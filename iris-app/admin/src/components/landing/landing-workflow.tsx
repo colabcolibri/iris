@@ -1,6 +1,9 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
-import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import {
+  LandingSection,
+  LandingSectionIntro,
+} from "@/components/landing/landing-section";
 
 export function LandingWorkflow() {
   const { m } = useLandingI18n();

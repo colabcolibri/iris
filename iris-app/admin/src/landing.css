@@ -29,7 +29,11 @@
 
 .iris-landing .iris-utility-card--dark {
   border-color: rgba(255, 255, 255, 0.1);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   backdrop-filter: blur(8px);
 }
 
@@ -144,12 +148,17 @@
 }
 
 .iris-landing .iris-form-input:hover:not(:disabled):not(:focus) {
-  border-color: color-mix(in srgb, var(--iris-hairline) 40%, var(--iris-ink-muted));
+  border-color: color-mix(
+    in srgb,
+    var(--iris-hairline) 40%,
+    var(--iris-ink-muted)
+  );
 }
 
 .iris-landing .iris-form-input:focus {
   border-color: var(--iris-primary);
-  outline: 2px solid color-mix(in srgb, var(--iris-primary-focus) 35%, transparent);
+  outline: 2px solid
+    color-mix(in srgb, var(--iris-primary-focus) 35%, transparent);
   outline-offset: 1px;
 }
 
@@ -192,7 +201,9 @@
   font-weight: 400;
   color: var(--iris-on-primary);
   cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.1s ease;
 }
 
 .iris-landing .iris-form-submit:hover:not(:disabled) {

@@ -1,6 +1,9 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
-import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import {
+  LandingSection,
+  LandingSectionIntro,
+} from "@/components/landing/landing-section";
 
 export function LandingTrust() {
   const { m } = useLandingI18n();
@@ -24,7 +27,10 @@ export function LandingTrust() {
 
       <ol className="mt-14 divide-y divide-white/10 border-y border-white/10">
         {m.trust.items.map((item, index) => (
-          <li key={item.title} className="flex flex-col gap-2 py-7 sm:flex-row sm:items-baseline sm:gap-8">
+          <li
+            key={item.title}
+            className="flex flex-col gap-2 py-7 sm:flex-row sm:items-baseline sm:gap-8"
+          >
             <span className="font-display text-sm text-[color:var(--iris-primary-on-dark)] sm:w-10 sm:shrink-0">
               {String(index + 1).padStart(2, "0")}
             </span>

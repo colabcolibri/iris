@@ -1,6 +1,9 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
-import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import {
+  LandingSection,
+  LandingSectionIntro,
+} from "@/components/landing/landing-section";
 
 export function LandingPricing() {
   const { m } = useLandingI18n();
@@ -12,7 +15,9 @@ export function LandingPricing() {
         title={
           <>
             <span className="block">{m.pricing.titleLine1}</span>
-            <span className="block italic text-[color:var(--iris-primary)]">{m.pricing.titleLine2}</span>
+            <span className="block italic text-[color:var(--iris-primary)]">
+              {m.pricing.titleLine2}
+            </span>
           </>
         }
         className="max-w-3xl"

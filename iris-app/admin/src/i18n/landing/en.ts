@@ -26,9 +26,11 @@ export const landingEn: LandingMessages = {
     cta: "I want to meet Iris",
     stage: {
       postHandle: "@nomad.studio",
-      postCaption: "Carousel · behind the scenes of the new collection, shot at our SP atelier.",
+      postCaption:
+        "Carousel · behind the scenes of the new collection, shot at our SP atelier.",
       commentAuthor: "@marianadias",
-      commentBody: "Loved the second slide! Are you launching in other cities too?",
+      commentBody:
+        "Loved the second slide! Are you launching in other cities too?",
       replyAuthor: "Nomad Studio",
       replyBody:
         "So glad you liked it! We're only in SP for now, but Belo Horizonte is on the radar for later this year 💜",
@@ -75,7 +77,7 @@ export const landingEn: LandingMessages = {
       {
         title: "Your AI agent creates and schedules posts",
         description:
-          "If you already use an AI assistant like Cursor, Claude, or ChatGPT, it can talk directly to Iris — create posts, send images, and check the calendar without you opening the dashboard. (The technical name for this connection is \"MCP\", in case you've heard the term.)",
+          'If you already use an AI assistant like Cursor, Claude, or ChatGPT, it can talk directly to Iris — create posts, send images, and check the calendar without you opening the dashboard. (The technical name for this connection is "MCP", in case you\'ve heard the term.)',
         highlight: true,
       },
       {
@@ -108,7 +110,7 @@ export const landingEn: LandingMessages = {
           "You can turn automatic replies on or off whenever you want — for every post at once, or just one — and set a waiting time before sending, as a last chance to review.",
       },
       {
-        title: "No one can \"trick\" the replies",
+        title: 'No one can "trick" the replies',
         description:
           "We've seen people try to fool AI assistants by hiding instructions inside a comment. Iris is trained to ignore that kind of trick — a comment can't make it drop its tone, language, or your brand's rules.",
       },
@@ -129,8 +131,10 @@ export const landingEn: LandingMessages = {
     titleLine1: "An Iris of your own,",
     titleLine2: "not a shared account",
     subtitle: "Not something you sign up for and start using on your own.",
-    manifestoNote: "I set up a version of Iris just for your brand, and teach you how to use it.",
-    manifestoQuestion: "Why this way, instead of selling it as a traditional SaaS subscription?",
+    manifestoNote:
+      "I set up a version of Iris just for your brand, and teach you how to use it.",
+    manifestoQuestion:
+      "Why this way, instead of selling it as a traditional SaaS subscription?",
     manifestoAnswer:
       "Because being a developer isn't my main occupation, and I'm not trying to start a company. Iris grew out of tools I built for my own use, which I decided to make available to other people too. I'm more of a small boutique, taking on one-off projects for people who genuinely see the value — not a software company chasing thousands of accounts.",
     items: [
@@ -201,8 +205,10 @@ export const landingEn: LandingMessages = {
       message: "Message",
       submit: "Send message",
       submitting: "Sending...",
-      success: "Thank you — we received your message and will reply by email shortly.",
-      validationError: "Fill in all fields. The message must be at least 10 characters.",
+      success:
+        "Thank you — we received your message and will reply by email shortly.",
+      validationError:
+        "Fill in all fields. The message must be at least 10 characters.",
       genericError: "Could not send right now. Please try again in a moment.",
     },
   },

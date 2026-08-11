@@ -4,7 +4,9 @@ import type { AppView } from "@/components/layout/app-sidebar";
 import { ROUTES } from "@/lib/routes";
 
 function readView(search: string): AppView {
-  return new URLSearchParams(search).get("view") === "kanban" ? "kanban" : "calendar";
+  return new URLSearchParams(search).get("view") === "kanban"
+    ? "kanban"
+    : "calendar";
 }
 
 export function useDashboardView() {
@@ -15,7 +17,11 @@ export function useDashboardView() {
 
   const setView = useCallback(
     (next: AppView) => {
-      navigate(next === "kanban" ? `${ROUTES.admin.root}?view=kanban` : ROUTES.admin.root);
+      navigate(
+        next === "kanban"
+          ? `${ROUTES.admin.root}?view=kanban`
+          : ROUTES.admin.root,
+      );
     },
     [navigate],
   );

@@ -1,7 +1,7 @@
 ---
 title: Design system
 status: approved
-version: 2.1
+version: 2.2
 updated: 2026-08-11
 depends_on: [05_architecture.md]
 blocks: []
@@ -107,7 +107,17 @@ Alinhado a `DESIGN-rules.md`. Em código: `--iris-*` em `iris-design-tokens.css`
 
 Ladder de weight: **300 / 400 / 600 / 700** — **500 deliberadamente ausente**. Strong inline = 600.
 
-Em CSS: `--font-sans` / `--font-display` e utilitário `.font-display`.
+**Admin — escala Tailwind (valores Iris no `@theme`):**
+
+| Uso | Utility | Valor Iris |
+| --- | --- | --- |
+| Título de linha / body | `text-base` | 17px |
+| Meta / filtros / captions | `text-sm` | 14px |
+| Badges / eyebrow / fine-print | `text-xs` | 12px |
+| Tagline / subtítulo | `text-xl` | 21px |
+| Display / h1 | `text-3xl` (+ `font-display`) | 34px |
+
+Não usar `text-[Npx]` nem classes inventadas (`text-body`, `text-micro`). Tamanhos vivem em `@theme` (`index.css`); families em `--iris-font-sans` / `--iris-font-display`. Markup só com utilities Tailwind.
 
 ## Radius & spacing
 
@@ -187,11 +197,16 @@ A pele Iris (tokens) não basta: o admin precisa de **um palco dominante** por t
 
 | Padrão | Quando usar | Regra |
 | --- | --- | --- |
-| **Stage focus** (padrão v1.15) | Hub de comentários e fluxos “selecionar item → trabalhar” | Lista é entrada (rail/drawer/voltar). Com item selecionado, o **stage** ocupa ≥ ~60% do inset (mídia + threads/ações). **Proibido:** três colunas permanentes (lista + preview + painel) no hub de comentários. |
+| **Stage focus** (padrão v1.15+) | Hub de comentários, webhooks, execuções e fluxos “selecionar item → trabalhar” | Lista é entrada (rail/drawer/voltar). Com item selecionado, o **stage** ocupa ≥ ~60% do inset. **Proibido:** três colunas permanentes no hub; **tabela wide** ou **split 50/50 permanente** em webhooks/execuções. |
+| **Lab / workshop** (v1.16) | Simulador do agente | Setup compacto (cenário + thread) + **palco de resultado** dominante após simular. Não é browse de histórico. Thread como conversa; resposta + stages no palco. |
 | **Master-detail curto** | Só quando os dois painéis são igualmente leves (ex.: preferências raras) | Dois painéis no máximo; nenhum pode ser “terceira fatia” espremendo o trabalho. |
 | **Mural editorial** | Calendário mensal | Dias **com** post = tiles densos (thumb/status/trecho). Dias **vazios** são secundários (não dominam o viewport). Empty state do mês = mensagem curta + CTA, não mar de células hero. |
 
+**Observabilidade de execuções:** uma **execução** = `agent_run`; **stages/chamadas** = `agent_run_steps` (triagem → rascunho → verificação), cada uma com modelo/tokens em destaque no stage — não tipografia muted de 11px.
+
 **Decisão v1.15:** modelo padrão = **stage focus**. **Thread-first** (conversa como coluna principal permanente, post só no header) foi avaliado e **rejeitado** nesta versão — a mídia editorial continua no palco junto com as threads.
+
+**Decisão v1.16:** webhooks e execuções seguem stage focus; simulador usa **lab/workshop** e reutiliza o painel de stages das execuções.
 
 ## Components (implementação)
 
@@ -201,6 +216,7 @@ A pele Iris (tokens) não basta: o admin precisa de **um palco dominante** por t
 | Button / input / badge | `components/ui/*` (shadcn remapeado) |
 | Shell | `components/layout/*` |
 | Page chrome | `components/templates/page-container.tsx` |
+| Scroll | `components/templates/page-scroll-area.tsx` → shadcn `ScrollArea` — **proibido** reinventar `overflow-y-auto` + scrollbar nativa nas páginas |
 | Status | `components/posts/status-badge.tsx` |
 
 Nomes legados HTML (`.btn-primary`, `.comments-panel`) mapeiam para os equivalentes React acima.

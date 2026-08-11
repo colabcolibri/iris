@@ -4,8 +4,8 @@ import { Loader2, Play, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ReplyAuditTimeline } from "@/components/comments/reply-audit-timeline";
 import { PageContainer } from "@/components/templates/page-container";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchAgentContent, fetchReplyPersona, simulateAgentReply } from "@/lib/api";
+import {
+  fetchAgentContent,
+  fetchReplyPersona,
+  simulateAgentReply,
+} from "@/lib/api";
 import { ROUTES } from "@/lib/routes";
 import type { ReplyAudit } from "@/lib/types";
 import type { SimulateThreadMessage } from "@/lib/api";
@@ -30,7 +34,10 @@ import {
   DEFAULT_RESPONSE_LANGUAGE,
   RESPONSE_LANGUAGE_OPTIONS,
 } from "@iris/domain/reply-language/response-languages";
-import { estimateLlmTokens, formatTokenEstimate } from "@/lib/estimate-llm-tokens";
+import {
+  estimateLlmTokens,
+  formatTokenEstimate,
+} from "@/lib/estimate-llm-tokens";
 import { cn } from "@/lib/utils";
 
 type ThreadRow = SimulateThreadMessage & { id: string };
@@ -43,14 +50,6 @@ function emptyThreadRow(): ThreadRow {
     is_brand_reply: false,
   };
 }
-
-const TERMINAL_LABELS: Record<string, string> = {
-  approved: "aprovado",
-  approved_simple: "aprovado (simples)",
-  skipped_triage: "ignorado na triagem",
-  blocked_harmful: "bloqueado (harmful)",
-  rejected_verify: "rejeitado na verificação",
-};
 
 const initialScenario = getSimulatorScenario(DEFAULT_SIMULATOR_SCENARIO_ID)!;
 
@@ -67,22 +66,25 @@ function applyScenarioToState(scenario: typeof initialScenario) {
 type ContentFieldStat = {
   key: "soul" | "page" | "knowledge" | "restrictions";
   label: string;
-  usedIn: string;
 };
 
 const CONTENT_FIELD_STATS: ContentFieldStat[] = [
-  { key: "soul", label: "SOUL", usedIn: "resposta completa" },
-  { key: "page", label: "Página", usedIn: "resposta completa" },
-  { key: "knowledge", label: "Knowledge", usedIn: "simples + completa" },
-  { key: "restrictions", label: "Restrições", usedIn: "triagem + drafts + verificação" },
+  { key: "soul", label: "SOUL" },
+  { key: "page", label: "Página" },
+  { key: "knowledge", label: "Knowledge" },
+  { key: "restrictions", label: "Restrições" },
 ];
 
 export function AgentSimulatorPage() {
   const initialForm = applyScenarioToState(initialScenario);
   const [scenarioId, setScenarioId] = useState(DEFAULT_SIMULATOR_SCENARIO_ID);
   const [caption, setCaption] = useState(initialForm.caption);
-  const [carouselSummary, setCarouselSummary] = useState(initialForm.carouselSummary);
-  const [responseLanguage, setResponseLanguage] = useState(DEFAULT_RESPONSE_LANGUAGE);
+  const [carouselSummary, setCarouselSummary] = useState(
+    initialForm.carouselSummary,
+  );
+  const [responseLanguage, setResponseLanguage] = useState(
+    DEFAULT_RESPONSE_LANGUAGE,
+  );
   const [brandName, setBrandName] = useState("");
   const [targetAuthor, setTargetAuthor] = useState(initialForm.targetAuthor);
   const [targetText, setTargetText] = useState(initialForm.targetText);
@@ -90,8 +92,9 @@ export function AgentSimulatorPage() {
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
   const [finalText, setFinalText] = useState<string | null>(null);
-  const [terminalStatus, setTerminalStatus] = useState<string | null>(null);
-  const [contentTokens, setContentTokens] = useState<Record<ContentFieldStat["key"], number>>({
+  const [contentTokens, setContentTokens] = useState<
+    Record<ContentFieldStat["key"], number>
+  >({
     soul: 0,
     page: 0,
     knowledge: 0,
@@ -102,7 +105,9 @@ export function AgentSimulatorPage() {
   useEffect(() => {
     void Promise.all([fetchReplyPersona(), fetchAgentContent()])
       .then(([persona, content]) => {
-        setResponseLanguage(persona.response_language ?? DEFAULT_RESPONSE_LANGUAGE);
+        setResponseLanguage(
+          persona.response_language ?? DEFAULT_RESPONSE_LANGUAGE,
+        );
         setBrandName(persona.brand_name ?? "");
         setContentTokens({
           soul: estimateLlmTokens(content.soul),
@@ -129,7 +134,6 @@ export function AgentSimulatorPage() {
     setTargetText(form.targetText);
     setAudit(null);
     setFinalText(null);
-    setTerminalStatus(null);
   }
 
   async function handleRun() {
@@ -141,7 +145,6 @@ export function AgentSimulatorPage() {
     setRunning(true);
     setAudit(null);
     setFinalText(null);
-    setTerminalStatus(null);
 
     try {
       const result = await simulateAgentReply({
@@ -163,7 +166,6 @@ export function AgentSimulatorPage() {
       });
       setAudit(result.audit);
       setFinalText(result.final_text);
-      setTerminalStatus(result.terminal_status);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha na simulação.");
     } finally {
@@ -172,66 +174,62 @@ export function AgentSimulatorPage() {
   }
 
   const languageLabel =
-    RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)?.label ??
-    responseLanguage;
+    RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)
+      ?.label ?? responseLanguage;
 
   const selectedScenario = getSimulatorScenario(scenarioId);
+  const hasResult = Boolean(audit);
 
   return (
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card lg:flex-row">
-          <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto border-b border-border lg:w-[min(100%,440px)] lg:max-w-[440px] lg:border-b-0 lg:border-r">
-            <div className="space-y-4 p-4 sm:p-5">
+          <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-b border-border lg:w-[min(100%,420px)] lg:max-w-[420px] lg:border-r lg:border-b-0">
+            <PageScrollArea contentClassName="space-y-5 p-4 sm:p-5">
               <PageContainer.Header
-                eyebrow="Operação"
-                title="Simulador do agente"
-                description="Monte uma thread fictícia e veja como o harness responderia — sem publicar na Meta."
+                eyebrow="Lab"
+                title="Simulador"
+                description="Monte a conversa e rode o mesmo harness de produção — sem publicar."
               />
 
-              <Card className="gap-3 border-primary/20 bg-primary/5 p-3 shadow-none">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-foreground">Prompts de produção</p>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    O simulador usa o mesmo harness do worker de comentários e lê SOUL, página,
-                    knowledge e restrições salvos em{" "}
-                    <Link to={ROUTES.admin.persona} className="text-primary underline-offset-4 hover:underline">
-                      Persona
-                    </Link>
-                    . Triagem usa só restrições; resposta simples inclui knowledge; resposta
-                    completa inclui SOUL e página.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {CONTENT_FIELD_STATS.map((field) => {
-                    const tokens = contentTokens[field.key];
-                    const populated = tokens > 0;
-                    return (
-                      <span
-                        key={field.key}
-                        className={cn(
-                          "rounded-md border px-2 py-0.5 text-[10px] leading-snug",
-                          populated
-                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100"
-                            : "border-border bg-background text-muted-foreground",
-                        )}
-                      >
-                        {field.label}:{" "}
-                        {contentLoaded ? formatTokenEstimate(tokens) : "…"}
-                      </span>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Estimativa de tokens (heurística ~3,5 chars/token — não é contagem exata do modelo).
-                </p>
-              </Card>
+              <div className="flex flex-wrap gap-1.5">
+                {CONTENT_FIELD_STATS.map((field) => {
+                  const tokens = contentTokens[field.key];
+                  const populated = tokens > 0;
+                  return (
+                    <span
+                      key={field.key}
+                      className={cn(
+                        "rounded-md border px-2 py-0.5 text-xs",
+                        populated
+                          ? "border-primary/30 bg-primary/5 text-foreground"
+                          : "border-border text-muted-foreground",
+                      )}
+                      title="Estimativa heurística de tokens"
+                    >
+                      {field.label}:{" "}
+                      {contentLoaded ? formatTokenEstimate(tokens) : "…"}
+                    </span>
+                  );
+                })}
+                <Link
+                  to={ROUTES.admin.persona}
+                  className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  Persona
+                </Link>
+              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sim-scenario">Cenário de exemplo</Label>
+                <Label htmlFor="sim-scenario">Cenário</Label>
                 <Select value={scenarioId} onValueChange={handleScenarioChange}>
-                  <SelectTrigger id="sim-scenario" className="w-full bg-background">
-                    <SelectValue>{selectedScenario?.label ?? "Cenário"}</SelectValue>
+                  <SelectTrigger
+                    id="sim-scenario"
+                    className="w-full bg-background"
+                  >
+                    <SelectValue>
+                      {selectedScenario?.label ?? "Cenário"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="start">
                     {SIMULATOR_SCENARIOS.map((scenario) => (
@@ -242,38 +240,44 @@ export function AgentSimulatorPage() {
                   </SelectContent>
                 </Select>
                 {selectedScenario ? (
-                  <p className="text-[11px] text-muted-foreground">{selectedScenario.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedScenario.description}
+                  </p>
                 ) : null}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="sim-language">Idioma da resposta</Label>
-                <Select
-                  value={responseLanguage}
-                  onValueChange={(value) => {
-                    if (value) setResponseLanguage(value);
-                  }}
-                >
-                  <SelectTrigger id="sim-language" className="w-full bg-background">
-                    <SelectValue>{languageLabel}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent align="start">
-                    {RESPONSE_LANGUAGE_OPTIONS.map((option) => (
-                      <SelectItem key={option.code} value={option.code}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sim-brand">Nome da marca</Label>
-                <Input
-                  id="sim-brand"
-                  value={brandName}
-                  onChange={(event) => setBrandName(event.target.value)}
-                />
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="space-y-2">
+                  <Label htmlFor="sim-language">Idioma</Label>
+                  <Select
+                    value={responseLanguage}
+                    onValueChange={(value) => {
+                      if (value) setResponseLanguage(value);
+                    }}
+                  >
+                    <SelectTrigger
+                      id="sim-language"
+                      className="w-full bg-background"
+                    >
+                      <SelectValue>{languageLabel}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent align="start">
+                      {RESPONSE_LANGUAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option.code} value={option.code}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sim-brand">Marca</Label>
+                  <Input
+                    id="sim-brand"
+                    value={brandName}
+                    onChange={(event) => setBrandName(event.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -290,90 +294,121 @@ export function AgentSimulatorPage() {
                 <Label htmlFor="sim-carousel">Resumo do carrossel</Label>
                 <Textarea
                   id="sim-carousel"
-                  rows={3}
+                  rows={2}
                   value={carouselSummary}
                   onChange={(event) => setCarouselSummary(event.target.value)}
                   placeholder="Texto usado pelo harness em vez das imagens."
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <Label>Thread (cronológica)</Label>
+                  <Label>Thread</Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setThread((rows) => [...rows, emptyThreadRow()])}
+                    onClick={() =>
+                      setThread((rows) => [...rows, emptyThreadRow()])
+                    }
                   >
                     <Plus className="mr-1 h-3.5 w-3.5" />
                     Mensagem
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  {thread.map((row, index) => (
-                    <div key={row.id} className="rounded-md border border-border/70 p-2 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={row.author}
-                          onChange={(event) =>
-                            setThread((rows) =>
-                              rows.map((item, i) =>
-                                i === index ? { ...item, author: event.target.value } : item,
-                              ),
-                            )
-                          }
-                          placeholder="autor"
-                          className="h-8 text-xs"
-                        />
-                        <label className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(row.is_brand_reply)}
+
+                <div className="space-y-3">
+                  {thread.map((row, index) => {
+                    const isBrand = Boolean(row.is_brand_reply);
+                    return (
+                      <div
+                        key={row.id}
+                        className={cn(
+                          "flex flex-col gap-2",
+                          isBrand ? "items-end" : "items-start",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-full max-w-[95%] rounded-[var(--iris-radius-lg)] border p-3",
+                            isBrand
+                              ? "border-primary/25 bg-primary/5"
+                              : "border-border/70 bg-muted/20",
+                          )}
+                        >
+                          <div className="mb-2 flex items-center gap-2">
+                            <Input
+                              value={row.author}
+                              onChange={(event) =>
+                                setThread((rows) =>
+                                  rows.map((item, i) =>
+                                    i === index
+                                      ? { ...item, author: event.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                              placeholder="autor"
+                              className="h-8 text-xs"
+                            />
+                            <label className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                              <input
+                                type="checkbox"
+                                checked={isBrand}
+                                onChange={(event) =>
+                                  setThread((rows) =>
+                                    rows.map((item, i) =>
+                                      i === index
+                                        ? {
+                                            ...item,
+                                            is_brand_reply:
+                                              event.target.checked,
+                                          }
+                                        : item,
+                                    ),
+                                  )
+                                }
+                              />
+                              marca
+                            </label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              className="size-7 shrink-0"
+                              onClick={() =>
+                                setThread((rows) =>
+                                  rows.filter((item) => item.id !== row.id),
+                                )
+                              }
+                              disabled={thread.length <= 1}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          <Textarea
+                            rows={2}
+                            value={row.text}
                             onChange={(event) =>
                               setThread((rows) =>
                                 rows.map((item, i) =>
                                   i === index
-                                    ? { ...item, is_brand_reply: event.target.checked }
+                                    ? { ...item, text: event.target.value }
                                     : item,
                                 ),
                               )
                             }
+                            className="text-sm"
                           />
-                          marca
-                        </label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="size-7 shrink-0"
-                          onClick={() =>
-                            setThread((rows) => rows.filter((item) => item.id !== row.id))
-                          }
-                          disabled={thread.length <= 1}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        </div>
                       </div>
-                      <Textarea
-                        rows={2}
-                        value={row.text}
-                        onChange={(event) =>
-                          setThread((rows) =>
-                            rows.map((item, i) =>
-                              i === index ? { ...item, text: event.target.value } : item,
-                            ),
-                          )
-                        }
-                        className="text-xs"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+              <div className="space-y-2 rounded-[var(--iris-radius-lg)] border border-primary/30 bg-primary/5 p-3">
+                <p className="text-xs font-semibold tracking-wide text-primary uppercase">
                   Comentário alvo
                 </p>
                 <Input
@@ -389,7 +424,12 @@ export function AgentSimulatorPage() {
                 />
               </div>
 
-              <Button type="button" className="w-full" onClick={() => void handleRun()} disabled={running}>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => void handleRun()}
+                disabled={running}
+              >
                 {running ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -397,43 +437,51 @@ export function AgentSimulatorPage() {
                 )}
                 Simular resposta
               </Button>
-            </div>
+            </PageScrollArea>
           </aside>
 
           <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
-              <h2 className="text-sm font-semibold">Resultado</h2>
-              {terminalStatus ? (
-                <p className="text-xs text-muted-foreground">
-                  Status:{" "}
-                  <span className="font-semibold text-foreground">
-                    {TERMINAL_LABELS[terminalStatus] ?? terminalStatus}
-                  </span>
-                </p>
-              ) : null}
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Resultado
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Resposta proposta e stages do harness no palco.
+              </p>
             </div>
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden p-4 sm:p-5">
-              {finalText ? (
-                <div className="rounded-[var(--iris-radius-sm)] border border-emerald-500/30 bg-emerald-500/10 p-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-900 dark:text-emerald-100">
-                    Resposta publicável ({languageLabel})
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{finalText}</p>
-                </div>
-              ) : audit ? (
-                <p className="text-sm text-muted-foreground">Nenhuma resposta aprovada nesta simulação.</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Escolha um cenário ou edite os campos e clique em simular para ver o harness em ação.
-                </p>
-              )}
+            <PageScrollArea contentClassName="p-4 sm:p-6">
+              <div className="mx-auto max-w-3xl">
+                {!hasResult && !running ? (
+                  <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[var(--iris-radius-lg)] border border-dashed border-border/80 bg-muted/10 px-6 py-12 text-center">
+                    <p className="font-display text-xl font-semibold text-foreground">
+                      Monte a thread e rode o harness
+                    </p>
+                    <p className="mt-2 max-w-sm text-base text-muted-foreground">
+                      O palco mostra a resposta proposta e cada chamada (modelo,
+                      tokens, verdict) depois da simulação.
+                    </p>
+                  </div>
+                ) : null}
 
-              {audit ? (
-                <div className={cn(!finalText && "opacity-90")}>
-                  <ReplyAuditTimeline audit={audit} />
-                </div>
-              ) : null}
-            </div>
+                {running ? (
+                  <p className="text-base text-muted-foreground">Simulando…</p>
+                ) : null}
+
+                {audit ? (
+                  <ReplyAuditTimeline
+                    audit={audit}
+                    proposedReply={finalText}
+                    proposedReplyLanguageLabel={languageLabel}
+                  />
+                ) : null}
+
+                {audit && !finalText ? (
+                  <p className="mt-4 text-base text-muted-foreground">
+                    Nenhuma resposta aprovada nesta simulação.
+                  </p>
+                ) : null}
+              </div>
+            </PageScrollArea>
           </section>
         </div>
       </PageContainer.Content>

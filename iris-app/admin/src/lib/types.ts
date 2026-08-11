@@ -1,4 +1,10 @@
-export type PostStatus = "draft" | "scheduled" | "published" | "monitored" | "failed" | "cancelled";
+export type PostStatus =
+  | "draft"
+  | "scheduled"
+  | "published"
+  | "monitored"
+  | "failed"
+  | "cancelled";
 export type ReplyMode = "off" | "auto" | "draft";
 export type PostReplyModeSetting = ReplyMode | "inherit";
 
@@ -50,7 +56,10 @@ export type Comment = {
 
 export type IgMediaStatus = "on_feed" | "archived" | "unavailable";
 
-export type CommentActivityKind = "pending_approval" | "recent_public" | "recent_iris";
+export type CommentActivityKind =
+  | "pending_approval"
+  | "recent_public"
+  | "recent_iris";
 
 export type CommentActivityItem = {
   comment_id: string;
@@ -297,6 +306,7 @@ export type AgentRunListItem = {
   total_prompt_tokens: number | null;
   total_completion_tokens: number | null;
   total_tokens: number | null;
+  models: string[];
 };
 
 export type AgentRunDetail = {
@@ -310,6 +320,7 @@ export type AgentRunDetail = {
     createdAt: string;
   };
   comment_id: string | null;
+  post_id: string | null;
   audit: ReplyAudit;
 };
 
@@ -383,7 +394,11 @@ export type LlmSettings = {
   updated_at: string | null;
 };
 
-export type WebhookProcessingStatus = "received" | "processed" | "ignored" | "failed";
+export type WebhookProcessingStatus =
+  | "received"
+  | "processed"
+  | "ignored"
+  | "failed";
 
 export type WebhookEvent = {
   id: string;

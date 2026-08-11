@@ -27,7 +27,10 @@ export type CommentThreadGroup = {
   replies: Comment[];
 };
 
-export const THREAD_SORT_OPTIONS: Array<{ value: ThreadSortMode; label: string }> = [
+export const THREAD_SORT_OPTIONS: Array<{
+  value: ThreadSortMode;
+  label: string;
+}> = [
   { value: "activity_desc", label: "Atividade mais recente" },
   { value: "activity_asc", label: "Atividade mais antiga" },
   { value: "root_desc", label: "Comentário raiz mais recente" },
@@ -35,11 +38,15 @@ export const THREAD_SORT_OPTIONS: Array<{ value: ThreadSortMode; label: string }
   { value: "pending_first", label: "Pendentes primeiro" },
 ];
 
-export function commentTimestamp(comment: Pick<Comment, "created_at" | "ig_timestamp">): string {
+export function commentTimestamp(
+  comment: Pick<Comment, "created_at" | "ig_timestamp">,
+): string {
   return comment.ig_timestamp ?? comment.created_at;
 }
 
-export function commentTimeMs(comment: Pick<Comment, "created_at" | "ig_timestamp">): number {
+export function commentTimeMs(
+  comment: Pick<Comment, "created_at" | "ig_timestamp">,
+): number {
   return parseCommentTimestampMs(commentTimestamp(comment));
 }
 
@@ -85,7 +92,9 @@ export function threadContainsIgId(
     return false;
   }
 
-  return [group.root, ...group.replies].some((comment) => comment.ig_comment_id === igCommentId);
+  return [group.root, ...group.replies].some(
+    (comment) => comment.ig_comment_id === igCommentId,
+  );
 }
 
 export function shouldShowLinkedReply(
@@ -163,7 +172,10 @@ export function indexCommentsByIgId(comments: Comment[]): Map<string, Comment> {
   return map;
 }
 
-export function resolveThreadRoot(comment: Comment, byIgId: Map<string, Comment>): Comment {
+export function resolveThreadRoot(
+  comment: Comment,
+  byIgId: Map<string, Comment>,
+): Comment {
   let current = comment;
   const visited = new Set<string>();
 
@@ -183,7 +195,9 @@ export function resolveThreadRoot(comment: Comment, byIgId: Map<string, Comment>
   return current;
 }
 
-export function buildCommentThreadGroups(comments: Comment[]): CommentThreadGroup[] {
+export function buildCommentThreadGroups(
+  comments: Comment[],
+): CommentThreadGroup[] {
   const uniqueComments = dedupeComments(comments);
   const byIgId = indexCommentsByIgId(uniqueComments);
   const byId = new Map(uniqueComments.map((comment) => [comment.id, comment]));
@@ -214,7 +228,9 @@ export function buildCommentThreadGroups(comments: Comment[]): CommentThreadGrou
 }
 
 export function threadActivityMs(group: CommentThreadGroup): number {
-  const stamps = [group.root, ...group.replies].map((comment) => commentTimeMs(comment));
+  const stamps = [group.root, ...group.replies].map((comment) =>
+    commentTimeMs(comment),
+  );
   return Math.max(...stamps, 0);
 }
 
@@ -271,9 +287,13 @@ export function sortCommentThreadGroups(
   return sorted;
 }
 
-export function defaultCollapsedThreadIds(groups: CommentThreadGroup[]): Set<string> {
+export function defaultCollapsedThreadIds(
+  groups: CommentThreadGroup[],
+): Set<string> {
   return new Set(
-    groups.filter((group) => group.replies.length > 0).map((group) => group.root.id),
+    groups
+      .filter((group) => group.replies.length > 0)
+      .map((group) => group.root.id),
   );
 }
 

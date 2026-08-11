@@ -26,9 +26,11 @@ export const landingPt: LandingMessages = {
     cta: "Quero conhecer a Íris",
     stage: {
       postHandle: "@estudio.nomade",
-      postCaption: "Carrossel · bastidores da nova coleção, gravado no ateliê em SP.",
+      postCaption:
+        "Carrossel · bastidores da nova coleção, gravado no ateliê em SP.",
       commentAuthor: "@marianadias",
-      commentBody: "Adorei o segundo slide! Vocês vão lançar em outras cidades também?",
+      commentBody:
+        "Adorei o segundo slide! Vocês vão lançar em outras cidades também?",
       replyAuthor: "Estúdio Nômade",
       replyBody:
         "Que alegria saber que curtiu! Por enquanto estamos só em SP, mas Belo Horizonte entra no radar ainda este ano 💜",
@@ -75,7 +77,7 @@ export const landingPt: LandingMessages = {
       {
         title: "Seu agente de IA cria e agenda posts",
         description:
-          "Se você já usa um assistente de IA como Cursor, Claude ou ChatGPT, ele pode falar diretamente com a Íris — criar posts, enviar imagens e consultar o calendário sem que você precise abrir o painel. (O nome técnico dessa conexão é \"MCP\", caso você já tenha ouvido falar.)",
+          'Se você já usa um assistente de IA como Cursor, Claude ou ChatGPT, ele pode falar diretamente com a Íris — criar posts, enviar imagens e consultar o calendário sem que você precise abrir o painel. (O nome técnico dessa conexão é "MCP", caso você já tenha ouvido falar.)',
         highlight: true,
       },
       {
@@ -108,7 +110,7 @@ export const landingPt: LandingMessages = {
           "Você pode ligar ou desligar as respostas automáticas quando quiser — para todos os posts de uma vez ou só para um em específico — e ainda escolher um tempo de espera antes do envio, como uma última chance de revisar.",
       },
       {
-        title: "Ninguém consegue \"hackear\" as respostas",
+        title: 'Ninguém consegue "hackear" as respostas',
         description:
           "Já vimos gente tentar enganar assistentes de IA escrevendo instruções escondidas dentro de um comentário. A Íris é treinada para ignorar esse tipo de truque — um comentário não consegue fazer ela fugir do tom, do idioma ou das regras da sua marca.",
       },
@@ -128,9 +130,12 @@ export const landingPt: LandingMessages = {
     sectionLabel: "04 · Implementação",
     titleLine1: "Uma Íris só sua,",
     titleLine2: "não uma conta compartilhada",
-    subtitle: "Não é um sistema em que você se cadastra e começa a usar sozinho.",
-    manifestoNote: "Eu coloco no ar uma versão própria da Íris só para a sua marca, e te ensino a usar.",
-    manifestoQuestion: "Por que assim, e não vender como um SaaS tradicional, por assinatura?",
+    subtitle:
+      "Não é um sistema em que você se cadastra e começa a usar sozinho.",
+    manifestoNote:
+      "Eu coloco no ar uma versão própria da Íris só para a sua marca, e te ensino a usar.",
+    manifestoQuestion:
+      "Por que assim, e não vender como um SaaS tradicional, por assinatura?",
     manifestoAnswer:
       "Porque ser desenvolvedor não é a minha ocupação principal, e não pretendo abrir uma startup. A Íris nasceu de ferramentas que criei para o meu próprio uso, e decidi colocar à disposição de outras pessoas. Tenho mais cara de uma pequena boutique, com projetos pontuais para quem realmente vê valor nisso — não de uma empresa de software correndo atrás de milhares de contas.",
     items: [
@@ -182,7 +187,7 @@ export const landingPt: LandingMessages = {
       {
         question: "Como faço para ter a Íris na minha marca?",
         answer:
-          "Não tem cadastro nem botão de \"assinar agora\". Eu monto e configuro tudo pessoalmente para você, e te ensino a usar. Envie uma mensagem pelo formulário de contato e conversamos sobre o seu caso.",
+          'Não tem cadastro nem botão de "assinar agora". Eu monto e configuro tudo pessoalmente para você, e te ensino a usar. Envie uma mensagem pelo formulário de contato e conversamos sobre o seu caso.',
       },
     ],
   },
@@ -201,10 +206,12 @@ export const landingPt: LandingMessages = {
       message: "Mensagem",
       submit: "Enviar mensagem",
       submitting: "Enviando...",
-      success: "Obrigado — recebemos sua mensagem e responderemos por email em breve.",
+      success:
+        "Obrigado — recebemos sua mensagem e responderemos por email em breve.",
       validationError:
         "Preencha todos os campos. A mensagem precisa ter pelo menos 10 caracteres.",
-      genericError: "Não foi possível enviar agora. Tente novamente em instantes.",
+      genericError:
+        "Não foi possível enviar agora. Tente novamente em instantes.",
     },
   },
   footer: {

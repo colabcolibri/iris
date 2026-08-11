@@ -15,7 +15,10 @@ type LandingLanguageSwitcherProps = {
   onDark?: boolean;
 };
 
-export function LandingLanguageSwitcher({ className, onDark = false }: LandingLanguageSwitcherProps) {
+export function LandingLanguageSwitcher({
+  className,
+  onDark = false,
+}: LandingLanguageSwitcherProps) {
   const { locale } = useLandingI18n();
   const location = useLocation();
   const suffix = `${location.hash}${location.search}`;
@@ -23,7 +26,7 @@ export function LandingLanguageSwitcher({ className, onDark = false }: LandingLa
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-[13px] font-semibold tracking-[0.08em] uppercase",
+        "inline-flex items-center gap-1 text-sm font-semibold tracking-[0.08em] uppercase",
         className,
       )}
       role="group"

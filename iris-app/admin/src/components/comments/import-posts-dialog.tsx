@@ -51,7 +51,11 @@ function formatCount(value: number | null): string {
   return new Intl.NumberFormat("pt-BR").format(value);
 }
 
-export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPostsDialogProps) {
+export function ImportPostsDialog({
+  open,
+  onOpenChange,
+  onImported,
+}: ImportPostsDialogProps) {
   const [items, setItems] = useState<BrowseableMediaItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -65,33 +69,44 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
   );
 
   const selectedImportableCount = useMemo(
-    () => selectedIds.filter((id) => importableItems.some((item) => item.ig_media_id === id)).length,
+    () =>
+      selectedIds.filter((id) =>
+        importableItems.some((item) => item.ig_media_id === id),
+      ).length,
     [importableItems, selectedIds],
   );
 
-  const loadPage = useCallback(async (cursor?: string | null, append = false) => {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
+  const loadPage = useCallback(
+    async (cursor?: string | null, append = false) => {
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
 
-    try {
-      const page = await browseMetaMedia({
-        limit: PAGE_SIZE,
-        after: cursor ?? null,
-      });
+      try {
+        const page = await browseMetaMedia({
+          limit: PAGE_SIZE,
+          after: cursor ?? null,
+        });
 
-      setItems((current) => (append ? [...current, ...page.items] : page.items));
-      setNextCursor(page.next_cursor);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Falha ao listar publicações.";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, []);
+        setItems((current) =>
+          append ? [...current, ...page.items] : page.items,
+        );
+        setNextCursor(page.next_cursor);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Falha ao listar publicações.";
+        toast.error(message);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -119,7 +134,9 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
     const allSelected = importableIds.every((id) => selectedIds.includes(id));
 
     if (allSelected) {
-      setSelectedIds((current) => current.filter((id) => !importableIds.includes(id)));
+      setSelectedIds((current) =>
+        current.filter((id) => !importableIds.includes(id)),
+      );
       return;
     }
 
@@ -148,12 +165,17 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
       if (skippedCount > 0 && importedCount === 0) {
         toast.error("Nenhuma publicação nova foi importada.");
       } else if (skippedCount > 0) {
-        toast.message(`${skippedCount} ignorada(s) (já gerenciadas ou inválidas).`);
+        toast.message(
+          `${skippedCount} ignorada(s) (já gerenciadas ou inválidas).`,
+        );
       }
 
       onOpenChange(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Falha ao importar publicações.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Falha ao importar publicações.";
       toast.error(message);
     } finally {
       setImporting(false);
@@ -175,7 +197,9 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
               className="size-4 rounded border-border"
               checked={
                 importableItems.length > 0 &&
-                importableItems.every((item) => selectedIds.includes(item.ig_media_id))
+                importableItems.every((item) =>
+                  selectedIds.includes(item.ig_media_id),
+                )
               }
               disabled={importableItems.length === 0 || loading}
               onChange={toggleSelectAll}
@@ -241,7 +265,7 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
                       <div className="min-w-0 flex-1 space-y-1.5">
                         <div className="flex flex-wrap items-center gap-2">
                           {disabled ? (
-                            <Badge variant="secondary" className="text-[10px]">
+                            <Badge variant="secondary" className="text-xs">
                               Já gerenciada
                             </Badge>
                           ) : null}
@@ -289,7 +313,11 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
       </AppDialog.Body>
 
       <AppDialog.Footer>
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+        >
           Cancelar
         </Button>
         <Button
@@ -298,7 +326,8 @@ export function ImportPostsDialog({ open, onOpenChange, onImported }: ImportPost
           disabled={importing || selectedImportableCount === 0}
         >
           {importing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          Importar {selectedImportableCount > 0 ? `(${selectedImportableCount})` : ""}
+          Importar{" "}
+          {selectedImportableCount > 0 ? `(${selectedImportableCount})` : ""}
         </Button>
       </AppDialog.Footer>
     </AppDialog>

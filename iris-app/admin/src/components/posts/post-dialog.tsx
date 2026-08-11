@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { commentTextClassName, displayCommentText } from "@/lib/comment-text-display";
+import {
+  commentTextClassName,
+  displayCommentText,
+} from "@/lib/comment-text-display";
 import { ROUTES } from "@/lib/routes";
 import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
@@ -25,10 +28,7 @@ import {
   replyStatusPresentation,
   resolveEffectivePostReplyStatus,
 } from "@iris/domain/reply-effective-status";
-import {
-  fetchReplyInspection,
-  replyToComment,
-} from "@/lib/api";
+import { fetchReplyInspection, replyToComment } from "@/lib/api";
 import type { ReplyInspection, Post, PostReplyModeSetting } from "@/lib/types";
 
 export type PostDialogMode = "create" | "edit";
@@ -132,19 +132,28 @@ export function PostDialog({
     canRevertToDraft: Boolean(onRevertToDraft) && (isScheduled || isCancelled),
     canRetryDraft: Boolean(onRetryDraft) && isFailed,
     canRetrySchedule: Boolean(onRetrySchedule) && isFailed,
-    canDelete: Boolean(onDelete) && mode === "edit" && Boolean(post?.id) && !isReadOnly && !isCancelled,
+    canDelete:
+      Boolean(onDelete) &&
+      mode === "edit" &&
+      Boolean(post?.id) &&
+      !isReadOnly &&
+      !isCancelled,
   });
-  const footerHandlers: Partial<Record<PostDialogFooterActionId, () => void>> = {
-    delete: onDelete,
-    publish_now: onPublishNow,
-    schedule: onSchedule,
-    save_draft: onSaveDraft,
-    save_scheduled: onSchedule,
-    revert_to_draft: onRevertToDraft,
-    retry_draft: onRetryDraft,
-    retry_schedule: onRetrySchedule,
-  };
-  const effectiveReply = resolveEffectivePostReplyStatus(globalReplyMode, replyMode);
+  const footerHandlers: Partial<Record<PostDialogFooterActionId, () => void>> =
+    {
+      delete: onDelete,
+      publish_now: onPublishNow,
+      schedule: onSchedule,
+      save_draft: onSaveDraft,
+      save_scheduled: onSchedule,
+      revert_to_draft: onRevertToDraft,
+      retry_draft: onRetryDraft,
+      retry_schedule: onRetrySchedule,
+    };
+  const effectiveReply = resolveEffectivePostReplyStatus(
+    globalReplyMode,
+    replyMode,
+  );
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
 
   const statusHint = (() => {
@@ -193,14 +202,20 @@ export function PostDialog({
           </p>
         ) : null}
 
-        <AppAccordion multiple value={openSections} onValueChange={setOpenSections}>
+        <AppAccordion
+          multiple
+          value={openSections}
+          onValueChange={setOpenSections}
+        >
           <AppAccordion.Item value="content">
             <AppAccordion.Trigger>Conteúdo</AppAccordion.Trigger>
             <AppAccordion.Content className="space-y-8">
               {status === "published" && post?.ig_media_id ? (
                 <p className="text-xs text-muted-foreground">
                   ID na Meta:{" "}
-                  <span className="font-mono text-foreground/80">{post.ig_media_id}</span>
+                  <span className="font-mono text-foreground/80">
+                    {post.ig_media_id}
+                  </span>
                   {metaIgUsername ? (
                     <>
                       {" · "}
@@ -253,8 +268,9 @@ export function PostDialog({
               <span className="flex items-center gap-2">
                 <span>Resposta IA</span>
                 {showCommentsSection && comments.length > 0 ? (
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
-                    {comments.length} comentário{comments.length === 1 ? "" : "s"}
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
+                    {comments.length} comentário
+                    {comments.length === 1 ? "" : "s"}
                   </span>
                 ) : null}
               </span>
@@ -262,7 +278,9 @@ export function PostDialog({
             <AppAccordion.Content className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">Modo de resposta</h3>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Modo de resposta
+                  </h3>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     Como a Iris deve responder comentários nesta publicação.
                   </p>
@@ -275,7 +293,10 @@ export function PostDialog({
               </div>
 
               <div className="max-w-xl space-y-2">
-                <Label htmlFor="post-reply-mode" className="text-sm font-semibold">
+                <Label
+                  htmlFor="post-reply-mode"
+                  className="text-sm font-semibold"
+                >
                   Respostas da IA neste post
                 </Label>
                 <ReplyModeSelect
@@ -289,7 +310,10 @@ export function PostDialog({
                   {effectiveReplyCopy.hint ??
                     `Estado efetivo agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
                   {" · "}
-                  <Link to={ROUTES.admin.persona} className="text-primary underline-offset-4 hover:underline">
+                  <Link
+                    to={ROUTES.admin.persona}
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
                     Editar persona
                   </Link>
                 </p>
@@ -298,7 +322,9 @@ export function PostDialog({
               {showCommentsSection ? (
                 <section className="space-y-3 border-t border-border/60 pt-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-foreground">Comentários</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      Comentários
+                    </p>
                     {post?.id ? (
                       <Link
                         to={`/comments?post_id=${post.id}`}
@@ -325,13 +351,22 @@ export function PostDialog({
                             <span className="font-semibold text-foreground">
                               {comment.author_username ?? "usuário"}
                             </span>
-                            <span>{new Date(comment.created_at).toLocaleString("pt-BR")}</span>
+                            <span>
+                              {new Date(comment.created_at).toLocaleString(
+                                "pt-BR",
+                              )}
+                            </span>
                           </div>
-                          <p className={commentTextClassName}>{displayCommentText(comment.text)}</p>
+                          <p className={commentTextClassName}>
+                            {displayCommentText(comment.text)}
+                          </p>
                           {comment.status === "skipped" ||
                           comment.status === "failed" ||
                           comment.status === "replied" ? (
-                            <ReplyAuditSection commentId={comment.id} className="mt-2" />
+                            <ReplyAuditSection
+                              commentId={comment.id}
+                              className="mt-2"
+                            />
                           ) : null}
                           {comment.thread.length > 0 ? (
                             <details className="mt-2">
@@ -348,13 +383,19 @@ export function PostDialog({
                                     }}
                                   >
                                     <span className="font-semibold text-foreground">
-                                      {entry.is_brand_reply ? "marca" : (entry.author ?? "usuário")}
+                                      {entry.is_brand_reply
+                                        ? "marca"
+                                        : (entry.author ?? "usuário")}
                                     </span>
                                     <span className="text-muted-foreground">
                                       {" · "}
-                                      {new Date(entry.at).toLocaleString("pt-BR")}
+                                      {new Date(entry.at).toLocaleString(
+                                        "pt-BR",
+                                      )}
                                     </span>
-                                    <p className="text-muted-foreground">{entry.text}</p>
+                                    <p className="text-muted-foreground">
+                                      {entry.text}
+                                    </p>
                                   </li>
                                 ))}
                               </ul>
@@ -367,8 +408,11 @@ export function PostDialog({
                                 e.preventDefault();
                                 const message = replyDrafts[comment.id]?.trim();
                                 if (!message || !post?.id) return;
-                                void replyToComment(comment.id, message).then(() =>
-                                  fetchReplyInspection(post.id).then(setInspection),
+                                void replyToComment(comment.id, message).then(
+                                  () =>
+                                    fetchReplyInspection(post.id).then(
+                                      setInspection,
+                                    ),
                                 );
                               }}
                             >
@@ -394,7 +438,8 @@ export function PostDialog({
                       {comments.length > 6 ? (
                         <p className="text-xs text-muted-foreground">
                           +{comments.length - 6} comentário
-                          {comments.length - 6 === 1 ? "" : "s"} — use o hub de publicações.
+                          {comments.length - 6 === 1 ? "" : "s"} — use o hub de
+                          publicações.
                         </p>
                       ) : null}
                     </div>
@@ -409,7 +454,10 @@ export function PostDialog({
             <AppAccordion.Content>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
                 <div className="space-y-2 shrink-0">
-                  <Label htmlFor="post-scheduled-at" className="text-sm font-semibold">
+                  <Label
+                    htmlFor="post-scheduled-at"
+                    className="text-sm font-semibold"
+                  >
                     {isScheduled ? "Publicação agendada para" : "Agendar para"}
                   </Label>
                   <div className="flex flex-wrap items-center gap-2">
@@ -421,7 +469,10 @@ export function PostDialog({
                       className="h-11 w-[17.5rem] max-w-full shrink-0 bg-background text-base sm:text-sm"
                       disabled={isReadOnly || isCancelled}
                     />
-                    {scheduledAt && !isReadOnly && !isCancelled && (isDraft || mode === "create") ? (
+                    {scheduledAt &&
+                    !isReadOnly &&
+                    !isCancelled &&
+                    (isDraft || mode === "create") ? (
                       <Button
                         type="button"
                         variant="ghost"
@@ -440,7 +491,10 @@ export function PostDialog({
                     <span>Confirme com “Agendar publicação”.</span>
                   ) : null}
                   {!metaConnected ? (
-                    <span>Conecte o Instagram em configurações para agendar publicações.</span>
+                    <span>
+                      Conecte o Instagram em configurações para agendar
+                      publicações.
+                    </span>
                   ) : null}
                 </div>
               </div>
@@ -467,7 +521,11 @@ export function PostDialog({
                 key={action.id}
                 type="button"
                 size="sm"
-                variant={action.variant === "destructive" ? "destructive" : action.variant}
+                variant={
+                  action.variant === "destructive"
+                    ? "destructive"
+                    : action.variant
+                }
                 className={
                   action.id === "delete"
                     ? "text-destructive hover:bg-destructive/10 hover:text-destructive"

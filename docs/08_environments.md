@@ -26,6 +26,8 @@ blocks: []
 | `IRIS_SMTP_PORT` | `1025` | Porta SMTP (Mailpit) |
 | `IRIS_AGENT_TOKEN` | required | Agent Bearer token (espelhar em `agent/iris.credentials.json`) |
 | `IRIS_MCP_CONNECTION_CODE` | optional | Código MCP — **opcional** se gerado em Configurações → Conexão MCP; útil para infra/CI. Distinto de `IRIS_AGENT_TOKEN` |
+| `IRIS_PUBLIC_BASE_URL` | required p/ publish + MCP upload | URL alcançável pelo host (dev: `http://127.0.0.1:8792`) |
+| `IRIS_PUBLISH_URL_SECRET` | required p/ publish + MCP upload | HMAC das URLs assinadas (`/publish/media/…` e `/upload/assets/…`) |
 | `IRIS_ADMIN_TOKEN` | optional | Bearer admin legacy (CLI) |
 | `NODE_ENV` | `development` | |
 | `IRIS_REPLY_MAX_CONCURRENT` | `10` | Máximo de `processCommentReply` em paralelo (webhook + worker); mínimo efetivo `1` |

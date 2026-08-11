@@ -30,15 +30,19 @@ export function LandingHero() {
             <span className="mt-1 block whitespace-nowrap italic text-[color:var(--iris-primary)]">
               {m.hero.titleLine2Accent}
             </span>
-            <span className="mt-1 block whitespace-nowrap">{m.hero.titleLine2}</span>
+            <span className="mt-1 block whitespace-nowrap">
+              {m.hero.titleLine2}
+            </span>
           </h1>
 
-          <p className="mt-6 max-w-lg text-[17px] leading-[1.47] text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
+          <p className="mt-6 max-w-lg text-base leading-normal text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
             {m.hero.subtitle}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <LandingPrimaryCta href={`#${LANDING_SECTIONS.contact}`}>{m.hero.cta}</LandingPrimaryCta>
+            <LandingPrimaryCta href={`#${LANDING_SECTIONS.contact}`}>
+              {m.hero.cta}
+            </LandingPrimaryCta>
           </div>
         </div>
 

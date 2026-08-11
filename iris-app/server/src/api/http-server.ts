@@ -12,6 +12,7 @@ import { handlePostsRoute } from "./routes/posts.ts";
 import { handleAssetsRoute } from "./routes/assets.ts";
 import { handleEventsRoute } from "./routes/events.ts";
 import { handlePublishMediaRoute } from "./routes/publish-media.ts";
+import { handleUploadAssetRoute } from "./routes/upload-asset.ts";
 import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments/index.ts";
 import { handleInsightsRoute } from "./routes/insights.ts";
@@ -209,6 +210,10 @@ async function handleRequest(
   }
 
   if (handlePublishMediaRoute(req, res, ctx, pathname)) {
+    return;
+  }
+
+  if (await handleUploadAssetRoute(req, res, ctx, pathname)) {
     return;
   }
 

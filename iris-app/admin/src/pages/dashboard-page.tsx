@@ -3,7 +3,10 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
-import { PostDialog, type PostDialogMode } from "@/components/posts/post-dialog";
+import {
+  PostDialog,
+  type PostDialogMode,
+} from "@/components/posts/post-dialog";
 import { PageContainer } from "@/components/templates/page-container";
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/app-settings-context";
@@ -22,7 +25,11 @@ import {
   updatePost,
   uploadAsset,
 } from "@/lib/api";
-import { monthRange, toDatetimeLocalFromIso, toIsoFromDatetimeLocal } from "@/lib/datetime";
+import {
+  monthRange,
+  toDatetimeLocalFromIso,
+  toIsoFromDatetimeLocal,
+} from "@/lib/datetime";
 import type { Post, PostStatus, PostReplyModeSetting } from "@/lib/types";
 
 export function DashboardPage() {
@@ -45,7 +52,10 @@ export function DashboardPage() {
   const loadPosts = useCallback(async () => {
     const data =
       view === "calendar"
-        ? await fetchPosts({ ...monthRange(cursor, timezone), calendarOnly: true })
+        ? await fetchPosts({
+            ...monthRange(cursor, timezone),
+            calendarOnly: true,
+          })
         : await fetchPosts();
     setPosts(data);
   }, [view, cursor, timezone]);
@@ -63,7 +73,8 @@ export function DashboardPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("meta_connected") === "1") toast.success("Instagram conectado com sucesso.");
+    if (params.get("meta_connected") === "1")
+      toast.success("Instagram conectado com sucesso.");
     if (params.get("meta_error")) toast.error("Falha ao conectar Instagram.");
     if (params.has("meta_connected") || params.has("meta_error")) {
       window.history.replaceState({}, "", window.location.pathname);
@@ -100,7 +111,9 @@ export function DashboardPage() {
     setDialogMode("edit");
     setCaption(post.caption ?? "");
     setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
-    setReplyMode(post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "inherit"));
+    setReplyMode(
+      post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "inherit"),
+    );
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -117,7 +130,8 @@ export function DashboardPage() {
     if (status === "cancelled") {
       const ok = await confirm({
         title: "Cancelar postagem?",
-        description: "A postagem sai do fluxo editorial ativo. Você poderá restaurá-la como rascunho depois.",
+        description:
+          "A postagem sai do fluxo editorial ativo. Você poderá restaurá-la como rascunho depois.",
         confirmLabel: "Cancelar postagem",
         confirmPhrase: "cancelar",
         variant: "destructive",
@@ -144,7 +158,9 @@ export function DashboardPage() {
       toast.success(message);
     } catch (err) {
       if (!handleAuthError(err)) {
-        toast.error(err instanceof Error ? err.message : "Falha ao atualizar status.");
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao atualizar status.",
+        );
       }
     }
   }
@@ -195,7 +211,8 @@ export function DashboardPage() {
       }
 
       if (schedule) {
-        if (!meta?.connected) throw new Error("Conecte Instagram antes de agendar.");
+        if (!meta?.connected)
+          throw new Error("Conecte Instagram antes de agendar.");
         const scheduledIso = toIsoFromDatetimeLocal(scheduledAt, timezone);
         if (!scheduledIso) throw new Error("Informe data e hora para agendar.");
         await updatePost(postId, {
@@ -216,7 +233,9 @@ export function DashboardPage() {
         }
         await updatePost(postId, updateBody);
         toast.success(
-          selectedPost?.status === "scheduled" ? "Alterações salvas." : "Rascunho salvo.",
+          selectedPost?.status === "scheduled"
+            ? "Alterações salvas."
+            : "Rascunho salvo.",
         );
       }
 
@@ -289,7 +308,8 @@ export function DashboardPage() {
       toast.success("Postagem publicada no Instagram.");
     } catch (err) {
       if (!handleAuthError(err)) {
-        const message = err instanceof Error ? err.message : "Falha ao publicar.";
+        const message =
+          err instanceof Error ? err.message : "Falha ao publicar.";
         setError(message);
         toast.error(message);
         if (postId) {
@@ -431,7 +451,8 @@ export function DashboardPage() {
             : undefined
         }
         onRevertToDraft={
-          selectedPost?.status === "scheduled" || selectedPost?.status === "cancelled"
+          selectedPost?.status === "scheduled" ||
+          selectedPost?.status === "cancelled"
             ? () => void revertToDraft()
             : undefined
         }
@@ -447,14 +468,20 @@ export function DashboardPage() {
                   })
                   .catch((err) => {
                     if (!handleAuthError(err)) {
-                      setError(err instanceof Error ? err.message : "Falha ao atualizar.");
+                      setError(
+                        err instanceof Error
+                          ? err.message
+                          : "Falha ao atualizar.",
+                      );
                     }
                   });
               }
             : undefined
         }
         onRetrySchedule={
-          selectedPost?.status === "failed" ? () => void savePost(true) : undefined
+          selectedPost?.status === "failed"
+            ? () => void savePost(true)
+            : undefined
         }
       />
     </>

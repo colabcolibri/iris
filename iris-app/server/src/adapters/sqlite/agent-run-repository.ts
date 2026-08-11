@@ -37,6 +37,7 @@ type AgentRunListRow = {
   total_prompt_tokens: number | null;
   total_completion_tokens: number | null;
   total_tokens: number | null;
+  models_csv: string | null;
 };
 
 function mapRow(row: AgentRunRow): AgentRun {
@@ -87,7 +88,25 @@ function mapListRow(row: AgentRunListRow): AgentRunListItem {
     totalPromptTokens: row.total_prompt_tokens,
     totalCompletionTokens: row.total_completion_tokens,
     totalTokens: row.total_tokens,
+    models: parseModelsCsv(row.models_csv),
   };
+}
+
+function parseModelsCsv(csv: string | null): string[] {
+  if (!csv?.trim()) {
+    return [];
+  }
+  const seen = new Set<string>();
+  const models: string[] = [];
+  for (const part of csv.split(",")) {
+    const model = part.trim();
+    if (!model || seen.has(model)) {
+      continue;
+    }
+    seen.add(model);
+    models.push(model);
+  }
+  return models;
 }
 
 export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunRepository {
@@ -154,7 +173,14 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
       ) AS total_completion_tokens,
       (
         SELECT SUM(s.total_tokens) FROM agent_run_steps s WHERE s.agent_run_id = ar.id
-      ) AS total_tokens
+      ) AS total_tokens,
+      (
+        SELECT GROUP_CONCAT(DISTINCT s.model)
+        FROM agent_run_steps s
+        WHERE s.agent_run_id = ar.id
+          AND s.model IS NOT NULL
+          AND TRIM(s.model) != ''
+      ) AS models_csv
     FROM agent_runs ar
     WHERE (? IS NULL OR ar.created_at < ?)
     ORDER BY ar.created_at DESC, ar.rowid DESC

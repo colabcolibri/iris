@@ -42,7 +42,11 @@ export function App() {
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
               {LEGACY_ADMIN_REDIRECTS.map(([from, to]) => (
-                <Route key={from} path={from} element={<Navigate to={to} replace />} />
+                <Route
+                  key={from}
+                  path={from}
+                  element={<Navigate to={to} replace />}
+                />
               ))}
 
               <Route
@@ -64,11 +68,26 @@ export function App() {
                 }
               >
                 <Route path={ROUTES.admin.root} element={<DashboardPage />} />
-                <Route path={ROUTES.admin.comments} element={<CommentsPage />} />
-                <Route path={ROUTES.admin.webhooks} element={<WebhooksPage />} />
-                <Route path={ROUTES.admin.agentRuns} element={<AgentRunsPage />} />
-                <Route path={ROUTES.admin.agentSimulator} element={<AgentSimulatorPage />} />
-                <Route path={ROUTES.admin.settings} element={<SettingsPage />} />
+                <Route
+                  path={ROUTES.admin.comments}
+                  element={<CommentsPage />}
+                />
+                <Route
+                  path={ROUTES.admin.webhooks}
+                  element={<WebhooksPage />}
+                />
+                <Route
+                  path={ROUTES.admin.agentRuns}
+                  element={<AgentRunsPage />}
+                />
+                <Route
+                  path={ROUTES.admin.agentSimulator}
+                  element={<AgentSimulatorPage />}
+                />
+                <Route
+                  path={ROUTES.admin.settings}
+                  element={<SettingsPage />}
+                />
                 <Route path={ROUTES.admin.persona} element={<PersonaPage />} />
               </Route>
 

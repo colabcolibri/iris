@@ -1,5 +1,11 @@
 import type { DragEvent } from "react";
-import { ChevronLeft, ChevronRight, GripVertical, Loader2, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 import type { PostMediaAsset } from "@/hooks/use-post-media-assets";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -68,7 +74,7 @@ export function MediaTile({
         />
       </div>
 
-      <span className="absolute top-2 left-2 rounded-[var(--iris-radius-sm)] bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground shadow-none">
+      <span className="absolute top-2 left-2 rounded-[var(--iris-radius-sm)] bg-background/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-foreground shadow-none">
         {index + 1}
       </span>
 

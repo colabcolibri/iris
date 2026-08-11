@@ -13,14 +13,25 @@ type AppAccordionProps = ComponentProps<typeof Accordion>;
 
 /** Template de composição sobre o Accordion do shadcn — não altere `components/ui`. */
 export function AppAccordion({ className, ...props }: AppAccordionProps) {
-  return <Accordion className={cn("flex w-full flex-col gap-5", className)} {...props} />;
+  return (
+    <Accordion
+      className={cn("flex w-full flex-col gap-5", className)}
+      {...props}
+    />
+  );
 }
 
 type AppAccordionItemProps = ComponentProps<typeof AccordionItem>;
 
-AppAccordion.Item = function AppAccordionItem({ className, ...props }: AppAccordionItemProps) {
+AppAccordion.Item = function AppAccordionItem({
+  className,
+  ...props
+}: AppAccordionItemProps) {
   return (
-    <AccordionItem className={cn("w-full border-0 not-last:border-b-0", className)} {...props} />
+    <AccordionItem
+      className={cn("w-full border-0 not-last:border-b-0", className)}
+      {...props}
+    />
   );
 };
 
@@ -46,11 +57,18 @@ AppAccordion.Trigger = function AppAccordionTrigger({
 
 type AppAccordionHeaderProps = ComponentProps<typeof AccordionPrimitive.Header>;
 
-AppAccordion.Header = function AppAccordionHeader({ className, ...props }: AppAccordionHeaderProps) {
-  return <AccordionPrimitive.Header className={cn("w-full", className)} {...props} />;
+AppAccordion.Header = function AppAccordionHeader({
+  className,
+  ...props
+}: AppAccordionHeaderProps) {
+  return (
+    <AccordionPrimitive.Header className={cn("w-full", className)} {...props} />
+  );
 };
 
-type AppAccordionPanelTriggerProps = ComponentProps<typeof AccordionPrimitive.Trigger>;
+type AppAccordionPanelTriggerProps = ComponentProps<
+  typeof AccordionPrimitive.Trigger
+>;
 
 AppAccordion.PanelTrigger = function AppAccordionPanelTrigger({
   className,
@@ -74,7 +92,9 @@ AppAccordion.PanelTrigger = function AppAccordionPanelTrigger({
   );
 };
 
-type AppAccordionChevronTriggerProps = ComponentProps<typeof AccordionPrimitive.Trigger>;
+type AppAccordionChevronTriggerProps = ComponentProps<
+  typeof AccordionPrimitive.Trigger
+>;
 
 AppAccordion.ChevronTrigger = function AppAccordionChevronTrigger({
   className,
@@ -106,5 +126,10 @@ AppAccordion.Content = function AppAccordionContent({
   className,
   ...props
 }: AppAccordionContentProps) {
-  return <AccordionContent className={cn("space-y-4 px-4 pb-2 pt-4", className)} {...props} />;
+  return (
+    <AccordionContent
+      className={cn("space-y-4 px-4 pb-2 pt-4", className)}
+      {...props}
+    />
+  );
 };

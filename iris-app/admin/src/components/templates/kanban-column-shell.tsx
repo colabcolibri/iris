@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { cn } from "@/lib/utils";
 import type { PostStatus } from "@/lib/types";
 
-const COLUMN_THEME: Record<PostStatus, { headerAccent?: string; muted?: boolean }> = {
+const COLUMN_THEME: Record<
+  PostStatus,
+  { headerAccent?: string; muted?: boolean }
+> = {
   draft: {},
   scheduled: {},
   published: {},
@@ -19,7 +23,12 @@ type KanbanColumnShellProps = {
   children: ReactNode;
 };
 
-export function KanbanColumnShell({ status, label, count, children }: KanbanColumnShellProps) {
+export function KanbanColumnShell({
+  status,
+  label,
+  count,
+  children,
+}: KanbanColumnShellProps) {
   const theme = COLUMN_THEME[status];
 
   return (
@@ -32,21 +41,21 @@ export function KanbanColumnShell({ status, label, count, children }: KanbanColu
       <header className="flex shrink-0 items-center justify-between gap-2 rounded-t-[var(--iris-radius-lg)] border-b border-border bg-card px-4 py-4">
         <h3
           className={cn(
-            "flex items-center gap-2 text-xs font-semibold tracking-widest text-foreground uppercase",
+            "flex items-center gap-2 text-sm font-semibold tracking-widest text-foreground uppercase",
             theme.headerAccent,
           )}
         >
           {label}
           {status === "failed" && <AlertCircle className="size-4" />}
         </h3>
-        <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
+        <span className="rounded-full bg-secondary px-2 py-0.5 text-sm font-semibold text-secondary-foreground">
           {count}
         </span>
       </header>
 
-      <div className="kanban-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <PageScrollArea contentClassName="flex flex-col gap-4 p-4">
         {children}
-      </div>
+      </PageScrollArea>
     </section>
   );
 }
@@ -70,12 +79,16 @@ KanbanColumnShell.Card = function KanbanCardShell({
     <article
       className={cn(
         "group rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none transition-colors hover:border-primary/30",
-        variant === "failed" && "relative overflow-hidden border-destructive/30 bg-destructive/5",
+        variant === "failed" &&
+          "relative overflow-hidden border-destructive/30 bg-destructive/5",
         className,
       )}
     >
       {variant === "failed" && (
-        <div className="absolute top-0 bottom-0 left-0 w-1 bg-destructive" aria-hidden />
+        <div
+          className="absolute top-0 bottom-0 left-0 w-1 bg-destructive"
+          aria-hidden
+        />
       )}
       <button
         type="button"
