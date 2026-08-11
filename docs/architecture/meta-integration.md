@@ -117,6 +117,17 @@ Guia operacional de revisão: `docs/architecture/meta-app-review.md`.
 - Per-post sync: `POST /api/posts/:id/comments/sync` pulls comments for one `ig_media_id` and upserts into SQLite
 - Legacy inbox sync: `GET /api/comments/inbox` — avoid for routine use; prefer per-post sync or webhook ingest
 
+## Insights
+
+| Fluxo | Endpoint / MCP | Custo Meta | Uso |
+| ----- | -------------- | ---------- | --- |
+| Por post (cache 1h) | `GET /api/posts/:id/insights` / `iris_get_post_insights` | 1 call se miss | Detalhe |
+| Lote 1:1 (throttle) | `POST /api/insights/refresh-all` / `iris_refresh_all_post_insights` | N calls | Backfill; opcional `since`/`until` em `published_at` |
+| Página sob demanda | `POST /api/insights/refresh-media-page` / `iris_refresh_media_insights_page` | ~1 call/página | Atualizar posts gerenciados via `/me/media?fields=insights.metric(...)` |
+| Conta | `GET /api/insights/account` / `iris_get_account_insights` | 1 call | Métricas da conta (`period`, `since`, `until`); sem snapshot SQLite nesta versão |
+
+Mídia: métricas lifetime no endpoint por-id — filtros de data na query do post são no-op. Conta: usa `period` + janela Meta.
+
 ## Webhook verification
 
 - `GET /webhooks/meta?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...`

@@ -8,3 +8,14 @@ export const STANDARD_MEDIA_INSIGHT_METRICS = [
 ] as const;
 
 export type StandardMediaInsightMetric = (typeof STANDARD_MEDIA_INSIGHT_METRICS)[number];
+
+/** Conjunto inicial de métricas de conta (Instagram Login / Graph). */
+export const STANDARD_ACCOUNT_INSIGHT_METRICS = [
+  "reach",
+  "follower_count",
+  "profile_views",
+  "website_clicks",
+] as const;
+
+export type StandardAccountInsightMetric =
+  (typeof STANDARD_ACCOUNT_INSIGHT_METRICS)[number];

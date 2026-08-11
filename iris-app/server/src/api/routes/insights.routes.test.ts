@@ -54,6 +54,12 @@ test("GET post insights caches snapshot and history lists it", async () => {
       calls += 1;
       return [{ name: "reach", period: "lifetime", values: [{ value: calls }] }];
     },
+    async getAccountInsights() {
+      return [];
+    },
+    async listMediaPageWithInsights() {
+      return { items: [], nextCursor: null };
+    },
   };
 
   await withServer(async (baseUrl, ctx) => {
@@ -102,6 +108,12 @@ test("POST refresh-all updates multiple published posts with delay", async () =>
     async getMediaInsights(igMediaId) {
       return [{ name: "reach", period: "lifetime", values: [{ value: igMediaId.length }] }];
     },
+    async getAccountInsights() {
+      return [];
+    },
+    async listMediaPageWithInsights() {
+      return { items: [], nextCursor: null };
+    },
   };
 
   await withServer(async (baseUrl, ctx) => {
@@ -131,6 +143,156 @@ test("POST refresh-all updates multiple published posts with delay", async () =>
     const body = (await response.json()) as { requested: number; refreshed: string[] };
     assert.equal(body.requested, 2);
     assert.equal(body.refreshed.length, 2);
+  }, { insightsReader: reader });
+});
+
+test("GET account insights returns live metrics", async () => {
+  const reader: MetaInsightsReader = {
+    async getMediaInsights() {
+      return [];
+    },
+    async getAccountInsights(query) {
+      assert.equal(query.period, "day");
+      return [
+        { name: "reach", period: "day", values: [{ value: 42 }] },
+      ];
+    },
+    async listMediaPageWithInsights() {
+      return { items: [], nextCursor: null };
+    },
+  };
+
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/insights/account?period=day`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      ok: boolean;
+      insights: Array<{ name: string; values: Array<{ value: number }> }>;
+    };
+    assert.equal(body.ok, true);
+    assert.equal(body.insights[0]?.values[0]?.value, 42);
+  }, { insightsReader: reader });
+});
+
+test("POST refresh-media-page updates matching managed posts only", async () => {
+  const reader: MetaInsightsReader = {
+    async getMediaInsights() {
+      return [];
+    },
+    async getAccountInsights() {
+      return [];
+    },
+    async listMediaPageWithInsights() {
+      return {
+        items: [
+          {
+            igMediaId: "media-managed",
+            caption: "ok",
+            timestamp: "2026-08-10T12:00:00.000Z",
+            likeCount: 9,
+            commentsCount: 2,
+            insights: [
+              { name: "likes", period: "lifetime", values: [{ value: 9 }] },
+              { name: "reach", period: "lifetime", values: [{ value: 100 }] },
+            ],
+          },
+          {
+            igMediaId: "media-unknown",
+            caption: "skip",
+            timestamp: "2026-08-10T12:00:00.000Z",
+            likeCount: 1,
+            commentsCount: 0,
+            insights: [],
+          },
+        ],
+        nextCursor: "cursor-2",
+      };
+    },
+  };
+
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "monitored",
+      igMediaId: "media-managed",
+      publishedAt: "2026-08-10T12:00:00.000Z",
+    });
+
+    const response = await fetch(`${baseUrl}/api/insights/refresh-media-page`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ limit: 25 }),
+    });
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      refreshed: string[];
+      unmatched_ig_media_ids: string[];
+      next_cursor: string | null;
+      meta_call_count: number;
+    };
+    assert.deepEqual(body.refreshed, [post.id]);
+    assert.deepEqual(body.unmatched_ig_media_ids, ["media-unknown"]);
+    assert.equal(body.next_cursor, "cursor-2");
+    assert.equal(body.meta_call_count, 1);
+
+    const updated = ctx.posts.findById(post.id);
+    assert.equal(updated?.likeCount, 9);
+    assert.equal(updated?.reportedCommentsCount, 2);
+    assert.equal(ctx.postInsightsStore.findLatestByPostId(post.id)?.metrics[0]?.name, "likes");
+  }, { insightsReader: reader });
+});
+
+test("POST refresh-all respects since/until on published_at", async () => {
+  const seen: string[] = [];
+  const reader: MetaInsightsReader = {
+    async getMediaInsights(igMediaId) {
+      seen.push(igMediaId);
+      return [{ name: "reach", period: "lifetime", values: [{ value: 1 }] }];
+    },
+    async getAccountInsights() {
+      return [];
+    },
+    async listMediaPageWithInsights() {
+      return { items: [], nextCursor: null };
+    },
+  };
+
+  await withServer(async (baseUrl, ctx) => {
+    ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      igMediaId: "media-old",
+      publishedAt: "2026-07-01T00:00:00.000Z",
+    });
+    ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      igMediaId: "media-new",
+      publishedAt: "2026-08-10T00:00:00.000Z",
+    });
+
+    const response = await fetch(`${baseUrl}/api/insights/refresh-all`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${ADMIN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        delay_ms: 0,
+        since: "2026-08-01T00:00:00.000Z",
+        until: "2026-08-31T23:59:59.999Z",
+      }),
+    });
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { requested: number; refreshed: string[] };
+    assert.equal(body.requested, 1);
+    assert.equal(body.refreshed.length, 1);
+    assert.deepEqual(seen, ["media-new"]);
   }, { insightsReader: reader });
 });
 

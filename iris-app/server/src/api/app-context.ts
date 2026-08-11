@@ -201,7 +201,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
 
   const metaInsightsReader = createGraphApiInsightsReader({
     metaTokenStore,
-    config: { graphApiVersion },
+    config: {
+      graphApiVersion,
+      resolveIgUserId,
+    },
   });
 
   const metaConversationsReader = createGraphApiConversationsReader({

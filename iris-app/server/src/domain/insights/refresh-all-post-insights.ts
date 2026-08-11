@@ -5,6 +5,9 @@ export type RefreshAllPostInsightsInput = {
   limit?: number;
   delayMs?: number;
   force?: boolean;
+  /** ISO — filtra posts por published_at. */
+  since?: string | null;
+  until?: string | null;
 };
 
 export type RefreshAllPostInsightsResult = {
@@ -21,6 +24,36 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
+function inPublishedWindow(
+  publishedAt: string | null,
+  since?: string | null,
+  until?: string | null,
+): boolean {
+  if (!since && !until) {
+    return true;
+  }
+  if (!publishedAt) {
+    return false;
+  }
+  const ms = Date.parse(publishedAt);
+  if (!Number.isFinite(ms)) {
+    return false;
+  }
+  if (since) {
+    const sinceMs = Date.parse(since);
+    if (Number.isFinite(sinceMs) && ms < sinceMs) {
+      return false;
+    }
+  }
+  if (until) {
+    const untilMs = Date.parse(until);
+    if (Number.isFinite(untilMs) && ms > untilMs) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function refreshAllPostInsights(
   ctx: AppContext,
   input: RefreshAllPostInsightsInput = {},
@@ -33,7 +66,8 @@ export async function refreshAllPostInsights(
     .filter(
       (post) =>
         Boolean(post.igMediaId) &&
-        (post.status === "published" || post.status === "monitored"),
+        (post.status === "published" || post.status === "monitored") &&
+        inPublishedWindow(post.publishedAt, input.since, input.until),
     )
     .sort((left, right) => {
       const leftAt = left.publishedAt ?? left.scheduledAt ?? left.createdAt;

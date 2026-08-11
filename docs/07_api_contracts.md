@@ -1,7 +1,7 @@
 ---
 title: API contracts
 status: approved
-version: 1.3
+version: 1.4
 updated: 2026-08-11
 depends_on: [05_architecture.md, 06_database.md, 02_security.md]
 blocks: []
@@ -24,7 +24,7 @@ Inventário alinhado ao código em `iris-app/server/src/api/` (router declarativ
 | MCP | `/api/mcp/validate`, `/mcp`, `/api/settings/mcp` |
 | Posts | `/api/posts`, `/api/posts/:id`, publish, carousel-summary |
 | Assets | `/api/posts/:id/assets` |
-| Insights | `/api/posts/:id/insights`, `/api/insights/refresh-all` |
+| Insights | `/api/posts/:id/insights`, `/api/insights/account`, `/api/insights/refresh-all`, `/api/insights/refresh-media-page` |
 | Comments | `/api/posts/:id/comments`, `/api/comments/*` |
 | Meta | `/auth/meta`, `/api/meta/*` |
 | Settings | `/api/settings/*` |
@@ -102,7 +102,9 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_get_reply_context` | `GET /api/comments/:id/reply-context` | Envelope completo para resposta |
 | `iris_get_post_insights` | `GET /api/posts/:id/insights` | Insights com cache 1h (`force`/`refresh`) |
 | `iris_get_post_insights_history` | `GET /api/posts/:id/insights/history` | Snapshots persistidos |
-| `iris_refresh_all_post_insights` | `POST /api/insights/refresh-all` | Refresh em lote (throttle) |
+| `iris_get_account_insights` | `GET /api/insights/account` | Insights da conta IG (`period`, `since`, `until`, `metrics`) — live, sem snapshot |
+| `iris_refresh_all_post_insights` | `POST /api/insights/refresh-all` | Refresh em lote 1:1 (`limit`, `delay_ms`, `force`, `since`, `until`) |
+| `iris_refresh_media_insights_page` | `POST /api/insights/refresh-media-page` | Uma página `/me/media` + field expansion (~1 call Meta) |
 | `iris_list_webhooks` | `GET /api/settings/webhook-events` | Eventos Meta recentes |
 
 ## Error envelope
@@ -167,13 +169,44 @@ Post só vai para `scheduled` com ≥ 1 asset. Otimização JPEG server-side —
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
-| GET | `/api/posts/:id/insights` | admin | Insights do post (`force=1` ou `refresh=1` ignora cache) |
+| GET | `/api/posts/:id/insights` | admin | Insights do post (`force=1` ou `refresh=1` ignora cache). Métricas de mídia são lifetime — `since`/`until` na query são ignorados (no-op documentado). |
 | GET | `/api/posts/:id/insights/history` | admin | Snapshots (`limit`, default 30, máx. 200) |
-| POST | `/api/insights/refresh-all` | admin | Atualiza insights em lote (`limit`, `delay_ms`, `force`) |
+| GET | `/api/insights/account` | admin + Meta | Insights da **conta** IG (`period`, `since`, `until` unix ou ISO, `metrics` CSV). Live — sem persistência. |
+| POST | `/api/insights/refresh-all` | admin + Meta | Atualiza insights 1:1 em lote (`limit`, `delay_ms`, `force`, `since`, `until` ISO filtrando `published_at`) |
+| POST | `/api/insights/refresh-media-page` | admin + Meta | Uma página de mídia com `insights.metric(...)` (~1 call). Body: `limit`, `after`, `since`, `until`, `force`. Só atualiza posts já `published`/`monitored` (não cria posts). |
 
-Cache padrão: 1 hora (`from_cache` na resposta). Requer Meta conectada.
+Cache padrão por post: 1 hora (`from_cache` na resposta). Requer Meta conectada.
 
-Resposta inclui `ig_media_status` (`on_feed` \| `archived` \| `unavailable`), `ig_media_status_detail` e `ig_media_status_checked_at` quando a Iris já verificou a mídia na Meta. Posts arquivados no IG costumam falhar no GET da mídia, mas ainda podem expor comentários — a Iris distingue isso de publicação excluída ou sem permissão.
+**Custo Meta:** refresh-all = N calls; refresh-media-page ≈ 1 call por página; account = 1 call.
+
+Resposta de post inclui `ig_media_status` (`on_feed` \| `archived` \| `unavailable`), `ig_media_status_detail` e `ig_media_status_checked_at` quando a Iris já verificou a mídia na Meta. Posts arquivados no IG costumam falhar no GET da mídia, mas ainda podem expor comentários — a Iris distingue isso de publicação excluída ou sem permissão.
+
+### GET /api/insights/account — query
+
+| Param | Type | Description |
+| ----- | ---- | ----------- |
+| `period` | string | Default `day`. Valores Meta: `day`, `week`, `days_28`, … |
+| `since` | ISO ou unix | Início do intervalo (conta) |
+| `until` | ISO ou unix | Fim do intervalo (conta) |
+| `metrics` | CSV | Opcional; default documentado no server (`reach`, `follower_count`, `profile_views`, `website_clicks`) |
+
+### POST /api/insights/refresh-media-page — body
+
+```json
+{
+  "limit": 25,
+  "after": "cursor-opcional",
+  "since": "2026-08-01T00:00:00.000Z",
+  "until": "2026-08-31T23:59:59.999Z",
+  "force": true
+}
+```
+
+Resposta: `refreshed[]`, `unmatched_ig_media_ids[]`, `next_cursor`, `meta_call_count` (1), `items_scanned`.
+
+### POST /api/insights/refresh-all — body (extensão)
+
+Além de `limit`, `delay_ms`, `force`: `since` / `until` (ISO) filtram posts gerenciados por `published_at`.
 
 ## Comments
 
