@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { AppContext } from "../../api/app-context.ts";
-import { serializePost } from "../../adapters/sqlite/mappers.ts";
+import { serializePost, serializeAsset } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import { parseIsoDateParam } from "../../domain/time/datetime-ui.ts";
 import {
@@ -50,7 +50,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         return toolError("post not found");
       }
 
-      const assets = ctx.assets.listByPostId(args.postId);
+      const assets = ctx.assets.listByPostId(args.postId).map(serializeAsset);
       return jsonToolContent({
         post: serializePost(post),
         assets,
@@ -94,10 +94,11 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_update_post",
-    "Update caption, schedule or status for a post",
+    "Update caption, carousel_summary, schedule or status for a post",
     {
       postId: z.string().min(1),
       caption: z.string().optional(),
+      carouselSummary: z.string().nullable().optional(),
       scheduledAt: z.string().nullable().optional(),
       status: z.string().optional(),
     },
@@ -105,6 +106,9 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
       try {
         const body: Record<string, unknown> = {};
         if (args.caption !== undefined) body.caption = args.caption;
+        if (args.carouselSummary !== undefined) {
+          body.carousel_summary = args.carouselSummary;
+        }
         if (args.scheduledAt !== undefined) body.scheduled_at = args.scheduledAt;
         if (args.status !== undefined) body.status = args.status;
 

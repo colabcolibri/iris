@@ -156,3 +156,150 @@ test("prepare + signed multipart upload ingests asset once", async () => {
     await rm(mediaRoot, { recursive: true, force: true });
   }
 });
+
+test("iris_list_post_assets and iris_delete_post_asset", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-asset-del-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+    publicBaseUrl: "http://127.0.0.1:9876",
+    publishUrlSecret: "publish-secret",
+  });
+
+  const post = ctx.posts.create({ caption: "del", channel: "instagram" });
+  const { ingestPostAsset } = await import("../../domain/posts/asset-ingest.ts");
+  const asset = await ingestPostAsset(
+    {
+      posts: ctx.posts,
+      assets: ctx.assets,
+      mediaStorage: ctx.mediaStorage,
+      imageOptimizer: ctx.imageOptimizer,
+    },
+    {
+      postId: post.id,
+      buffer: TINY_PNG,
+      filename: "pixel.png",
+      sortOrder: 1,
+    },
+  );
+
+  const mcp = createIrisMcpServer(ctx);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test", version: "1.0.0" });
+  await mcp.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  try {
+    const listed = await client.callTool({
+      name: "iris_list_post_assets",
+      arguments: { postId: post.id },
+    });
+    assert.ok(!listed.isError);
+    const listPayload = JSON.parse(
+      Array.isArray(listed.content) && listed.content[0]?.type === "text"
+        ? listed.content[0].text
+        : "{}",
+    ) as { assets: Array<{ id: string }> };
+    assert.equal(listPayload.assets.length, 1);
+    assert.equal(listPayload.assets[0]?.id, asset.id);
+
+    const deleted = await client.callTool({
+      name: "iris_delete_post_asset",
+      arguments: { postId: post.id, assetId: asset.id },
+    });
+    assert.ok(!deleted.isError);
+    assert.equal(ctx.assets.listByPostId(post.id).length, 0);
+
+    const missing = await client.callTool({
+      name: "iris_delete_post_asset",
+      arguments: { postId: post.id, assetId: asset.id },
+    });
+    assert.equal(missing.isError, true);
+  } finally {
+    await client.close();
+    await mcp.close();
+    db.close();
+    await rm(mediaRoot, { recursive: true, force: true });
+  }
+});
+
+test("list assets includes signed url; update carousel_summary; generate without vision errors", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-carousel-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+    publicBaseUrl: "https://iris.example.com",
+    publishUrlSecret: "publish-secret",
+  });
+
+  const post = ctx.posts.create({ caption: "c", channel: "instagram" });
+  const { ingestPostAsset } = await import("../../domain/posts/asset-ingest.ts");
+  await ingestPostAsset(
+    {
+      posts: ctx.posts,
+      assets: ctx.assets,
+      mediaStorage: ctx.mediaStorage,
+      imageOptimizer: ctx.imageOptimizer,
+    },
+    {
+      postId: post.id,
+      buffer: TINY_PNG,
+      filename: "pixel.png",
+      sortOrder: 1,
+    },
+  );
+
+  const mcp = createIrisMcpServer(ctx);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test", version: "1.0.0" });
+  await mcp.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  try {
+    const listed = await client.callTool({
+      name: "iris_list_post_assets",
+      arguments: { postId: post.id },
+    });
+    assert.ok(!listed.isError);
+    const listPayload = JSON.parse(
+      Array.isArray(listed.content) && listed.content[0]?.type === "text"
+        ? listed.content[0].text
+        : "{}",
+    ) as { assets: Array<{ url: string | null }> };
+    assert.match(listPayload.assets[0]?.url ?? "", /\/publish\/media\//);
+
+    const updated = await client.callTool({
+      name: "iris_update_post",
+      arguments: {
+        postId: post.id,
+        carouselSummary: "Produto azul no fundo branco.",
+      },
+    });
+    assert.ok(!updated.isError);
+    assert.equal(
+      ctx.posts.findById(post.id)?.carouselSummary,
+      "Produto azul no fundo branco.",
+    );
+
+    const generated = await client.callTool({
+      name: "iris_generate_post_carousel_summary",
+      arguments: { postId: post.id },
+    });
+    assert.equal(generated.isError, true);
+  } finally {
+    await client.close();
+    await mcp.close();
+    db.close();
+    await rm(mediaRoot, { recursive: true, force: true });
+  }
+});

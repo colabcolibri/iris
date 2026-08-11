@@ -86,15 +86,18 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 
 **Escopo MCP:** equivalente ao token agent — posts, assets, comentários, insights, webhooks (leitura). Sem settings admin nem OAuth Meta.
 
-### MCP tools (11)
+### MCP tools (14)
 
 | Tool | Equivalente REST | Descrição |
 | ---- | ---------------- | --------- |
 | `iris_list_posts` | `GET /api/posts` | Lista com `status`, `from`, `to` |
 | `iris_get_post` | `GET /api/posts/:id` | Post + metadados de assets |
 | `iris_create_post` | `POST /api/posts` | Cria rascunho |
-| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, agenda ou status |
+| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, `carousel_summary`, agenda ou status |
+| `iris_list_post_assets` | `GET /api/posts/:id/assets` | Metadados + `url` assinada (`/publish/media/…`) |
 | `iris_prepare_post_asset_upload` | `POST /upload/assets/:sig/:postId` | Prepara URL assinada; host faz `curl -F file=@…` (sem base64) |
+| `iris_delete_post_asset` | `DELETE /api/posts/:id/assets/:assetId` | Remove asset (row + arquivo) |
+| `iris_generate_post_carousel_summary` | `POST /api/posts/:id/generate-carousel-summary` | Vision no server → grava `carousel_summary` |
 | `iris_list_post_comments` | `GET /api/posts/:id/comments` | Comentários sincronizados |
 | `iris_get_reply_context` | `GET /api/comments/:id/reply-context` | Envelope completo para resposta |
 | `iris_get_post_insights` | `GET /api/posts/:id/insights` | Insights com cache 1h (`force`/`refresh`) |
