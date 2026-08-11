@@ -197,4 +197,4 @@ Ver também `docs/02_security.md` — § MCP.
 | `docs/08_environments.md` | Variáveis de ambiente |
 | `iris-agent/README.md` | Setup rápido do kit |
 | `iris-agent/.agent/skills/mcp-connection/SKILL.md` | Skill para agentes no workspace |
-| `iris-app/src/mcp/` | Implementação do servidor MCP |
+| `iris-app/server/src/mcp/` | Implementação do servidor MCP |

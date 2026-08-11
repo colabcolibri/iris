@@ -3,31 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "license": "PolyForm-Noncommercial-1.0.0",
-  "description": "Iris — agendamento, publicação e comentários no Instagram (serviço independente do Casper)",
+  "description": "Iris — workspace: server (API) + admin (React)",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development node --env-file=.env --experimental-strip-types src/server.ts",
-    "start": "node --experimental-strip-types src/server.ts",
-    "build:admin": "node scripts/clean-vite-assets.mjs && pnpm --dir admin build",
-    "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test $(find src test -name '*.test.ts' -print 2>/dev/null | tr '\\n' ' ')"
+    "dev": "pnpm --filter @iris/server dev",
+    "start": "pnpm --filter @iris/server start",
+    "build:admin": "node scripts/clean-vite-assets.mjs && pnpm --filter admin build",
+    "typecheck": "pnpm --filter @iris/server typecheck",
+    "test": "pnpm --filter @iris/server test"
   },
   "engines": {
     "node": ">=22"
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "nodemailer": "^9.0.5",
-    "sharp": "^0.35.0",
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "^25.6.0",
-    "@types/nodemailer": "^8.0.1",
-    "@vitejs/plugin-react": "^6.0.4",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3",
-    "vite": "^8.2.0"
+    "typescript": "^6.0.3"
   }
 }

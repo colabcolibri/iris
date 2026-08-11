@@ -23,7 +23,7 @@ blocks: [02_security.md, 04_principles.md, 08_environments.md]
 | Layer | Choice | Rationale |
 | ----- | ------ | --------- |
 | Database | SQLite (`node:sqlite`) | Simples, um arquivo, adequado ao volume editorial |
-| Migrations | SQL versionadas em `iris-app/migrations/` | Timestamp `YYYYMMDDHHMMSS` |
+| Migrations | SQL versionadas em `iris-app/server/migrations/` | Timestamp `YYYYMMDDHHMMSS` |
 
 ## HTTP and UI
 

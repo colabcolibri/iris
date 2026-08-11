@@ -3,7 +3,7 @@
 ## Dependency diagram
 
 ```txt
-iris-app/src/server.ts
+iris-app/server/src/server.ts
   └── api/routes/*
   └── mcp/*                    # gateway MCP stateless por request
         └── use-cases
@@ -40,6 +40,6 @@ iris-agent/.agent/skills/
 | ---- | ---------------- |
 | `iris-agent/publications/` + skill push | Montar pacote, upload REST, atualizar post.md |
 | `iris-agent/.agent/skills/mcp-connection` | Configurar clients MCP (Cursor, ChatGPT, Claude) |
-| `iris-app/src/api` | Receber bytes, persistir, agendar |
-| `iris-app/src/mcp` | Transport MCP + tools editoriais |
-| `iris-app/src/workers` | Publicar no IG no horário |
+| `iris-app/server/src/api` | Receber bytes, persistir, agendar |
+| `iris-app/server/src/mcp` | Transport MCP + tools editoriais |
+| `iris-app/server/src/workers` | Publicar no IG no horário |

@@ -32,7 +32,7 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(adminDir, "./src"),
-        "@iris/domain": path.resolve(adminDir, "../src/domain"),
+        "@iris/domain": path.resolve(adminDir, "../server/src/domain"),
       },
     },
     build: {

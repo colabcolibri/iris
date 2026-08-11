@@ -6,11 +6,11 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY iris-app/package.json iris-app/pnpm-lock.yaml ./
-COPY iris-app/admin/package.json iris-app/admin/pnpm-lock.yaml ./admin/
+COPY iris-app/package.json iris-app/pnpm-workspace.yaml iris-app/pnpm-lock.yaml ./
+COPY iris-app/server/package.json ./server/
+COPY iris-app/admin/package.json ./admin/
 
-RUN pnpm install --frozen-lockfile \
-  && pnpm --dir admin install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 
@@ -31,12 +31,14 @@ RUN corepack enable && corepack prepare pnpm@latest --activate \
   && apt-get install -y --no-install-recommends tini \
   && rm -rf /var/lib/apt/lists/*
 
-COPY iris-app/package.json iris-app/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+COPY iris-app/package.json iris-app/pnpm-workspace.yaml iris-app/pnpm-lock.yaml ./
+COPY iris-app/server/package.json ./server/
+COPY iris-app/admin/package.json ./admin/
+RUN pnpm install --frozen-lockfile --prod --filter @iris/server...
 
 COPY --from=build /app/public ./public
-COPY --from=build /app/src ./src
-COPY --from=build /app/migrations ./migrations
+COPY --from=build /app/server/src ./server/src
+COPY --from=build /app/server/migrations ./server/migrations
 
 RUN mkdir -p /app/data/media
 
@@ -46,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 8792) + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["node", "--experimental-strip-types", "src/server.ts"]
+CMD ["node", "--experimental-strip-types", "server/src/server.ts"]

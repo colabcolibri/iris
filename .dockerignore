@@ -8,9 +8,10 @@ iris-agent
 !iris-app/.env.example
 iris-app/node_modules
 iris-app/admin/node_modules
+iris-app/server/node_modules
 iris-app/data
 iris-app/tmp-test-media
 **/*.db
 **/*.db-*
 **/*.test.ts
-iris-app/test
+iris-app/server/test

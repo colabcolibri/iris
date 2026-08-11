@@ -24,7 +24,7 @@
 
     "paths": {
       "@/*": ["./src/*"],
-      "@iris/domain/*": ["../src/domain/*"]
+      "@iris/domain/*": ["../server/src/domain/*"]
     }
   },
   "include": ["src"]

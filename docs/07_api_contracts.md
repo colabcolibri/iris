@@ -9,7 +9,7 @@ blocks: []
 
 # 07 — API contracts
 
-Inventário alinhado ao código em `iris-app/src/api/` (router declarativo + `http-server.ts`). **Produção** expõe as mesmas rotas após deploy do commit em `main` (Railway).
+Inventário alinhado ao código em `iris-app/server/src/api/` (router declarativo + `http-server.ts`). **Produção** expõe as mesmas rotas após deploy do commit em `main` (Railway).
 
 ## Base URL
 

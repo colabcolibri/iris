@@ -1,15 +1,16 @@
 # syntax=docker/dockerfile:1
+# Build context = iris-app/ (local / alternate deploy). Prefer repo-root Dockerfile on Railway.
 
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY package.json pnpm-lock.yaml ./
-COPY admin/package.json admin/pnpm-lock.yaml ./admin/
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY server/package.json ./server/
+COPY admin/package.json ./admin/
 
-RUN pnpm install --frozen-lockfile \
-  && pnpm --dir admin install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 
@@ -30,12 +31,14 @@ RUN corepack enable && corepack prepare pnpm@latest --activate \
   && apt-get install -y --no-install-recommends tini \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY server/package.json ./server/
+COPY admin/package.json ./admin/
+RUN pnpm install --frozen-lockfile --prod --filter @iris/server...
 
 COPY --from=build /app/public ./public
-COPY src ./src
-COPY migrations ./migrations
+COPY --from=build /app/server/src ./server/src
+COPY --from=build /app/server/migrations ./server/migrations
 
 RUN mkdir -p /app/data/media
 
@@ -45,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 8792) + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["node", "--experimental-strip-types", "src/server.ts"]
+CMD ["node", "--experimental-strip-types", "server/src/server.ts"]

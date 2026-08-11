@@ -6,7 +6,7 @@ SPA do operador editorial. Build Vite → `iris-app/public/`. Documentação de 
 
 ```bash
 # na raiz iris-app/
-pnpm dev:admin      # HMR em modo dev
+pnpm dev            # API + admin HMR (mesmo processo)
 pnpm build:admin    # produção → public/
 ```
 
