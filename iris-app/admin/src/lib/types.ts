@@ -44,6 +44,7 @@ export type Comment = {
   draft_status?: string | null;
   linked_reply_text?: string | null;
   linked_reply_ig_comment_id?: string | null;
+  reply_to_ig_comment_id?: string | null;
   deleted_at?: string | null;
 };
 
