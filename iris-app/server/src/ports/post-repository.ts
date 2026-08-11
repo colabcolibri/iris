@@ -28,6 +28,8 @@ export type UpdatePostInput = {
   errorMessage?: string | null;
   autoReplyEnabled?: boolean;
   replyMode?: PostReplyModeSetting;
+  likeCount?: number | null;
+  reportedCommentsCount?: number | null;
 };
 
 export type ListPostsFilter = {

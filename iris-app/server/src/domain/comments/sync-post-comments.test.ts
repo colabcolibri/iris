@@ -63,6 +63,8 @@ test("listCommentPosts returns published iris posts with local counts", () => {
             igMediaStatus: post.igMediaStatus,
             igMediaStatusDetail: post.igMediaStatusDetail,
             igMediaStatusCheckedAt: post.igMediaStatusCheckedAt,
+            likeCount: post.likeCount,
+            reportedCommentsCount: post.reportedCommentsCount,
           })),
       countCommentsByPostId: (postId) => comments.countByPostId(postId),
     });
@@ -87,6 +89,7 @@ test("syncPostComments upserts remote comments for one post", async () => {
               igMediaId: "media-1",
               caption: "Legenda",
               timestamp: new Date().toISOString(),
+              likeCount: null,
               reportedCommentsCount: 1,
               comments: [
                 {
@@ -110,7 +113,8 @@ test("syncPostComments upserts remote comments for one post", async () => {
         async findMediaByPermalink() {
           return null;
         },
-      },
+      } as never,
+      posts: { update: () => null } as never,
       upsertFromWebhook: (input) => ({
         comment: {
           id: "comment-1",
@@ -172,7 +176,8 @@ test("syncPostComments marks comments removed from instagram when remote list is
                 igMediaId: "media-1",
                 caption: "Legenda",
                 timestamp: new Date().toISOString(),
-                reportedCommentsCount: 1,
+                likeCount: null,
+              reportedCommentsCount: 1,
                 comments: [
                   {
                     igCommentId: "ig-stays",
@@ -195,7 +200,8 @@ test("syncPostComments marks comments removed from instagram when remote list is
           async findMediaByPermalink() {
             return null;
           },
-        },
+        } as never,
+        posts,
         upsertFromWebhook: (input) => comments.upsertFromWebhook(input),
         listByPostId: (postId) => comments.listByPostId(postId),
         markDeletedFromInstagram: (id) => comments.markDeletedFromInstagram(id),

@@ -100,7 +100,13 @@ const PostInboxItem = memo(function PostInboxItem({
   const preview = resolveThumbnail(post, thumbnailOverrides);
   const badge = statusBadge(post);
   const mediaBadge = igMediaBadge(post.ig_media_status);
-  const hasEngagement = post.comments_count > 0 || post.status === "published";
+  const likeLabel =
+    post.like_count == null
+      ? "—"
+      : new Intl.NumberFormat("pt-BR").format(post.like_count);
+  const commentsLabel = new Intl.NumberFormat("pt-BR").format(
+    post.comments_count,
+  );
 
   return (
     <button
@@ -170,19 +176,14 @@ const PostInboxItem = memo(function PostInboxItem({
           {listCaption(post.caption)}
         </p>
 
-        <div
-          className={cn(
-            "mt-1 flex items-center gap-2 text-muted-foreground",
-            !hasEngagement && "opacity-0",
-          )}
-        >
+        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
           <span className="inline-flex items-center gap-1 text-xs">
             <Heart className="size-3.5 shrink-0" aria-hidden />
-            <span className="tabular-nums">—</span>
+            <span className="tabular-nums">{likeLabel}</span>
           </span>
           <span className="inline-flex items-center gap-1 text-xs">
             <MessageCircle className="size-3.5 shrink-0" aria-hidden />
-            <span className="tabular-nums">{post.comments_count}</span>
+            <span className="tabular-nums">{commentsLabel}</span>
           </span>
         </div>
       </div>

@@ -24,14 +24,16 @@ test("syncPostComments does not schedule agent replies and reconcile links exist
     await syncPostComments(
       { postId: post.id, igMediaId: "media-1" },
       {
-        metaCommentReader: {
+        posts,
+      metaCommentReader: {
           async listRecentMediaWithComments() {
             return [
               {
                 igMediaId: "media-1",
                 caption: "Legenda",
                 timestamp: "2026-08-10T10:00:00+0000",
-                reportedCommentsCount: 2,
+                likeCount: null,
+              reportedCommentsCount: 2,
                 comments: [
                   {
                     igCommentId: "ig-user",

@@ -3,6 +3,7 @@ import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
 import type { PostRepository } from "../../ports/post-repository.ts";
 import { parseInstagramMediaInput } from "./parse-instagram-media-input.ts";
 import { resolveMonitoredPostMedia } from "./resolve-monitored-post-media.ts";
+import { persistPostEngagement } from "../posts/persist-post-engagement.ts";
 import { ValidationError } from "../../api/json.ts";
 
 export type RegisterMonitoredPostInput = {
@@ -25,12 +26,12 @@ export async function registerMonitoredPost(
   const existing = deps.posts.findByIgMediaId(igMediaId);
 
   if (existing) {
-    if (existing.status === "monitored") {
-      return existing;
-    }
-
-    if (existing.status === "published") {
-      return existing;
+    if (existing.status === "monitored" || existing.status === "published") {
+      persistPostEngagement(deps.posts, existing.id, {
+        likeCount: metadata.likeCount ?? null,
+        reportedCommentsCount: metadata.commentsCount ?? null,
+      });
+      return deps.posts.findById(existing.id) ?? existing;
     }
 
     throw new ValidationError(
@@ -38,7 +39,7 @@ export async function registerMonitoredPost(
     );
   }
 
-  return deps.posts.create({
+  const post = deps.posts.create({
     channel: "instagram",
     status: "monitored",
     caption: metadata.caption,
@@ -47,4 +48,11 @@ export async function registerMonitoredPost(
     sourceNote: "monitored externally",
     replyMode: "inherit",
   });
+
+  persistPostEngagement(deps.posts, post.id, {
+    likeCount: metadata.likeCount ?? null,
+    reportedCommentsCount: metadata.commentsCount ?? null,
+  });
+
+  return deps.posts.findById(post.id) ?? post;
 }

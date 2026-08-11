@@ -8,26 +8,20 @@ type PageScrollAreaProps = {
   className?: string;
   /** Classes no conteúdo interno (padding, gap). */
   contentClassName?: string;
-  /** Classes no viewport do ScrollArea (ex.: overflow-x-hidden). */
-  viewportClassName?: string;
 };
 
 /**
- * Região de scroll padrão do admin (SRP: só scroll).
- * Usa shadcn ScrollArea — não reinventar overflow-y-auto + scrollbar nativa.
+ * Região de scroll do admin — composição sobre o ScrollArea shadcn.
+ * Não alterar `components/ui/scroll-area`.
  */
 export function PageScrollArea({
   children,
   className,
   contentClassName,
-  viewportClassName,
 }: PageScrollAreaProps) {
   return (
     <div className={cn("min-h-0 min-w-0 flex-1 overflow-hidden", className)}>
-      <ScrollArea
-        className="h-full"
-        viewportClassName={cn("!overflow-x-hidden", viewportClassName)}
-      >
+      <ScrollArea className="h-full">
         <div className={cn(contentClassName)}>{children}</div>
       </ScrollArea>
     </div>

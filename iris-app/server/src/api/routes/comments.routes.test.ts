@@ -369,6 +369,7 @@ test("POST comments sync upserts comments for one post", async () => {
               igMediaId: "media-sync-post",
               caption: "Post sync",
               timestamp: new Date().toISOString(),
+              likeCount: null,
               reportedCommentsCount: 1,
               comments: [
                 {
@@ -437,6 +438,7 @@ test("POST comments reconcile sincroniza e marca comentários removidos no Insta
               igMediaId: "media-reconcile-deleted",
               caption: "Post reconcile deleted",
               timestamp: new Date().toISOString(),
+              likeCount: null,
               reportedCommentsCount: 1,
               comments: [
                 {
@@ -493,7 +495,8 @@ test("GET comments inbox returns synced media", async () => {
             igMediaId: "media-inbox",
             caption: "Post inbox",
             timestamp: new Date().toISOString(),
-            reportedCommentsCount: 1,
+            likeCount: null,
+              reportedCommentsCount: 1,
             comments: [
               {
                 igCommentId: "ig-inbox-1",
@@ -537,6 +540,7 @@ test("GET comments inbox filters by ig_media_id", async () => {
               igMediaId: "media-only",
               caption: "Post filtrado",
               timestamp: new Date().toISOString(),
+              likeCount: null,
               reportedCommentsCount: 1,
               comments: [
                 {

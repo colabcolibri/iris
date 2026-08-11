@@ -183,13 +183,13 @@ export function ImportPostsDialog({
   };
 
   return (
-    <AppDialog open={open} onOpenChange={onOpenChange} size="xl">
+    <AppDialog open={open} onOpenChange={onOpenChange} size="xl" height="full">
       <AppDialog.Header
         title="Importar da Meta"
         description="Selecione publicações recentes da conta conectada para monitorar comentários no Iris."
       />
 
-      <AppDialog.Body className="px-0">
+      <AppDialog.Body className="px-0 pb-2">
         <div className="border-b px-6 pb-3">
           <label className="inline-flex items-center gap-2 text-sm">
             <input
@@ -208,7 +208,7 @@ export function ImportPostsDialog({
           </label>
         </div>
 
-        <div className="min-h-[18rem] px-2 py-2">
+        <div className="px-2 py-2">
           {loading && items.length === 0 ? (
             <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />

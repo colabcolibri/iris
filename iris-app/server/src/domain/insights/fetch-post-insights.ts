@@ -93,6 +93,11 @@ export async function fetchPostInsights(
     fetchedAt,
   });
 
+  const likes = metrics.find((item) => item.name === "likes")?.values[0]?.value;
+  if (typeof likes === "number") {
+    ctx.posts.update(postId, { likeCount: likes });
+  }
+
   return serializePostInsightsSnapshot(snapshot, {
     fromCache: false,
     ok: insightsMessage === null,

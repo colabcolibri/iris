@@ -23,6 +23,7 @@ export function commentReconcileDeps(ctx: AppContext) {
 export function postCommentSyncDeps(ctx: AppContext) {
   return {
     metaCommentReader: ctx.metaCommentReader,
+    posts: ctx.posts,
     upsertFromWebhook: (input: Parameters<AppContext["comments"]["upsertFromWebhook"]>[0]) =>
       ctx.comments.upsertFromWebhook(input),
     listByPostId: (postId: string) => ctx.comments.listByPostId(postId),

@@ -1,10 +1,13 @@
 import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
+import type { PostRepository } from "../../ports/post-repository.ts";
 import type { Comment } from "./comment.ts";
 import { normalizeCommentTimestamp } from "./normalize-comment-timestamp.ts";
 import { reconcileDeletedInstagramComments } from "./reconcile-deleted-instagram-comments.ts";
+import { persistPostEngagement } from "../posts/persist-post-engagement.ts";
 
 export type SyncPostCommentsDeps = {
   metaCommentReader: MetaCommentReader;
+  posts: PostRepository;
   upsertFromWebhook: (input: {
     igCommentId: string;
     postId: string;
@@ -78,6 +81,11 @@ export async function syncPostComments(
   }
 
   const accessLimited = media.reportedCommentsCount > 0 && comments.length === 0;
+
+  persistPostEngagement(deps.posts, input.postId, {
+    likeCount: media.likeCount,
+    reportedCommentsCount: media.reportedCommentsCount,
+  });
 
   const remoteIgCommentIds = new Set(
     media.comments.map((remoteComment) => remoteComment.igCommentId),

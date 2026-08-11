@@ -151,6 +151,12 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
             : current.autoReplyEnabled,
         replyMode:
           input.replyMode !== undefined ? input.replyMode : current.replyMode,
+        likeCount:
+          input.likeCount !== undefined ? input.likeCount : current.likeCount,
+        reportedCommentsCount:
+          input.reportedCommentsCount !== undefined
+            ? input.reportedCommentsCount
+            : current.reportedCommentsCount,
       };
 
       if (input.autoReplyEnabled !== undefined && input.replyMode === undefined) {
@@ -170,7 +176,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         SET caption = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
             published_at = ?, ig_media_id = ?, ig_media_status = ?, ig_media_status_detail = ?,
             ig_media_status_checked_at = ?, error_message = ?, auto_reply_enabled = ?,
-            reply_mode = ?, updated_at = ?
+            reply_mode = ?, like_count = ?, reported_comments_count = ?, updated_at = ?
         WHERE id = ?
       `).run(
         next.caption,
@@ -187,6 +193,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.errorMessage,
         autoReplyEnabled ? 1 : 0,
         next.replyMode,
+        next.likeCount,
+        next.reportedCommentsCount,
         updatedAt,
         id,
       );

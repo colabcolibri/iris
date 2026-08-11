@@ -58,7 +58,8 @@ test("buildCommentsInbox syncs comments for iris posts", async () => {
             igMediaId: "media-sync",
             caption: "Legenda",
             timestamp: new Date().toISOString(),
-            reportedCommentsCount: 1,
+            likeCount: null,
+              reportedCommentsCount: 1,
             comments: [
               {
                 igCommentId: "ig-sync-1",
@@ -73,7 +74,8 @@ test("buildCommentsInbox syncs comments for iris posts", async () => {
             igMediaId: "media-external",
             caption: null,
             timestamp: new Date().toISOString(),
-            reportedCommentsCount: 3,
+            likeCount: null,
+              reportedCommentsCount: 3,
             comments: [],
           },
         ];
@@ -120,7 +122,8 @@ test("buildCommentsInbox with iris scope requests only iris media ids", async ()
             igMediaId: "media-sync",
             caption: "Legenda",
             timestamp: new Date().toISOString(),
-            reportedCommentsCount: 1,
+            likeCount: null,
+              reportedCommentsCount: 1,
             comments: [],
           },
         ];
@@ -188,7 +191,8 @@ test("buildCommentsInbox flags meta access limitation when counts exist but list
             igMediaId: "media-blocked",
             caption: "Post com comentários",
             timestamp: new Date().toISOString(),
-            reportedCommentsCount: 2,
+            likeCount: null,
+              reportedCommentsCount: 2,
             comments: [],
           },
         ];

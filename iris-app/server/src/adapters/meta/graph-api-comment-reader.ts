@@ -50,8 +50,8 @@ type GraphComment = {
   replies?: GraphPaging<GraphComment>;
 };
 
-const MEDIA_FIELDS = "id,caption,timestamp,comments_count";
-const MEDIA_LOOKUP_FIELDS = "id,caption,timestamp,permalink";
+const MEDIA_FIELDS = "id,caption,timestamp,comments_count,like_count";
+const MEDIA_LOOKUP_FIELDS = "id,caption,timestamp,permalink,like_count,comments_count";
 const MEDIA_PREVIEW_FIELDS =
   "id,caption,timestamp,permalink,media_type,media_url,thumbnail_url";
 const MEDIA_CAROUSEL_FIELDS =
@@ -152,6 +152,7 @@ export function createGraphApiCommentReader(
       caption: media.caption ?? null,
       timestamp: media.timestamp ?? new Date().toISOString(),
       reportedCommentsCount: Number(media.comments_count ?? 0),
+      likeCount: typeof media.like_count === "number" ? media.like_count : null,
       comments,
     };
   }
@@ -165,6 +166,9 @@ export function createGraphApiCommentReader(
       mediaType: media.media_type ?? null,
       mediaUrl: media.media_url ?? null,
       thumbnailUrl: media.thumbnail_url ?? null,
+      likeCount: typeof media.like_count === "number" ? media.like_count : null,
+      commentsCount:
+        typeof media.comments_count === "number" ? media.comments_count : null,
     };
   }
 

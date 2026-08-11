@@ -13,6 +13,7 @@ test("refreshAndReconcilePostComments sincroniza antes de vincular", async () =>
     igMediaId,
     brandUsername: "colabcolibri",
     syncDeps: {
+      posts: { update: () => null } as never,
       metaCommentReader: {
         async listRecentMediaWithComments() {
           return [
@@ -20,6 +21,7 @@ test("refreshAndReconcilePostComments sincroniza antes de vincular", async () =>
               igMediaId,
               caption: null,
               timestamp: new Date().toISOString(),
+              likeCount: null,
               reportedCommentsCount: 1,
               comments: [
                 {

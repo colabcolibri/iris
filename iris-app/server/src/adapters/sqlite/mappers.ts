@@ -20,6 +20,8 @@ type PostRow = {
   error_message: string | null;
   auto_reply_enabled: number;
   reply_mode: string;
+  like_count: number | null;
+  reported_comments_count: number | null;
   created_at: string;
   updated_at: string;
   assets_count?: number | string;
@@ -79,6 +81,15 @@ export function mapPostRow(row: PostRow): Post {
     replyMode: isPostReplyModeSetting(row.reply_mode)
       ? row.reply_mode
       : "off",
+    likeCount:
+      row.like_count === null || row.like_count === undefined
+        ? null
+        : Number(row.like_count),
+    reportedCommentsCount:
+      row.reported_comments_count === null ||
+      row.reported_comments_count === undefined
+        ? null
+        : Number(row.reported_comments_count),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     assetsCount:

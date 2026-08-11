@@ -25,6 +25,10 @@ export type Post = {
   errorMessage: string | null;
   autoReplyEnabled: boolean;
   replyMode: PostReplyModeSetting;
+  /** Curtidas Meta (nullable até sync/insights). */
+  likeCount: number | null;
+  /** comments_count reportado pela Meta (nullable até sync). */
+  reportedCommentsCount: number | null;
   createdAt: string;
   updatedAt: string;
   assetsCount?: number;

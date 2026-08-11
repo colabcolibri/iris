@@ -11,6 +11,7 @@ export type RemoteMediaWithComments = {
   caption: string | null;
   timestamp: string;
   reportedCommentsCount: number;
+  likeCount: number | null;
   comments: RemoteComment[];
 };
 
@@ -55,6 +56,8 @@ export type RemoteMediaMetadata = {
   mediaType?: string | null;
   mediaUrl?: string | null;
   thumbnailUrl?: string | null;
+  likeCount?: number | null;
+  commentsCount?: number | null;
 };
 
 export type RemoteMediaPreview = {

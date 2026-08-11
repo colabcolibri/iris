@@ -87,6 +87,8 @@ export type CommentPostSummary = {
   ig_media_status?: IgMediaStatus | null;
   ig_media_status_detail?: string | null;
   ig_media_status_checked_at?: string | null;
+  like_count: number | null;
+  reported_comments_count?: number | null;
   comments_count: number;
   pending_count: number;
   preview_filename?: string | null;

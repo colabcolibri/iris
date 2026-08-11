@@ -33,6 +33,8 @@ export const commentsInboxRouter = createRouter([
             igMediaStatus: post.igMediaStatus,
             igMediaStatusDetail: post.igMediaStatusDetail,
             igMediaStatusCheckedAt: post.igMediaStatusCheckedAt,
+            likeCount: post.likeCount,
+            reportedCommentsCount: post.reportedCommentsCount,
           })),
       countCommentsByPostId: (postId) => match.ctx.comments.countByPostId(postId),
     });
@@ -56,6 +58,17 @@ export const commentsInboxRouter = createRouter([
             previewUrl = firstPostMediaUrl(media);
           }
 
+          let likeCount = post.likeCount;
+          if (likeCount == null) {
+            const snap = match.ctx.postInsightsStore.findLatestByPostId(post.postId);
+            const likesMetric = snap?.metrics.find((item) => item.name === "likes");
+            const likesValue = likesMetric?.values[0]?.value;
+            if (typeof likesValue === "number") {
+              likeCount = likesValue;
+              match.ctx.posts.update(post.postId, { likeCount: likesValue });
+            }
+          }
+
           return {
             post_id: post.postId,
             caption: post.caption,
@@ -69,6 +82,8 @@ export const commentsInboxRouter = createRouter([
             ig_media_status: post.igMediaStatus,
             ig_media_status_detail: post.igMediaStatusDetail,
             ig_media_status_checked_at: post.igMediaStatusCheckedAt,
+            like_count: likeCount,
+            reported_comments_count: post.reportedCommentsCount,
             comments_count: post.commentsCount,
             pending_count: post.pendingCount,
             preview_filename: firstAsset?.storagePath ?? null,

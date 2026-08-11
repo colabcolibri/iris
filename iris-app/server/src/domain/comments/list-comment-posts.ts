@@ -13,6 +13,8 @@ export type CommentPostSummary = {
   igMediaStatus: IgMediaStatus | null;
   igMediaStatusDetail: string | null;
   igMediaStatusCheckedAt: string | null;
+  likeCount: number | null;
+  reportedCommentsCount: number | null;
   commentsCount: number;
   pendingCount: number;
 };
@@ -30,6 +32,8 @@ export type ListCommentPostsDeps = {
     igMediaStatus: IgMediaStatus | null;
     igMediaStatusDetail: string | null;
     igMediaStatusCheckedAt: string | null;
+    likeCount: number | null;
+    reportedCommentsCount: number | null;
   }>;
   countCommentsByPostId: (postId: string) => { total: number; pending: number };
 };
@@ -40,6 +44,7 @@ export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary
     .filter((post): post is typeof post & { igMediaId: string } => Boolean(post.igMediaId))
     .map((post) => {
       const counts = deps.countCommentsByPostId(post.id);
+      const reported = post.reportedCommentsCount ?? 0;
       return {
         postId: post.id,
         caption: post.caption,
@@ -52,7 +57,9 @@ export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary
         igMediaStatus: post.igMediaStatus,
         igMediaStatusDetail: post.igMediaStatusDetail,
         igMediaStatusCheckedAt: post.igMediaStatusCheckedAt,
-        commentsCount: counts.total,
+        likeCount: post.likeCount,
+        reportedCommentsCount: post.reportedCommentsCount,
+        commentsCount: Math.max(counts.total, reported),
         pendingCount: counts.pending,
       };
     })

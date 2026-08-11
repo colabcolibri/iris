@@ -1,4 +1,8 @@
-import type { ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 const SIZE_CLASS = {
@@ -23,6 +27,17 @@ const HEIGHT_CLASS = {
   default: "max-h-[min(92vh,880px)]",
   full: "h-[calc(100dvh-0.5rem)] max-h-[calc(100dvh-0.5rem)] sm:h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-1rem)]",
 } as const;
+
+/** ScrollArea: altura só no Root. Viewport fica h-full (não repetir h- no viewport). */
+const BODY_SCROLL_HEIGHT = "h-[min(70vh,640px)]";
+
+type DialogLayout = {
+  height: keyof typeof HEIGHT_CLASS;
+};
+
+const AppDialogLayoutContext = createContext<DialogLayout>({
+  height: "default",
+});
 
 type AppDialogProps = {
   open: boolean;
@@ -44,17 +59,19 @@ export function AppDialog({
 }: AppDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className={cn(
-          SIZE_CLASS[size],
-          HEIGHT_CLASS[height],
-          "flex flex-col gap-0 overflow-hidden p-0",
-          className,
-        )}
-      >
-        {children}
-      </DialogContent>
+      <AppDialogLayoutContext.Provider value={{ height }}>
+        <DialogContent
+          showCloseButton={false}
+          className={cn(
+            SIZE_CLASS[size],
+            HEIGHT_CLASS[height],
+            "!flex min-h-0 flex-col gap-0 overflow-hidden p-0",
+            className,
+          )}
+        >
+          {children}
+        </DialogContent>
+      </AppDialogLayoutContext.Provider>
     </Dialog>
   );
 }
@@ -108,17 +125,32 @@ type AppDialogBodyProps = {
   className?: string;
 };
 
+/**
+ * ScrollArea shadcn.
+ * - default: altura explícita (obrigatório pro ScrollArea)
+ * - full: flex-1 + h-full (popup já tem `h-` definido)
+ */
 AppDialog.Body = function AppDialogBody({
   children,
   className,
 }: AppDialogBodyProps) {
+  const { height } = useContext(AppDialogLayoutContext);
+  const content = (
+    <div className={cn("min-w-0 px-6 py-5", className)}>{children}</div>
+  );
+
+  if (height === "full") {
+    return (
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full">{content}</ScrollArea>
+      </div>
+    );
+  }
+
   return (
-    <PageScrollArea
-      className={cn(className)}
-      contentClassName="min-w-0 px-6 py-5"
-    >
-      {children}
-    </PageScrollArea>
+    <ScrollArea className={cn("w-full shrink-0", BODY_SCROLL_HEIGHT)}>
+      {content}
+    </ScrollArea>
   );
 };
 
