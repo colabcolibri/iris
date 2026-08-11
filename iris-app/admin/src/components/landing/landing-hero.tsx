@@ -1,75 +1,49 @@
-import { Link } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { useLandingI18n } from "@/i18n/landing-context";
+import { LANDING_SECTIONS } from "@/i18n/routing";
+import { BrandLogo } from "@/components/layout/brand-logo";
+import { LandingHeroStage } from "@/components/landing/landing-hero-stage";
+import { LandingPrimaryCta } from "@/components/landing/landing-section";
 
 export function LandingHero() {
+  const { m } = useLandingI18n();
+
   return (
-    <section className="relative overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24">
-      <div className="mx-auto grid w-full min-w-0 max-w-[1200px] grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16 lg:px-8">
-        <div className="flex min-w-0 flex-col gap-6 sm:gap-8">
+    <section className="iris-hero relative overflow-hidden bg-[color:var(--iris-canvas-parchment)] pt-32 pb-[var(--iris-section-y)] sm:pt-40 lg:pt-48 lg:pb-[var(--iris-section-y-lg)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_45%_at_50%_-5%,rgba(82,37,135,0.1),transparent_60%)]"
+      />
+
+      <div className="relative mx-auto grid w-full min-w-0 max-w-[var(--iris-container)] grid-cols-1 items-center gap-14 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-16 lg:px-8">
+        <div className="flex min-w-0 flex-col">
           <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-[color:var(--iris-lp-primary)]" />
-            <p className="text-xs font-semibold tracking-[0.18em] text-[color:var(--iris-lp-muted)] uppercase">
-              Gestão editorial no Instagram
-            </p>
+            <BrandLogo size="lg" className="size-12 sm:size-14" />
+            <span className="font-display text-2xl font-semibold tracking-tight text-[color:var(--iris-ink)] sm:text-3xl">
+              {m.brand.name}
+            </span>
           </div>
 
-          <h1 className="font-display text-4xl leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--iris-lp-text)] sm:text-5xl lg:text-[3.25rem]">
-            Seu Instagram com{" "}
-            <span className="italic text-[color:var(--iris-lp-primary)]">ritmo editorial</span>{" "}
-            e respostas inteligentes
+          <p className="iris-eyebrow mt-6">{m.hero.eyebrow}</p>
+
+          <h1 className="mt-4 font-display text-[2rem] leading-[1.05] font-semibold tracking-[-0.02em] text-[color:var(--iris-ink)] sm:text-[2.75rem] lg:text-[3.1rem]">
+            <span className="block whitespace-nowrap">{m.hero.titleLine1}</span>
+            <span className="mt-1 block whitespace-nowrap italic text-[color:var(--iris-primary)]">
+              {m.hero.titleLine2Accent}
+            </span>
+            <span className="mt-1 block whitespace-nowrap">{m.hero.titleLine2}</span>
           </h1>
 
-          <p className="max-w-xl text-base leading-relaxed text-[color:var(--iris-lp-text-soft)] sm:text-lg">
-            O Iris é uma plataforma para agendar publicações, acompanhar comentários e responder com
-            contexto — usando a API oficial da Meta e uma persona editorial que você controla.
+          <p className="mt-6 max-w-lg text-[17px] leading-[1.47] text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
+            {m.hero.subtitle}
           </p>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <a
-              href="#contato"
-              className="inline-flex h-11 items-center justify-center rounded-md bg-[color:var(--iris-lp-primary)] px-6 text-sm font-medium text-[color:var(--iris-lp-on-primary)] transition-opacity hover:opacity-90"
-            >
-              Quero saber mais
-            </a>
-            <Link
-              to={ROUTES.admin.login}
-              className="inline-flex h-11 items-center justify-center rounded-md border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-panel)] px-6 text-sm font-medium text-[color:var(--iris-lp-text)] transition-colors hover:border-[color:var(--iris-lp-primary)]"
-            >
-              Acessar o painel
-            </Link>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <LandingPrimaryCta href={`#${LANDING_SECTIONS.contact}`}>{m.hero.cta}</LandingPrimaryCta>
           </div>
         </div>
 
-        <div
-          aria-hidden
-          className="relative hidden min-h-[360px] rounded-2xl border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-panel)] p-6 shadow-[0_24px_60px_-24px_rgba(26,24,20,0.35)] lg:block"
-        >
-          <div className="space-y-4">
-            <div className="rounded-xl border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-ink)] p-4">
-              <p className="text-xs font-medium tracking-wide text-[color:var(--iris-lp-muted)] uppercase">
-                Calendário editorial
-              </p>
-              <p className="mt-2 font-display text-lg text-[color:var(--iris-lp-text)]">
-                Posts agendados, legendas e status em um só lugar
-              </p>
-            </div>
-            <div className="rounded-xl border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-ink)] p-4">
-              <p className="text-xs font-medium tracking-wide text-[color:var(--iris-lp-muted)] uppercase">
-                Inbox de comentários
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-[color:var(--iris-lp-text-soft)]">
-                Triagem, respostas sugeridas e aprovação antes de publicar na Meta.
-              </p>
-            </div>
-            <div className="rounded-xl border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-ink)] p-4">
-              <p className="text-xs font-medium tracking-wide text-[color:var(--iris-lp-muted)] uppercase">
-                Persona editorial
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-[color:var(--iris-lp-text-soft)]">
-                Tom de voz, limites e contexto que guiam cada resposta assistida.
-              </p>
-            </div>
-          </div>
+        <div className="min-w-0">
+          <LandingHeroStage />
         </div>
       </div>
     </section>

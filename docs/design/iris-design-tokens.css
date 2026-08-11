@@ -1,0 +1,65 @@
+/**
+ * Iris marketing tokens — implementação de docs/design/DESIGN-rules.md
+ * Gramática Apple (tiles, spacing, componentes); skin Iris (roxo, parchment, fontes).
+ */
+.iris-landing {
+  /* Brand (Apple: primary / primary-focus / primary-on-dark) */
+  --iris-primary: #522587;
+  --iris-primary-focus: #6b4a96;
+  --iris-primary-on-dark: #c9a8f0;
+  --iris-on-primary: #ffffff;
+
+  /* Surfaces */
+  --iris-canvas: #ffffff;
+  --iris-canvas-parchment: #f4f2ee;
+  --iris-surface-pearl: #ebe8e2;
+  --iris-surface-tile-1: #1f1d1b;
+  --iris-surface-tile-2: #2a2622;
+  --iris-surface-tile-3: #1a1814;
+  --iris-surface-black: #1a1814;
+  --iris-surface-chip-translucent: #d8d2c8;
+
+  /* Text */
+  --iris-ink: #1a1814;
+  --iris-ink-soft: #4a443c;
+  --iris-ink-muted-80: #4a443c;
+  --iris-ink-muted-48: #6f6860;
+  --iris-ink-muted: #6f6860;
+  --iris-ink-on-dark: #f5f2ec;
+  --iris-ink-muted-on-dark: #b8b0a6;
+  --iris-accent-foreground: #3f2d5c;
+
+  /* Hairlines */
+  --iris-hairline: #d8d2c8;
+  --iris-divider-soft: #eceae4;
+
+  /* Elevation — product preview only (Apple: rgba(0,0,0,0.22) 3px 5px 30px) */
+  --iris-product-shadow: 0 3px 5px 0 rgba(26, 24, 20, 0.14), 0 16px 40px -12px rgba(26, 24, 20, 0.2);
+
+  /* Radius (Apple scale) */
+  --iris-radius-xs: 5px;
+  --iris-radius-sm: 8px;
+  --iris-radius-md: 11px;
+  --iris-radius-lg: 18px;
+  --iris-radius-pill: 9999px;
+
+  /* Spacing */
+  --iris-section-y: 5rem;
+  --iris-section-y-lg: 7.5rem;
+  --iris-container: 72rem;
+
+  /* Typography */
+  --iris-font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --iris-font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* Aliases internos */
+  --iris-surface-tile: var(--iris-surface-tile-1);
+  --iris-surface-tile-soft: var(--iris-surface-tile-2);
+}
+
+@media (min-width: 1024px) {
+  .iris-landing {
+    --iris-section-y: 6rem;
+    --iris-section-y-lg: 7.5rem;
+  }
+}

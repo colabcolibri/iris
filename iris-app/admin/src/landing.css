@@ -1,18 +1,75 @@
-.iris-landing {
-  --iris-lp-ink: #f4f2ee;
-  --iris-lp-panel: #ffffff;
-  --iris-lp-text: #1a1814;
-  --iris-lp-text-soft: #4a443c;
-  --iris-lp-muted: #6f6860;
-  --iris-lp-rule: #d8d2c8;
-  --iris-lp-primary: #522587;
-  --iris-lp-on-primary: #ffffff;
+@import "../../../docs/design/iris-design-tokens.css";
 
+.iris-landing {
   min-height: 100svh;
-  background: var(--iris-lp-ink);
-  color: var(--iris-lp-text);
+  background: var(--iris-canvas-parchment);
+  color: var(--iris-ink);
+  font-family: var(--iris-font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .iris-landing a {
   text-decoration: none;
+}
+
+.iris-landing .iris-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--iris-ink-muted);
+}
+
+.iris-landing .iris-utility-card {
+  border: 1px solid var(--iris-hairline);
+  border-radius: var(--iris-radius-lg);
+  background: var(--iris-canvas);
+}
+
+.iris-landing .iris-utility-card--dark {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.iris-landing .iris-product-preview {
+  border-radius: var(--iris-radius-lg);
+  box-shadow: var(--iris-product-shadow);
+}
+
+.iris-landing .iris-stage-panel {
+  border: 1px solid var(--iris-hairline);
+  border-radius: var(--iris-radius-lg);
+  background: var(--iris-canvas);
+}
+
+.iris-landing .iris-stage-code-block {
+  border-radius: var(--iris-radius-md);
+  border: 1px solid var(--iris-divider-soft);
+  background: var(--iris-canvas-parchment);
+  padding: 0.875rem 1rem;
+}
+
+.iris-landing .iris-stage-reply {
+  border-radius: var(--iris-radius-md);
+  border: 1px solid rgba(82, 37, 135, 0.16);
+  background: rgba(82, 37, 135, 0.05);
+  padding: 0.75rem 1rem;
+}
+
+.iris-landing .iris-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--iris-primary);
+  box-shadow: 0 0 0 3px rgba(82, 37, 135, 0.18);
+}
+
+.iris-landing .iris-faq-item summary {
+  transition: color 0.15s ease;
+}
+
+.iris-landing .iris-faq-item[open] summary {
+  color: var(--iris-primary);
 }

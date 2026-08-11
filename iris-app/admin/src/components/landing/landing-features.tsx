@@ -1,68 +1,163 @@
-import { Bot, LayoutGrid, Shield, Webhook } from "lucide-react";
-
-const FEATURES = [
-  {
-    icon: LayoutGrid,
-    title: "Calendário e kanban",
-    description:
-      "Alterne entre visão mensal e quadro editorial para enxergar o que está rascunho, agendado ou publicado.",
-  },
-  {
-    icon: Bot,
-    title: "Agente de comentários",
-    description:
-      "Respostas sugeridas com harness editorial, simulador e trilha de auditoria para cada decisão.",
-  },
-  {
-    icon: Shield,
-    title: "Controle e privacidade",
-    description:
-      "Login por OTP, sessão segura e tokens criptografados. Você decide o que automatizar e o que aprovar.",
-  },
-  {
-    icon: Webhook,
-    title: "Integração Meta",
-    description:
-      "OAuth, webhooks e Graph API para manter comentários e publicações sincronizados com o Instagram.",
-  },
-] as const;
+import { useLandingI18n } from "@/i18n/landing-context";
+import { LANDING_SECTIONS } from "@/i18n/routing";
+import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import { cn } from "@/lib/utils";
 
 export function LandingFeatures() {
-  return (
-    <section id="recursos" className="border-t border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-panel)]/50">
-      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-[color:var(--iris-lp-muted)] uppercase">
-            02 · Recursos
-          </p>
-          <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight text-[color:var(--iris-lp-text)] sm:text-4xl">
-            Feito para quem publica com{" "}
-            <span className="italic text-[color:var(--iris-lp-primary)]">intenção</span>
-          </h2>
-        </div>
+  const { m } = useLandingI18n();
 
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {FEATURES.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <article
-                key={feature.title}
-                className="min-w-0 rounded-2xl border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-ink)] p-6 sm:p-8"
-              >
-                <span className="inline-flex size-10 items-center justify-center rounded-lg bg-[color:var(--iris-lp-primary)]/15 text-[color:var(--iris-lp-primary)]">
-                  <Icon className="size-5" />
+  return (
+    <LandingSection id={LANDING_SECTIONS.features} tone="canvas">
+      <LandingSectionIntro
+        eyebrow={m.features.sectionLabel}
+        title={
+          <>
+            {m.features.title}{" "}
+            <span className="italic text-[color:var(--iris-primary)]">{m.features.titleAccent}</span>
+          </>
+        }
+        subtitle={m.features.subtitle}
+        className="max-w-3xl"
+      />
+
+      <div className="mt-14 divide-y divide-[color:var(--iris-hairline)] border-y border-[color:var(--iris-hairline)]">
+        {m.features.items.map((feature, index) => (
+          <div
+            key={feature.title}
+            className="grid grid-cols-1 gap-6 py-10 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+          >
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-4">
+                <span className="font-display text-lg text-[color:var(--iris-ink-muted)]">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
-                <h3 className="mt-5 font-display text-2xl font-semibold text-[color:var(--iris-lp-text)]">
+                <p className="font-display text-2xl leading-[1.15] font-semibold text-[color:var(--iris-ink)] sm:text-3xl">
                   {feature.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[color:var(--iris-lp-text-soft)] sm:text-base">
-                  {feature.description}
                 </p>
-              </article>
+              </div>
+              <p className="mt-3 max-w-md pl-0 text-base leading-relaxed text-[color:var(--iris-ink-soft)] sm:pl-12 sm:text-lg sm:leading-[1.55]">
+                {feature.description}
+              </p>
+              {feature.highlight ? (
+                <span className="mt-4 ml-0 inline-flex items-center rounded-[var(--iris-radius-xs)] bg-[color:var(--iris-primary)] px-2.5 py-1 text-[11px] font-bold tracking-[0.08em] text-[color:var(--iris-on-primary)] uppercase sm:ml-12">
+                  MCP
+                </span>
+              ) : null}
+            </div>
+
+            <div className={cn("min-w-0", index % 2 === 1 && "lg:order-first")}>
+              <FeatureVisual index={index} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </LandingSection>
+  );
+}
+
+function FeatureVisual({ index }: { index: number }) {
+  if (index === 0) {
+    return (
+      <div className="iris-utility-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
+          <span className="iris-live-dot shrink-0" aria-hidden />
+          <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+            MCP tools
+          </span>
+        </div>
+        <div className="divide-y divide-[color:var(--iris-hairline)]">
+          {[
+            "iris_create_post",
+            "iris_upload_post_asset",
+            "iris_list_post_comments",
+            "iris_get_post_insights",
+          ].map((tool) => (
+            <div key={tool} className="px-5 py-3.5 font-mono text-[13px] text-[color:var(--iris-ink-soft)]">
+              {tool}
+              <span className="text-[color:var(--iris-primary)]">()</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 1) {
+    return (
+      <div className="iris-utility-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
+          <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+            Agosto · calendário
+          </span>
+        </div>
+        <div className="grid grid-cols-7 gap-px bg-[color:var(--iris-hairline)] p-px">
+          {Array.from({ length: 21 }).map((_, cell) => {
+            const marked = [4, 9, 13, 17].includes(cell);
+            return (
+              <div
+                key={cell}
+                className={cn(
+                  "flex aspect-square items-center justify-center bg-[color:var(--iris-canvas)] text-[11px] text-[color:var(--iris-ink-muted)]",
+                  marked && "bg-[color:var(--iris-primary)]/10 font-semibold text-[color:var(--iris-primary)]",
+                )}
+              >
+                {cell + 1}
+              </div>
             );
           })}
         </div>
       </div>
-    </section>
+    );
+  }
+
+  if (index === 2) {
+    return (
+      <div className="iris-utility-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
+          <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+            Harness · 3 etapas
+          </span>
+        </div>
+        <div className="space-y-3 p-5">
+          {[
+            ["Triagem", "shouldReply · replyTier · blockCategory"],
+            ["Rascunho", "persona + restrições + contexto da thread"],
+            ["Verificação", "idioma, limites e tom auditados"],
+          ].map(([step, detail], i) => (
+            <div key={step} className="flex items-start gap-3">
+              <span className="font-display text-sm text-[color:var(--iris-ink-muted)]">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[color:var(--iris-ink)]">{step}</p>
+                <p className="mt-0.5 truncate text-xs text-[color:var(--iris-ink-muted)]">{detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="iris-utility-card overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
+        <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+          Webhook · Meta Graph API
+        </span>
+      </div>
+      <div className="p-5">
+        <div className="iris-stage-code-block">
+          <p className="font-mono text-[11px] text-[color:var(--iris-ink-muted)]">X-Hub-Signature-256</p>
+          <p className="mt-2 font-mono text-[12px] break-all text-[color:var(--iris-ink-soft)]">
+            sha256=4f2a9c…e81d — assinatura verificada
+          </p>
+        </div>
+        <p className="mt-4 text-sm text-[color:var(--iris-ink-soft)]">
+          Evento <span className="font-medium text-[color:var(--iris-primary)]">comments</span> sincronizado
+          em 340ms.
+        </p>
+      </div>
+    </div>
   );
 }

@@ -1,50 +1,49 @@
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { ROUTES } from "@/lib/routes";
+import { useLandingI18n } from "@/i18n/landing-context";
+import { LANDING_SECTIONS, landingHomePath } from "@/i18n/routing";
 
 export function LandingFooter() {
+  const { locale, m } = useLandingI18n();
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-panel)]/60">
-      <div className="mx-auto flex w-full min-w-0 max-w-[1200px] flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
+    <footer className="bg-[color:var(--iris-canvas-parchment)] text-[color:var(--iris-ink-muted-80)]">
+      <div className="mx-auto flex w-full min-w-0 max-w-[var(--iris-container)] flex-col gap-8 px-4 py-16 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
         <div className="flex min-w-0 flex-col gap-4">
-          <Link to={ROUTES.home} className="flex items-center gap-3 text-foreground no-underline">
+          <Link
+            to={landingHomePath(locale)}
+            className="flex items-center gap-3 no-underline"
+          >
             <BrandLogo size="sm" />
-            <span className="font-display text-lg font-semibold tracking-tight text-[color:var(--iris-lp-text)]">
+            <span className="font-display text-lg font-semibold tracking-tight text-[color:var(--iris-ink)]">
               Iris
             </span>
           </Link>
-          <p className="max-w-md text-sm leading-relaxed text-[color:var(--iris-lp-text-soft)]">
-            Plataforma editorial para Instagram — agendamento, publicação, comentários e respostas
-            com contexto.
+          <p className="max-w-md text-sm leading-[1.47] text-[color:var(--iris-ink-soft)]">
+            {m.footer.blurb}
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 text-sm">
+        <div className="flex flex-col gap-3 text-[17px] leading-[2.41]">
           <a
-            href="#contato"
-            className="text-[color:var(--iris-lp-text-soft)] transition-colors hover:text-[color:var(--iris-lp-primary)]"
+            href={`#${LANDING_SECTIONS.contact}`}
+            className="text-[color:var(--iris-ink-soft)] transition-colors hover:text-[color:var(--iris-primary)]"
           >
-            Contato
+            {m.footer.contact}
           </a>
           <Link
             to={ROUTES.privacy}
-            className="text-[color:var(--iris-lp-text-soft)] transition-colors hover:text-[color:var(--iris-lp-primary)]"
+            className="text-[color:var(--iris-ink-soft)] transition-colors hover:text-[color:var(--iris-primary)]"
           >
-            Privacidade
-          </Link>
-          <Link
-            to={ROUTES.admin.login}
-            className="text-[color:var(--iris-lp-text-soft)] transition-colors hover:text-[color:var(--iris-lp-primary)]"
-          >
-            Entrar no painel
+            {m.footer.privacy}
           </Link>
         </div>
       </div>
 
-      <div className="border-t border-[color:var(--iris-lp-rule)]">
-        <div className="mx-auto flex w-full min-w-0 max-w-[1200px] flex-col gap-2 px-4 py-5 text-xs text-[color:var(--iris-lp-muted)] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className="border-t border-[color:var(--iris-hairline)]">
+        <div className="mx-auto flex w-full min-w-0 max-w-[var(--iris-container)] flex-col gap-2 px-4 py-5 text-xs text-[color:var(--iris-ink-muted-48)] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>© {year} Iris · Sergio Luciano</span>
           <span>iris.sergioluciano.com</span>
         </div>

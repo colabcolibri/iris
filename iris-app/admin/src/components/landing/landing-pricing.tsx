@@ -1,0 +1,48 @@
+import { useLandingI18n } from "@/i18n/landing-context";
+import { LANDING_SECTIONS } from "@/i18n/routing";
+import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+
+export function LandingPricing() {
+  const { m } = useLandingI18n();
+
+  return (
+    <LandingSection id={LANDING_SECTIONS.pricing} tone="canvas">
+      <LandingSectionIntro
+        eyebrow={m.pricing.sectionLabel}
+        title={
+          <>
+            <span className="block">{m.pricing.titleLine1}</span>
+            <span className="block italic text-[color:var(--iris-primary)]">{m.pricing.titleLine2}</span>
+          </>
+        }
+        subtitle={m.pricing.subtitle}
+        className="max-w-3xl"
+      />
+
+      <ol className="mt-14 divide-y divide-[color:var(--iris-hairline)] border-y border-[color:var(--iris-hairline)]">
+        {m.pricing.items.map((item, index) => (
+          <li
+            key={item.title}
+            className="flex flex-col gap-2 py-7 sm:flex-row sm:items-baseline sm:gap-8"
+          >
+            <span className="font-display text-sm text-[color:var(--iris-ink-muted)] sm:w-10 sm:shrink-0">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <div className="min-w-0 sm:flex sm:flex-1 sm:items-baseline sm:gap-8">
+              <h3 className="font-display text-xl font-semibold text-[color:var(--iris-ink)] sm:w-64 sm:shrink-0">
+                {item.title}
+              </h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--iris-ink-soft)] sm:mt-0 sm:text-base sm:leading-[1.55]">
+                {item.description}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <p className="mt-10 max-w-3xl text-base leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
+        {m.pricing.note}
+      </p>
+    </LandingSection>
+  );
+}

@@ -4,13 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LandingSection, LandingSectionIntro } from "@/components/landing/landing-section";
+import { useLandingI18n } from "@/i18n/landing-context";
+import { LANDING_SECTIONS } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
 
 type FormState = "idle" | "pending" | "done" | "error";
 
 const MIN_MESSAGE = 10;
 const MAX_MESSAGE = 4000;
 
+const fieldClass =
+  "h-11 rounded-[var(--iris-radius-pill)] border-[color:var(--iris-hairline)] bg-[color:var(--iris-canvas)] px-4 text-[15px] focus-visible:border-[color:var(--iris-primary)] focus-visible:ring-[color:var(--iris-primary)]/20";
+
 export function LandingContact() {
+  const { locale, m } = useLandingI18n();
   const honeypotId = useId();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,6 +29,7 @@ export function LandingContact() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pending = state === "pending";
+  const form = m.contact.form;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -32,7 +41,7 @@ export function LandingContact() {
       !subject.trim() ||
       message.trim().length < MIN_MESSAGE
     ) {
-      setErrorMessage("Preencha todos os campos. A mensagem precisa ter pelo menos 10 caracteres.");
+      setErrorMessage(form.validationError);
       setState("error");
       return;
     }
@@ -49,6 +58,7 @@ export function LandingContact() {
           email: email.trim(),
           subject: subject.trim(),
           message: message.trim(),
+          locale,
           pageUrl: window.location.href,
           website,
         }),
@@ -60,131 +70,148 @@ export function LandingContact() {
       }
 
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setErrorMessage(payload?.error ?? "Não foi possível enviar agora. Tente novamente em instantes.");
+      setErrorMessage(payload?.error ?? form.genericError);
       setState("error");
     } catch {
-      setErrorMessage("Não foi possível enviar agora. Tente novamente em instantes.");
+      setErrorMessage(form.genericError);
       setState("error");
     }
   }
 
   return (
-    <section id="contato" className="border-t border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-panel)]/50">
-      <div className="mx-auto grid w-full min-w-0 max-w-[1200px] grid-cols-1 gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16 lg:px-8 lg:py-24">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-[0.18em] text-[color:var(--iris-lp-muted)] uppercase">
-            04 · Contato
-          </p>
-          <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight text-[color:var(--iris-lp-text)] sm:text-4xl">
-            Tem interesse?{" "}
-            <span className="italic text-[color:var(--iris-lp-primary)]">Vamos conversar</span>
-          </h2>
-          <p className="mt-4 max-w-lg text-base leading-relaxed text-[color:var(--iris-lp-text-soft)] sm:text-lg">
-            O Iris ainda não tem venda direta por aqui. Se você quer saber mais, pilotar o produto ou
-            explorar uma parceria, envie uma mensagem — respondo por email em{" "}
-            <a
-              href="mailto:ola@sergioluciano.com"
-              className="font-medium text-[color:var(--iris-lp-primary)] underline-offset-4 hover:underline"
-            >
-              ola@sergioluciano.com
-            </a>
-            .
-          </p>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-[color:var(--iris-lp-rule)] bg-[color:var(--iris-lp-ink)] p-6 sm:p-8">
-          {state === "done" ? (
-            <p role="status" className="text-base leading-relaxed text-[color:var(--iris-lp-text)]">
-              Obrigado — recebemos sua mensagem e responderemos por email em breve.
-            </p>
-          ) : (
-            <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
-                <label htmlFor={honeypotId}>Website</label>
-                <input
-                  id={honeypotId}
-                  name="website"
-                  type="text"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  value={website}
-                  onChange={(event) => setWebsite(event.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="contact-name">Nome</Label>
-                  <Input
-                    id="contact-name"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    autoComplete="name"
-                    required
-                    disabled={pending}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact-email">Email</Label>
-                  <Input
-                    id="contact-email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    autoComplete="email"
-                    required
-                    disabled={pending}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="contact-subject">Assunto</Label>
-                <Input
-                  id="contact-subject"
-                  value={subject}
-                  onChange={(event) => setSubject(event.target.value)}
-                  required
-                  disabled={pending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="contact-message">Mensagem</Label>
-                <Textarea
-                  id="contact-message"
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                  rows={6}
-                  maxLength={MAX_MESSAGE}
-                  required
-                  disabled={pending}
-                />
-                <p className="text-xs text-[color:var(--iris-lp-muted)]">
-                  {message.length}/{MAX_MESSAGE}
-                </p>
-              </div>
-
-              {errorMessage ? (
-                <p role="alert" className="text-sm text-destructive">
-                  {errorMessage}
-                </p>
-              ) : null}
-
-              <Button type="submit" disabled={pending} className="h-11">
-                {pending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  "Enviar mensagem"
-                )}
-              </Button>
-            </form>
-          )}
-        </div>
+    <LandingSection
+      id={LANDING_SECTIONS.contact}
+      tone="canvas"
+      containerClassName="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16"
+    >
+      <div className="min-w-0">
+        <LandingSectionIntro
+          eyebrow={m.contact.sectionLabel}
+          title={
+            <span className="sm:whitespace-nowrap">
+              {m.contact.title}{" "}
+              <span className="italic text-[color:var(--iris-primary)]">{m.contact.titleAccent}</span>
+            </span>
+          }
+        />
+        <p className="mt-4 max-w-lg text-[17px] leading-[1.47] text-[color:var(--iris-ink-soft)]">
+          {m.contact.bodyBeforeEmail}{" "}
+          <a
+            href={`mailto:${m.contact.email}`}
+            className="font-medium text-[color:var(--iris-primary)] underline-offset-4 hover:underline"
+          >
+            {m.contact.email}
+          </a>
+          {m.contact.bodyAfterEmail}
+        </p>
       </div>
-    </section>
+
+      <div className="iris-utility-card min-w-0 p-6 sm:p-8">
+        {state === "done" ? (
+          <p role="status" className="text-base leading-[1.47] text-[color:var(--iris-ink)]">
+            {form.success}
+          </p>
+        ) : (
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
+              <label htmlFor={honeypotId}>Website</label>
+              <input
+                id={honeypotId}
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(event) => setWebsite(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact-name" className="text-[color:var(--iris-ink-soft)]">
+                {form.name}
+              </Label>
+              <Input
+                id="contact-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                autoComplete="name"
+                required
+                disabled={pending}
+                className={fieldClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-email" className="text-[color:var(--iris-ink-soft)]">
+                {form.email}
+              </Label>
+              <Input
+                id="contact-email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                required
+                disabled={pending}
+                className={fieldClass}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact-subject" className="text-[color:var(--iris-ink-soft)]">
+                {form.subject}
+              </Label>
+              <Input
+                id="contact-subject"
+                value={subject}
+                onChange={(event) => setSubject(event.target.value)}
+                required
+                disabled={pending}
+                className={fieldClass}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact-message" className="text-[color:var(--iris-ink-soft)]">
+                {form.message}
+              </Label>
+              <Textarea
+                id="contact-message"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                rows={6}
+                maxLength={MAX_MESSAGE}
+                required
+                disabled={pending}
+                className={cn(fieldClass, "min-h-[9rem] rounded-[var(--iris-radius-lg)] py-3")}
+              />
+              <p className="text-xs text-[color:var(--iris-ink-muted)]">
+                {message.length}/{MAX_MESSAGE}
+              </p>
+            </div>
+
+            {errorMessage ? (
+              <p role="alert" className="text-sm text-destructive">
+                {errorMessage}
+              </p>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={pending}
+              className="h-11 rounded-[var(--iris-radius-pill)] bg-[color:var(--iris-primary)] px-6 text-[15px] font-medium text-[color:var(--iris-on-primary)] hover:bg-[color:var(--iris-primary)]/90 active:scale-[0.98]"
+            >
+              {pending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  {form.submitting}
+                </>
+              ) : (
+                form.submit
+              )}
+            </Button>
+          </form>
+        )}
+      </div>
+    </LandingSection>
   );
 }
