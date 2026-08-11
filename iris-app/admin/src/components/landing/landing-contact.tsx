@@ -94,7 +94,7 @@ export function LandingContact() {
             </span>
           }
         />
-        <p className="mt-4 max-w-lg text-[17px] leading-[1.47] text-[color:var(--iris-ink-soft)]">
+        <p className="mt-4 max-w-xl text-[17px] leading-[1.47] text-[color:var(--iris-ink-soft)]">
           {m.contact.bodyBeforeEmail}{" "}
           <a
             href={`mailto:${m.contact.email}`}

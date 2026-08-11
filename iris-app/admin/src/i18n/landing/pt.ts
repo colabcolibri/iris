@@ -128,8 +128,11 @@ export const landingPt: LandingMessages = {
     sectionLabel: "04 · Implementação",
     titleLine1: "Uma Íris só sua,",
     titleLine2: "não uma conta compartilhada",
-    subtitle:
-      "A Íris não é um sistema em que você se cadastra e começa a usar sozinho. Eu coloco no ar uma versão própria da Íris só para a sua marca — configurada com o jeito de falar, as regras e os limites do seu negócio — e te ensino a usar.",
+    subtitle: "Não é um sistema em que você se cadastra e começa a usar sozinho.",
+    manifestoNote: "Eu coloco no ar uma versão própria da Íris só para a sua marca, e te ensino a usar.",
+    manifestoQuestion: "Por que assim, e não vender como um SaaS tradicional, por assinatura?",
+    manifestoAnswer:
+      "Porque ser desenvolvedor não é a minha ocupação principal, e não pretendo abrir uma startup. A Íris nasceu de ferramentas que criei para o meu próprio uso, e decidi colocar à disposição de outras pessoas. Tenho mais cara de uma pequena boutique, com projetos pontuais para quem realmente vê valor nisso — não de uma empresa de software correndo atrás de milhares de contas.",
     items: [
       {
         title: "Implementação",
@@ -142,12 +145,13 @@ export const landingPt: LandingMessages = {
           "Eu cuido para que fique sempre no ar e funcionando. Ajustes e pedidos fora do combinado inicialmente são cobrados à parte, conforme a necessidade.",
       },
       {
-        title: "Atualizações constantes",
+        title: "Atualizações",
         description:
           "A Íris está sempre evoluindo — melhorias e novas funções vão sendo adicionadas com o tempo, e a sua versão recebe essas atualizações.",
       },
     ],
-    note: "Não existe um plano ou preço fixo publicado aqui, porque cada implementação é diferente: depende do tamanho da sua marca, do volume de comentários e do que você precisa. A forma de descobrir o valor é conversando comigo — sem compromisso.",
+    noteLabel: "Sobre o valor",
+    note: "Sem plano ou preço fixo publicado aqui: o valor depende do tamanho da sua marca e do que você precisa. A forma de descobrir é conversando comigo — sem compromisso.",
   },
   faq: {
     sectionLabel: "05 · FAQ",
@@ -187,7 +191,7 @@ export const landingPt: LandingMessages = {
     title: "Tem interesse?",
     titleAccent: "Vamos conversar",
     bodyBeforeEmail:
-      "Cada implementação da Íris é individual, pensada para a sua marca. Se você quer entender o investimento ou tirar dúvidas, envie uma mensagem — respondo por email em",
+      "Cada implementação da Íris é individual, pensada para a sua marca. Se você quer entender o investimento ou tirar dúvidas, envie uma mensagem — a resposta vem de",
     bodyAfterEmail: ".",
     email: "ola@sergioluciano.com",
     form: {

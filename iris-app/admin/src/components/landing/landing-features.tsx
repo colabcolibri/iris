@@ -28,18 +28,18 @@ export function LandingFeatures() {
           >
             <div className="min-w-0">
               <div className="flex items-baseline gap-4">
-                <span className="font-display text-lg text-[color:var(--iris-ink-muted)]">
+                <span className="font-display text-3xl text-[color:var(--iris-ink-muted)] sm:text-4xl">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <p className="font-display text-2xl leading-[1.15] font-semibold text-[color:var(--iris-ink)] sm:text-3xl">
                   {feature.title}
                 </p>
               </div>
-              <p className="mt-3 max-w-md pl-0 text-base leading-relaxed text-[color:var(--iris-ink-soft)] sm:pl-12 sm:text-lg sm:leading-[1.55]">
+              <p className="mt-3 max-w-md text-base leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
                 {feature.description}
               </p>
               {feature.highlight ? (
-                <span className="mt-4 ml-0 inline-flex items-center rounded-[var(--iris-radius-xs)] bg-[color:var(--iris-primary)] px-2.5 py-1 text-[11px] font-bold tracking-[0.08em] text-[color:var(--iris-on-primary)] uppercase sm:ml-12">
+                <span className="mt-4 inline-flex items-center rounded-[var(--iris-radius-xs)] bg-[color:var(--iris-primary)] px-2.5 py-1 text-xs font-bold tracking-[0.08em] text-[color:var(--iris-on-primary)] uppercase">
                   MCP
                 </span>
               ) : null}
@@ -61,7 +61,7 @@ function FeatureVisual({ index }: { index: number }) {
       <div className="iris-utility-card overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
           <span className="iris-live-dot shrink-0" aria-hidden />
-          <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+          <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
             MCP tools
           </span>
         </div>
@@ -72,7 +72,7 @@ function FeatureVisual({ index }: { index: number }) {
             "iris_list_post_comments",
             "iris_get_post_insights",
           ].map((tool) => (
-            <div key={tool} className="px-5 py-3.5 font-mono text-[13px] text-[color:var(--iris-ink-soft)]">
+            <div key={tool} className="px-5 py-3.5 font-mono text-sm text-[color:var(--iris-ink-soft)]">
               {tool}
               <span className="text-[color:var(--iris-primary)]">()</span>
             </div>
@@ -86,7 +86,7 @@ function FeatureVisual({ index }: { index: number }) {
     return (
       <div className="iris-utility-card overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
-          <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+          <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
             Agosto · calendário
           </span>
         </div>
@@ -97,7 +97,7 @@ function FeatureVisual({ index }: { index: number }) {
               <div
                 key={cell}
                 className={cn(
-                  "flex aspect-square items-center justify-center bg-[color:var(--iris-canvas)] text-[11px] text-[color:var(--iris-ink-muted)]",
+                  "flex aspect-square items-center justify-center bg-[color:var(--iris-canvas)] text-xs text-[color:var(--iris-ink-muted)]",
                   marked && "bg-[color:var(--iris-primary)]/10 font-semibold text-[color:var(--iris-primary)]",
                 )}
               >
@@ -114,7 +114,7 @@ function FeatureVisual({ index }: { index: number }) {
     return (
       <div className="iris-utility-card overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
-          <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+          <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
             Harness · 3 etapas
           </span>
         </div>
@@ -142,14 +142,14 @@ function FeatureVisual({ index }: { index: number }) {
   return (
     <div className="iris-utility-card overflow-hidden">
       <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
-        <span className="text-[11px] font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+        <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
           Webhook · Meta Graph API
         </span>
       </div>
       <div className="p-5">
         <div className="iris-stage-code-block">
-          <p className="font-mono text-[11px] text-[color:var(--iris-ink-muted)]">X-Hub-Signature-256</p>
-          <p className="mt-2 font-mono text-[12px] break-all text-[color:var(--iris-ink-soft)]">
+          <p className="font-mono text-xs text-[color:var(--iris-ink-muted)]">X-Hub-Signature-256</p>
+          <p className="mt-2 font-mono text-xs break-all text-[color:var(--iris-ink-soft)]">
             sha256=4f2a9c…e81d — assinatura verificada
           </p>
         </div>

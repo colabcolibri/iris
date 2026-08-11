@@ -128,8 +128,11 @@ export const landingEn: LandingMessages = {
     sectionLabel: "04 · Implementation",
     titleLine1: "An Iris of your own,",
     titleLine2: "not a shared account",
-    subtitle:
-      "Iris isn't something you sign up for and start using on your own. I set up a version of Iris just for your brand — configured with your tone of voice, rules, and limits — and I teach you how to use it.",
+    subtitle: "Not something you sign up for and start using on your own.",
+    manifestoNote: "I set up a version of Iris just for your brand, and teach you how to use it.",
+    manifestoQuestion: "Why this way, instead of selling it as a traditional SaaS subscription?",
+    manifestoAnswer:
+      "Because being a developer isn't my main occupation, and I'm not trying to start a company. Iris grew out of tools I built for my own use, which I decided to make available to other people too. I'm more of a small boutique, taking on one-off projects for people who genuinely see the value — not a software company chasing thousands of accounts.",
     items: [
       {
         title: "Implementation",
@@ -142,12 +145,13 @@ export const landingEn: LandingMessages = {
           "I make sure it stays up and running. Adjustments and requests outside what we originally agreed on are billed separately, as needed.",
       },
       {
-        title: "Constant updates",
+        title: "Updates",
         description:
           "Iris keeps evolving — improvements and new features get added over time, and your version receives those updates.",
       },
     ],
-    note: "There's no fixed plan or price published here, because every implementation is different: it depends on your brand's size, your comment volume, and what you actually need. The way to find out the investment is to talk to me — no strings attached.",
+    noteLabel: "About the investment",
+    note: "No fixed plan or price published here: the investment depends on your brand's size and what you need. The way to find out is to talk to me — no strings attached.",
   },
   faq: {
     sectionLabel: "05 · FAQ",
@@ -187,7 +191,7 @@ export const landingEn: LandingMessages = {
     title: "Interested?",
     titleAccent: "Let's talk",
     bodyBeforeEmail:
-      "Every Iris implementation is individual, built for your brand. If you want to understand the investment or have questions, send a message — I'll reply by email at",
+      "Every Iris implementation is individual, built for your brand. If you want to understand the investment or have questions, send a message — you'll hear back from",
     bodyAfterEmail: ".",
     email: "ola@sergioluciano.com",
     form: {

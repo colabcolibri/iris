@@ -35,7 +35,7 @@ export function LandingWorkflow() {
               <h3 className="font-display text-xl font-semibold text-[color:var(--iris-ink-on-dark)] sm:w-64 sm:shrink-0">
                 {step.title}
               </h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--iris-ink-muted-on-dark)] sm:mt-0 sm:text-base sm:leading-[1.55]">
+              <p className="mt-2 text-sm leading-relaxed text-[color:var(--iris-ink-muted-on-dark)] sm:mt-0 sm:text-base sm:leading-[1.55]">
                 {step.description}
               </p>
             </div>
