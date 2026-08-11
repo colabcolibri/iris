@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { getImageLimits } from "../../domain/image-limits.ts";
+import { getImageLimits } from "../../domain/posts/image-limits.ts";
 import {
   ImageOptimizationError,
   type ImageOptimizer,

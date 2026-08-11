@@ -1,4 +1,4 @@
-import type { ReplyMode } from "./reply-mode.ts";
+import type { ReplyMode } from "../domain/posts/reply-mode.ts";
 
 export type AppSettings = {
   timezone: string;
@@ -7,6 +7,10 @@ export type AppSettings = {
   autoReplyEnabled: boolean;
   /** 0 = resposta imediata no próximo tick; 30–600 = fila com delay em segundos. */
   replyDelaySeconds: number;
+  /** Cadastra mídias novas (poll + webhook lazy) como posts monitored. */
+  autoMonitorEnabled: boolean;
+  /** Intervalo do poll de mídias recentes (segundos). */
+  autoMonitorIntervalSeconds: number;
   updatedAt: string;
 };
 

@@ -11,12 +11,12 @@ import {
   AdminLoginError,
   confirmAdminLoginCode,
   requestAdminLoginCode,
-} from "../../domain/admin-login.ts";
+} from "../../domain/auth/admin-login.ts";
 import {
   authIpRateLimiter,
   formatAuthIpRateLimitMessage,
   type AuthIpRateLimitAction,
-} from "../../domain/auth-ip-rate-limit.ts";
+} from "../../domain/auth/auth-ip-rate-limit.ts";
 import { resolveClientIp } from "../request-client-ip.ts";
 import {
   appendSessionCookie,

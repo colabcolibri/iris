@@ -97,14 +97,14 @@ export function KanbanCard({
       }
     >
       {isPublished && assetsCount > 0 && (
-        <div className="relative -mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-xl bg-muted">
+        <div className="relative -mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-[var(--iris-radius-lg)] bg-muted">
           <div className="flex h-full items-center justify-center bg-linear-to-br from-primary/10 to-muted">
             <PlayCircle className="size-8 text-primary/60" />
           </div>
         </div>
       )}
 
-      <p className="mb-2 text-sm leading-snug font-medium text-foreground group-hover:text-primary">
+      <p className="mb-2 text-sm leading-snug font-semibold text-foreground group-hover:text-primary">
         {truncate(post.caption, 96)}
       </p>
 

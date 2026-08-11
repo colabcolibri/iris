@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { timingSafeStringEqual } from "../domain/secret-compare.ts";
+import { timingSafeStringEqual } from "../domain/auth/secret-compare.ts";
 
 export const SESSION_COOKIE = "iris_session";
 const SESSION_VERSION = "v1";

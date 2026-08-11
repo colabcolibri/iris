@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildReplyPrompt } from "./build-reply-prompt.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 
 test("buildReplyPrompt includes context and mandatory language", () => {
   const prompt = buildReplyPrompt({

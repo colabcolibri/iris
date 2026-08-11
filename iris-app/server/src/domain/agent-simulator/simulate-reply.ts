@@ -1,8 +1,8 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentContentStore } from "../../ports/agent-content-store.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
-import { getAgentContentOrDefault } from "../agent-content-defaults.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { getAgentContentOrDefault } from "../settings/agent-content-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../reply-language/response-languages.ts";
 import { ValidationError } from "../../api/json.ts";
 import type { CommentThreadContext } from "../reply-context/thread-context.ts";

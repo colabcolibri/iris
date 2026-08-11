@@ -121,7 +121,7 @@ function InsightMetricCard({
   loading: boolean;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+    <div className="flex min-w-0 flex-col gap-3 rounded-[var(--iris-radius-lg)] border border-border/70 bg-card p-4">
       <div className="flex items-center gap-2.5">
         <div
           className={cn(
@@ -131,7 +131,7 @@ function InsightMetricCard({
         >
           <Icon className="size-4" aria-hidden />
         </div>
-        <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">{label}</p>
+        <p className="min-w-0 text-sm font-semibold leading-snug text-muted-foreground">{label}</p>
       </div>
       {loading ? (
         <Skeleton className="h-8 w-20" />
@@ -198,7 +198,7 @@ function PerformanceTabContent({
               : "border-destructive/30 bg-destructive/10 text-destructive",
           )}
         >
-          <p className="font-medium">{igMediaCopy.label}</p>
+          <p className="font-semibold">{igMediaCopy.label}</p>
           <p className="mt-0.5 text-xs opacity-90">
             {igMediaStatusDetail ?? igMediaCopy.hint}
           </p>
@@ -214,7 +214,7 @@ function PerformanceTabContent({
               : "border-destructive/30 bg-destructive/10 text-destructive",
           )}
         >
-          <p className="font-medium">
+          <p className="font-semibold">
             {hasInsightsData
               ? "Algumas métricas não estão disponíveis"
               : "Não foi possível carregar insights"}
@@ -460,7 +460,7 @@ export function PostDetailPanel({
               Comentários
               <span
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+                  "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
                   activeTab === "comments"
                     ? "bg-primary/15 text-primary"
                     : "bg-muted text-muted-foreground",
@@ -554,7 +554,7 @@ export function PostDetailPanel({
               ) : threadGroups.length === 0 ? (
                 <div className="px-4 py-12 text-center">
                   <MessageCircle className="mx-auto mb-3 size-8 text-muted-foreground/40" />
-                  <p className="font-medium">Nenhum comentário ainda</p>
+                  <p className="font-semibold">Nenhum comentário ainda</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Novos chegam via webhook. Use sincronizar para buscar histórico na Meta.
                   </p>
@@ -599,7 +599,7 @@ export function PostDetailPanel({
 
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 p-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Estado efetivo</p>
+                  <p className="text-sm font-semibold text-foreground">Estado efetivo</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {effectiveReplyCopy.hint ??
                       `Agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
@@ -613,7 +613,7 @@ export function PostDetailPanel({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="comments-post-reply-mode" className="text-sm font-medium">
+                <Label htmlFor="comments-post-reply-mode" className="text-sm font-semibold">
                   Modo nesta publicação
                 </Label>
                 <ReplyModeSelect

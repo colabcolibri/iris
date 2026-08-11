@@ -68,19 +68,19 @@ function StatusBadges({ event }: { event: WebhookEvent }) {
     <div className="flex flex-wrap items-center gap-1.5">
       <span
         className={cn(
-          "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
+          "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase",
           statusClass(event.processing_status),
         )}
       >
         {STATUS_LABELS[event.processing_status]}
       </span>
       {verb ? (
-        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
           {verb}
         </span>
       ) : null}
       {!event.signature_valid ? (
-        <span className="rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+        <span className="rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">
           assinatura inválida
         </span>
       ) : null}
@@ -135,11 +135,11 @@ function EntityLinks({ event }: { event: WebhookEvent }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       <div>
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Post</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Post</p>
         <PostLink event={event} />
       </div>
       <div>
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           Comentário
         </p>
         <CommentLink event={event} />
@@ -163,7 +163,7 @@ function WebhookEventDetails({ event, open, onToggle }: WebhookEventDetailsProps
       {event.error_message ? <p className="text-destructive">{event.error_message}</p> : null}
       <button
         type="button"
-        className="inline-flex items-center gap-1 text-xs font-medium text-primary"
+        className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
         onClick={onToggle}
       >
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
@@ -183,14 +183,14 @@ function WebhookEventMobileCard({ event }: { event: WebhookEvent }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-lg border border-border/70 bg-background/60 p-3 text-xs">
+    <div className="rounded-[var(--iris-radius-sm)] border border-border/70 bg-background/60 p-3 text-xs">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <StatusBadges event={event} />
         <span className="text-muted-foreground">
           {new Date(event.received_at).toLocaleString("pt-BR")}
         </span>
       </div>
-      <p className="mt-2 font-medium text-foreground">{event.webhook_type}</p>
+      <p className="mt-2 font-semibold text-foreground">{event.webhook_type}</p>
       <p className="mt-1 text-muted-foreground">
         {event.author_username ? `@${event.author_username}` : "autor —"}
         {event.entries_count > 1 ? ` · ${event.entries_count} entradas` : ""}
@@ -342,13 +342,13 @@ export function WebhookEventsPanel() {
               <table className="w-full min-w-[960px] border-collapse text-left text-xs">
                 <thead>
                   <tr className="border-b border-border/70 text-muted-foreground">
-                    <th className="px-2 py-2 font-medium">Recebido</th>
-                    <th className="px-2 py-2 font-medium">Tipo</th>
-                    <th className="px-2 py-2 font-medium">Status</th>
-                    <th className="px-2 py-2 font-medium">Autor / resumo</th>
-                    <th className="px-2 py-2 font-medium">Post</th>
-                    <th className="px-2 py-2 font-medium">Comentário</th>
-                    <th className="px-2 py-2 font-medium">Detalhes</th>
+                    <th className="px-2 py-2 font-semibold">Recebido</th>
+                    <th className="px-2 py-2 font-semibold">Tipo</th>
+                    <th className="px-2 py-2 font-semibold">Status</th>
+                    <th className="px-2 py-2 font-semibold">Autor / resumo</th>
+                    <th className="px-2 py-2 font-semibold">Post</th>
+                    <th className="px-2 py-2 font-semibold">Comentário</th>
+                    <th className="px-2 py-2 font-semibold">Detalhes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -358,7 +358,7 @@ export function WebhookEventsPanel() {
                         {new Date(event.received_at).toLocaleString("pt-BR")}
                       </td>
                       <td className="px-2 py-3">
-                        <p className="font-medium text-foreground">{event.webhook_type}</p>
+                        <p className="font-semibold text-foreground">{event.webhook_type}</p>
                         {event.field ? (
                           <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">{event.field}</p>
                         ) : null}
@@ -367,7 +367,7 @@ export function WebhookEventsPanel() {
                         <StatusBadges event={event} />
                       </td>
                       <td className="px-2 py-3">
-                        <p className="font-medium text-foreground">
+                        <p className="font-semibold text-foreground">
                           {event.author_username ? `@${event.author_username}` : "—"}
                         </p>
                         {event.text_preview ? (

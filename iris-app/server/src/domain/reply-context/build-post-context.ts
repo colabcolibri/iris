@@ -3,7 +3,7 @@ import type { PostRepository } from "../../ports/post-repository.ts";
 import {
   buildPublishImageUrl,
   filenameFromStoragePath,
-} from "../publish-url.ts";
+} from "../posts/publish-url.ts";
 import type { PostReplyContext } from "./post-context.ts";
 
 export type BuildPostReplyContextDeps = {

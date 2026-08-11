@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildTriagePrompt } from "./build-harness-prompt.ts";
-import { defaultAgentContent } from "../agent-content-defaults.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { defaultAgentContent } from "../settings/agent-content-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 
 function mockContext(responseLanguage = "pt-BR"): ReplyContext {

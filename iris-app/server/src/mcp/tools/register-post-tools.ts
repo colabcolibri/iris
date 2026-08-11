@@ -3,17 +3,17 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { AppContext } from "../../api/app-context.ts";
 import { serializePost } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
-import { parseIsoDateParam } from "../../domain/datetime-ui.ts";
+import { parseIsoDateParam } from "../../domain/time/datetime-ui.ts";
 import {
   assertMetaReadyForSchedule,
   MetaNotConnectedError,
-} from "../../domain/meta-readiness.ts";
+} from "../../domain/meta/meta-readiness.ts";
 import {
   normalizeCreatePost,
   normalizeUpdatePost,
-} from "../../domain/post-mutations.ts";
-import type { PostStatus } from "../../domain/post.ts";
-import { applyScheduleRules } from "../../domain/schedule.ts";
+} from "../../domain/posts/post-mutations.ts";
+import type { PostStatus } from "../../domain/posts/post.ts";
+import { applyScheduleRules } from "../../domain/posts/schedule.ts";
 import { jsonToolContent, toolError } from "../tool-response.ts";
 
 export function registerPostTools(server: McpServer, ctx: AppContext): void {

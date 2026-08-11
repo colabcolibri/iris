@@ -47,7 +47,7 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
           return (
             <li
               key={`${step.stage}-${index}`}
-              className="rounded-xl border border-border/70 bg-muted/20 p-3"
+              className="rounded-[var(--iris-radius-lg)] border border-border/70 bg-muted/20 p-3"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-foreground">
@@ -77,7 +77,7 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
 
               {step.reasoning ? (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-xs font-medium text-primary">
+                  <summary className="cursor-pointer text-xs font-semibold text-primary">
                     Ver reasoning
                   </summary>
                   <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-background/80 p-2 text-xs leading-relaxed text-muted-foreground">
@@ -88,7 +88,7 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
 
               {step.structured ? (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-xs font-medium text-primary">
+                  <summary className="cursor-pointer text-xs font-semibold text-primary">
                     Ver JSON estruturado
                   </summary>
                   <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-background/80 p-2 text-xs leading-relaxed text-muted-foreground">
@@ -104,7 +104,7 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
       {suggestEdit ? (
         <p className="text-xs text-muted-foreground">
           Ajuste as regras em{" "}
-          <Link to={ROUTES.admin.persona} className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={ROUTES.admin.persona} className="font-semibold text-primary underline-offset-4 hover:underline">
             conteúdo do agente
           </Link>
           .

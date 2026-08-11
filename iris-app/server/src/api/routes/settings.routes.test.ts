@@ -139,10 +139,14 @@ test("GET app settings returns default timezone", async () => {
       timezone: string;
       auto_reply_enabled: boolean;
       reply_delay_seconds: number;
+      auto_monitor_enabled: boolean;
+      auto_monitor_interval_seconds: number;
     };
     assert.equal(body.timezone, "America/Sao_Paulo");
     assert.equal(body.auto_reply_enabled, true);
     assert.equal(body.reply_delay_seconds, 0);
+    assert.equal(body.auto_monitor_enabled, true);
+    assert.equal(body.auto_monitor_interval_seconds, 300);
   });
 });
 
@@ -197,6 +201,39 @@ test("PUT app settings persists reply_delay_seconds", async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ reply_delay_seconds: 15 }),
+    });
+    assert.equal(invalid.status, 422);
+  });
+});
+
+test("PUT app settings persists auto_monitor fields", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const putResponse = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auto_monitor_enabled: false,
+        auto_monitor_interval_seconds: 120,
+      }),
+    });
+    assert.equal(putResponse.status, 200);
+    const body = (await putResponse.json()) as {
+      auto_monitor_enabled: boolean;
+      auto_monitor_interval_seconds: number;
+    };
+    assert.equal(body.auto_monitor_enabled, false);
+    assert.equal(body.auto_monitor_interval_seconds, 120);
+
+    const invalid = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ auto_monitor_interval_seconds: 10 }),
     });
     assert.equal(invalid.status, 422);
   });

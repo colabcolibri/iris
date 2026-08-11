@@ -67,21 +67,23 @@ export function AppHeader() {
   }
 
   return (
-    <header className="flex h-20 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-black/20 bg-[#1f1d1b] px-4 text-white shadow-sm sm:gap-4 sm:px-6">
+    <header className="flex h-14 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-sidebar-border bg-sidebar px-4 text-sidebar-foreground sm:gap-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-3 md:gap-5">
-        <IrisSidebarTrigger />
+        <IrisSidebarTrigger className="size-11 shrink-0" />
         <div className="flex min-w-0 items-center gap-3">
           <BrandLogo size="sm" />
           <div className="min-w-0">
-            <p className="font-display text-xl font-semibold leading-none tracking-tight sm:text-2xl">
-              Iris
+            <p className="font-display text-xl font-semibold leading-none tracking-tight text-sidebar-foreground sm:text-2xl">
+              iris
             </p>
-            <p className="hidden truncate text-xs text-white/60 sm:block">Creative scheduler</p>
+            <p className="hidden truncate text-xs font-normal tracking-[-0.12px] text-sidebar-foreground/60 sm:block">
+              Creative scheduler
+            </p>
           </div>
         </div>
 
         {!connected ? (
-          <p className="hidden max-w-xs text-sm text-white/70 lg:block">
+          <p className="hidden max-w-xs text-sm text-sidebar-foreground/70 lg:block">
             {tokenExpired
               ? "Sua sessão com o Instagram expirou. Conecte de novo para agendar publicações."
               : "Conecte sua conta do Instagram para agendar e publicar posts."}
@@ -89,14 +91,14 @@ export function AppHeader() {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
         <AgentGlobalStatusBadge replyMode={replyMode} loading={settingsLoading} />
 
         {!connected ? (
           <a
             href="/auth/meta"
             className={cn(
-              "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition-colors",
+              "inline-flex min-h-11 items-center gap-2 rounded-full px-[22px] py-[11px] text-[17px] font-normal leading-none transition-transform active:scale-95",
               tokenExpired
                 ? "bg-amber-500 text-amber-950 hover:bg-amber-400"
                 : "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -117,13 +119,13 @@ export function AppHeader() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-2 rounded-full border-emerald-400/35 bg-emerald-500/10 px-3 text-white hover:bg-emerald-500/20 hover:text-white"
+                    className="h-11 gap-2 rounded-full border-emerald-400/35 bg-emerald-500/10 px-3 text-sidebar-foreground hover:bg-emerald-500/20 hover:text-sidebar-foreground"
                     aria-label="Conta do Instagram conectada"
                   />
                 }
               >
                 <InstagramIcon className="size-4 text-emerald-300" />
-                <span className="max-w-[9rem] truncate text-sm font-medium sm:max-w-none">
+                <span className="max-w-[9rem] truncate text-sm font-normal sm:max-w-none">
                   {handle}
                 </span>
                 <span className="size-2 shrink-0 rounded-full bg-emerald-400" aria-hidden />
@@ -159,7 +161,7 @@ export function AppHeader() {
           variant="ghost"
           size="sm"
           onClick={() => void handleLogout()}
-          className="hidden text-white/80 hover:bg-white/10 hover:text-white md:inline-flex"
+          className="hidden min-h-11 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground md:inline-flex"
         >
           <LogOut className="mr-2 size-4" />
           Sair

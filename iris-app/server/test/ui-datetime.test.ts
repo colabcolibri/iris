@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
   toDatetimeLocalFromIso,
   toIsoFromDatetimeLocal,
-} from "../src/domain/datetime-ui.ts";
+} from "../src/domain/time/datetime-ui.ts";
 
 const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), "../../public");
 

@@ -1,8 +1,8 @@
 ---
 title: Architecture
-status: review
+status: approved
 version: 1.3
-updated: 2026-08-10
+updated: 2026-08-11
 depends_on: [00_scope.md, 01_tech_stack.md, 02_security.md, 03_user_types.md, 04_principles.md]
 blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_system.md]
 ---

@@ -4,7 +4,7 @@ import type { PostRepository } from "../../ports/post-repository.ts";
 import {
   buildPublishImageUrl,
   filenameFromStoragePath,
-} from "../publish-url.ts";
+} from "../posts/publish-url.ts";
 
 export type PostMediaSlide = {
   source: "local" | "meta";

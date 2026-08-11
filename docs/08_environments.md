@@ -15,7 +15,7 @@ blocks: []
 | -------- | ------- | ----------- |
 | `PORT` | `8792` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
-| `IRIS_DB_PATH` | `./data/iris.db` | SQLite file |
+| `IRIS_DB_PATH` | `./data/iris.db` | SQLite file — caminho relativo é resolvido a partir de `iris-app/` (workspace), **não** do `cwd` do processo (`server/`). Evita abrir um segundo DB vazio em `server/data/`. |
 | `IRIS_ADMIN_EMAIL` | required (UI) | Email allowlisted para OTP |
 | `IRIS_SESSION_SECRET` | required (UI) | HMAC da sessão HttpOnly |
 | `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
@@ -40,8 +40,12 @@ Estes valores **não** vêm de `.env` — persistem em `app_settings` via **Conf
 | ----- | ------- | ---------- |
 | `reply_mode` | `auto` | Agente de comentários → modo global |
 | `reply_delay_seconds` | `0` | Agente de comentários → **Resposta imediata** ou **Fila com delay** (30–600s) |
+| `auto_monitor_enabled` | `true` | Auto-monitoramento de publicações → Ligado/Desligado |
+| `auto_monitor_interval_seconds` | `300` (5 min) | Auto-monitoramento → intervalo do poll (60–3600s) |
 
 Com `reply_delay_seconds = 0`, o agente processa no próximo ciclo do worker (~60s). Com fila ativa, o worker acelera o poll (~15s) automaticamente — sem variável de ambiente.
+
+Com `auto_monitor_enabled`, o worker lista mídias recentes no intervalo configurado e cadastra posts `monitored`; o webhook de comentário também auto-cadastra mídia desconhecida.
 
 ## Agente local (`iris-agent/`)
 

@@ -114,7 +114,7 @@ export function AgentRunsPage() {
               {responseLanguage ? (
                 <p className="mt-2 text-xs text-muted-foreground">
                   Idioma configurado na persona:{" "}
-                  <span className="font-medium text-foreground">{languageLabel}</span>
+                  <span className="font-semibold text-foreground">{languageLabel}</span>
                 </p>
               ) : null}
               <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -162,12 +162,12 @@ export function AgentRunsPage() {
                 <table className="w-full min-w-[480px] border-collapse text-left text-xs">
                   <thead className="sticky top-0 z-10 bg-card">
                     <tr className="border-b border-border/70 text-muted-foreground">
-                      <th className="px-3 py-2 font-medium">Quando</th>
-                      <th className="px-3 py-2 font-medium">Origem</th>
-                      <th className="px-3 py-2 font-medium">Status</th>
-                      <th className="px-3 py-2 font-medium">Tier</th>
-                      <th className="px-3 py-2 font-medium">Tokens</th>
-                      <th className="px-3 py-2 font-medium">Duração</th>
+                      <th className="px-3 py-2 font-semibold">Quando</th>
+                      <th className="px-3 py-2 font-semibold">Origem</th>
+                      <th className="px-3 py-2 font-semibold">Status</th>
+                      <th className="px-3 py-2 font-semibold">Tier</th>
+                      <th className="px-3 py-2 font-semibold">Tokens</th>
+                      <th className="px-3 py-2 font-semibold">Duração</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -187,7 +187,7 @@ export function AgentRunsPage() {
                         <td className="px-3 py-3">
                           <span
                             className={cn(
-                              "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
+                              "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase",
                               terminalBadgeClass(row.terminal_status),
                             )}
                           >

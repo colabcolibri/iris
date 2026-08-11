@@ -56,8 +56,8 @@ export function ReplyAuditTrigger({ active = false, className, onClick }: ReplyA
     <button
       type="button"
       className={cn(
-        "shrink-0 rounded-md p-1.5 text-sky-600/80 transition-colors hover:bg-sky-500/10 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300",
-        active && "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+        "shrink-0 rounded-md p-1.5 text-primary/80 transition-colors hover:bg-primary/10 hover:text-primary",
+        active && "bg-primary/15 text-primary",
         className,
       )}
       aria-label="Ver decisão do agente"
@@ -91,7 +91,7 @@ export function ReplyAuditPanel({
   }
 
   return (
-    <div className={cn("rounded-xl border border-border/60 bg-background/90 p-3", className)}>
+    <div className={cn("rounded-[var(--iris-radius-lg)] border border-border/60 bg-background/90 p-3", className)}>
       {loading ? (
         <div className="space-y-2">
           <Skeleton className="h-4 w-2/3" />

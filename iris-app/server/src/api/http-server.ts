@@ -35,7 +35,8 @@ import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
-import { readAdminSession } from "../domain/auth-session.ts";
+import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
+import { readAdminSession } from "../domain/auth/auth-session.ts";
 import { shouldGateSpaGet, resolveLegacyAdminRedirect } from "./spa-route-policy.ts";
 import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
 import { PUBLIC_DIR } from "../paths.ts";
@@ -394,10 +395,15 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     ? startDataRetention(ctx)
     : () => undefined;
 
+  const stopAutoMonitorMedia = options.startScheduler
+    ? startAutoMonitorMedia(ctx)
+    : () => undefined;
+
   const stopScheduler = () => {
     stopPublishScheduler();
     stopCommentResponder();
     stopDataRetention();
+    stopAutoMonitorMedia();
   };
 
   let adminVite: ViteDevServer | undefined;

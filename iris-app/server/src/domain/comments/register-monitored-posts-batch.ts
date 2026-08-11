@@ -1,4 +1,4 @@
-import type { Post } from "../post.ts";
+import type { Post } from "../posts/post.ts";
 import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
 import type { PostRepository } from "../../ports/post-repository.ts";
 import { registerMonitoredPost } from "./register-monitored-post.ts";

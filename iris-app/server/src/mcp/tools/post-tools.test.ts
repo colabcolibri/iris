@@ -73,7 +73,7 @@ test("ingestPostAsset stores optimized image", async () => {
     "base64",
   );
 
-  const { ingestPostAsset } = await import("../../domain/asset-ingest.ts");
+  const { ingestPostAsset } = await import("../../domain/posts/asset-ingest.ts");
   const asset = await ingestPostAsset(
     {
       posts: ctx.posts,

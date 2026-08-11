@@ -50,7 +50,7 @@ export function MediaTile({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={cn(
-        "group relative min-w-0 overflow-hidden rounded-lg border bg-muted/20 transition-all",
+        "group relative min-w-0 overflow-hidden rounded-[var(--iris-radius-sm)] border border-border bg-muted/20 transition-colors shadow-none",
         isDragOver && "border-primary ring-2 ring-primary/25",
         isDragging && "scale-[0.98] opacity-50",
         !readOnly && "cursor-grab active:cursor-grabbing",
@@ -68,14 +68,14 @@ export function MediaTile({
         />
       </div>
 
-      <span className="absolute top-2 left-2 rounded-md bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground shadow-sm">
+      <span className="absolute top-2 left-2 rounded-[var(--iris-radius-sm)] bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground shadow-none">
         {index + 1}
       </span>
 
       {!readOnly ? (
         <div
           className={cn(
-            "absolute top-2 right-2 flex items-center gap-0.5 rounded-md border border-border/60 bg-background/95 p-0.5 shadow-sm",
+            "absolute top-2 right-2 flex items-center gap-0.5 rounded-[var(--iris-radius-sm)] border border-border bg-background/95 p-0.5 shadow-none",
             "opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
           )}
         >

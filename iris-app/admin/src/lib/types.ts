@@ -318,6 +318,8 @@ export type AppSettings = {
   reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
   reply_delay_seconds: number;
+  auto_monitor_enabled: boolean;
+  auto_monitor_interval_seconds: number;
   updated_at: string;
 };
 

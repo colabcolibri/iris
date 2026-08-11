@@ -1,6 +1,6 @@
 import type { AppContext } from "../../api/app-context.ts";
 import { ValidationError } from "../../api/json.ts";
-import { getMetaReadiness } from "../meta-readiness.ts";
+import { getMetaReadiness } from "../meta/meta-readiness.ts";
 import { humanizeMetaMediaError } from "../meta/ig-media-status.ts";
 import { refreshPostIgMediaStatus } from "../meta/refresh-post-ig-media-status.ts";
 import {

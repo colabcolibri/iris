@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AppContext } from "../app-context.ts";
 import { sendError } from "../json.ts";
-import { verifyPublishSig } from "../../domain/publish-url.ts";
+import { verifyPublishSig } from "../../domain/posts/publish-url.ts";
 
 export function handlePublishMediaRoute(
   req: IncomingMessage,

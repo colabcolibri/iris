@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { Comment } from "../comment.ts";
+import type { Comment } from "./comment.ts";
 import { reconcileDeletedInstagramComments } from "./reconcile-deleted-instagram-comments.ts";
 
 function comment(overrides: Partial<Comment> & Pick<Comment, "id" | "igCommentId">): Comment {

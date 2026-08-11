@@ -1,9 +1,9 @@
 /**
- * Iris marketing tokens — implementação de docs/design/DESIGN-rules.md
- * Gramática Apple (tiles, spacing, componentes); skin Iris (roxo, parchment, fontes).
+ * Iris design tokens — docs/design/DESIGN-rules.md + docs/09_design_system.md
+ * Single source: :root (admin + landing). Landing keeps .iris-landing for layout only.
  */
-.iris-landing {
-  /* Brand (Apple: primary / primary-focus / primary-on-dark) */
+:root {
+  /* Brand */
   --iris-primary: #522587;
   --iris-primary-focus: #6b4a96;
   --iris-primary-on-dark: #c9a8f0;
@@ -33,10 +33,10 @@
   --iris-hairline: #d8d2c8;
   --iris-divider-soft: #eceae4;
 
-  /* Elevation — product preview only (Apple: rgba(0,0,0,0.22) 3px 5px 30px) */
+  /* Elevation — product preview only */
   --iris-product-shadow: 0 3px 5px 0 rgba(26, 24, 20, 0.14), 0 16px 40px -12px rgba(26, 24, 20, 0.2);
 
-  /* Radius (Apple scale) */
+  /* Radius */
   --iris-radius-xs: 5px;
   --iris-radius-sm: 8px;
   --iris-radius-md: 11px;
@@ -44,6 +44,13 @@
   --iris-radius-pill: 9999px;
 
   /* Spacing */
+  --iris-space-xxs: 4px;
+  --iris-space-xs: 8px;
+  --iris-space-sm: 12px;
+  --iris-space-md: 17px;
+  --iris-space-lg: 24px;
+  --iris-space-xl: 32px;
+  --iris-space-xxl: 48px;
   --iris-section-y: 5rem;
   --iris-section-y-lg: 7.5rem;
   --iris-container: 72rem;
@@ -51,14 +58,16 @@
   /* Typography */
   --iris-font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   --iris-font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --iris-body-size: 17px;
+  --iris-body-leading: 1.47;
 
-  /* Aliases internos */
+  /* Aliases */
   --iris-surface-tile: var(--iris-surface-tile-1);
   --iris-surface-tile-soft: var(--iris-surface-tile-2);
 }
 
 @media (min-width: 1024px) {
-  .iris-landing {
+  :root {
     --iris-section-y: 6rem;
     --iris-section-y-lg: 7.5rem;
   }

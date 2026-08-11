@@ -76,11 +76,11 @@ export function LoginPage() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-background p-4">
       <main className="w-full max-w-md">
-        <div className="flex flex-col gap-6 rounded-xl border border-border/80 bg-card p-8 shadow-[0_8px_40px_-12px_rgba(26,24,20,0.18)]">
+        <div className="flex flex-col gap-6 rounded-[var(--iris-radius-lg)] border border-border bg-card p-8 shadow-none">
           <div className="flex flex-col items-center gap-4 text-center">
             <BrandLogo size="lg" className="ring-0" />
             <div className="space-y-1">
-              <h1 className="font-display text-4xl font-semibold tracking-tight">Iris</h1>
+              <h1 className="font-display text-4xl font-semibold tracking-tight">iris</h1>
               <p className="text-base text-muted-foreground">
                 {step === "email" ? "Entrar com seu email" : `Código enviado para ${email}`}
               </p>
@@ -106,11 +106,10 @@ export function LoginPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="border-0 border-b bg-muted/80 focus-visible:ring-0"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full rounded-lg" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : (
@@ -127,14 +126,14 @@ export function LoginPage() {
                   id="code"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  className="border-0 border-b bg-muted/80 text-center text-lg tracking-[0.3em] focus-visible:ring-0"
+                  className="text-center text-lg tracking-[0.3em]"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   maxLength={6}
                   required
                 />
               </div>
-              <Button type="submit" className="w-full rounded-lg" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Entrar
               </Button>

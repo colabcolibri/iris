@@ -4,7 +4,7 @@ import type {
   CommentRepository,
   UpsertCommentInput,
 } from "../../ports/comment-repository.ts";
-import type { Comment } from "../../domain/comment.ts";
+import type { Comment } from "../../domain/comments/comment.ts";
 import type { CommentActivityKind } from "../../domain/comments/list-comment-activity.ts";
 import type { CommentActivityRow } from "../../domain/comments/list-comment-activity.ts";
 import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";

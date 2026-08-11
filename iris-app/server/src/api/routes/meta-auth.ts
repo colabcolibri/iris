@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AppContext } from "../app-context.ts";
-import { createMetaOAuthState, verifyMetaOAuthState } from "../../domain/meta-oauth-state.ts";
+import { createMetaOAuthState, verifyMetaOAuthState } from "../../domain/meta/meta-oauth-state.ts";
 import {
   buildMetaAuthorizeUrl,
   createMetaOAuthClient,

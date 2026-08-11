@@ -1,5 +1,5 @@
 import type { MetaCommentReader } from "../../ports/meta-comment-reader.ts";
-import type { Comment } from "../comment.ts";
+import type { Comment } from "./comment.ts";
 import { normalizeCommentTimestamp } from "./normalize-comment-timestamp.ts";
 import { reconcileDeletedInstagramComments } from "./reconcile-deleted-instagram-comments.ts";
 

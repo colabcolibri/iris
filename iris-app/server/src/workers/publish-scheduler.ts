@@ -1,7 +1,7 @@
 import type { AppContext } from "../api/app-context.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
-import { publishPostNow } from "../domain/publish-post.ts";
-import { isDueForPublish } from "../domain/schedule.ts";
+import { publishPostNow } from "../domain/posts/publish-post.ts";
+import { isDueForPublish } from "../domain/posts/schedule.ts";
 
 export type PublishSchedulerOptions = {
   intervalMs?: number;

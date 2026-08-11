@@ -7,7 +7,7 @@ import {
   firstPostMediaUrl,
   resolvePostMedia,
 } from "../../../domain/post-media/resolve-post-media.ts";
-import { getMetaReadiness } from "../../../domain/meta-readiness.ts";
+import { getMetaReadiness } from "../../../domain/meta/meta-readiness.ts";
 import { requirePost } from "../../route-resources.ts";
 
 export const commentsInboxRouter = createRouter([

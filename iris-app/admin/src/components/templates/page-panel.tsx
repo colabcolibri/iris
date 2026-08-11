@@ -11,7 +11,7 @@ export function PagePanel({ children, className }: PagePanelProps) {
   return (
     <section
       className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm",
+        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none",
         className,
       )}
     >

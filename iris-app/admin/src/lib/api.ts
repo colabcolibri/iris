@@ -427,6 +427,8 @@ export function updateAppSettings(body: {
   reply_mode?: ReplyMode;
   auto_reply_enabled?: boolean;
   reply_delay_seconds?: number;
+  auto_monitor_enabled?: boolean;
+  auto_monitor_interval_seconds?: number;
 }) {
   return apiFetch<AppSettings>("/api/settings/app", {
     method: "PUT",

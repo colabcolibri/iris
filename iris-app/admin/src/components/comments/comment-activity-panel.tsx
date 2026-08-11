@@ -135,7 +135,7 @@ export function CommentActivityPanel({ onSelect, refreshToken = 0 }: CommentActi
               className={cn(
                 "rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
                 activeKind === tab.kind
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-background text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

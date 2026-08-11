@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { OtpChallengeRecord } from "../../domain/admin-otp-code.ts";
+import type { OtpChallengeRecord } from "../../domain/auth/admin-otp-code.ts";
 
 export type AdminLoginChallengeRepository = {
   find(email: string): OtpChallengeRecord | null;

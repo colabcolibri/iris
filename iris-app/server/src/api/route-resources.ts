@@ -1,6 +1,6 @@
 import { sendError } from "./json.ts";
-import type { Post } from "../domain/post.ts";
-import type { Comment } from "../domain/comment.ts";
+import type { Post } from "../domain/posts/post.ts";
+import type { Comment } from "../domain/comments/comment.ts";
 import type { RouteMatch } from "./route-types.ts";
 
 export function routeParam(match: RouteMatch, name: string): string {

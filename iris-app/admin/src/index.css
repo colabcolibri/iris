@@ -1,3 +1,4 @@
+@import "./iris-design-tokens.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -5,10 +6,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: var(--iris-radius-sm);
+  --radius-md: var(--iris-radius-md);
+  --radius-lg: var(--iris-radius-lg);
+  --radius-xl: calc(var(--iris-radius-lg) + 4px);
+  --radius-pill: var(--iris-radius-pill);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -35,38 +37,38 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans: var(--iris-font-sans);
+  --font-display: var(--iris-font-display);
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: #f4f2ee;
-  --foreground: #1a1814;
-  --card: #ffffff;
-  --card-foreground: #1a1814;
-  --popover: #ffffff;
-  --popover-foreground: #1a1814;
-  --primary: #522587;
-  --primary-foreground: #ffffff;
-  --secondary: #ebe8e2;
-  --secondary-foreground: #3f3a34;
-  --muted: #eceae4;
-  --muted-foreground: #6f6860;
-  --accent: #e6e1d8;
-  --accent-foreground: #3f2d5c;
+  --radius: var(--iris-radius-lg);
+  --background: var(--iris-canvas-parchment);
+  --foreground: var(--iris-ink);
+  --card: var(--iris-canvas);
+  --card-foreground: var(--iris-ink);
+  --popover: var(--iris-canvas);
+  --popover-foreground: var(--iris-ink);
+  --primary: var(--iris-primary);
+  --primary-foreground: var(--iris-on-primary);
+  --secondary: var(--iris-surface-pearl);
+  --secondary-foreground: var(--iris-ink-muted-80);
+  --muted: var(--iris-divider-soft);
+  --muted-foreground: var(--iris-ink-muted-48);
+  --accent: var(--iris-surface-pearl);
+  --accent-foreground: var(--iris-accent-foreground);
   --destructive: #ba1a1a;
-  --border: #d8d2c8;
-  --input: #d8d2c8;
-  --ring: #6b4a96;
-  --sidebar: #1f1d1b;
-  --sidebar-foreground: #f5f2ec;
-  --sidebar-primary: #c9a8f0;
-  --sidebar-primary-foreground: #2a0053;
+  --border: var(--iris-hairline);
+  --input: var(--iris-hairline);
+  --ring: var(--iris-primary-focus);
+  --sidebar: var(--iris-surface-tile-1);
+  --sidebar-foreground: var(--iris-ink-on-dark);
+  --sidebar-primary: var(--iris-primary-on-dark);
+  --sidebar-primary-foreground: var(--iris-surface-tile-3);
   --sidebar-accent: rgba(255, 255, 255, 0.06);
-  --sidebar-accent-foreground: #f5f2ec;
+  --sidebar-accent-foreground: var(--iris-ink-on-dark);
   --sidebar-border: #3a3632;
-  --sidebar-ring: #6b4a96;
+  --sidebar-ring: var(--iris-primary-focus);
 }
 
 @layer base {
@@ -74,16 +76,35 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background font-sans text-foreground antialiased;
+    font-size: var(--iris-body-size);
+    line-height: var(--iris-body-leading);
+    letter-spacing: -0.374px;
+    font-weight: 400;
   }
 
   .font-display {
     font-family: var(--font-display);
+    font-weight: 600;
   }
 }
 
 @layer utilities {
+  .iris-utility-surface {
+    border: 1px solid var(--iris-hairline);
+    border-radius: var(--iris-radius-lg);
+    background: var(--iris-canvas);
+  }
+
+  .iris-product-shadow {
+    box-shadow: var(--iris-product-shadow);
+  }
+
   .kanban-scroll::-webkit-scrollbar {
     height: 6px;
     width: 6px;

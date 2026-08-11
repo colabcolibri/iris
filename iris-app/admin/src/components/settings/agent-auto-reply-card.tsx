@@ -62,7 +62,7 @@ export function AgentAutoReplyCard() {
   );
 
   return (
-    <Card className="space-y-4 border-border/80 bg-card/90 p-6 shadow-sm">
+    <Card className="space-y-4 border-border bg-card p-6 shadow-none">
       <header className="space-y-1">
         <h2 className="text-sm font-semibold">Agente de comentários</h2>
         <p className="text-xs text-muted-foreground">
@@ -76,7 +76,7 @@ export function AgentAutoReplyCard() {
       ) : (
         <div className="max-w-xl space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="global-reply-mode" className="text-sm font-medium">
+            <Label htmlFor="global-reply-mode" className="text-sm font-semibold">
               Modo global
             </Label>
             <ReplyModeSelect
@@ -90,7 +90,7 @@ export function AgentAutoReplyCard() {
 
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="space-y-1">
-              <Label className="text-sm font-medium">Tempo antes de responder</Label>
+              <Label className="text-sm font-semibold">Tempo antes de responder</Label>
               <p className="text-xs text-muted-foreground">
                 Padrão: imediato. Com fila, o agente aguarda o intervalo (sugestão 60–120s) antes
                 do harness — a fila fica no banco e sobrevive a reinícios.
@@ -128,7 +128,7 @@ export function AgentAutoReplyCard() {
 
             {delayEnabled ? (
               <div className="space-y-2">
-                <Label htmlFor="reply-delay-seconds" className="text-sm font-medium">
+                <Label htmlFor="reply-delay-seconds" className="text-sm font-semibold">
                   Segundos de espera ({DELAY_MIN}–{DELAY_MAX})
                 </Label>
                 <Input

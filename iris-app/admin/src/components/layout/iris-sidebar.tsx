@@ -37,7 +37,7 @@ export function IrisSidebar({ children, className }: IrisSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className={cn("top-20 h-[calc(100svh-5rem)] border-sidebar-border", className)}
+      className={cn("top-14 h-[calc(100svh-3.5rem)] border-sidebar-border bg-sidebar shadow-none", className)}
     >
       <SidebarContent
         className={cn(
@@ -78,7 +78,7 @@ type IrisSidebarTriggerProps = {
 export function IrisSidebarTrigger({ className }: IrisSidebarTriggerProps) {
   return (
     <SidebarTrigger
-      className={cn("text-white hover:bg-white/10 hover:text-white", className)}
+      className={cn("text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground size-11", className)}
       aria-label="Alternar menu lateral"
     />
   );

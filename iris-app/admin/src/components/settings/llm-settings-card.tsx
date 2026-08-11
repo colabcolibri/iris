@@ -55,7 +55,7 @@ export function LlmSettingsCard() {
   }
 
   return (
-    <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
+    <Card className="space-y-5 border-border bg-card p-6 shadow-none">
       <header className="space-y-1">
         <h2 className="text-sm font-semibold">Provedor de IA (respostas automáticas)</h2>
         <p className="text-xs text-muted-foreground">
@@ -65,7 +65,7 @@ export function LlmSettingsCard() {
       </header>
 
       {settings?.env_override && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+        <p className="rounded-[var(--iris-radius-sm)] border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
           Variáveis <code className="text-[11px]">LLM_*</code> no ambiente estão definidas. O banco
           tem prioridade quando configurado aqui.
         </p>

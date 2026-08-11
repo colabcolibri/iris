@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { refreshAndReconcilePostComments } from "./refresh-and-reconcile-post-comments.ts";
-import type { Comment } from "../comment.ts";
+import type { Comment } from "./comment.ts";
 
 test("refreshAndReconcilePostComments sincroniza antes de vincular", async () => {
   const postId = "post-1";

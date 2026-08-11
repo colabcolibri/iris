@@ -11,11 +11,12 @@ const SIZE_CLASS = {
   lg: "size-12",
 } as const;
 
+/** Lockup do símbolo Iris — sem sombra; superfície canvas para contraste na sidebar. */
 export function BrandLogo({ className, size = "md" }: BrandLogoProps) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-lg bg-white p-1 shadow-sm ring-1 ring-black/5",
+        "inline-flex shrink-0 items-center justify-center rounded-[var(--iris-radius-sm)] bg-card p-1",
         SIZE_CLASS[size],
         className,
       )}

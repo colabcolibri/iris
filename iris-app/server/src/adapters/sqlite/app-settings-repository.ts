@@ -1,7 +1,11 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { AppSettings, AppSettingsStore } from "../../ports/app-settings-store.ts";
-import { defaultAppSettings } from "../../domain/app-settings-defaults.ts";
-import { autoReplyEnabledFromReplyMode, isReplyMode } from "../../domain/reply-mode.ts";
+import { defaultAppSettings } from "../../domain/settings/app-settings-defaults.ts";
+import { autoReplyEnabledFromReplyMode, isReplyMode } from "../../domain/posts/reply-mode.ts";
+import {
+  AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
+  normalizeAutoMonitorIntervalSeconds,
+} from "../../domain/settings/auto-monitor-settings.ts";
 
 const PRIMARY_ID = "primary";
 
@@ -10,6 +14,8 @@ type AppSettingsRow = {
   auto_reply_enabled: number;
   reply_mode: string | null;
   reply_delay_seconds: number;
+  auto_monitor_enabled: number | null;
+  auto_monitor_interval_seconds: number | null;
   updated_at: string;
 };
 
@@ -20,30 +26,56 @@ function mapRow(row: AppSettingsRow): AppSettings {
       ? "auto"
       : "off";
 
+  const intervalRaw = Number(
+    row.auto_monitor_interval_seconds ?? AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
+  );
+
   return {
     timezone: row.timezone,
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
     replyDelaySeconds: Number(row.reply_delay_seconds ?? 0),
+    autoMonitorEnabled: Number(row.auto_monitor_enabled ?? 1) === 1,
+    autoMonitorIntervalSeconds: normalizeAutoMonitorIntervalSeconds(
+      Number.isFinite(intervalRaw) ? intervalRaw : AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
+    ),
     updatedAt: row.updated_at,
   };
 }
 
 export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore {
   const selectOne = db.prepare(`
-    SELECT timezone, auto_reply_enabled, reply_mode, reply_delay_seconds, updated_at
+    SELECT
+      timezone,
+      auto_reply_enabled,
+      reply_mode,
+      reply_delay_seconds,
+      auto_monitor_enabled,
+      auto_monitor_interval_seconds,
+      updated_at
     FROM app_settings
     WHERE id = ?
   `);
 
   const upsertStmt = db.prepare(`
-    INSERT INTO app_settings (id, timezone, auto_reply_enabled, reply_mode, reply_delay_seconds, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO app_settings (
+      id,
+      timezone,
+      auto_reply_enabled,
+      reply_mode,
+      reply_delay_seconds,
+      auto_monitor_enabled,
+      auto_monitor_interval_seconds,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       timezone = excluded.timezone,
       auto_reply_enabled = excluded.auto_reply_enabled,
       reply_mode = excluded.reply_mode,
       reply_delay_seconds = excluded.reply_delay_seconds,
+      auto_monitor_enabled = excluded.auto_monitor_enabled,
+      auto_monitor_interval_seconds = excluded.auto_monitor_interval_seconds,
       updated_at = excluded.updated_at
   `);
 
@@ -69,6 +101,8 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
         autoReplyEnabled ? 1 : 0,
         replyMode,
         input.replyDelaySeconds,
+        input.autoMonitorEnabled ? 1 : 0,
+        normalizeAutoMonitorIntervalSeconds(input.autoMonitorIntervalSeconds),
         updatedAt,
       );
 

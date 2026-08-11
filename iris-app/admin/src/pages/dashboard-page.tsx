@@ -322,7 +322,7 @@ export function DashboardPage() {
             type="button"
             size="sm"
             onClick={openCreate}
-            className="h-9 shrink-0 rounded-full px-4 font-semibold uppercase tracking-wide shadow-sm sm:px-6"
+            className="h-11 shrink-0 sm:px-6"
           >
             <Plus className="mr-2 size-4" />
             Nova postagem

@@ -8,6 +8,8 @@ type AppSettingsContextValue = {
   timezone: string;
   replyMode: ReplyMode;
   replyDelaySeconds: number;
+  autoMonitorEnabled: boolean;
+  autoMonitorIntervalSeconds: number;
   /** Compatibilidade com API legada. */
   autoReplyEnabled: boolean;
   loading: boolean;
@@ -15,6 +17,8 @@ type AppSettingsContextValue = {
   saveTimezone: (timezone: string) => Promise<void>;
   saveReplyMode: (mode: ReplyMode) => Promise<void>;
   saveReplyDelaySeconds: (seconds: number) => Promise<void>;
+  saveAutoMonitorEnabled: (enabled: boolean) => Promise<void>;
+  saveAutoMonitorIntervalSeconds: (seconds: number) => Promise<void>;
 };
 
 const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
@@ -24,6 +28,8 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
   const [replyMode, setReplyMode] = useState<ReplyMode>("auto");
   const [replyDelaySeconds, setReplyDelaySeconds] = useState(0);
+  const [autoMonitorEnabled, setAutoMonitorEnabled] = useState(true);
+  const [autoMonitorIntervalSeconds, setAutoMonitorIntervalSeconds] = useState(300);
   const [loading, setLoading] = useState(false);
 
   const applySettings = useCallback(
@@ -31,6 +37,8 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
       setTimezone(settings.timezone);
       setReplyMode(settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"));
       setReplyDelaySeconds(settings.reply_delay_seconds ?? 0);
+      setAutoMonitorEnabled(settings.auto_monitor_enabled ?? true);
+      setAutoMonitorIntervalSeconds(settings.auto_monitor_interval_seconds ?? 300);
     },
     [],
   );
@@ -78,18 +86,38 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
     [applySettings],
   );
 
+  const saveAutoMonitorEnabled = useCallback(
+    async (enabled: boolean) => {
+      const saved = await updateAppSettings({ auto_monitor_enabled: enabled });
+      applySettings(saved);
+    },
+    [applySettings],
+  );
+
+  const saveAutoMonitorIntervalSeconds = useCallback(
+    async (seconds: number) => {
+      const saved = await updateAppSettings({ auto_monitor_interval_seconds: seconds });
+      applySettings(saved);
+    },
+    [applySettings],
+  );
+
   return (
     <AppSettingsContext.Provider
       value={{
         timezone,
         replyMode,
         replyDelaySeconds,
+        autoMonitorEnabled,
+        autoMonitorIntervalSeconds,
         autoReplyEnabled: replyMode !== "off",
         loading,
         refresh,
         saveTimezone,
         saveReplyMode,
         saveReplyDelaySeconds,
+        saveAutoMonitorEnabled,
+        saveAutoMonitorIntervalSeconds,
       }}
     >
       {children}

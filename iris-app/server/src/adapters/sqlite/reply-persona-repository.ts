@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { ReplyPersona, ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
-import { defaultReplyPersona } from "../../domain/reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../../domain/settings/reply-persona-defaults.ts";
 import { DEFAULT_RESPONSE_LANGUAGE } from "../../domain/reply-language/response-languages.ts";
 
 const PRIMARY_ID = "primary";

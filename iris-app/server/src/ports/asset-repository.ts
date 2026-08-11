@@ -1,4 +1,4 @@
-import type { PostAsset } from "../domain/post.ts";
+import type { PostAsset } from "../domain/posts/post.ts";
 
 export type CreateAssetInput = {
   postId: string;

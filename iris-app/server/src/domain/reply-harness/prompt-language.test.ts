@@ -5,7 +5,7 @@ import {
   buildMentionDirective,
   buildSignatureVerificationBlock,
 } from "./prompt-language.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 
 function mockContext(authorUsername = "maria_escuta"): ReplyContext {

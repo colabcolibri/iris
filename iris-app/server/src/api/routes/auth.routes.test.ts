@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createServer } from "../http-server.ts";
-import { hashOtpCode } from "../../domain/admin-otp-code.ts";
+import { hashOtpCode } from "../../domain/auth/admin-otp-code.ts";
 import type { EmailSender } from "../../ports/email-sender.ts";
 
 const ADMIN = "integration-admin";
@@ -169,7 +169,7 @@ test("GET /api/auth/me returns email with valid session cookie", async () => {
 
 test("request-code returns 429 when IP rate limit is exceeded", async () => {
   const { AUTH_REQUEST_CODE_IP_MAX, resetAuthIpRateLimiterForTests } = await import(
-    "../../domain/auth-ip-rate-limit.ts"
+    "../../domain/auth/auth-ip-rate-limit.ts"
   );
   resetAuthIpRateLimiterForTests();
 

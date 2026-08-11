@@ -6,7 +6,7 @@ import {
   generateMcpConnectionCode,
   hashMcpConnectionCode,
   mcpConnectionCodeHint,
-} from "../../domain/mcp-connection-verifier.ts";
+} from "../../domain/mcp/mcp-connection-verifier.ts";
 
 function resolveMcpUrl(req: IncomingMessage, ctx: AppContext): string {
   const publicBase = ctx.publicBaseUrl?.trim();

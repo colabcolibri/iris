@@ -1,4 +1,4 @@
-import type { Comment, CommentStatus } from "../domain/comment.ts";
+import type { Comment, CommentStatus } from "../domain/comments/comment.ts";
 import type {
   CommentActivityKind,
   CommentActivityRow,

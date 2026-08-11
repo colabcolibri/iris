@@ -3,7 +3,7 @@ import { sendError } from "./json.ts";
 import {
   getMetaReadiness,
   metaReadinessMessage,
-} from "../domain/meta-readiness.ts";
+} from "../domain/meta/meta-readiness.ts";
 import type { RouteMatch } from "./route-types.ts";
 
 export function guardAdmin(match: RouteMatch): boolean {

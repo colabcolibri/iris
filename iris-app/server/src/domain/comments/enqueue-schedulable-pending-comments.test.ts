@@ -29,6 +29,8 @@ test("enqueueSchedulablePendingComments schedules pending comments when post inh
       replyMode: "auto",
       autoReplyEnabled: true,
       replyDelaySeconds: 0,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
     });
     withMockLlm(ctx);
 
@@ -76,6 +78,8 @@ test("enqueueSchedulablePendingComments ignores posts with reply_mode off", () =
       replyMode: "auto",
       autoReplyEnabled: true,
       replyDelaySeconds: 0,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
     });
     withMockLlm(ctx);
 

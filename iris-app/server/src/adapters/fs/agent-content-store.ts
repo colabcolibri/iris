@@ -5,7 +5,7 @@ import type {
   AgentContentInput,
   AgentContentStore,
 } from "../../ports/agent-content-store.ts";
-import { defaultAgentContent } from "../../domain/agent-content-defaults.ts";
+import { defaultAgentContent } from "../../domain/settings/agent-content-defaults.ts";
 
 const FILE_NAMES = {
   soul: "soul.md",

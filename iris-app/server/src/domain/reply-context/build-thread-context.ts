@@ -1,4 +1,4 @@
-import type { Comment } from "../comment.ts";
+import type { Comment } from "../comments/comment.ts";
 import type { CommentRepository } from "../../ports/comment-repository.ts";
 import {
   sortThreadEntriesChronologically,

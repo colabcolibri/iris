@@ -6,7 +6,7 @@ import {
   SIGNATURE_SEPARATOR,
 } from "./reply-signature-format.ts";
 import { buildSignatureVerificationBlock } from "./prompt-language.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 
 test("SIGNATURE_SEPARATOR is newline-dot-newline", () => {
   assert.equal(SIGNATURE_SEPARATOR, "\n.\n");

@@ -130,7 +130,7 @@ const PostInboxItem = memo(function PostInboxItem({
         )}
         {post.pending_count > 0 ? (
           <span
-            className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white shadow"
+            className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
           >
             {post.pending_count > 9 ? "9+" : post.pending_count}
           </span>

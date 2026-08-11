@@ -6,7 +6,7 @@ import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import {
   AssetIngestError,
   ingestPostAsset,
-} from "../../domain/asset-ingest.ts";
+} from "../../domain/posts/asset-ingest.ts";
 import { jsonToolContent, toolError } from "../tool-response.ts";
 
 export function registerAssetTools(server: McpServer, ctx: AppContext): void {

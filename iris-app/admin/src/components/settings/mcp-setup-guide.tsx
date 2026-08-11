@@ -89,12 +89,12 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4 rounded-lg border border-border/80 bg-muted/30 p-4">
+      <div className="space-y-4 rounded-[var(--iris-radius-sm)] border border-border/80 bg-muted/30 p-4">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">ChatGPT</h3>
           <p className="text-xs text-muted-foreground">
             Projeto → Plugins → Conectar MCP personalizado → tipo{" "}
-            <span className="font-medium text-foreground">HTTP com streaming</span>. Preencha campo a
+            <span className="font-semibold text-foreground">HTTP com streaming</span>. Preencha campo a
             campo (não aceita JSON completo).
           </p>
         </div>
@@ -103,7 +103,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
         <McpCopyField id="chatgpt-url" label="URL" value={mcpUrl} hint="Use HTTPS público (ex.: ngrok) — não localhost." />
 
         <p className="rounded-md border border-border/80 bg-background px-3 py-2 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Variável de ambiente de token do portador:</span> deixe
+          <span className="font-semibold text-foreground">Variável de ambiente de token do portador:</span> deixe
           vazio. Esse campo é só o <em>nome</em> de uma variável no seu computador (ex.{" "}
           <span className="font-mono">MCP_BEARER_TOKEN</span>) — não cole o código do Iris aí. Para o Iris,
           use o cabeçalho <span className="font-mono">Authorization</span> abaixo.
@@ -135,7 +135,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
         )}
       </div>
 
-      <div className="space-y-4 rounded-lg border border-border/80 bg-muted/30 p-4">
+      <div className="space-y-4 rounded-[var(--iris-radius-sm)] border border-border/80 bg-muted/30 p-4">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">Cursor</h3>
           <p className="text-xs text-muted-foreground">
@@ -149,7 +149,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
               readOnly
               rows={10}
               value={cursorSnippet}
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs shadow-xs outline-none"
+              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs shadow-none outline-none"
             />
             <Button
               type="button"
@@ -165,7 +165,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
         )}
       </div>
 
-      <div className="space-y-4 rounded-lg border border-border/80 bg-muted/30 p-4">
+      <div className="space-y-4 rounded-[var(--iris-radius-sm)] border border-border/80 bg-muted/30 p-4">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">Claude Desktop</h3>
           <p className="text-xs text-muted-foreground">
@@ -188,7 +188,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
                   readOnly
                   rows={10}
                   value={claudeSnippet}
-                  className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs shadow-xs outline-none"
+                  className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs shadow-none outline-none"
                 />
                 <Button
                   type="button"

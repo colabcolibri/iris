@@ -1,5 +1,5 @@
 import type { IncomingMessage } from "node:http";
-import { timingSafeStringEqual } from "../domain/secret-compare.ts";
+import { timingSafeStringEqual } from "../domain/auth/secret-compare.ts";
 import { readSessionToken, verifySessionToken } from "./session.ts";
 
 export type AuthRole = "admin" | "agent";

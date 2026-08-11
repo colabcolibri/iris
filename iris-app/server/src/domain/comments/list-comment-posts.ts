@@ -1,4 +1,4 @@
-import type { PostReplyModeSetting } from "../reply-mode.ts";
+import type { PostReplyModeSetting } from "../posts/reply-mode.ts";
 import type { IgMediaStatus } from "../meta/ig-media-status.ts";
 
 export type CommentPostSummary = {

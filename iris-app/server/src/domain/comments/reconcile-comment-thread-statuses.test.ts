@@ -4,7 +4,7 @@ import {
   planCommentThreadReconciliation,
   reconcileCommentThreadStatuses,
 } from "./reconcile-comment-thread-statuses.ts";
-import type { Comment } from "../comment.ts";
+import type { Comment } from "./comment.ts";
 
 function makeComment(
   partial: Partial<Comment> & Pick<Comment, "id" | "igCommentId" | "postId">,

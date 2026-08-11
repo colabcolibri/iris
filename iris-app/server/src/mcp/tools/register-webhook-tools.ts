@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { AppContext } from "../../api/app-context.ts";
-import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
-import { summarizeWebhookPayload } from "../../domain/webhook-event-summary.ts";
+import { truncateWebhookPayload } from "../../domain/meta/meta-webhook-payload.ts";
+import { summarizeWebhookPayload } from "../../domain/meta/webhook-event-summary.ts";
 import type { WebhookProcessingStatus } from "../../ports/webhook-event-repository.ts";
 import { jsonToolContent } from "../tool-response.ts";
 

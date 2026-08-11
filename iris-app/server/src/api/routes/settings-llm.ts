@@ -8,9 +8,9 @@ import {
   createLlmConfigResolver,
   llmKeyHint,
 } from "../../domain/llm/resolve-llm-config.ts";
-import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
-import { summarizeWebhookPayload } from "../../domain/webhook-event-summary.ts";
-import { parseWebhookEventListFilter } from "../../domain/webhook-event-query.ts";
+import { truncateWebhookPayload } from "../../domain/meta/meta-webhook-payload.ts";
+import { summarizeWebhookPayload } from "../../domain/meta/webhook-event-summary.ts";
+import { parseWebhookEventListFilter } from "../../domain/meta/webhook-event-query.ts";
 import type { WebhookEventRecord } from "../../ports/webhook-event-repository.ts";
 import type { AppContext } from "../app-context.ts";
 

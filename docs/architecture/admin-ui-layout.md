@@ -60,7 +60,7 @@ Template composto para páginas autenticadas. Exportado em `components/templates
 | `variant` | Comportamento | Uso |
 | --------- | ------------- | --- |
 | `scroll` (padrão) | `overflow-auto`, padding responsivo | Settings, webhooks, persona |
-| `fill` | `flex-1`, `overflow-hidden`, altura cheia | Dashboard, comments (split pane) |
+| `fill` | `flex-1`, `overflow-hidden`, altura cheia | Dashboard; comments (browse ou stage focus) |
 
 ### Subcomponentes
 
@@ -95,11 +95,34 @@ export function SettingsPage() {
 ```tsx
 <PageContainer variant="fill">
   {/* banners opcionais */}
-  <div className="flex min-h-0 flex-1 …">{/* split pane */}</div>
+  <div className="flex min-h-0 flex-1 …">{/* conteúdo full-height */}</div>
 </PageContainer>
 ```
 
-Dashboard usa `variant="fill"` com `className="px-8 pb-8"` para manter o ritmo do calendário/kanban.
+Dashboard usa `variant="fill"` com padding lateral para o ritmo do calendário/kanban (mural editorial — ver `09` § Composição).
+
+## Hub de comentários — stage focus (v1.15)
+
+Contrato visual: [`docs/09_design_system.md`](../09_design_system.md) § **Composição / foco**.
+
+### Fluxo
+
+```txt
+/admin/comments
+  browse (sem post_id)
+    lista Publicações | Atividade  →  empty state “selecione uma publicação”
+  stage (com post_id)
+    [rail/drawer lista — colapsável]  +  STAGE (≥60% inset)
+         PostDetailPanel: mídia em destaque + abas (Desempenho | Comentários | Legenda | Config)
+```
+
+- Entrar em stage ao setar `?post_id=` (e opcional `comment_id` para deep link / highlight).
+- Voltar ao browse ou reabrir lista via CTA / rail — **sem** manter lista + preview + painel como três colunas fixas.
+- Deep link e SSE existentes permanecem; muda só a composição.
+
+### Deprecated
+
+**Layout de três colunas permanentes** (aside lista ~340px + preview + painel lateral) no hub de comentários está **deprecated** a partir de v1.15 / US-0105. Não reintroduzir.
 
 ## Outros templates
 
@@ -125,9 +148,13 @@ Dashboard usa `variant="fill"` com `className="px-8 pb-8"` para manter o ritmo d
 - Duplicar padding/scroll com `div` manual quando `PageContainer` cobre o caso.
 - Estado local de calendário/kanban fora da URL em `/` (quebra highlight da sidebar).
 - Chamar `fetchMetaStatus` direto na página (usar `MetaSessionProvider`).
+- Três colunas permanentes no hub de comentários (lista + mídia + threads lado a lado).
+- Grid de calendário onde células vazias dominam o viewport (usar mural editorial).
 
 ## Referências
 
-- Design tokens e telas: `docs/design/stitch-iris-admin/`
+- Design system (tokens + composição): `docs/09_design_system.md`
+- Gramática de marca: `docs/design/DESIGN-rules.md`
+- Design tokens e telas legadas: `docs/design/stitch-iris-admin/`
 - Mapa shadcn: `docs/design/stitch-iris-admin/shadcn-component-map.md`
 - Guia rápido do pacote: `iris-app/admin/README.md`

@@ -16,7 +16,7 @@ type PostMediaCarouselProps = {
 };
 
 const NAV_BUTTON_CLASS =
-  "flex size-8 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-foreground shadow-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-30";
+  "flex size-8 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-30";
 
 function isVideoSlide(slide: CarouselSlide): boolean {
   const type = slide.mediaType?.toUpperCase() ?? "";
@@ -58,7 +58,7 @@ export function PostMediaCarousel({
           "relative w-full overflow-hidden bg-muted/80",
           isHero
             ? "aspect-[4/5] w-full max-h-[min(52vh,520px)] shrink-0"
-            : "aspect-[4/5] rounded-2xl shadow-md ring-1 ring-border/60",
+            : "aspect-[4/5] rounded-[var(--iris-radius-lg)] shadow-[var(--iris-product-shadow)] ring-1 ring-border/60",
         )}
       >
         {current ? (
@@ -93,11 +93,11 @@ export function PostMediaCarousel({
         ) : (
           <div
             className={cn(
-              "flex flex-col items-center justify-center gap-3 bg-linear-to-br from-violet-500/15 via-background to-orange-400/15 p-6 text-center",
+              "flex flex-col items-center justify-center gap-3 bg-muted p-6 text-center",
               isHero ? "size-full" : "absolute inset-0",
             )}
           >
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-background/80 text-2xl font-semibold text-primary shadow-sm">
+            <div className="flex size-16 items-center justify-center rounded-[var(--iris-radius-lg)] bg-background/80 text-2xl font-semibold text-primary">
               {initial}
             </div>
             <div className="space-y-1">
@@ -111,7 +111,7 @@ export function PostMediaCarousel({
           <>
             <button
               type="button"
-              className="absolute top-1/2 left-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-30"
+              className="absolute top-1/2 left-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-30"
               onClick={goPrev}
               aria-label="Slide anterior"
             >
@@ -119,7 +119,7 @@ export function PostMediaCarousel({
             </button>
             <button
               type="button"
-              className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-30"
+              className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-30"
               onClick={goNext}
               aria-label="Próximo slide"
             >

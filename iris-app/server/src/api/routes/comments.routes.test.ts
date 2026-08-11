@@ -946,3 +946,133 @@ test("PATCH draft updates stored draft text", async () => {
     assert.equal(body.draft_text, "Draft editado");
   });
 });
+
+test("meta webhook auto-registers unknown media then ingests comment", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.metaCommentReader = {
+      ...ctx.metaCommentReader,
+      async fetchMediaMetadata(igMediaId: string) {
+        if (igMediaId === "18614146732042397") {
+          return {
+            igMediaId: "18614146732042397",
+            caption: "post externo",
+            timestamp: "2026-08-11T12:00:00.000Z",
+          };
+        }
+        throw new Error(`unexpected media ${igMediaId}`);
+      },
+    };
+
+    const payload = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "ig-lazy-1",
+                text: "primeiro comentário",
+                from: { username: "fan" },
+                media: { id: "18614146732042397" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signBody(payload),
+      },
+      body: payload,
+    });
+    assert.equal(response.status, 200);
+
+    const monitored = ctx.posts.findCommentableByIgMediaId("18614146732042397");
+    assert.ok(monitored);
+    assert.equal(monitored?.status, "monitored");
+    assert.equal(ctx.comments.listByPostId(monitored!.id).length, 1);
+
+    const secondPayload = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "ig-lazy-2",
+                text: "segundo",
+                from: { username: "fan2" },
+                media: { id: "18614146732042397" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const second = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signBody(secondPayload),
+      },
+      body: secondPayload,
+    });
+    assert.equal(second.status, 200);
+
+    const again = ctx.posts.findByIgMediaId("18614146732042397");
+    assert.equal(again?.id, monitored?.id);
+    assert.equal(ctx.comments.listByPostId(monitored!.id).length, 2);
+  });
+});
+
+test("meta webhook ignores comment when unknown media cannot be resolved", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    ctx.metaCommentReader = {
+      ...ctx.metaCommentReader,
+      async fetchMediaMetadata() {
+        throw new Error("media not found on account");
+      },
+    };
+
+    const payload = JSON.stringify({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              field: "comments",
+              value: {
+                id: "ig-orphan-1",
+                text: "órfão",
+                from: { username: "fan" },
+                media: { id: "18000000000000001" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signBody(payload),
+      },
+      body: payload,
+    });
+    assert.equal(response.status, 200);
+    assert.equal(ctx.posts.findByIgMediaId("18000000000000001"), null);
+    assert.equal(ctx.comments.listByPostId("any").length, 0);
+
+    const event = ctx.webhookEvents.listRecent(1)[0];
+    assert.equal(event?.processingStatus, "ignored");
+  });
+});

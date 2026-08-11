@@ -162,6 +162,8 @@ test("processCommentReply skips when global is off and post inherits", async () 
       replyMode: "off",
       autoReplyEnabled: false,
       replyDelaySeconds: 0,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
     });
 
     const post = ctx.posts.create({
@@ -214,6 +216,8 @@ test("processCommentReply honors explicit post auto when global is off", async (
       replyMode: "off",
       autoReplyEnabled: false,
       replyDelaySeconds: 0,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
     });
 
     const post = ctx.posts.create({
@@ -320,6 +324,8 @@ test("processCommentReply manual auto publishes even when global is off", async 
       replyMode: "off",
       autoReplyEnabled: false,
       replyDelaySeconds: 0,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
     });
 
     const post = ctx.posts.create({

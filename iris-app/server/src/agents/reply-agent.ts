@@ -3,7 +3,7 @@ import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-co
 import { assembleReplyContext } from "../domain/reply-context/reply-context-assembler.ts";
 import { buildReplyPrompt } from "../domain/reply-context/build-reply-prompt.ts";
 import type { ReplyContext } from "../domain/reply-context/types.ts";
-import { defaultReplyPersona } from "../domain/reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../domain/settings/reply-persona-defaults.ts";
 import { DEFAULT_RESPONSE_LANGUAGE } from "../domain/reply-language/response-languages.ts";
 
 export type ReplyAgentInput = {

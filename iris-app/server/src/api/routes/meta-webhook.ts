@@ -6,17 +6,19 @@ import {
   readWebhookEnvelope,
   verifyHubSignature,
   verifySubscribeToken,
-} from "../../domain/meta-webhook.ts";
+} from "../../domain/meta/meta-webhook.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { enqueueCommentReply } from "../../domain/comments/enqueue-comment-reply.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
-} from "../../domain/reply-mode.ts";
+} from "../../domain/posts/reply-mode.ts";
 import { isBrandAuthor } from "../../domain/comments/is-brand-author.ts";
 
-import { truncateWebhookPayload } from "../../domain/meta-webhook-payload.ts";
+import { truncateWebhookPayload } from "../../domain/meta/meta-webhook-payload.ts";
+import { ensureMonitoredPost } from "../../domain/comments/ensure-monitored-post.ts";
+
 export function handleMetaWebhookRoute(
   req: IncomingMessage,
   res: ServerResponse,
@@ -133,9 +135,21 @@ async function handleMetaWebhookPost(
     let linkedPostId: string | null = null;
 
     for (const entry of entries) {
-      const post = ctx.posts.findCommentableByIgMediaId(entry.igMediaId);
+      let post = ctx.posts.findCommentableByIgMediaId(entry.igMediaId);
       if (!post) {
-        continue;
+        const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
+        if (!appSettings.autoMonitorEnabled) {
+          continue;
+        }
+
+        const ensured = await ensureMonitoredPost(entry.igMediaId, {
+          posts: ctx.posts,
+          metaCommentReader: ctx.metaCommentReader,
+        });
+        if (!ensured.ok) {
+          continue;
+        }
+        post = ensured.post;
       }
 
       let igTimestamp = entry.igTimestamp;

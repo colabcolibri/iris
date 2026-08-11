@@ -1,4 +1,4 @@
-import type { Comment } from "../comment.ts";
+import type { Comment } from "./comment.ts";
 
 export type ReconcileDeletedInstagramCommentsDeps = {
   listByPostId: (postId: string) => Comment[];

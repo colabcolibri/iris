@@ -3,7 +3,7 @@ import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repo
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
-} from "../reply-mode.ts";
+} from "../posts/reply-mode.ts";
 import { computeAgentReplyNotBefore } from "./compute-agent-reply-not-before.ts";
 
 export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean {

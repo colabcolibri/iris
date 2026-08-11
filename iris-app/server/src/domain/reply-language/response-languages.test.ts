@@ -6,7 +6,7 @@ import {
   resolveResponseLanguage,
 } from "./response-languages.ts";
 import { buildResponseLanguageDirective } from "../reply-harness/prompt-language.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 
 test("resolveResponseLanguage falls back to default", () => {
   const resolved = resolveResponseLanguage("invalid");

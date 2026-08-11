@@ -185,7 +185,7 @@ function CommentDraftPanel({
 
   if (editing) {
     return (
-      <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+      <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
         <Textarea
           value={draftValue}
@@ -233,7 +233,7 @@ function CommentDraftPanel({
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+    <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">Sugestão da IA</p>
       <p className="mt-1.5 wrap-break-word text-sm leading-relaxed whitespace-pre-wrap">
         {displayCommentText(comment.draft_text)}
@@ -316,7 +316,7 @@ function CommentActions({
       {showGenerateDraft ? (
         <button
           type="button"
-          className="shrink-0 rounded-md p-1.5 text-violet-600/80 hover:bg-violet-500/10 hover:text-violet-700 disabled:opacity-50 dark:text-violet-400 dark:hover:text-violet-300"
+          className="shrink-0 rounded-md p-1.5 text-primary/80 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
           aria-label="Gerar rascunho"
           title="Gerar rascunho com IA"
           disabled={generating}
@@ -476,7 +476,7 @@ function CommentBody({
               {replyTarget && showReplyContext ? (
                 <p className="text-xs text-muted-foreground">
                   Em resposta a{" "}
-                  <span className="font-medium text-foreground/80">{replyTarget}</span>
+                  <span className="font-semibold text-foreground/80">{replyTarget}</span>
                 </p>
               ) : null}
             </div>
@@ -523,7 +523,7 @@ function CommentBody({
           ) : null}
 
           {showLinkedReply ? (
-            <div className={cn("mt-3 rounded-xl px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
+            <div className={cn("mt-3 rounded-[var(--iris-radius-lg)] px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
               <div className="flex gap-2.5">
                 <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
                   <AvatarFallback className="text-[9px] font-semibold text-primary">
@@ -537,7 +537,7 @@ function CommentBody({
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Em resposta a{" "}
-                    <span className="font-medium text-foreground/80">{linkedReplyTarget}</span>
+                    <span className="font-semibold text-foreground/80">{linkedReplyTarget}</span>
                   </p>
                 </div>
               </div>
@@ -609,7 +609,7 @@ function CommentRootExtras({
       ) : null}
 
       {showLinkedReply ? (
-        <div className={cn("rounded-xl px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
+        <div className={cn("rounded-[var(--iris-radius-lg)] px-3 py-2.5", brandReplyLinkedSurfaceClass)}>
           <div className="flex gap-2.5">
             <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
               <AvatarFallback className="text-[9px] font-semibold text-primary">
@@ -623,7 +623,7 @@ function CommentRootExtras({
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Em resposta a{" "}
-                <span className="font-medium text-foreground/80">{linkedReplyTarget}</span>
+                <span className="font-semibold text-foreground/80">{linkedReplyTarget}</span>
               </p>
             </div>
           </div>
@@ -668,7 +668,7 @@ function ThreadCard({
     <article
       id={`comment-focus-${group.root.id}`}
       className={cn(
-        "scroll-mt-24 rounded-xl border p-4 shadow-sm",
+        "scroll-mt-24 rounded-[var(--iris-radius-lg)] border p-4",
         highlightCommentId === group.root.id &&
           "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
         isDeletedRoot
@@ -794,7 +794,7 @@ function ThreadAccordionHeader({
             >
               {previewText(root.text)}
             </p>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
               <MessageCircle className="size-3.5" />
               {replyCount} resposta{replyCount === 1 ? "" : "s"} na conversa
             </span>
@@ -845,7 +845,7 @@ function ThreadAccordionItem({
       value={root.id}
       id={`comment-focus-${root.id}`}
       className={cn(
-        "scroll-mt-24 overflow-hidden rounded-xl border shadow-sm",
+        "scroll-mt-24 overflow-hidden rounded-[var(--iris-radius-lg)] border",
         highlightCommentId === root.id &&
           "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
         isDeletedRoot

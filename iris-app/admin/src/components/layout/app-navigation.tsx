@@ -30,7 +30,7 @@ const FOOTER_ROUTE_ITEMS = [
 ] as const;
 
 const MENU_BUTTON_CLASS =
-  "h-12 text-sidebar-foreground/70 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 data-active:bg-primary/25 data-active:font-semibold data-active:text-sidebar-foreground";
+  "h-11 min-h-11 text-[12px] font-normal tracking-[-0.12px] text-sidebar-foreground/70 transition-transform active:scale-95 group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-primary data-active:shadow-none";
 
 const MENU_LABEL_CLASS = "group-data-[collapsible=icon]:hidden";
 

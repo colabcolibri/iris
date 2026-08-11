@@ -5,7 +5,7 @@ import { enqueueCommentReply } from "./enqueue-comment-reply.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
-} from "../reply-mode.ts";
+} from "../posts/reply-mode.ts";
 
 export type EnqueueSchedulablePendingCommentsOptions = {
   postId?: string;

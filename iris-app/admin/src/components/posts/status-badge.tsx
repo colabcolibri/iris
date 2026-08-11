@@ -9,9 +9,9 @@ const STATUS_META: Record<PostStatus, { pill: string; dot: string; ring: string 
     ring: "ring-stone-400/45",
   },
   scheduled: {
-    pill: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
-    dot: "bg-violet-600 dark:bg-violet-400",
-    ring: "ring-violet-500/35",
+    pill: "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200",
+    dot: "bg-sky-600 dark:bg-sky-400",
+    ring: "ring-sky-500/35",
   },
   published: {
     pill: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
@@ -70,7 +70,7 @@ export function StatusBadge({
           )}
           aria-hidden
         />
-        <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-normal uppercase tracking-widest text-muted-foreground">
           {label}
         </span>
       </span>

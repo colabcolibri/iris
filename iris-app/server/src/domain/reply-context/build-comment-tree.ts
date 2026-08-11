@@ -1,4 +1,4 @@
-import type { Comment } from "../comment.ts";
+import type { Comment } from "../comments/comment.ts";
 
 export type CommentTreeNode = {
   comment: Comment;

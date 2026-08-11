@@ -1,6 +1,6 @@
 import { readJsonBody, sendJson, ValidationError } from "../json.ts";
 import { createAdminPathRouter } from "../router.ts";
-import { defaultReplyPersona } from "../../domain/reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../../domain/settings/reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../../domain/reply-language/response-languages.ts";
 import type { ReplyPersona } from "../../ports/reply-persona-store.ts";
 

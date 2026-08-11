@@ -2,8 +2,8 @@ import type { AppContext } from "../../api/app-context.ts";
 import type { MetaCommentReplier } from "../../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentRun } from "../../ports/agent-run-repository.ts";
-import type { Comment } from "../comment.ts";
-import type { Post } from "../post.ts";
+import type { Comment } from "./comment.ts";
+import type { Post } from "../posts/post.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
 import { assembleReplyContext } from "../reply-context/reply-context-assembler.ts";
@@ -16,12 +16,12 @@ import {
   HarnessExecutionError,
   recordFailedHarnessRun,
 } from "../reply-harness/execute-and-record-harness.ts";
-import { getAgentContentOrDefault } from "../agent-content-defaults.ts";
+import { getAgentContentOrDefault } from "../settings/agent-content-defaults.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
   type ReplyMode,
-} from "../reply-mode.ts";
+} from "../posts/reply-mode.ts";
 import { commentReplyLimiter } from "./comment-reply-limiter.ts";
 
 export type ProcessCommentReplyOptions = {

@@ -1,4 +1,4 @@
-import type { AppContext } from "../app-context.ts";
+import type { AppContext } from "../../api/app-context.ts";
 
 export function resolveLatestInspectableMediaId(ctx: AppContext): string | null {
   const candidates = ctx.posts

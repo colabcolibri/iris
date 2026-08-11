@@ -62,11 +62,11 @@ import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-co
 import {
   loadMcpConnectionCodeFromEnv,
   type McpConfig,
-} from "../domain/mcp-connection.ts";
+} from "../domain/mcp/mcp-connection.ts";
 import {
   createMcpConnectionVerifier,
   type McpConnectionVerifier,
-} from "../domain/mcp-connection-verifier.ts";
+} from "../domain/mcp/mcp-connection-verifier.ts";
 import { MEDIA_ROOT } from "../paths.ts";
 
 export type AppContext = {

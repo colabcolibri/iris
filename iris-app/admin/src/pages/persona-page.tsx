@@ -115,7 +115,7 @@ export function PersonaPage() {
           description="Identidade e limites da marca ficam no banco (SQLite). O conteúdo editorial do agente também é persistido no banco — só muda quando você salva explicitamente."
         />
 
-        <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
+        <Card className="space-y-5 border-border bg-card p-6 shadow-none">
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : (
@@ -208,7 +208,7 @@ export function PersonaPage() {
           )}
         </Card>
 
-        <Card className="mt-6 space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
+        <Card className="mt-6 space-y-5 border-border bg-card p-6 shadow-none">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Conteúdo do agente</h2>
             <p className="mt-1 text-sm text-muted-foreground">

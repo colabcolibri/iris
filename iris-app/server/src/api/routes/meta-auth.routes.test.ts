@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createHmac } from "node:crypto";
 import { createServer } from "../http-server.ts";
-import { hashOtpCode } from "../../domain/admin-otp-code.ts";
+import { hashOtpCode } from "../../domain/auth/admin-otp-code.ts";
 import type { EmailSender } from "../../ports/email-sender.ts";
 
 const ADMIN = "integration-admin";

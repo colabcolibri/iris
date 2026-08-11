@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runReplyHarness } from "./orchestrator.ts";
-import { defaultAgentContent } from "../agent-content-defaults.ts";
+import { defaultAgentContent } from "../settings/agent-content-defaults.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import { createTestLlmCompletion } from "../../ports/llm-completer.ts";

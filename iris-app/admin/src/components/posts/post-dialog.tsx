@@ -161,7 +161,7 @@ export function PostDialog({
 
       <AppDialog.Body>
         {isFailed && post?.error_message ? (
-          <p className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p className="mb-4 rounded-[var(--iris-radius-sm)] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             Causa da falha: {post.error_message}
           </p>
         ) : null}
@@ -248,7 +248,7 @@ export function PostDialog({
               </div>
 
               <div className="max-w-xl space-y-2">
-                <Label htmlFor="post-reply-mode" className="text-sm font-medium">
+                <Label htmlFor="post-reply-mode" className="text-sm font-semibold">
                   Respostas da IA neste post
                 </Label>
                 <ReplyModeSelect
@@ -271,11 +271,11 @@ export function PostDialog({
               {showCommentsSection ? (
                 <section className="space-y-3 border-t border-border/60 pt-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground">Comentários</p>
+                    <p className="text-sm font-semibold text-foreground">Comentários</p>
                     {post?.id ? (
                       <Link
                         to={`/comments?post_id=${post.id}`}
-                        className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                        className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
                       >
                         Abrir no hub
                       </Link>
@@ -284,7 +284,7 @@ export function PostDialog({
                   {loadingComments ? (
                     <p className="text-sm text-muted-foreground">Carregando…</p>
                   ) : comments.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
+                    <p className="rounded-[var(--iris-radius-sm)] border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
                       Nenhum comentário neste post ainda.
                     </p>
                   ) : (
@@ -292,7 +292,7 @@ export function PostDialog({
                       {comments.slice(0, 6).map((comment) => (
                         <article
                           key={comment.id}
-                          className="rounded-lg border border-border/60 bg-background p-3 text-sm"
+                          className="rounded-[var(--iris-radius-sm)] border border-border/60 bg-background p-3 text-sm"
                         >
                           <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span className="font-semibold text-foreground">
@@ -308,7 +308,7 @@ export function PostDialog({
                           ) : null}
                           {comment.thread.length > 0 ? (
                             <details className="mt-2">
-                              <summary className="cursor-pointer text-xs font-medium text-primary">
+                              <summary className="cursor-pointer text-xs font-semibold text-primary">
                                 Ver conversa ({comment.thread.length})
                               </summary>
                               <ul className="mt-2 space-y-2 border-l-2 border-border/60 pl-3 text-xs">
@@ -320,7 +320,7 @@ export function PostDialog({
                                       marginLeft: `${Math.min(entry.depth, 4) * 10}px`,
                                     }}
                                   >
-                                    <span className="font-medium text-foreground">
+                                    <span className="font-semibold text-foreground">
                                       {entry.is_brand_reply ? "marca" : (entry.author ?? "usuário")}
                                     </span>
                                     <span className="text-muted-foreground">
@@ -382,7 +382,7 @@ export function PostDialog({
             <AppAccordion.Content>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
                 <div className="space-y-2 shrink-0">
-                  <Label htmlFor="post-scheduled-at" className="text-sm font-medium">
+                  <Label htmlFor="post-scheduled-at" className="text-sm font-semibold">
                     {isScheduled ? "Publicação agendada para" : "Agendar para"}
                   </Label>
                   <div className="flex flex-wrap items-center gap-2">
@@ -422,7 +422,7 @@ export function PostDialog({
         </AppAccordion>
 
         {error ? (
-          <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p className="mt-4 rounded-[var(--iris-radius-sm)] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         ) : null}

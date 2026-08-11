@@ -4,7 +4,7 @@ import { notifyCommentsChanged } from "../../../adapters/sse/event-bus.ts";
 import {
   getMetaReadiness,
   metaReadinessMessage,
-} from "../../../domain/meta-readiness.ts";
+} from "../../../domain/meta/meta-readiness.ts";
 import { requestManualCommentReply } from "../../../domain/comments/request-manual-comment-reply.ts";
 import { requireComment, routeParam } from "../../route-resources.ts";
 import {

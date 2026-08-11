@@ -1,17 +1,17 @@
 import { readJsonBody, sendError, sendJson } from "../json.ts";
 import { createRouter, route } from "../router.ts";
 import { requirePost, routeParam } from "../route-resources.ts";
-import { getImageLimits } from "../../domain/image-limits.ts";
+import { getImageLimits } from "../../domain/posts/image-limits.ts";
 import { parseMultipart } from "../multipart.ts";
 import { serializeAsset } from "../../adapters/sqlite/mappers.ts";
 import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import {
   ingestPostAsset,
-} from "../../domain/asset-ingest.ts";
+} from "../../domain/posts/asset-ingest.ts";
 import {
   deletePostAsset,
   reorderPostAssets,
-} from "../../domain/post-assets.ts";
+} from "../../domain/posts/post-assets.ts";
 
 export const handleAssetsRoute = createRouter([
   route(

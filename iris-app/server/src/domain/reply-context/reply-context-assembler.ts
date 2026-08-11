@@ -1,7 +1,7 @@
 import type { ImageContextProvider } from "../../ports/image-context-provider.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
 import type { CommentRepository } from "../../ports/comment-repository.ts";
-import { defaultReplyPersona } from "../reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import { buildPostReplyContext, type BuildPostReplyContextDeps } from "./build-post-context.ts";
 import { buildCommentThreadContext } from "./build-thread-context.ts";
 import type { ReplyContext } from "./types.ts";

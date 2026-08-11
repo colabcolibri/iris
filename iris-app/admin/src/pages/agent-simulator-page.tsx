@@ -406,7 +406,7 @@ export function AgentSimulatorPage() {
               {terminalStatus ? (
                 <p className="text-xs text-muted-foreground">
                   Status:{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="font-semibold text-foreground">
                     {TERMINAL_LABELS[terminalStatus] ?? terminalStatus}
                   </span>
                 </p>
@@ -414,7 +414,7 @@ export function AgentSimulatorPage() {
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden p-4 sm:p-5">
               {finalText ? (
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+                <div className="rounded-[var(--iris-radius-sm)] border border-emerald-500/30 bg-emerald-500/10 p-4">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-900 dark:text-emerald-100">
                     Resposta publicável ({languageLabel})
                   </p>

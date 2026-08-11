@@ -10,11 +10,11 @@ import {
 import {
   ContactFormError,
   submitContactForm,
-} from "../../domain/contact-form.ts";
+} from "../../domain/contact/contact-form.ts";
 import {
   contactIpRateLimiter,
   formatContactIpRateLimitMessage,
-} from "../../domain/contact-rate-limit.ts";
+} from "../../domain/contact/contact-rate-limit.ts";
 import { resolveClientIp } from "../request-client-ip.ts";
 
 export async function handleContactRoute(

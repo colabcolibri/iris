@@ -1,4 +1,4 @@
-import type { Comment } from "../comment.ts";
+import type { Comment } from "./comment.ts";
 import { buildCommentTree, type CommentTreeNode } from "../reply-context/build-comment-tree.ts";
 import { isBrandAuthor } from "./is-brand-author.ts";
 

@@ -29,6 +29,8 @@ test("enqueueCommentReply schedules not_before from reply delay settings", () =>
       replyMode: "auto",
       autoReplyEnabled: true,
       replyDelaySeconds: 90,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
     });
 
     const post = ctx.posts.create({

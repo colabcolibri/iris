@@ -1,8 +1,8 @@
 import type { ServerResponse } from "node:http";
 import { BodyTooLargeError, sendApiError, sendError, ValidationError } from "./json.ts";
-import { MetaNotConnectedError } from "../domain/meta-readiness.ts";
-import { PublishNotConfiguredError } from "../domain/publish-post.ts";
-import { AssetIngestError } from "../domain/asset-ingest.ts";
+import { MetaNotConnectedError } from "../domain/meta/meta-readiness.ts";
+import { PublishNotConfiguredError } from "../domain/posts/publish-post.ts";
+import { AssetIngestError } from "../domain/posts/asset-ingest.ts";
 import { ImageOptimizationError } from "../ports/image-optimizer.ts";
 import { MultipartParseError } from "./multipart.ts";
 

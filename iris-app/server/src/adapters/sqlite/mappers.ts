@@ -1,8 +1,8 @@
-import type { Post, PostAsset } from "../../domain/post.ts";
-import type { PostReplyModeSetting } from "../../domain/reply-mode.ts";
-import { isPostReplyModeSetting } from "../../domain/reply-mode.ts";
+import type { Post, PostAsset } from "../../domain/posts/post.ts";
+import type { PostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
+import { isPostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
 import type { IgMediaStatus } from "../../domain/meta/ig-media-status.ts";
-import type { Comment } from "../../domain/comment.ts";
+import type { Comment } from "../../domain/comments/comment.ts";
 
 type PostRow = {
   id: string;

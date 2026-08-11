@@ -1,14 +1,18 @@
 import { readJsonBody, sendJson, ValidationError } from "../json.ts";
 import { createAdminPathRouter } from "../router.ts";
-import { defaultAppSettings } from "../../domain/app-settings-defaults.ts";
-import { isValidIanaTimeZone } from "../../domain/timezone.ts";
+import { defaultAppSettings } from "../../domain/settings/app-settings-defaults.ts";
+import { isValidIanaTimeZone } from "../../domain/time/timezone.ts";
 import type { AppSettings } from "../../ports/app-settings-store.ts";
 import {
   autoReplyEnabledFromReplyMode,
   isReplyMode,
   replyModeFromAutoReplyEnabled,
-} from "../../domain/reply-mode.ts";
+} from "../../domain/posts/reply-mode.ts";
 import { isValidReplyDelaySeconds } from "../../domain/comments/compute-agent-reply-not-before.ts";
+import {
+  isValidAutoMonitorIntervalSeconds,
+  normalizeAutoMonitorIntervalSeconds,
+} from "../../domain/settings/auto-monitor-settings.ts";
 
 function serializeAppSettings(settings: AppSettings) {
   return {
@@ -16,6 +20,8 @@ function serializeAppSettings(settings: AppSettings) {
     reply_mode: settings.replyMode,
     auto_reply_enabled: settings.autoReplyEnabled,
     reply_delay_seconds: settings.replyDelaySeconds,
+    auto_monitor_enabled: settings.autoMonitorEnabled,
+    auto_monitor_interval_seconds: settings.autoMonitorIntervalSeconds,
     updated_at: settings.updatedAt,
   };
 }
@@ -28,10 +34,19 @@ function normalizeAppSettingsBody(
   const hasAutoReply = "auto_reply_enabled" in body;
   const hasReplyMode = "reply_mode" in body;
   const hasReplyDelay = "reply_delay_seconds" in body;
+  const hasAutoMonitor = "auto_monitor_enabled" in body;
+  const hasAutoMonitorInterval = "auto_monitor_interval_seconds" in body;
 
-  if (!hasTimezone && !hasAutoReply && !hasReplyMode && !hasReplyDelay) {
+  if (
+    !hasTimezone &&
+    !hasAutoReply &&
+    !hasReplyMode &&
+    !hasReplyDelay &&
+    !hasAutoMonitor &&
+    !hasAutoMonitorInterval
+  ) {
     throw new ValidationError(
-      "at least one of timezone, reply_mode, reply_delay_seconds, or auto_reply_enabled is required",
+      "at least one of timezone, reply_mode, reply_delay_seconds, auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
     );
   }
 
@@ -72,11 +87,36 @@ function normalizeAppSettingsBody(
     replyDelaySeconds = Math.round(body.reply_delay_seconds);
   }
 
+  let autoMonitorEnabled = current.autoMonitorEnabled;
+  if (hasAutoMonitor) {
+    if (typeof body.auto_monitor_enabled !== "boolean") {
+      throw new ValidationError("auto_monitor_enabled must be a boolean");
+    }
+    autoMonitorEnabled = body.auto_monitor_enabled;
+  }
+
+  let autoMonitorIntervalSeconds = current.autoMonitorIntervalSeconds;
+  if (hasAutoMonitorInterval) {
+    if (typeof body.auto_monitor_interval_seconds !== "number") {
+      throw new ValidationError("auto_monitor_interval_seconds must be a number");
+    }
+    if (!isValidAutoMonitorIntervalSeconds(body.auto_monitor_interval_seconds)) {
+      throw new ValidationError(
+        "auto_monitor_interval_seconds must be between 60 and 3600",
+      );
+    }
+    autoMonitorIntervalSeconds = normalizeAutoMonitorIntervalSeconds(
+      body.auto_monitor_interval_seconds,
+    );
+  }
+
   return {
     timezone,
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
     replyDelaySeconds,
+    autoMonitorEnabled,
+    autoMonitorIntervalSeconds,
   };
 }
 

@@ -5,7 +5,7 @@ import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import {
   getMetaReadiness,
   metaReadinessMessage,
-} from "../meta-readiness.ts";
+} from "../meta/meta-readiness.ts";
 import { isBrandAuthor } from "./is-brand-author.ts";
 import { processCommentReply } from "./process-comment-reply.ts";
 

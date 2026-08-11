@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Loader2, Plus, RefreshCw, Search, Download } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, RefreshCw, Search, Download, PanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { ImportPostsDialog } from "@/components/comments/import-posts-dialog";
 import { CommentActivityPanel } from "@/components/comments/comment-activity-panel";
@@ -11,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { ROUTES } from "@/lib/routes";
@@ -84,6 +90,7 @@ export function CommentsPage() {
   const selectedCommentId = searchParams.get("comment_id")?.trim() ?? "";
   const [leftPanelMode, setLeftPanelMode] = useState<LeftPanelMode>("posts");
   const [activityRefreshToken, setActivityRefreshToken] = useState(0);
+  const [listSheetOpen, setListSheetOpen] = useState(false);
 
   const [posts, setPosts] = useState<CommentPostSummary[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -645,6 +652,7 @@ export function CommentsPage() {
   const handleSelectPost = useCallback(
     (postId: string) => {
       setSearchParams({ post_id: postId });
+      setListSheetOpen(false);
     },
     [setSearchParams],
   );
@@ -652,9 +660,15 @@ export function CommentsPage() {
   const handleActivitySelect = useCallback(
     (item: CommentActivityItem) => {
       setSearchParams({ post_id: item.post_id, comment_id: item.comment_id });
+      setListSheetOpen(false);
     },
     [setSearchParams],
   );
+
+  const clearStage = useCallback(() => {
+    setSearchParams({});
+    setListSheetOpen(false);
+  }, [setSearchParams]);
 
   useEffect(() => {
     const cached = postCacheRef.current.getPosts();
@@ -664,12 +678,6 @@ export function CommentsPage() {
     }
     void loadPosts({ silent: Boolean(cached) });
   }, [loadPosts]);
-
-  useEffect(() => {
-    if (!selectedPostId && posts[0] && !selectedCommentId) {
-      setSearchParams({ post_id: posts[0].post_id });
-    }
-  }, [posts, selectedCommentId, selectedPostId, setSearchParams]);
 
   useEffect(() => {
     if (!selectedCommentId || loadingComments) {
@@ -776,6 +784,117 @@ export function CommentsPage() {
     };
   }, []);
 
+  const inStage = Boolean(selectedPost);
+
+  const listChrome = (
+    <>
+      <div className="mb-3 grid grid-cols-2 gap-1 rounded-[var(--iris-radius-sm)] border border-border bg-muted/20 p-1">
+        <button
+          type="button"
+          onClick={() => setLeftPanelMode("posts")}
+          className={cn(
+            "rounded-[var(--iris-radius-sm)] px-2 py-1.5 text-xs font-semibold transition-colors",
+            leftPanelMode === "posts"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Publicações
+        </button>
+        <button
+          type="button"
+          onClick={() => setLeftPanelMode("activity")}
+          className={cn(
+            "rounded-[var(--iris-radius-sm)] px-2 py-1.5 text-xs font-semibold transition-colors",
+            leftPanelMode === "activity"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Atividade
+        </button>
+      </div>
+
+      {leftPanelMode === "posts" ? (
+        <>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-display text-xl font-semibold leading-tight text-foreground">
+              Publicações
+            </h2>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="size-8 shrink-0"
+                onClick={() => setImportDialogOpen(true)}
+                disabled={!meta?.connected}
+                aria-label="Importar publicações"
+              >
+                <Download className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="size-8 shrink-0"
+                onClick={() => setAddDialogOpen(true)}
+                disabled={!meta?.connected}
+                aria-label="Adicionar publicação"
+              >
+                <Plus className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="size-8 shrink-0"
+                onClick={() => void loadPosts({ force: true })}
+                disabled={refreshingPosts}
+                aria-label="Recarregar lista"
+              >
+                {refreshingPosts ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Buscar legenda ou ID..."
+              className="h-10 border-border bg-muted/30 pl-10 text-sm focus-visible:ring-primary/40"
+            />
+          </div>
+        </>
+      ) : null}
+    </>
+  );
+
+  const listBody: ReactNode =
+    leftPanelMode === "activity" ? (
+      <CommentActivityPanel onSelect={handleActivitySelect} refreshToken={activityRefreshToken} />
+    ) : loadingPosts ? (
+      <p className="px-4 py-6 text-sm text-muted-foreground">Carregando…</p>
+    ) : filteredPosts.length === 0 ? (
+      <p className="px-4 py-6 text-sm text-muted-foreground">
+        {posts.length === 0
+          ? "Nenhuma publicação gerenciada ainda."
+          : "Nada encontrado na busca."}
+      </p>
+    ) : (
+      <PostInboxList
+        posts={filteredPosts}
+        selectedPostId={selectedPostId}
+        thumbnailOverrides={thumbnailOverrides}
+        onSelect={handleSelectPost}
+      />
+    );
+
   return (
     <PageContainer variant="fill">
         {!meta?.connected && (
@@ -801,125 +920,41 @@ export function CommentsPage() {
           </p>
         ) : null}
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card lg:flex-row">
-          <aside
-            className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-b border-border lg:w-[340px] lg:max-w-[340px] lg:border-b-0 lg:border-r"
-          >
-            <div className="shrink-0 border-b p-4">
-              <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-                <button
-                  type="button"
-                  onClick={() => setLeftPanelMode("posts")}
-                  className={cn(
-                    "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
-                    leftPanelMode === "posts"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Publicações
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLeftPanelMode("activity")}
-                  className={cn(
-                    "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
-                    leftPanelMode === "activity"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Atividade
-                </button>
-              </div>
-
-              {leftPanelMode === "posts" ? (
-                <>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="font-display text-xl font-semibold leading-tight text-foreground">
-                  Publicações
-                </h2>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    className="size-8 shrink-0"
-                    onClick={() => setImportDialogOpen(true)}
-                    disabled={!meta?.connected}
-                    aria-label="Importar publicações"
-                  >
-                    <Download className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    className="size-8 shrink-0"
-                    onClick={() => setAddDialogOpen(true)}
-                    disabled={!meta?.connected}
-                    aria-label="Adicionar publicação"
-                  >
-                    <Plus className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    className="size-8 shrink-0"
-                    onClick={() => void loadPosts({ force: true })}
-                    disabled={refreshingPosts}
-                    aria-label="Recarregar lista"
-                  >
-                    {refreshingPosts ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div className="relative">
-                <Search
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Buscar legenda ou ID..."
-                  className="h-10 border-border bg-muted/30 pl-10 text-sm focus-visible:ring-primary/40"
-                />
-              </div>
-                </>
-              ) : null}
+        {!inStage ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+            <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
+              <div className="shrink-0 border-b p-4 sm:px-6">{listChrome}</div>
+              <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{listBody}</div>
+            </div>
+          </div>
+        ) : selectedPost ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+            <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 sm:px-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="min-h-11 gap-2"
+                onClick={clearStage}
+              >
+                <ArrowLeft className="size-4" />
+                Todas as publicações
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-11 gap-2"
+                onClick={() => setListSheetOpen(true)}
+              >
+                <PanelLeft className="size-4" />
+                Lista
+              </Button>
+              <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                {selectedPost.caption?.trim() || selectedPost.ig_media_id || selectedPost.post_id}
+              </p>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-              {leftPanelMode === "activity" ? (
-                <CommentActivityPanel
-                  onSelect={handleActivitySelect}
-                  refreshToken={activityRefreshToken}
-                />
-              ) : loadingPosts ? (
-                <p className="px-4 py-6 text-sm text-muted-foreground">Carregando…</p>
-              ) : filteredPosts.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-muted-foreground">
-                  {posts.length === 0
-                    ? "Nenhuma publicação gerenciada ainda."
-                    : "Nada encontrado na busca."}
-                </p>
-              ) : (
-                <PostInboxList
-                  posts={filteredPosts}
-                  selectedPostId={selectedPostId}
-                  thumbnailOverrides={thumbnailOverrides}
-                  onSelect={handleSelectPost}
-                />
-              )}
-            </div>
-          </aside>
-
-          {selectedPost ? (
             <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <PostDetailPanel
                 post={selectedPost}
@@ -956,12 +991,26 @@ export function CommentsPage() {
                 onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
               />
             </section>
-          ) : (
-            <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-              Selecione uma publicação na lista.
-            </div>
-          )}
-        </div>
+
+            <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
+              <SheetContent side="left" className="w-full max-w-md gap-0 p-0 sm:max-w-md">
+                <SheetHeader className="border-b border-border">
+                  <SheetTitle className="font-display text-lg font-semibold">
+                    Publicações
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <div className="shrink-0 border-b p-4">{listChrome}</div>
+                  <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{listBody}</div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+            Carregando publicação…
+          </div>
+        )}
 
       {addDialogOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

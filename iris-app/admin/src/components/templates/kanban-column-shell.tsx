@@ -7,7 +7,7 @@ const COLUMN_THEME: Record<PostStatus, { headerAccent?: string; muted?: boolean 
   draft: {},
   scheduled: {},
   published: {},
-  monitored: { headerAccent: "text-amber-700" },
+  monitored: { headerAccent: "text-amber-800" },
   failed: { headerAccent: "text-destructive" },
   cancelled: { muted: true },
 };
@@ -25,11 +25,11 @@ export function KanbanColumnShell({ status, label, count, children }: KanbanColu
   return (
     <section
       className={cn(
-        "flex h-full w-[320px] shrink-0 flex-col rounded-xl border border-border/60 bg-muted/80",
+        "flex h-full w-[320px] shrink-0 flex-col rounded-[var(--iris-radius-lg)] border border-border bg-muted/60 shadow-none",
         theme.muted && "opacity-80",
       )}
     >
-      <header className="flex shrink-0 items-center justify-between gap-2 rounded-t-xl border-b border-border/50 bg-card/80 px-4 py-4">
+      <header className="flex shrink-0 items-center justify-between gap-2 rounded-t-[var(--iris-radius-lg)] border-b border-border bg-card px-4 py-4">
         <h3
           className={cn(
             "flex items-center gap-2 text-xs font-semibold tracking-widest text-foreground uppercase",
@@ -69,7 +69,7 @@ KanbanColumnShell.Card = function KanbanCardShell({
   return (
     <article
       className={cn(
-        "group rounded-xl border bg-card shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] transition-all hover:border-primary/30 hover:shadow-md",
+        "group rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none transition-colors hover:border-primary/30",
         variant === "failed" && "relative overflow-hidden border-destructive/30 bg-destructive/5",
         className,
       )}
@@ -81,14 +81,14 @@ KanbanColumnShell.Card = function KanbanCardShell({
         type="button"
         onClick={onOpen}
         className={cn(
-          "w-full rounded-t-xl px-4 pt-4 pb-2 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          "w-full rounded-t-[var(--iris-radius-lg)] px-4 pt-4 pb-2 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           variant === "failed" && "pl-5",
         )}
       >
         {children}
       </button>
       {footer ? (
-        <div className="flex items-center justify-end border-t border-border/40 px-2 py-1.5">
+        <div className="flex items-center justify-end border-t border-border px-2 py-1.5">
           {footer}
         </div>
       ) : null}
@@ -104,7 +104,7 @@ KanbanColumnShell.Empty = function KanbanColumnEmpty({
   message = "Nenhuma postagem",
 }: KanbanColumnEmptyProps) {
   return (
-    <div className="flex min-h-24 items-center justify-center rounded-xl border-2 border-dashed border-border/50 bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground italic">
+    <div className="flex min-h-24 items-center justify-center rounded-[var(--iris-radius-lg)] border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground italic">
       {message}
     </div>
   );

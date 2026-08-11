@@ -1,5 +1,5 @@
-import type { Post, PostStatus } from "../domain/post.ts";
-import type { PostReplyModeSetting } from "../domain/reply-mode.ts";
+import type { Post, PostStatus } from "../domain/posts/post.ts";
+import type { PostReplyModeSetting } from "../domain/posts/reply-mode.ts";
 import type { IgMediaStatus } from "../domain/meta/ig-media-status.ts";
 
 export type CreatePostInput = {

@@ -74,7 +74,7 @@ export function ReplyModeSelect(props: ReplyModeSelectProps) {
             <SelectItem key={option.value} value={option.value} className="py-2.5 pl-3 pr-8">
               <Icon className="size-4 shrink-0 text-muted-foreground" />
               <span className="flex flex-col gap-0.5 text-left">
-                <span className="font-medium leading-none">{option.label}</span>
+                <span className="font-semibold leading-none">{option.label}</span>
                 <span className="text-xs leading-snug text-muted-foreground">
                   {option.description}
                 </span>

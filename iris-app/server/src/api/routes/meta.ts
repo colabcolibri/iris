@@ -7,7 +7,7 @@ import { checkMetaConnection } from "../../adapters/meta/meta-health-check.ts";
 import {
   getMetaReadiness,
   metaReadinessMessage,
-} from "../../domain/meta-readiness.ts";
+} from "../../domain/meta/meta-readiness.ts";
 
 type RouteRequest = {
   req: IncomingMessage;

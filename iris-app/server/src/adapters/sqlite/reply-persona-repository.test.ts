@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { openDatabase } from "./connection.ts";
 import { runMigrations } from "./migrate.ts";
 import { createSqliteReplyPersonaStore } from "./reply-persona-repository.ts";
-import { defaultReplyPersona } from "../../domain/reply-persona-defaults.ts";
+import { defaultReplyPersona } from "../../domain/settings/reply-persona-defaults.ts";
 
 test("reply persona store upserts and reads single row", () => {
   const db = openDatabase(":memory:");

@@ -115,7 +115,7 @@ export function McpConnectionCard() {
   const mcpUrl = generated?.mcp_url ?? settings?.mcp_url ?? "";
 
   return (
-    <Card className="space-y-5 border-border/80 bg-card/90 p-6 shadow-sm">
+    <Card className="space-y-5 border-border bg-card p-6 shadow-none">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">Conexão MCP</h2>
         <p className="text-sm text-muted-foreground">
@@ -139,7 +139,7 @@ export function McpConnectionCard() {
             <div className="space-y-2 text-sm">
               <p>
                 Status:{" "}
-                <span className="font-medium text-foreground">
+                <span className="font-semibold text-foreground">
                   {settings.source === "database"
                     ? "ativo (gerado na interface)"
                     : settings.source === "environment"
@@ -160,7 +160,7 @@ export function McpConnectionCard() {
           )}
 
           {displayCode && (
-            <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+            <div className="space-y-3 rounded-[var(--iris-radius-sm)] border border-primary/20 bg-primary/5 p-4">
               <p className="text-xs font-semibold tracking-wide text-primary uppercase">
                 Código de conexão — copie agora (exibido uma única vez)
               </p>

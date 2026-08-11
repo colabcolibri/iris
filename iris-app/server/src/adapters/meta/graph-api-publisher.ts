@@ -5,7 +5,7 @@ import type { MetaTokenStore } from "../../ports/meta-token-store.ts";
 import {
   buildPublishImageUrl,
   filenameFromStoragePath,
-} from "../../domain/publish-url.ts";
+} from "../../domain/posts/publish-url.ts";
 
 export type GraphApiPublisherConfig = {
   resolveIgUserId: () => string | null;
