@@ -88,32 +88,62 @@ function StatusBadges({ event }: { event: WebhookEvent }) {
   );
 }
 
+function PostLink({ event }: { event: WebhookEvent }) {
+  if (event.post_id) {
+    return (
+      <Link to={`/comments?post_id=${event.post_id}`} className="text-primary hover:underline">
+        {truncateId(event.post_id)}
+      </Link>
+    );
+  }
+
+  if (event.ig_media_id) {
+    return (
+      <span className="font-mono text-[11px] text-muted-foreground">
+        mídia {truncateId(event.ig_media_id)}
+      </span>
+    );
+  }
+
+  return <span className="text-muted-foreground">—</span>;
+}
+
+function CommentLink({ event }: { event: WebhookEvent }) {
+  if (event.comment_id) {
+    return (
+      <Link
+        to={`/comments?post_id=${event.post_id ?? ""}&comment=${event.comment_id}`}
+        className="text-primary hover:underline"
+      >
+        {truncateId(event.comment_id)}
+      </Link>
+    );
+  }
+
+  if (event.ig_comment_id) {
+    return (
+      <span className="font-mono text-[11px] text-muted-foreground">
+        ig {truncateId(event.ig_comment_id)}
+      </span>
+    );
+  }
+
+  return <span className="text-muted-foreground">—</span>;
+}
+
 function EntityLinks({ event }: { event: WebhookEvent }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      {event.post_id ? (
-        <Link to={`/comments?post_id=${event.post_id}`} className="text-primary hover:underline">
-          post {truncateId(event.post_id)}
-        </Link>
-      ) : event.ig_media_id ? (
-        <span className="font-mono text-[11px] text-muted-foreground">mídia {truncateId(event.ig_media_id)}</span>
-      ) : (
-        <span>post —</span>
-      )}
-      {event.comment_id ? (
-        <Link
-          to={`/comments?post_id=${event.post_id ?? ""}&comment=${event.comment_id}`}
-          className="text-primary hover:underline"
-        >
-          coment. {truncateId(event.comment_id)}
-        </Link>
-      ) : event.ig_comment_id ? (
-        <span className="font-mono text-[11px] text-muted-foreground">
-          ig {truncateId(event.ig_comment_id)}
-        </span>
-      ) : (
-        <span>coment. —</span>
-      )}
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div>
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Post</p>
+        <PostLink event={event} />
+      </div>
+      <div>
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Comentário
+        </p>
+        <CommentLink event={event} />
+      </div>
     </div>
   );
 }
@@ -316,7 +346,8 @@ export function WebhookEventsPanel() {
                     <th className="px-2 py-2 font-medium">Tipo</th>
                     <th className="px-2 py-2 font-medium">Status</th>
                     <th className="px-2 py-2 font-medium">Autor / resumo</th>
-                    <th className="px-2 py-2 font-medium">Post / comentário</th>
+                    <th className="px-2 py-2 font-medium">Post</th>
+                    <th className="px-2 py-2 font-medium">Comentário</th>
                     <th className="px-2 py-2 font-medium">Detalhes</th>
                   </tr>
                 </thead>
@@ -349,7 +380,10 @@ export function WebhookEventsPanel() {
                         ) : null}
                       </td>
                       <td className="px-2 py-3">
-                        <EntityLinks event={event} />
+                        <PostLink event={event} />
+                      </td>
+                      <td className="px-2 py-3">
+                        <CommentLink event={event} />
                       </td>
                       <td className="px-2 py-3">
                         <WebhookEventDetails

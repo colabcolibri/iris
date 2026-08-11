@@ -176,7 +176,7 @@ export function buildVerifyPrompt(
     '{"approved":true|false,"harmful":true|false,"policyViolations":["..."],"reason":"short label","reasoning":"explanation","finalText":"complete publishable reply"}',
     "If approved=true, finalText is the publishable reply — you may polish tone and closing.",
     hasSignature
-      ? "Adapt the closing voice naturally per the guidance above; exact wording is not required. Skip a trailing sign-off when identity is already clear in the body."
+      ? `When adding a closing, use body + ${JSON.stringify(SIGNATURE_SEPARATOR)} + sign-off (period on its own line). Skip the sign-off when identity is already clear in the body.`
       : "If approved=true and finalText is empty, the original draft will be used.",
     "finalText MUST respect the mandatory response language.",
   ].join("\n");
@@ -208,7 +208,7 @@ export function buildLightVerifyPrompt(
     '{"approved":true|false,"harmful":true|false,"policyViolations":[],"reason":"short label","reasoning":"brief","finalText":"complete publishable reply"}',
     "If approved=true, finalText is the publishable reply — you may polish tone and closing.",
     hasSignature
-      ? "Adapt the closing voice naturally per the guidance above; exact wording is not required. Skip a trailing sign-off when identity is already clear in the body."
+      ? `When adding a closing, use body + ${JSON.stringify(SIGNATURE_SEPARATOR)} + sign-off (period on its own line). Skip the sign-off when identity is already clear in the body.`
       : "If approved=true and finalText is empty, the original draft will be used.",
     "",
     "Draft:",

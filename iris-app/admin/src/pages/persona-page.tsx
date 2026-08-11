@@ -172,8 +172,9 @@ export function PersonaPage() {
                   placeholder="Ex.: Assine sempre com “— Equipe Colab” ou use o primeiro nome do atendente."
                 />
                 <FieldHint>
-                  Como a IA deve encerrar ou assinar a resposta (nome, emoji, tom). Inserido no
-                  prompt logo abaixo do nome da marca, antes do SOUL.
+                  Como a IA deve encerrar a resposta. Na publicação, corpo e assinatura ficam
+                  separados por um ponto em linha própria (texto, depois «.», depois a assinatura) —
+                  formato que funciona bem no Instagram.
                 </FieldHint>
               </div>
 

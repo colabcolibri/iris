@@ -1,6 +1,7 @@
 import type { ReplyPersona } from "../../ports/reply-persona-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { resolveResponseLanguage } from "../reply-language/response-languages.ts";
+import { SIGNATURE_SEPARATOR } from "./reply-signature-format.ts";
 
 export type LanguageDirectiveOptions = {
   /** When true, instructs the model to return only public reply text. */
@@ -125,7 +126,16 @@ export function buildSignatureVerificationBlock(persona: ReplyPersona): string |
     "Never repeat name, role, or bot identity twice in the same reply.",
     "If the draft already established who is speaking or the assistant's role, do NOT add a trailing sign-off that repeats the same information.",
     "In that case, keep the body as-is or polish lightly — no redundant footer.",
-    "When you do add a closing, separate it from the main reply with a blank line (paragraph break: \\n\\n).",
+    "When you do add a closing, separate it from the main reply using this Instagram-friendly layout:",
+    "1) Main reply body (normal sentences; do not end the body with a lone period on its own line).",
+    "2) A single period character on its own line.",
+    "3) The sign-off line (name, team, emoji — per the editorial guidance above).",
+    `Use this exact separator between body and sign-off: newline + "." + newline (${JSON.stringify(SIGNATURE_SEPARATOR)}).`,
+    "Do NOT use a blank line alone (\\n\\n) between body and sign-off.",
+    "Example finalText:",
+    "Obrigado pelo comentário, @maria!",
+    ".",
+    "— Equipe Iris",
     "Never glue the sign-off to the last sentence of the body in the same paragraph.",
     "If the closing feels impersonal or off-brand, refine finalText — do not reject only for that.",
     "A slightly longer, more natural closing may exceed the draft character limit.",
