@@ -44,19 +44,29 @@ test("GET /health returns ok json", async () => {
 
 test("protected spa routes redirect to login without session", async () => {
   await withServer(async (port) => {
-    for (const path of ["/", "/comments", "/settings", "/persona"]) {
+    for (const path of ["/admin", "/admin/comments", "/admin/settings", "/admin/persona"]) {
       const response = await fetch(`http://127.0.0.1:${port}${path}`, {
         redirect: "manual",
       });
       assert.equal(response.status, 302, path);
-      assert.equal(response.headers.get("location"), "/login", path);
+      assert.equal(response.headers.get("location"), "/admin/login", path);
     }
+  });
+});
+
+test("landing page remains accessible without session", async () => {
+  await withServer(async (port) => {
+    const response = await fetch(`http://127.0.0.1:${port}/`);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /<title>Iris<\/title>/);
+    assert.match(html, /id="root"/);
   });
 });
 
 test("public spa routes remain accessible without session", async () => {
   await withServer(async (port) => {
-    const response = await fetch(`http://127.0.0.1:${port}/login`);
+    const response = await fetch(`http://127.0.0.1:${port}/admin/login`);
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.match(html, /<title>Iris<\/title>/);
@@ -112,7 +122,7 @@ test("protected spa routes serve index.html with valid session cookie", async ()
     const setCookie = confirmResponse.headers.get("set-cookie");
     assert.ok(setCookie);
 
-    const response = await fetch(`${baseUrl}/`, {
+    const response = await fetch(`${baseUrl}/admin`, {
       headers: { Cookie: setCookie!.split(";")[0]! },
     });
     assert.equal(response.status, 200);
@@ -131,7 +141,7 @@ test("protected spa routes serve index.html with valid session cookie", async ()
 
 test("spa routes fall back to index.html", async () => {
   await withServer(async (port) => {
-    const response = await fetch(`http://127.0.0.1:${port}/login`);
+    const response = await fetch(`http://127.0.0.1:${port}/admin/login`);
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.match(html, /<title>Iris<\/title>/);
@@ -139,13 +149,13 @@ test("spa routes fall back to index.html", async () => {
   });
 });
 
-test("redirects legacy /login.html to /login", async () => {
+test("redirects legacy /login.html to /admin/login", async () => {
   await withServer(async (port) => {
     const response = await fetch(`http://127.0.0.1:${port}/login.html`, {
       redirect: "manual",
     });
     assert.equal(response.status, 302);
-    assert.equal(response.headers.get("location"), "/login");
+    assert.equal(response.headers.get("location"), "/admin/login");
   });
 });
 

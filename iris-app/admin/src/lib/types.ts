@@ -48,6 +48,8 @@ export type Comment = {
   deleted_at?: string | null;
 };
 
+export type IgMediaStatus = "on_feed" | "archived" | "unavailable";
+
 export type CommentPostSummary = {
   post_id: string;
   caption: string | null;
@@ -58,6 +60,9 @@ export type CommentPostSummary = {
   is_external?: boolean;
   reply_mode?: PostReplyModeSetting;
   auto_reply_enabled?: boolean;
+  ig_media_status?: IgMediaStatus | null;
+  ig_media_status_detail?: string | null;
+  ig_media_status_checked_at?: string | null;
   comments_count: number;
   pending_count: number;
   preview_filename?: string | null;
@@ -97,6 +102,8 @@ export type PostInsightsResult = {
   message?: string;
   post_id?: string;
   ig_media_id?: string;
+  ig_media_status?: IgMediaStatus | null;
+  ig_media_status_detail?: string | null;
   fetched_at?: string;
   from_cache?: boolean;
   insights?: PostInsightMetric[];

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
+import { ROUTES } from "@/lib/routes";
 import { firstMediaSlideSrc } from "@/hooks/use-post-preview";
 import {
   approveCommentReply,
@@ -273,6 +274,26 @@ export function CommentsPage() {
         const fetchedAt = Date.now();
         postCacheRef.current.setInsights(postId, result, fetchedAt);
         setInsights(result);
+
+        if (result.ig_media_status !== undefined) {
+          setPosts((current) => {
+            const patched = current.map((item) =>
+              item.post_id === postId
+                ? {
+                    ...item,
+                    ig_media_status: result.ig_media_status ?? item.ig_media_status,
+                    ig_media_status_detail:
+                      result.ig_media_status_detail ?? item.ig_media_status_detail,
+                  }
+                : item,
+            );
+            const postsCache = postCacheRef.current.getPosts();
+            if (postsCache) {
+              postCacheRef.current.setPosts(patched, postsCache.fetchedAt);
+            }
+            return patched;
+          });
+        }
 
         const previewUrl = firstMediaSlideSrc(postId, result.media);
         if (previewUrl) {
@@ -715,7 +736,7 @@ export function CommentsPage() {
         {!meta?.connected && (
           <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
             Conecte o Instagram em{" "}
-            <Link to="/settings" className="text-primary underline-offset-4 hover:underline">
+            <Link to={ROUTES.admin.settings} className="text-primary underline-offset-4 hover:underline">
               configurações
             </Link>{" "}
             para sincronizar comentários e atualizar insights.

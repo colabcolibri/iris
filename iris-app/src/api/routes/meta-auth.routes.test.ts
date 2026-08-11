@@ -106,7 +106,7 @@ test("meta auth redirect requires session", async () => {
   await withMetaServer(async ({ baseUrl }) => {
     const response = await fetch(`${baseUrl}/auth/meta`, { redirect: "manual" });
     assert.equal(response.status, 302);
-    assert.equal(response.headers.get("location"), "/login");
+    assert.equal(response.headers.get("location"), "/admin/login");
   });
 });
 

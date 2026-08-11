@@ -129,6 +129,18 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
           input.publishedAt !== undefined ? input.publishedAt : current.publishedAt,
         igMediaId:
           input.igMediaId !== undefined ? input.igMediaId : current.igMediaId,
+        igMediaStatus:
+          input.igMediaStatus !== undefined
+            ? input.igMediaStatus
+            : current.igMediaStatus,
+        igMediaStatusDetail:
+          input.igMediaStatusDetail !== undefined
+            ? input.igMediaStatusDetail
+            : current.igMediaStatusDetail,
+        igMediaStatusCheckedAt:
+          input.igMediaStatusCheckedAt !== undefined
+            ? input.igMediaStatusCheckedAt
+            : current.igMediaStatusCheckedAt,
         errorMessage:
           input.errorMessage !== undefined
             ? input.errorMessage
@@ -156,7 +168,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
       db.prepare(`
         UPDATE posts
         SET caption = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
-            published_at = ?, ig_media_id = ?, error_message = ?, auto_reply_enabled = ?,
+            published_at = ?, ig_media_id = ?, ig_media_status = ?, ig_media_status_detail = ?,
+            ig_media_status_checked_at = ?, error_message = ?, auto_reply_enabled = ?,
             reply_mode = ?, updated_at = ?
         WHERE id = ?
       `).run(
@@ -168,6 +181,9 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.status,
         next.publishedAt,
         next.igMediaId,
+        next.igMediaStatus,
+        next.igMediaStatusDetail,
+        next.igMediaStatusCheckedAt,
         next.errorMessage,
         autoReplyEnabled ? 1 : 0,
         next.replyMode,

@@ -70,6 +70,10 @@ export type MetaCommentReader = {
   ): Promise<RemoteMediaWithComments[]>;
   fetchMediaMetadata(igMediaId: string): Promise<RemoteMediaMetadata>;
   fetchMediaPreview(igMediaId: string): Promise<RemoteMediaPreview>;
+  /** Verifica se a mídia ainda aparece no feed público (/me/media). */
+  isMediaOnUserFeed(igMediaId: string): Promise<boolean>;
+  /** Testa se comentários da mídia ainda são acessíveis na Meta. */
+  canAccessMediaComments(igMediaId: string): Promise<boolean>;
   listBrowsableMedia(options?: ListBrowsableMediaOptions): Promise<ListBrowsableMediaResult>;
   findMediaByPermalink(permalink: string): Promise<RemoteMediaMetadata | null>;
   fetchCommentTimestamp(igCommentId: string): Promise<string | null>;

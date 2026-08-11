@@ -4,6 +4,7 @@ export type SendEmailInput = {
   text: string;
   html?: string;
   from?: string;
+  replyTo?: string;
 };
 
 export type SendEmailResult = {

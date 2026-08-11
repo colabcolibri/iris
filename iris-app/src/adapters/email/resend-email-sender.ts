@@ -25,6 +25,7 @@ export function createResendEmailSender(
           subject: input.subject,
           text: input.text,
           html: input.html,
+          ...(input.replyTo ? { reply_to: input.replyTo.trim() } : {}),
         }),
       });
 

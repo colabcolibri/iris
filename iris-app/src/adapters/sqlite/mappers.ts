@@ -1,6 +1,7 @@
 import type { Post, PostAsset } from "../../domain/post.ts";
 import type { PostReplyModeSetting } from "../../domain/reply-mode.ts";
 import { isPostReplyModeSetting } from "../../domain/reply-mode.ts";
+import type { IgMediaStatus } from "../../domain/meta/ig-media-status.ts";
 import type { Comment } from "../../domain/comment.ts";
 
 type PostRow = {
@@ -12,6 +13,9 @@ type PostRow = {
   scheduled_at: string | null;
   published_at: string | null;
   ig_media_id: string | null;
+  ig_media_status: string | null;
+  ig_media_status_detail: string | null;
+  ig_media_status_checked_at: string | null;
   source_note: string | null;
   error_message: string | null;
   auto_reply_enabled: number;
@@ -49,6 +53,13 @@ type AssetRow = {
   created_at: string;
 };
 
+function parseIgMediaStatus(value: string | null | undefined): IgMediaStatus | null {
+  if (value === "on_feed" || value === "archived" || value === "unavailable") {
+    return value;
+  }
+  return null;
+}
+
 export function mapPostRow(row: PostRow): Post {
   return {
     id: row.id,
@@ -59,6 +70,9 @@ export function mapPostRow(row: PostRow): Post {
     scheduledAt: row.scheduled_at,
     publishedAt: row.published_at,
     igMediaId: row.ig_media_id,
+    igMediaStatus: parseIgMediaStatus(row.ig_media_status),
+    igMediaStatusDetail: row.ig_media_status_detail ?? null,
+    igMediaStatusCheckedAt: row.ig_media_status_checked_at ?? null,
     sourceNote: row.source_note,
     errorMessage: row.error_message,
     autoReplyEnabled: row.auto_reply_enabled === 1,
@@ -130,6 +144,9 @@ export function serializePost(post: Post) {
     scheduled_at: post.scheduledAt,
     published_at: post.publishedAt,
     ig_media_id: post.igMediaId,
+    ig_media_status: post.igMediaStatus,
+    ig_media_status_detail: post.igMediaStatusDetail,
+    ig_media_status_checked_at: post.igMediaStatusCheckedAt,
     source_note: post.sourceNote,
     error_message: post.errorMessage,
     auto_reply_enabled: post.autoReplyEnabled,

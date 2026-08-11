@@ -18,6 +18,7 @@ import { useAuthSession } from "@/contexts/auth-session-context";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
@@ -39,7 +40,7 @@ export function AppHeader() {
     });
     if (!ok) return;
     await signOut();
-    navigate("/login", { replace: true });
+    navigate(ROUTES.admin.login, { replace: true });
   }
 
   async function handleDisconnectMeta() {

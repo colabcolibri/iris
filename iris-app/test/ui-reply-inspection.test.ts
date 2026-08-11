@@ -9,7 +9,7 @@ test("post dialog includes reply inspection UI", () => {
   assert.match(dialog, /fetchReplyInspection/);
   assert.match(dialog, /entry\.depth/);
   assert.match(dialog, /Editar persona/);
-  assert.match(dialog, /to="\/persona"/);
+  assert.match(dialog, /ROUTES\.admin\.persona/);
   assert.match(dialog, /CarouselSummaryEditor/);
   assert.match(dialog, /PostMediaSection/);
   assert.match(dialog, /carousel_summary/);

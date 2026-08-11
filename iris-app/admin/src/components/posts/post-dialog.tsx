@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { commentTextClassName, displayCommentText } from "@/lib/comment-text-display";
+import { ROUTES } from "@/lib/routes";
 import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { StatusBadge } from "@/components/posts/status-badge";
@@ -261,7 +262,7 @@ export function PostDialog({
                   {effectiveReplyCopy.hint ??
                     `Estado efetivo agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
                   {" · "}
-                  <Link to="/persona" className="text-primary underline-offset-4 hover:underline">
+                  <Link to={ROUTES.admin.persona} className="text-primary underline-offset-4 hover:underline">
                     Editar persona
                   </Link>
                 </p>

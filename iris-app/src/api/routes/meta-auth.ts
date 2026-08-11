@@ -48,7 +48,7 @@ export async function handleMetaAuthRoute(
 
   if (pathname === "/auth/meta") {
     if (!requireAdminSession(req)) {
-      redirect(res, "/login");
+      redirect(res, "/admin/login");
       return true;
     }
 
@@ -68,7 +68,7 @@ export async function handleMetaAuthRoute(
   const url = new URL(req.url ?? "/", "http://localhost");
   const error = url.searchParams.get("error");
   if (error) {
-    redirect(res, `/?meta_error=denied`);
+    redirect(res, `/admin?meta_error=denied`);
     return true;
   }
 
@@ -77,7 +77,7 @@ export async function handleMetaAuthRoute(
   const secret = sessionSecret();
 
   if (!code || !state || !secret || !verifyMetaOAuthState(state, secret)) {
-    redirect(res, `/?meta_error=invalid_state`);
+    redirect(res, `/admin?meta_error=invalid_state`);
     return true;
   }
 
@@ -85,7 +85,7 @@ export async function handleMetaAuthRoute(
   const result = await client.completeFromCode(code);
 
   if (!result.ok) {
-    redirect(res, `/?meta_error=${result.code}`);
+    redirect(res, `/admin?meta_error=${result.code}`);
     return true;
   }
 
@@ -98,6 +98,6 @@ export async function handleMetaAuthRoute(
     pageName: null,
   });
 
-  redirect(res, "/?meta_connected=1");
+  redirect(res, "/admin?meta_connected=1");
   return true;
 }

@@ -424,6 +424,50 @@ export function createGraphApiCommentReader(
       return null;
     },
 
+    async isMediaOnUserFeed(igMediaId: string) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
+      }
+
+      const mediaUrl = new URL(`${base}/me/media`);
+      mediaUrl.searchParams.set("fields", "id");
+      mediaUrl.searchParams.set("access_token", token);
+
+      let nextUrl: string | null = mediaUrl.toString();
+
+      while (nextUrl) {
+        const page = await fetchGraph<GraphPaging<GraphMedia>>(nextUrl);
+        for (const item of page.data ?? []) {
+          if (item.id === igMediaId) {
+            return true;
+          }
+        }
+        nextUrl = page.paging?.next ?? null;
+      }
+
+      return false;
+    },
+
+    async canAccessMediaComments(igMediaId: string) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
+      }
+
+      const commentsUrl = new URL(`${base}/${igMediaId}/comments`);
+      commentsUrl.searchParams.set("fields", "id");
+      commentsUrl.searchParams.set("limit", "1");
+      commentsUrl.searchParams.set("access_token", token);
+
+      try {
+        await fetchGraph<GraphPaging<GraphComment>>(commentsUrl.toString());
+        return true;
+      } catch {
+        return false;
+      }
+    },
+
     async fetchCommentTimestamp(igCommentId: string) {
       const token = deps.metaTokenStore.getActiveToken();
       if (!token) {

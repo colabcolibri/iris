@@ -8,8 +8,8 @@ test("app routes use protected and guest guards", () => {
   assert.match(app, /GuestRoute/);
   assert.match(app, /AuthSessionProvider/);
   assert.match(app, /ConfirmDialogProvider/);
-  assert.match(app, /path="\/comments"/);
-  assert.match(app, /path="\/agent-runs"/);
+  assert.match(app, /ROUTES\.admin\.comments/);
+  assert.match(app, /ROUTES\.admin\.agentRuns/);
   assert.match(app, /<ProtectedRoute>[\s\S]*<CommentsPage/);
 });
 
@@ -17,14 +17,14 @@ test("protected route redirects anonymous users to login with returnUrl", () => 
   const guard = readFileSync("admin/src/components/auth/protected-route.tsx", "utf8");
   assert.match(guard, /status === "loading"/);
   assert.match(guard, /returnUrl/);
-  assert.match(guard, /Navigate to=\{`\/login\?returnUrl=/);
+  assert.match(guard, /ROUTES\.admin\.login/);
   assert.match(guard, /AuthLoadingScreen/);
 });
 
 test("guest route shares auth loading screen", () => {
   const guest = readFileSync("admin/src/components/auth/guest-route.tsx", "utf8");
   assert.match(guest, /AuthLoadingScreen/);
-  assert.match(guest, /Navigate to="\/"/);
+  assert.match(guest, /ROUTES\.admin\.root/);
 });
 
 test("auth session invalidates only when authenticated", () => {

@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetchAgentContent, fetchReplyPersona, simulateAgentReply } from "@/lib/api";
+import { ROUTES } from "@/lib/routes";
 import type { ReplyAudit } from "@/lib/types";
 import type { SimulateThreadMessage } from "@/lib/api";
 import {
@@ -194,7 +195,7 @@ export function AgentSimulatorPage() {
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
                     O simulador usa o mesmo harness do worker de comentários e lê SOUL, página,
                     knowledge e restrições salvos em{" "}
-                    <Link to="/persona" className="text-primary underline-offset-4 hover:underline">
+                    <Link to={ROUTES.admin.persona} className="text-primary underline-offset-4 hover:underline">
                       Persona
                     </Link>
                     . Triagem usa só restrições; resposta simples inclui knowledge; resposta

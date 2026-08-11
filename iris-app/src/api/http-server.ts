@@ -17,6 +17,7 @@ import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments/index.ts";
 import { handleInsightsRoute } from "./routes/insights.ts";
 import { handleAuthRoute } from "./routes/auth.ts";
+import { handleContactRoute } from "./routes/contact.ts";
 import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
@@ -36,7 +37,7 @@ import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
 import { readAdminSession } from "../domain/auth-session.ts";
-import { shouldGateSpaGet } from "./spa-route-policy.ts";
+import { shouldGateSpaGet, resolveLegacyAdminRedirect } from "./spa-route-policy.ts";
 import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -234,6 +235,10 @@ async function handleRequest(
       return;
     }
 
+    if (await handleContactRoute(req, res, ctx, pathname)) {
+      return;
+    }
+
     if (await handleMcpAuthRoute(req, res, ctx, pathname)) {
       return;
     }
@@ -311,17 +316,18 @@ async function handleRequest(
     return;
   }
 
-  if (req.method === "GET" && pathname === "/login.html") {
-    res.writeHead(302, { Location: "/login" });
-    res.end();
-    return;
-  }
-
   if (req.method === "GET") {
+    const legacyRedirect = resolveLegacyAdminRedirect(pathname);
+    if (legacyRedirect) {
+      res.writeHead(302, { Location: legacyRedirect });
+      res.end();
+      return;
+    }
+
     if (shouldGateSpaGet(pathname, req.method)) {
       const session = readAdminSession(req);
       if (!session.ok) {
-        res.writeHead(302, { Location: "/login" });
+        res.writeHead(302, { Location: "/admin/login" });
         res.end();
         return;
       }

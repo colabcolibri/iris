@@ -2,7 +2,8 @@ import { memo } from "react";
 import { Heart, ImageIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postPreviewUrl } from "@/hooks/use-post-preview";
-import type { CommentPostSummary } from "@/lib/types";
+import type { CommentPostSummary, IgMediaStatus } from "@/lib/types";
+import { igMediaStatusPresentation } from "@iris/domain/meta/ig-media-status";
 
 type PostInboxListProps = {
   posts: CommentPostSummary[];
@@ -40,6 +41,29 @@ function resolveThumbnail(
   return postPreviewUrl(post);
 }
 
+function igMediaBadge(
+  status: IgMediaStatus | null | undefined,
+): { label: string; className: string } | null {
+  if (!status || status === "on_feed") {
+    return null;
+  }
+
+  const copy = igMediaStatusPresentation(status);
+  if (status === "archived") {
+    return {
+      label: copy.label,
+      className:
+        "border-sky-500/25 bg-sky-500/10 text-sky-950 dark:text-sky-100",
+    };
+  }
+
+  return {
+    label: copy.label,
+    className:
+      "border-destructive/25 bg-destructive/10 text-destructive",
+  };
+}
+
 function statusBadge(post: CommentPostSummary): { label: string; className: string } {
   if (post.status === "scheduled") {
     return {
@@ -75,6 +99,7 @@ const PostInboxItem = memo(function PostInboxItem({
 }) {
   const preview = resolveThumbnail(post, thumbnailOverrides);
   const badge = statusBadge(post);
+  const mediaBadge = igMediaBadge(post.ig_media_status);
   const hasEngagement = post.comments_count > 0 || post.status === "published";
 
   return (
@@ -114,14 +139,27 @@ const PostInboxItem = memo(function PostInboxItem({
 
       <div className="min-w-0 flex-1 flex flex-col">
         <div className="mb-1 flex items-center justify-between gap-2">
-          <span
-            className={cn(
-              "rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
-              badge.className,
-            )}
-          >
-            {badge.label}
-          </span>
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            <span
+              className={cn(
+                "rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                badge.className,
+              )}
+            >
+              {badge.label}
+            </span>
+            {mediaBadge ? (
+              <span
+                className={cn(
+                  "rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                  mediaBadge.className,
+                )}
+                title={post.ig_media_status_detail ?? undefined}
+              >
+                {mediaBadge.label}
+              </span>
+            ) : null}
+          </div>
           <span className="shrink-0 text-xs text-muted-foreground">
             {formatListDate(post.published_at)}
           </span>

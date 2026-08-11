@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { AuthLoadingScreen } from "@/components/auth/auth-loading-screen";
 import { useAuthSession } from "@/contexts/auth-session-context";
+import { ROUTES } from "@/lib/routes";
 
 type GuestRouteProps = {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export function GuestRoute({ children }: GuestRouteProps) {
   }
 
   if (status === "authenticated") {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.admin.root} replace />;
   }
 
   return children;

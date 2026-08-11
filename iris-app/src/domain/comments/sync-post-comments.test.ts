@@ -54,9 +54,15 @@ test("listCommentPosts returns published iris posts with local counts", () => {
           .map((post) => ({
             id: post.id,
             caption: post.caption,
+            carouselSummary: post.carouselSummary,
             publishedAt: post.publishedAt,
             igMediaId: post.igMediaId,
             status: post.status,
+            replyMode: post.replyMode,
+            autoReplyEnabled: post.autoReplyEnabled,
+            igMediaStatus: post.igMediaStatus,
+            igMediaStatusDetail: post.igMediaStatusDetail,
+            igMediaStatusCheckedAt: post.igMediaStatusCheckedAt,
           })),
       countCommentsByPostId: (postId) => comments.countByPostId(postId),
     });

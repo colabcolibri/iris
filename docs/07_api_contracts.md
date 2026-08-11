@@ -167,6 +167,8 @@ Post só vai para `scheduled` com ≥ 1 asset. Otimização JPEG server-side —
 
 Cache padrão: 1 hora (`from_cache` na resposta). Requer Meta conectada.
 
+Resposta inclui `ig_media_status` (`on_feed` \| `archived` \| `unavailable`), `ig_media_status_detail` e `ig_media_status_checked_at` quando a Iris já verificou a mídia na Meta. Posts arquivados no IG costumam falhar no GET da mídia, mas ainda podem expor comentários — a Iris distingue isso de publicação excluída ou sem permissão.
+
 ## Comments
 
 | Method | Path | Auth | Description |
@@ -176,7 +178,7 @@ Cache padrão: 1 hora (`from_cache` na resposta). Requer Meta conectada.
 | GET | `/api/posts/:id/comments/reconcile-preview` | admin + Meta | Sincroniza comentários com a Meta, marca removidos e retorna preview de vínculos |
 | POST | `/api/posts/:id/comments/reconcile` | admin + Meta | Sincroniza, marca removidos e vincula respostas da marca já existentes no IG |
 | POST | `/api/posts/:id/comments/sync` | admin | Sync Graph API → SQLite |
-| GET | `/api/comments/posts` | admin | Posts gerenciados + contagens |
+| GET | `/api/comments/posts` | admin | Posts gerenciados + contagens (`ig_media_status`, `ig_media_status_detail`, `ig_media_status_checked_at`) |
 | GET | `/api/comments/inbox` | admin | Inbox Meta/local (`days`, `source`, `scope`, `ig_media_id`, `post_id`) |
 | POST | `/api/comments/monitored-posts` | admin | Importa post externo (`ig_media_id` / permalink) |
 | POST | `/api/comments/monitored-posts/batch` | admin | Import em lote (`ig_media_ids[]`) |

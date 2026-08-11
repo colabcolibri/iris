@@ -31,6 +31,8 @@ import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { Label } from "@/components/ui/label";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { resolveEffectivePostReplyStatus, replyStatusPresentation } from "@iris/domain/reply-effective-status";
+import { igMediaStatusPresentation } from "@iris/domain/meta/ig-media-status";
+import type { IgMediaStatus } from "@iris/domain/meta/ig-media-status";
 import type { PostReplyModeSetting } from "@/lib/types";
 
 type PostDetailPanelProps = {
@@ -169,14 +171,39 @@ function PerformanceTabContent({
   hasInsightsData,
   metricRows,
   loadingInsights,
+  igMediaStatus,
+  igMediaStatusDetail,
 }: {
   insightsError: string | null;
   hasInsightsData: boolean;
   metricRows: NonNullable<PostInsightsResult["insights"]>;
   loadingInsights: boolean;
+  igMediaStatus: IgMediaStatus | null;
+  igMediaStatusDetail: string | null;
 }) {
+  const igMediaCopy =
+    igMediaStatus && igMediaStatus !== "on_feed"
+      ? igMediaStatusPresentation(igMediaStatus)
+      : null;
+
   return (
     <div className="flex flex-col gap-4">
+      {igMediaCopy ? (
+        <div
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm",
+            igMediaStatus === "archived"
+              ? "border-sky-500/30 bg-sky-500/10 text-sky-950 dark:text-sky-100"
+              : "border-destructive/30 bg-destructive/10 text-destructive",
+          )}
+        >
+          <p className="font-medium">{igMediaCopy.label}</p>
+          <p className="mt-0.5 text-xs opacity-90">
+            {igMediaStatusDetail ?? igMediaCopy.hint}
+          </p>
+        </div>
+      ) : null}
+
       {insightsError ? (
         <div
           className={cn(
@@ -302,6 +329,10 @@ export function PostDetailPanel({
   const slides = resolveMediaSlides(post.post_id, insights?.media);
   const permalink = insights?.media?.permalink ?? null;
   const metricRows = insights?.insights ?? [];
+  const igMediaStatus =
+    insights?.ig_media_status ?? post.ig_media_status ?? null;
+  const igMediaStatusDetail =
+    insights?.ig_media_status_detail ?? post.ig_media_status_detail ?? null;
   const insightsError = insights && !insights.ok ? insights.message : null;
   const hasInsightsData = metricRows.length > 0;
   const publishedLabel = formatPublishedCompact(post.published_at);
@@ -355,6 +386,20 @@ export function PostDetailPanel({
                   title="Comentários aguardando resposta ou aprovação da Iris"
                 >
                   {post.pending_count} pendente{post.pending_count === 1 ? "" : "s"}
+                </Badge>
+              ) : null}
+              {igMediaStatus && igMediaStatus !== "on_feed" ? (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "h-5 shrink-0 px-1.5 text-[10px]",
+                    igMediaStatus === "archived"
+                      ? "border-sky-500/30 bg-sky-500/10 text-sky-900 dark:text-sky-100"
+                      : "border-destructive/30 bg-destructive/10 text-destructive",
+                  )}
+                  title={igMediaStatusDetail ?? undefined}
+                >
+                  {igMediaStatusPresentation(igMediaStatus).label}
                 </Badge>
               ) : null}
               <span
@@ -456,6 +501,8 @@ export function PostDetailPanel({
               hasInsightsData={hasInsightsData}
               metricRows={metricRows}
               loadingInsights={loadingInsights}
+              igMediaStatus={igMediaStatus}
+              igMediaStatusDetail={igMediaStatusDetail}
             />
           ) : activeTab === "comments" ? (
             <div className="flex flex-col gap-4">

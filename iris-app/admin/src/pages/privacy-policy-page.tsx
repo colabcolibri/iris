@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { ROUTES } from "@/lib/routes";
 
 const LAST_UPDATED = "10 de agosto de 2026";
 
@@ -8,12 +9,12 @@ export function PrivacyPolicyPage() {
     <div className="min-h-svh bg-background">
       <header className="border-b border-border/80 bg-card/50 px-4 py-6 sm:px-6">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-3 text-foreground no-underline">
+          <Link to={ROUTES.home} className="flex items-center gap-3 text-foreground no-underline">
             <BrandLogo size="sm" />
             <span className="font-display text-xl font-semibold tracking-tight">Iris</span>
           </Link>
           <Link
-            to="/login"
+            to={ROUTES.admin.login}
             className="text-sm font-medium text-primary hover:underline"
           >
             Entrar

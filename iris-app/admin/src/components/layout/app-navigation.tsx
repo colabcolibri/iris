@@ -1,6 +1,7 @@
 import { CalendarDays, Bot, FlaskConical, LayoutGrid, MessageCircle, Settings, Sparkles, Webhook } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import type { AppView } from "@/components/layout/app-sidebar";
+import { ROUTES } from "@/lib/routes";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -17,15 +18,15 @@ const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] = 
 ];
 
 const MAIN_ROUTE_ITEMS = [
-  { to: "/comments", label: "Comentários", icon: MessageCircle },
-  { to: "/webhooks", label: "Webhooks", icon: Webhook },
-  { to: "/agent-simulator", label: "Simulador", icon: FlaskConical },
-  { to: "/agent-runs", label: "Execuções", icon: Bot },
+  { to: ROUTES.admin.comments, label: "Comentários", icon: MessageCircle },
+  { to: ROUTES.admin.webhooks, label: "Webhooks", icon: Webhook },
+  { to: ROUTES.admin.agentSimulator, label: "Simulador", icon: FlaskConical },
+  { to: ROUTES.admin.agentRuns, label: "Execuções", icon: Bot },
 ] as const;
 
 const FOOTER_ROUTE_ITEMS = [
-  { to: "/settings", label: "Configurações", icon: Settings },
-  { to: "/persona", label: "Persona", icon: Sparkles },
+  { to: ROUTES.admin.settings, label: "Configurações", icon: Settings },
+  { to: ROUTES.admin.persona, label: "Persona", icon: Sparkles },
 ] as const;
 
 const MENU_BUTTON_CLASS =
@@ -49,7 +50,7 @@ export function AppNavigation({
   const location = useLocation();
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
-  const onDashboard = location.pathname === "/";
+  const onDashboard = location.pathname === ROUTES.admin.root;
 
   function handleNavigate() {
     onNavigate?.();
@@ -75,7 +76,7 @@ export function AppNavigation({
                       if (onDashboard && onViewChange) {
                         onViewChange(item.id);
                       } else {
-                        navigate(item.id === "kanban" ? "/?view=kanban" : "/");
+                        navigate(item.id === "kanban" ? `${ROUTES.admin.root}?view=kanban` : ROUTES.admin.root);
                       }
                       handleNavigate();
                     }}

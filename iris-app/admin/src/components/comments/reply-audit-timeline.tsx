@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { ReplyAudit } from "@/lib/types";
+import { ROUTES } from "@/lib/routes";
 import {
   REPLY_AUDIT_BADGE_STYLES,
   REPLY_AUDIT_STAGE_LABELS,
@@ -103,7 +104,7 @@ export function ReplyAuditTimeline({ audit, className }: ReplyAuditTimelineProps
       {suggestEdit ? (
         <p className="text-xs text-muted-foreground">
           Ajuste as regras em{" "}
-          <Link to="/persona" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={ROUTES.admin.persona} className="font-medium text-primary underline-offset-4 hover:underline">
             conteúdo do agente
           </Link>
           .

@@ -1,0 +1,18 @@
+.iris-landing {
+  --iris-lp-ink: #f4f2ee;
+  --iris-lp-panel: #ffffff;
+  --iris-lp-text: #1a1814;
+  --iris-lp-text-soft: #4a443c;
+  --iris-lp-muted: #6f6860;
+  --iris-lp-rule: #d8d2c8;
+  --iris-lp-primary: #522587;
+  --iris-lp-on-primary: #ffffff;
+
+  min-height: 100svh;
+  background: var(--iris-lp-ink);
+  color: var(--iris-lp-text);
+}
+
+.iris-landing a {
+  text-decoration: none;
+}

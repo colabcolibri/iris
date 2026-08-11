@@ -2,6 +2,7 @@ import { sendError, sendJson } from "../../json.ts";
 import { createRouter, route } from "../../router.ts";
 import { notifyCommentsChanged } from "../../../adapters/sse/event-bus.ts";
 import { refreshAndReconcilePostComments } from "../../../domain/comments/refresh-and-reconcile-post-comments.ts";
+import { refreshPostIgMediaStatus } from "../../../domain/meta/refresh-post-ig-media-status.ts";
 import {
   planCommentThreadReconciliation,
 } from "../../../domain/comments/reconcile-comment-thread-statuses.ts";
@@ -108,6 +109,11 @@ export const commentsPostCommentsRouter = createRouter([
           syncDeps: postCommentSyncDeps(match.ctx),
           reconcileDeps: commentReconcileDeps(match.ctx),
         });
+
+        await refreshPostIgMediaStatus(postId, {
+          posts: match.ctx.posts,
+          metaCommentReader: match.ctx.metaCommentReader,
+        }).catch(() => undefined);
 
         notifyCommentsChanged({ post_id: postId });
 

@@ -1,17 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { shouldGateSpaGet } from "../src/api/spa-route-policy.ts";
+import {
+  isProtectedSpaPath,
+  isPublicSpaPath,
+  resolveLegacyAdminRedirect,
+  shouldGateSpaGet,
+} from "../src/api/spa-route-policy.ts";
 
-test("shouldGateSpaGet protects editorial routes only", () => {
-  assert.equal(shouldGateSpaGet("/", "GET"), true);
-  assert.equal(shouldGateSpaGet("/comments", "GET"), true);
-  assert.equal(shouldGateSpaGet("/settings", "GET"), true);
-  assert.equal(shouldGateSpaGet("/persona", "GET"), true);
+test("shouldGateSpaGet protects admin routes only", () => {
+  assert.equal(shouldGateSpaGet("/admin", "GET"), true);
+  assert.equal(shouldGateSpaGet("/admin/comments", "GET"), true);
+  assert.equal(shouldGateSpaGet("/admin/settings", "GET"), true);
+  assert.equal(shouldGateSpaGet("/admin/persona", "GET"), true);
 });
 
-test("shouldGateSpaGet allows public routes and assets", () => {
-  assert.equal(shouldGateSpaGet("/login", "GET"), false);
+test("shouldGateSpaGet allows landing and public routes", () => {
+  assert.equal(shouldGateSpaGet("/", "GET"), false);
   assert.equal(shouldGateSpaGet("/privacy", "GET"), false);
+  assert.equal(shouldGateSpaGet("/admin/login", "GET"), false);
   assert.equal(shouldGateSpaGet("/health", "GET"), false);
   assert.equal(shouldGateSpaGet("/api/posts", "GET"), false);
   assert.equal(shouldGateSpaGet("/auth/meta", "GET"), false);
@@ -20,5 +26,18 @@ test("shouldGateSpaGet allows public routes and assets", () => {
 });
 
 test("shouldGateSpaGet ignores non-GET methods", () => {
-  assert.equal(shouldGateSpaGet("/", "POST"), false);
+  assert.equal(shouldGateSpaGet("/admin", "POST"), false);
+});
+
+test("resolveLegacyAdminRedirect maps old admin paths", () => {
+  assert.equal(resolveLegacyAdminRedirect("/login"), "/admin/login");
+  assert.equal(resolveLegacyAdminRedirect("/comments"), "/admin/comments");
+  assert.equal(resolveLegacyAdminRedirect("/"), null);
+});
+
+test("isProtectedSpaPath and isPublicSpaPath", () => {
+  assert.equal(isProtectedSpaPath("/admin/comments"), true);
+  assert.equal(isProtectedSpaPath("/admin/login"), false);
+  assert.equal(isPublicSpaPath("/"), true);
+  assert.equal(isPublicSpaPath("/admin/login"), true);
 });

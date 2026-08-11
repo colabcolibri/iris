@@ -1,18 +1,36 @@
-const PROTECTED_SPA_PATHS = new Set(["/", "/comments", "/settings", "/persona"]);
+const PUBLIC_SPA_PATHS = new Set(["/", "/privacy", "/privacy-policy"]);
 
-const PUBLIC_SPA_PATHS = new Set([
-  "/login",
-  "/privacy",
-  "/privacy-policy",
-  "/login.html",
-]);
+const ADMIN_LOGIN_PATHS = new Set(["/admin/login", "/admin/login.html"]);
+
+const LEGACY_ADMIN_REDIRECTS: Record<string, string> = {
+  "/login": "/admin/login",
+  "/login.html": "/admin/login",
+  "/comments": "/admin/comments",
+  "/settings": "/admin/settings",
+  "/persona": "/admin/persona",
+  "/webhooks": "/admin/webhooks",
+  "/agent-runs": "/admin/agent-runs",
+  "/agent-simulator": "/admin/agent-simulator",
+};
+
+export function resolveLegacyAdminRedirect(pathname: string): string | null {
+  return LEGACY_ADMIN_REDIRECTS[pathname] ?? null;
+}
 
 export function isProtectedSpaPath(pathname: string): boolean {
-  return PROTECTED_SPA_PATHS.has(pathname);
+  if (!pathname.startsWith("/admin")) {
+    return false;
+  }
+
+  return !ADMIN_LOGIN_PATHS.has(pathname);
 }
 
 export function isPublicSpaPath(pathname: string): boolean {
-  return PUBLIC_SPA_PATHS.has(pathname);
+  if (PUBLIC_SPA_PATHS.has(pathname)) {
+    return true;
+  }
+
+  return ADMIN_LOGIN_PATHS.has(pathname);
 }
 
 export function shouldGateSpaGet(pathname: string, method: string): boolean {

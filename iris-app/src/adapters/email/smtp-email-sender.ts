@@ -32,6 +32,7 @@ export function createSmtpEmailSender(
           subject: input.subject,
           text: input.text,
           html: input.html,
+          ...(input.replyTo ? { replyTo: input.replyTo.trim() } : {}),
         });
 
         return { ok: true };

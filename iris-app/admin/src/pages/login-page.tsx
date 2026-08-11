@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { confirmLoginCode, requestLoginCode } from "@/lib/api";
 import { useAuthSession } from "@/contexts/auth-session-context";
+import { ROUTES } from "@/lib/routes";
 
 type Step = "email" | "code";
 
@@ -61,9 +62,9 @@ export function LoginPage() {
         returnUrl &&
         returnUrl.startsWith("/") &&
         !returnUrl.startsWith("//") &&
-        !returnUrl.startsWith("/login")
+        !returnUrl.startsWith(ROUTES.admin.login)
           ? returnUrl
-          : "/";
+          : ROUTES.admin.root;
       navigate(safeReturn, { replace: true });
     } catch (err) {
       setFeedback(err instanceof Error ? err.message : "Código inválido ou expirado.");
@@ -161,7 +162,7 @@ export function LoginPage() {
           )}
 
           <p className="text-center text-xs text-muted-foreground">
-            <Link to="/privacy" className="hover:text-foreground hover:underline">
+            <Link to={ROUTES.privacy} className="hover:text-foreground hover:underline">
               Política de privacidade
             </Link>
           </p>

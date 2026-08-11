@@ -54,6 +54,8 @@ export function postsHaveChanged(
       previous.caption !== post.caption ||
       previous.published_at !== post.published_at ||
       previous.status !== post.status ||
+      previous.ig_media_status !== post.ig_media_status ||
+      previous.ig_media_status_detail !== post.ig_media_status_detail ||
       previous.is_external !== post.is_external ||
       previous.preview_url !== post.preview_url ||
       previous.preview_filename !== post.preview_filename

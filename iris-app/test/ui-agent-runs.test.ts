@@ -12,7 +12,7 @@ test("agent runs page and api are wired", () => {
   assert.match(app, /agent-runs/);
 
   const nav = readFileSync("admin/src/components/layout/app-navigation.tsx", "utf8");
-  assert.match(nav, /\/agent-runs/);
+  assert.match(nav, /ROUTES\.admin\.agentRuns/);
 
   const api = readFileSync("admin/src/lib/api.ts", "utf8");
   assert.match(api, /\/api\/agent-runs/);

@@ -1,4 +1,5 @@
 import type { PostReplyModeSetting } from "./reply-mode.ts";
+import type { IgMediaStatus } from "./meta/ig-media-status.ts";
 
 export type PostStatus =
   | "draft"
@@ -17,6 +18,9 @@ export type Post = {
   scheduledAt: string | null;
   publishedAt: string | null;
   igMediaId: string | null;
+  igMediaStatus: IgMediaStatus | null;
+  igMediaStatusDetail: string | null;
+  igMediaStatusCheckedAt: string | null;
   sourceNote: string | null;
   errorMessage: string | null;
   autoReplyEnabled: boolean;

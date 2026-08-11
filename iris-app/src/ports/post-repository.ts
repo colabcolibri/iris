@@ -1,5 +1,6 @@
 import type { Post, PostStatus } from "../domain/post.ts";
 import type { PostReplyModeSetting } from "../domain/reply-mode.ts";
+import type { IgMediaStatus } from "../domain/meta/ig-media-status.ts";
 
 export type CreatePostInput = {
   caption?: string | null;
@@ -21,6 +22,9 @@ export type UpdatePostInput = {
   status?: PostStatus;
   publishedAt?: string | null;
   igMediaId?: string | null;
+  igMediaStatus?: IgMediaStatus | null;
+  igMediaStatusDetail?: string | null;
+  igMediaStatusCheckedAt?: string | null;
   errorMessage?: string | null;
   autoReplyEnabled?: boolean;
   replyMode?: PostReplyModeSetting;
