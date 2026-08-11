@@ -1,4 +1,4 @@
-@import "../../../docs/design/iris-design-tokens.css";
+@import "./iris-design-tokens.css";
 
 .iris-landing {
   min-height: 100svh;
