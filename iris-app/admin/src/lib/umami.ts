@@ -9,3 +9,15 @@ export const umamiConfig = {
 export function isUmamiEnabled(): boolean {
   return umamiConfig.websiteId.length > 0;
 }
+
+/** Landing, privacidade e demo — nunca `/admin` (uso interno). */
+export function shouldTrackUmamiPath(pathname: string): boolean {
+  if (pathname === "/" || pathname === "/en") return true;
+  if (pathname === "/privacy" || pathname === "/privacy-policy") return true;
+  if (pathname === "/demo" || pathname.startsWith("/demo/")) return true;
+  return false;
+}
+
+export function umamiScriptSelector(): string {
+  return `script[data-website-id="${umamiConfig.websiteId}"]`;
+}
