@@ -235,7 +235,7 @@ export function PostMediaSection({
       ) : gridItems.length === 0 ? (
         <div
           className={cn(
-            "rounded-[var(--iris-radius-lg)] border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground shadow-none",
+            "rounded-(--iris-radius-lg) border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground shadow-none",
             showAddButton && "sm:py-14",
           )}
         >
@@ -290,7 +290,7 @@ export function PostMediaSection({
           </div>
 
           {canManage && selected ? (
-            <div className="space-y-3 rounded-[var(--iris-radius-sm)] border border-border bg-muted/10 p-3">
+            <div className="space-y-3 rounded-(--iris-radius-sm) border border-border bg-muted/10 p-3">
               <p className="text-sm font-medium text-foreground">
                 Slide {items.findIndex((item) => item.id === selected.id) + 1} —
                 acessibilidade e tags

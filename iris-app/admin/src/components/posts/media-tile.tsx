@@ -1,4 +1,6 @@
-import type { DragEvent } from "react";
+import { Button } from "@/components/ui/button";
+import type { PostMediaAsset } from "@/hooks/use-post-media-assets";
+import { cn } from "@/lib/utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,9 +8,7 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
-import type { PostMediaAsset } from "@/hooks/use-post-media-assets";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import type { DragEvent } from "react";
 
 type MediaTileProps = {
   item: PostMediaAsset;
@@ -79,7 +79,7 @@ export function MediaTile({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={cn(
-        "group relative min-w-0 overflow-hidden rounded-[var(--iris-radius-sm)] border border-border bg-muted/20 transition-colors shadow-none",
+        "group relative min-w-0 overflow-hidden rounded-(--iris-radius-sm) border border-border bg-muted/20 transition-colors shadow-none",
         isDragOver && "border-primary ring-2 ring-primary/25",
         isDragging && "scale-[0.98] opacity-50",
         selected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
@@ -100,14 +100,14 @@ export function MediaTile({
         />
       </div>
 
-      <span className="absolute top-2 left-2 rounded-[var(--iris-radius-sm)] bg-background/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-foreground shadow-none">
+      <span className="absolute top-2 left-2 rounded-(--iris-radius-sm) bg-background/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-foreground shadow-none">
         {index + 1}
       </span>
 
       {!readOnly ? (
         <div
           className={cn(
-            "absolute top-2 right-2 flex items-center gap-0.5 rounded-[var(--iris-radius-sm)] border border-border bg-background/95 p-0.5 shadow-none",
+            "absolute top-2 right-2 flex items-center gap-0.5 rounded-(--iris-radius-sm) border border-border bg-background/95 p-0.5 shadow-none",
             "opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
           )}
           onClick={(event) => event.stopPropagation()}
