@@ -1,6 +1,7 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentContentStore } from "../../ports/agent-content-store.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
+import type { SimulatorScenarioStore } from "../../ports/simulator-scenario-store.ts";
 import { getAgentContentOrDefault } from "../settings/agent-content-defaults.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../reply-language/response-languages.ts";
@@ -17,15 +18,17 @@ import {
   buildReplyAuditSummary,
   serializeReplyAuditSummary,
 } from "../reply-context/build-reply-audit-summary.ts";
+import {
+  normalizeScenarioId,
+  normalizeSimulateTargetComment,
+  normalizeSimulateThread,
+  type SimulateThreadMessage,
+} from "./simulator-payload.ts";
 
-export type SimulateThreadMessage = {
-  author: string;
-  text: string;
-  is_brand_reply?: boolean;
-  at?: string;
-};
+export type { SimulateThreadMessage };
 
 export type SimulateReplyInput = {
+  scenario_id?: string;
   caption?: string | null;
   carousel_summary?: string | null;
   response_language?: string;
@@ -47,6 +50,10 @@ export type SimulateReplyDeps = {
   agentRunSteps: AgentRunStepRepository;
 };
 
+export type ResolveSimulateReplyInputDeps = {
+  scenarioStore: SimulatorScenarioStore;
+};
+
 export type SimulateReplyResult = {
   audit: ReturnType<typeof serializeHarnessAudit>;
   final_text: string | null;
@@ -66,6 +73,125 @@ function buildThread(messages: SimulateThreadMessage[] | undefined): CommentThre
   }));
 
   return { entries };
+}
+
+export function resolveSimulateReplyInput(
+  body: Record<string, unknown>,
+  deps: ResolveSimulateReplyInputDeps,
+): SimulateReplyInput {
+  const scenarioIdRaw = body.scenario_id ?? body.scenarioId;
+  const scenario =
+    typeof scenarioIdRaw === "string" && scenarioIdRaw.trim()
+      ? deps.scenarioStore.getById(normalizeScenarioId(scenarioIdRaw, "scenario_id"))
+      : null;
+
+  if (typeof scenarioIdRaw === "string" && scenarioIdRaw.trim() && !scenario) {
+    throw new ValidationError(`scenario_id not found: ${scenarioIdRaw.trim()}`);
+  }
+
+  const base = scenario
+    ? {
+        caption: scenario.caption,
+        carousel_summary: scenario.carouselSummary,
+        thread: scenario.thread,
+        target_comment: {
+          author: scenario.targetAuthor,
+          text: scenario.targetText,
+        },
+      }
+    : {
+        caption: null as string | null,
+        carousel_summary: null as string | null,
+        thread: undefined as SimulateThreadMessage[] | undefined,
+        target_comment: {
+          author: "user",
+          text: "",
+        },
+      };
+
+  const hasTargetComment =
+    body.target_comment !== undefined ||
+    body.targetComment !== undefined ||
+    body.target_author !== undefined ||
+    body.targetAuthor !== undefined ||
+    body.target_text !== undefined ||
+    body.targetText !== undefined;
+
+  const targetSource = hasTargetComment
+    ? {
+        author:
+          (body.target_comment as Record<string, unknown> | undefined)?.author ??
+          (body.targetComment as Record<string, unknown> | undefined)?.author ??
+          body.target_author ??
+          body.targetAuthor,
+        text:
+          (body.target_comment as Record<string, unknown> | undefined)?.text ??
+          (body.targetComment as Record<string, unknown> | undefined)?.text ??
+          body.target_text ??
+          body.targetText,
+      }
+    : base.target_comment;
+
+  const targetComment = normalizeSimulateTargetComment(targetSource, {
+    requiredText: !scenario,
+  });
+
+  return {
+    scenario_id:
+      typeof scenarioIdRaw === "string" && scenarioIdRaw.trim()
+        ? normalizeScenarioId(scenarioIdRaw, "scenario_id")
+        : undefined,
+    caption:
+      typeof body.caption === "string"
+        ? body.caption
+        : body.caption === null
+          ? null
+          : base.caption,
+    carousel_summary:
+      typeof body.carousel_summary === "string"
+        ? body.carousel_summary
+        : typeof body.carouselSummary === "string"
+          ? body.carouselSummary
+          : body.carousel_summary === null || body.carouselSummary === null
+            ? null
+            : base.carousel_summary,
+    response_language:
+      typeof body.response_language === "string"
+        ? body.response_language
+        : typeof body.responseLanguage === "string"
+          ? body.responseLanguage
+          : undefined,
+    brand_name:
+      body.brand_name === null
+        ? null
+        : typeof body.brand_name === "string"
+          ? body.brand_name
+          : body.brandName === null
+            ? null
+            : typeof body.brandName === "string"
+              ? body.brandName
+              : undefined,
+    brand_username:
+      body.brand_username === null
+        ? null
+        : typeof body.brand_username === "string"
+          ? body.brand_username
+          : body.brandUsername === null
+            ? null
+            : typeof body.brandUsername === "string"
+              ? body.brandUsername
+              : undefined,
+    max_chars:
+      typeof body.max_chars === "number"
+        ? body.max_chars
+        : typeof body.maxChars === "number"
+          ? body.maxChars
+          : undefined,
+    thread: Array.isArray(body.thread)
+      ? normalizeSimulateThread(body.thread)
+      : base.thread,
+    target_comment: targetComment,
+  };
 }
 
 function buildSimulatedContext(input: SimulateReplyInput, deps: SimulateReplyDeps): ReplyContext {
@@ -132,9 +258,13 @@ export async function simulateReply(
   input: SimulateReplyInput,
   deps: SimulateReplyDeps,
 ): Promise<SimulateReplyResult> {
-  if (!input.target_comment?.text?.trim()) {
-    throw new ValidationError("target_comment.text is required");
-  }
+  const targetComment = normalizeSimulateTargetComment(input.target_comment, {
+    requiredText: true,
+  });
+  input = {
+    ...input,
+    target_comment: targetComment,
+  };
 
   if (!deps.llm) {
     throw new ValidationError("LLM is not configured");

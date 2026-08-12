@@ -58,6 +58,8 @@ import type { AgentRunStepRepository } from "../ports/agent-run-step-repository.
 import type { LlmSettingsStore } from "../ports/llm-settings-store.ts";
 import type { WebhookEventRepository } from "../ports/webhook-event-repository.ts";
 import type { PostInsightsStore } from "../ports/post-insights-store.ts";
+import type { SimulatorScenarioStore } from "../ports/simulator-scenario-store.ts";
+import { createSqliteSimulatorScenarioStore } from "../adapters/sqlite/simulator-scenario-repository.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 import {
   loadMcpConnectionCodeFromEnv,
@@ -105,6 +107,7 @@ export type AppContext = {
   agentContentStore: AgentContentStore;
   agentRunSteps: AgentRunStepRepository;
   appSettingsStore: AppSettingsStore;
+  simulatorScenarioStore: SimulatorScenarioStore;
   imageContextProvider: ImageContextProvider;
   replyContextAssembler: ReplyContextAssemblerDeps;
 };
@@ -226,6 +229,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const agentContentStore = createSqliteAgentContentStore(options.db);
   const agentRunSteps = createSqliteAgentRunStepRepository(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
+  const simulatorScenarioStore = createSqliteSimulatorScenarioStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
   const webhookEvents = createSqliteWebhookEventRepository(options.db);
   const postInsightsStore = createSqlitePostInsightsStore(options.db);
@@ -295,6 +299,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     agentContentStore,
     agentRunSteps,
     appSettingsStore,
+    simulatorScenarioStore,
     imageContextProvider,
     replyContextAssembler,
   };

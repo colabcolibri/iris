@@ -118,6 +118,23 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | expires_at | TEXT | |
 | updated_at | TEXT | |
 
+### `simulator_scenarios`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | Slug estável (`jogo-grok`, …) |
+| label | TEXT | Nome exibido no admin |
+| description | TEXT | Resumo do cenário |
+| caption | TEXT | Legenda simulada do post |
+| carousel_summary | TEXT | Resumo do carrossel/reel |
+| thread_json | TEXT | JSON — array de mensagens (`author`, `text`, `is_brand_reply`, `at?`) |
+| target_author | TEXT | Autor do comentário alvo |
+| target_text | TEXT | Texto do comentário alvo |
+| created_at | TEXT | |
+| updated_at | TEXT | |
+
+Seed na migration `20260812110107_simulator_scenarios.sql` — paridade com `admin/src/lib/agent-simulator-scenarios.ts`.
+
 ## Filesystem (não-SQL)
 
 ```txt

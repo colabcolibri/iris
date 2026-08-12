@@ -28,7 +28,7 @@ Inventário alinhado ao código em `iris-app/server/src/api/` (router declarativ
 | Comments | `/api/posts/:id/comments`, `/api/comments/*` |
 | Meta | `/auth/meta`, `/api/meta/*` |
 | Settings | `/api/settings/*` |
-| Agent | `/api/agent-runs`, `/api/agent/simulate` |
+| Agent | `/api/agent-runs`, `/api/agent/simulate`, `/api/agent/simulator-scenarios` |
 | Events | `/api/events` (SSE) |
 | Webhooks Meta | `/webhooks/meta` |
 | Publish (IG) | `/publish/media/*` (URL assinada, sem Bearer) |
@@ -84,9 +84,9 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 
 **Headers:** `Accept: application/json, text/event-stream` em `POST /mcp`.
 
-**Escopo MCP:** equivalente ao token agent — posts, assets, comentários, insights, webhooks (leitura). Sem settings admin nem OAuth Meta.
+**Escopo MCP:** equivalente ao token agent — posts, assets, comentários, insights, webhooks (leitura), persona e conteúdo editorial do agente. Sem LLM settings nem OAuth Meta.
 
-### MCP tools (14)
+### MCP tools (21)
 
 | Tool | Equivalente REST | Descrição |
 | ---- | ---------------- | --------- |
@@ -106,6 +106,15 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_refresh_all_post_insights` | `POST /api/insights/refresh-all` | Refresh em lote 1:1 (`limit`, `delay_ms`, `force`, `since`, `until`) |
 | `iris_refresh_media_insights_page` | `POST /api/insights/refresh-media-page` | Uma página `/me/media` + field expansion (~1 call Meta) |
 | `iris_list_webhooks` | `GET /api/settings/webhook-events` | Eventos Meta recentes |
+| `iris_get_reply_persona` | `GET /api/settings/reply-persona` | Persona de resposta (`brand_name`, `signature_instruction`, `response_language`, `max_chars`) |
+| `iris_update_reply_persona` | `PUT /api/settings/reply-persona` | Atualiza persona (campos parciais aceitos) |
+| `iris_get_agent_content` | `GET /api/settings/agent-content` | Blocos Markdown do agente |
+| `iris_update_agent_content` | `PUT /api/settings/agent-content` | Atualiza blocos (quatro campos obrigatórios) |
+| `iris_get_app_settings` | `GET /api/settings/app` | Config operacional (timezone, reply, auto-monitor) |
+| `iris_update_app_settings` | `PUT /api/settings/app` | Atualização parcial com mesmas validações REST |
+| `iris_list_simulator_scenarios` | `GET /api/agent/simulator-scenarios` | Lista cenários persistidos (resumo — sem thread completa) |
+| `iris_create_simulator_scenario` | `POST /api/agent/simulator-scenarios` | Cria cenário com mesmas validações REST admin |
+| `iris_simulate_reply` | `POST /api/agent/simulate` | Executa harness sandbox (`scenario_id` ou inline; opcional `response_language`) — não publica na Meta |
 
 ## Error envelope
 
@@ -249,7 +258,11 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/agent-runs` | admin | Lista runs (`limit`, `cursor`, `terminal_status`, `reply_tier`) |
 | GET | `/api/agent-runs/:id` | admin | Detalhe + audit steps |
-| POST | `/api/agent/simulate` | admin | Simula resposta (sandbox, sem publicar) |
+| GET | `/api/agent/simulator-scenarios` | admin | Lista cenários editoriais persistidos |
+| POST | `/api/agent/simulator-scenarios` | admin | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
+| PUT | `/api/agent/simulator-scenarios/:id` | admin | Atualiza cenário (campos parciais permitidos) |
+| DELETE | `/api/agent/simulator-scenarios/:id` | admin | Remove cenário |
+| POST | `/api/agent/simulate` | admin | Simula resposta (sandbox, sem publicar). Aceita `scenario_id` opcional para carregar cenário persistido; body inline continua válido e sobrescreve campos do cenário. |
 
 ## Settings
 
@@ -259,8 +272,8 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | PUT | `/api/settings/reply-persona` | admin | Atualiza persona |
 | GET | `/api/settings/agent-content` | admin | Blocos Markdown (`soul`, `page`, `knowledge`, `restrictions`) |
 | PUT | `/api/settings/agent-content` | admin | Atualiza blocos |
-| GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `reply_delay_seconds`) |
-| PUT | `/api/settings/app` | admin | Atualiza app settings |
+| GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `reply_delay_seconds`, `auto_reply_enabled`, `auto_monitor_enabled`, `auto_monitor_interval_seconds`) |
+| PUT | `/api/settings/app` | admin | Atualiza app settings (parcial; mesmas validações) |
 | GET | `/api/settings/llm` | admin | Status LLM (`configured`, `model`, `key_hint`, …) |
 | PUT | `/api/settings/llm` | admin | Configura LLM |
 | GET | `/api/settings/webhook-events` | admin | Eventos webhook (`limit`, `status`, `field`, `signature_valid`) |

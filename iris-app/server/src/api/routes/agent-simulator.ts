@@ -1,55 +1,78 @@
-import { readJsonBody, sendJson } from "../json.ts";
+import { readJsonBody, sendError, sendJson } from "../json.ts";
 import { createRouter, route } from "../router.ts";
-import { simulateReply } from "../../domain/agent-simulator/simulate-reply.ts";
+import { routeParam } from "../route-resources.ts";
+import {
+  resolveSimulateReplyInput,
+  simulateReply,
+} from "../../domain/agent-simulator/simulate-reply.ts";
+import {
+  mergeScenarioUpdate,
+  normalizeSimulatorScenarioInput,
+  serializeSimulatorScenario,
+} from "../../domain/agent-simulator/simulator-scenario.ts";
 
 export const handleAgentSimulatorRoute = createRouter([
+  route("GET", "/api/agent/simulator-scenarios", { admin: true }, async (match) => {
+    const items = match.ctx.simulatorScenarioStore.list().map(serializeSimulatorScenario);
+    sendJson(match.res, 200, { items });
+  }),
+
+  route("POST", "/api/agent/simulator-scenarios", { admin: true }, async (match) => {
+    const body = await readJsonBody<Record<string, unknown>>(match.req);
+    const input = normalizeSimulatorScenarioInput(body, { requireId: true });
+    const created = match.ctx.simulatorScenarioStore.create(input);
+    sendJson(match.res, 201, serializeSimulatorScenario(created));
+  }),
+
+  route(
+    "PUT",
+    /^\/api\/agent\/simulator-scenarios\/([^/]+)$/,
+    { admin: true },
+    async (match) => {
+      const id = routeParam(match, "id");
+      const existing = match.ctx.simulatorScenarioStore.getById(id);
+      if (!existing) {
+        sendError(match.res, 404, "simulator scenario not found");
+        return;
+      }
+
+      const body = await readJsonBody<Record<string, unknown>>(match.req);
+      const input = mergeScenarioUpdate(existing, body);
+      const updated = match.ctx.simulatorScenarioStore.update(id, input);
+      sendJson(match.res, 200, serializeSimulatorScenario(updated!));
+    },
+    { paramNames: ["id"] },
+  ),
+
+  route(
+    "DELETE",
+    /^\/api\/agent\/simulator-scenarios\/([^/]+)$/,
+    { admin: true },
+    async (match) => {
+      const id = routeParam(match, "id");
+      const deleted = match.ctx.simulatorScenarioStore.delete(id);
+      if (!deleted) {
+        sendError(match.res, 404, "simulator scenario not found");
+        return;
+      }
+
+      sendJson(match.res, 200, { ok: true });
+    },
+    { paramNames: ["id"] },
+  ),
+
   route("POST", "/api/agent/simulate", { admin: true }, async (match) => {
     const body = await readJsonBody<Record<string, unknown>>(match.req);
-    const result = await simulateReply(
-      {
-        caption: typeof body.caption === "string" ? body.caption : null,
-        carousel_summary:
-          typeof body.carousel_summary === "string" ? body.carousel_summary : null,
-        response_language:
-          typeof body.response_language === "string" ? body.response_language : undefined,
-        brand_name:
-          body.brand_name === null
-            ? null
-            : typeof body.brand_name === "string"
-              ? body.brand_name
-              : undefined,
-        max_chars: typeof body.max_chars === "number" ? body.max_chars : undefined,
-        thread: Array.isArray(body.thread)
-          ? body.thread.map((entry) => {
-              const row = entry as Record<string, unknown>;
-              return {
-                author: typeof row.author === "string" ? row.author : "user",
-                text: typeof row.text === "string" ? row.text : "",
-                is_brand_reply: row.is_brand_reply === true,
-                at: typeof row.at === "string" ? row.at : undefined,
-              };
-            })
-          : undefined,
-        target_comment: {
-          author:
-            typeof (body.target_comment as Record<string, unknown> | undefined)?.author ===
-            "string"
-              ? ((body.target_comment as Record<string, unknown>).author as string)
-              : "user",
-          text:
-            typeof (body.target_comment as Record<string, unknown> | undefined)?.text === "string"
-              ? ((body.target_comment as Record<string, unknown>).text as string)
-              : "",
-        },
-      },
-      {
-        personaStore: match.ctx.replyPersonaStore,
-        agentContentStore: match.ctx.agentContentStore,
-        llm: match.ctx.resolveLlmCompleter(),
-        agentRuns: match.ctx.agentRuns,
-        agentRunSteps: match.ctx.agentRunSteps,
-      },
-    );
+    const input = resolveSimulateReplyInput(body, {
+      scenarioStore: match.ctx.simulatorScenarioStore,
+    });
+    const result = await simulateReply(input, {
+      personaStore: match.ctx.replyPersonaStore,
+      agentContentStore: match.ctx.agentContentStore,
+      llm: match.ctx.resolveLlmCompleter(),
+      agentRuns: match.ctx.agentRuns,
+      agentRunSteps: match.ctx.agentRunSteps,
+    });
 
     sendJson(match.res, 200, result);
   }),

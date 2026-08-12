@@ -72,6 +72,15 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_generate_post_carousel_summary` | Gera `carousel_summary` via vision no server |
 | `iris_list_post_comments` | Comentários sincronizados do post |
 | `iris_refresh_all_post_insights` | Refresh em lote; `since`/`until` ISO filtram `published_at` |
+| `iris_get_reply_persona` | Persona de resposta (`brand_name`, `signature_instruction`, `response_language`, `max_chars`) |
+| `iris_update_reply_persona` | Atualiza persona (campos parciais aceitos) |
+| `iris_get_agent_content` | Blocos Markdown (`soul`, `page`, `knowledge`, `restrictions`) |
+| `iris_update_agent_content` | Atualiza blocos editoriais (quatro campos obrigatórios) |
+| `iris_get_app_settings` | Config operacional (`timezone`, `reply_mode`, delay, auto-monitor) |
+| `iris_update_app_settings` | Atualização parcial — mesmas validações de `PUT /api/settings/app` |
+| `iris_list_simulator_scenarios` | Lista cenários persistidos (resumo — sem thread completa) |
+| `iris_create_simulator_scenario` | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
+| `iris_simulate_reply` | Executa harness sandbox (`scenario_id` ou payload inline; opcional `response_language`) — não publica na Meta |
 
 ### Upload de imagem via MCP
 
@@ -83,7 +92,7 @@ Bytes **não** entram no JSON-RPC. Fluxo:
 
 Requisitos: `IRIS_PUBLIC_BASE_URL` + `IRIS_PUBLISH_URL_SECRET`. URL one-shot (~5 min). Clientes sem shell (ex.: ChatGPT connector puro) devem subir pela UI admin.
 
-Escopo equivalente ao token **agent** REST — sem tokens Meta nem rotas admin-only.
+Escopo equivalente ao token **agent** REST — persona e conteúdo editorial do agente; sem tokens Meta, LLM settings nem rotas admin-only.
 
 ---
 
