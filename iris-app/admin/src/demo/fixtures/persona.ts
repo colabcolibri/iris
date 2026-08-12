@@ -1,9 +1,14 @@
 import type { AgentContent, ReplyPersona } from "@/lib/types";
+import type { DemoLocale } from "@/demo/locale";
 import {
   DEMO_BRAND_NAME,
   DEMO_IG_HANDLE,
   DEMO_STORE_URL,
 } from "@/demo/demo-brand";
+import {
+  getDemoAgentContentEn,
+  getDemoReplyPersonaEn,
+} from "@/demo/fixtures/i18n/persona.en";
 
 export const DEMO_REPLY_PERSONA: ReplyPersona = {
   brand_name: DEMO_BRAND_NAME,
@@ -141,3 +146,11 @@ Recuse educadamente perguntas off-topic (política, religião, saúde, concorren
 - Sem blocos de texto enormes; preferir 2–4 frases curtas.`,
   updated_at: "2026-08-10T08:00:00.000Z",
 };
+
+export function getDemoReplyPersona(locale: DemoLocale): ReplyPersona {
+  return locale === "en" ? getDemoReplyPersonaEn() : DEMO_REPLY_PERSONA;
+}
+
+export function getDemoAgentContent(locale: DemoLocale): AgentContent {
+  return locale === "en" ? getDemoAgentContentEn() : DEMO_AGENT_CONTENT;
+}

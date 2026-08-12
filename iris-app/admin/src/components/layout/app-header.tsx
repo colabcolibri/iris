@@ -25,12 +25,15 @@ import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useDemoMode } from "@/demo/demo-mode-context";
+import { DemoLanguageSwitcher } from "@/demo/demo-language-switcher";
+import { useDemoLocale } from "@/demo/demo-locale-context";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const navigate = useNavigate();
   const { isDemoMode } = useDemoMode();
+  const { m: demoMessages } = useDemoLocale();
   const { signOut } = useAuthSession();
   const { replyMode, loading: settingsLoading } = useAppSettings();
   const { confirm } = useConfirmDialog();
@@ -101,6 +104,7 @@ export function AppHeader() {
       </div>
 
       <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+        {isDemoMode ? <DemoLanguageSwitcher /> : null}
         <AgentGlobalStatusBadge
           replyMode={replyMode}
           loading={settingsLoading}
@@ -126,7 +130,9 @@ export function AppHeader() {
           <div className="inline-flex h-11 items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 text-sm text-sidebar-foreground">
             <InstagramIcon className="size-4 text-emerald-300" />
             <span className="max-w-[9rem] truncate sm:max-w-none">{handle}</span>
-            <span className="text-xs text-sidebar-foreground/60">(demo)</span>
+            <span className="text-xs text-sidebar-foreground/60">
+              {demoMessages.instagramDemo}
+            </span>
           </div>
         ) : (
           handle && (

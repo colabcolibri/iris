@@ -97,14 +97,18 @@ export function LandingPrimaryCta({
   href,
   children,
   variant = "filled",
+  newTab = false,
 }: {
   href: string;
   children: ReactNode;
   variant?: "filled" | "ghost";
+  newTab?: boolean;
 }) {
   return (
     <a
       href={href}
+      target={newTab ? "_blank" : undefined}
+      rel={newTab ? "noopener noreferrer" : undefined}
       className={cn(
         "inline-flex h-11 items-center justify-center px-6 text-base font-medium transition-transform active:scale-[0.98]",
         variant === "filled"

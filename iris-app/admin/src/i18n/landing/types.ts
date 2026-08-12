@@ -5,6 +5,7 @@ export type LandingNavMessages = {
   pricing: string;
   faq: string;
   contact: string;
+  demo: string;
 };
 
 export type LandingStepMessages = {

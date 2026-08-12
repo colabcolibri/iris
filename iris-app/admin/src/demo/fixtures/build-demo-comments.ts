@@ -5,11 +5,10 @@ import type {
   Post,
 } from "@/lib/types";
 import { DEMO_BRAND_REPLY_HANDLE } from "@/demo/demo-brand";
+import type { DemoLocale } from "@/demo/locale";
 import { listDemoManagedPosts } from "@/demo/domain/managed-posts";
 import {
-  ELABORATE_THREADS,
-  MEDIUM_THREADS,
-  REALISTIC_PAIRS,
+  getDemoCommentThreadBundle,
   type CommentTurn,
 } from "@/demo/fixtures/demo-comment-threads";
 
@@ -181,7 +180,9 @@ function fillCommentBucket(
     pairIdx: number;
     result: Record<string, Comment[]>;
   },
+  threads: ReturnType<typeof getDemoCommentThreadBundle>,
 ): void {
+  const { ELABORATE_THREADS, MEDIUM_THREADS, REALISTIC_PAIRS } = threads;
   const bucket: Comment[] = [];
 
   while (bucket.length < target && state.elaborateIdx < ELABORATE_THREADS.length) {
@@ -246,7 +247,9 @@ function fillCommentBucket(
 export function buildDemoComments(
   posts: Post[],
   referenceDate = new Date(),
+  locale: DemoLocale = "pt",
 ): Record<string, Comment[]> {
+  const threads = getDemoCommentThreadBundle(locale);
   igSeq = 1000;
   commentSeq = 1;
   userPoolIndex = 0;
@@ -263,7 +266,7 @@ export function buildDemoComments(
   for (const post of managedPosts) {
     const target = targets.get(post.id) ?? 0;
     if (target <= 0) continue;
-    fillCommentBucket(post.id, target, referenceDate, state);
+    fillCommentBucket(post.id, target, referenceDate, state, threads);
   }
 
   let brands = 0;
@@ -285,7 +288,10 @@ export function buildDemoComments(
       list.push({
         id: nextCommentId(),
         ig_comment_id: nextIgId(),
-        text: "Se ainda tiver dúvida de medida, compara busto/cintura/quadril com a tabela do último slide — medimos em superfície plana, sem esticar o tecido. Estamos por aqui se quiser chutar tamanho antes de fechar o pedido.\nEquipe Estúdio Nômade 💛",
+        text:
+          locale === "en"
+            ? "If you still have size questions, compare bust/waist/hips to the last slide chart — we measure on a flat surface without stretching fabric. We're here if you want a size suggestion before checkout.\nTeam Estúdio Nômade 💛"
+            : "Se ainda tiver dúvida de medida, compara busto/cintura/quadril com a tabela do último slide — medimos em superfície plana, sem esticar o tecido. Estamos por aqui se quiser chutar tamanho antes de fechar o pedido.\nEquipe Estúdio Nômade 💛",
         status: "replied",
         author_username: BRAND,
         parent_ig_comment_id: root.ig_comment_id,

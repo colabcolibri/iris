@@ -1,7 +1,8 @@
 import type { Asset, Post, PostStatus } from "@/lib/types";
+import type { DemoLocale } from "@/demo/locale";
 import { DEMO_STORE_URL } from "@/demo/demo-brand";
 import type { DemoPostTemplate } from "@/demo/fixtures/demo-post-templates";
-import { DEMO_POST_TEMPLATES } from "@/demo/fixtures/demo-post-templates";
+import { getDemoPostTemplates } from "@/demo/fixtures/i18n";
 
 const SLOTS_PREV_MONTH = 10;
 const SLOTS_CURRENT_MONTH = 15;
@@ -157,7 +158,11 @@ function applyDates(
   };
 }
 
-export function buildDemoPosts(referenceDate = new Date()): Post[] {
+export function buildDemoPosts(
+  referenceDate = new Date(),
+  locale: DemoLocale = "pt",
+): Post[] {
+  const templates = getDemoPostTemplates(locale);
   const year = referenceDate.getFullYear();
   const monthIndex = referenceDate.getMonth();
 
@@ -185,7 +190,7 @@ export function buildDemoPosts(referenceDate = new Date()): Post[] {
     daysInMonth(nextYear, nextMonthIndex),
   );
 
-  return DEMO_POST_TEMPLATES.map((template, index) => {
+  return templates.map((template, index) => {
     let slotYear: number;
     let slotMonth: number;
     let day: number;
@@ -256,8 +261,11 @@ function asset(
   };
 }
 
-export function buildDemoAssets(posts: Post[]): Record<string, Asset[]> {
-  const byId = new Map(DEMO_POST_TEMPLATES.map((t) => [t.id, t]));
+export function buildDemoAssets(
+  posts: Post[],
+  locale: DemoLocale = "pt",
+): Record<string, Asset[]> {
+  const byId = new Map(getDemoPostTemplates(locale).map((t) => [t.id, t]));
   const result: Record<string, Asset[]> = {};
 
   for (const post of posts) {
@@ -282,7 +290,10 @@ export function buildDemoAssets(posts: Post[]): Record<string, Asset[]> {
   return result;
 }
 
-export function buildDemoPostInsights(referenceDate = new Date()): Record<
+export function buildDemoPostInsights(
+  referenceDate = new Date(),
+  locale: DemoLocale = "pt",
+): Record<
   string,
   {
     ok: boolean;
@@ -302,13 +313,14 @@ export function buildDemoPostInsights(referenceDate = new Date()): Record<
   }
 > {
   const fetchedAt = referenceDate.toISOString();
-  const posts = buildDemoPosts(referenceDate);
+  const posts = buildDemoPosts(referenceDate, locale);
+  const templates = getDemoPostTemplates(locale);
   const insights: ReturnType<typeof buildDemoPostInsights> = {};
 
   for (const post of posts) {
     if (post.status !== "published" && post.status !== "monitored") continue;
     if (!post.ig_media_id) continue;
-    const template = DEMO_POST_TEMPLATES.find((t) => t.id === post.id);
+    const template = templates.find((t) => t.id === post.id);
     const preview = template?.assets?.[0]?.filename ?? "cover.jpg";
     insights[post.id] = {
       ok: true,

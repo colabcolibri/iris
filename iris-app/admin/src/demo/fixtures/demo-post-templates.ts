@@ -562,3 +562,5 @@ Cadastro na bio.
     assets: [{ filename: "live-lista.jpg" }],
   },
 ];
+
+export { getDemoPostTemplates } from "@/demo/fixtures/i18n";

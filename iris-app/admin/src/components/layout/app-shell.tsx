@@ -6,6 +6,7 @@ import {
   IrisSidebarProvider,
 } from "@/components/layout/iris-sidebar";
 import { DemoBanner, useDemoMode } from "@/demo/demo-mode-context";
+import { useDemoLocale } from "@/demo/demo-locale-context";
 
 type AppShellProps = {
   sidebarView?: AppView;
@@ -19,9 +20,13 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const { isDemoMode } = useDemoMode();
+  const { locale } = useDemoLocale();
 
   return (
-    <IrisSidebarProvider demoChrome={isDemoMode}>
+    <IrisSidebarProvider
+      demoChrome={isDemoMode}
+      demoLocale={isDemoMode ? locale : undefined}
+    >
       {isDemoMode ? <DemoBanner /> : null}
       <AppHeader />
 

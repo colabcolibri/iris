@@ -8,26 +8,35 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
+import type { DemoLocale } from "@/demo/locale";
 
 const IRIS_SIDEBAR_WIDTH = "17.5rem";
 /** h-14 — altura do AppHeader */
 const IRIS_HEADER_HEIGHT = "3.5rem";
-/** h-10 — altura do DemoBanner */
+/** h-10 — altura do DemoBanner (só PT) */
 const IRIS_DEMO_BANNER_HEIGHT = "2.5rem";
+/** faixa do disclaimer EN abaixo do banner */
+const IRIS_DEMO_DISCLAIMER_HEIGHT = "2.75rem";
 
 type IrisSidebarProviderProps = {
   children: ReactNode;
   className?: string;
   demoChrome?: boolean;
+  demoLocale?: DemoLocale;
 };
 
 export function IrisSidebarProvider({
   children,
   className,
   demoChrome = false,
+  demoLocale,
 }: IrisSidebarProviderProps) {
+  const demoBannerHeight =
+    demoChrome && demoLocale === "en"
+      ? `calc(${IRIS_DEMO_BANNER_HEIGHT} + ${IRIS_DEMO_DISCLAIMER_HEIGHT})`
+      : IRIS_DEMO_BANNER_HEIGHT;
   const chromeTop = demoChrome
-    ? `calc(${IRIS_DEMO_BANNER_HEIGHT} + ${IRIS_HEADER_HEIGHT})`
+    ? `calc(${demoBannerHeight} + ${IRIS_HEADER_HEIGHT})`
     : IRIS_HEADER_HEIGHT;
 
   return (

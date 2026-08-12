@@ -1,3 +1,10 @@
+import type { DemoLocale } from "@/demo/locale";
+import {
+  ELABORATE_THREADS as ELABORATE_THREADS_EN,
+  MEDIUM_THREADS as MEDIUM_THREADS_EN,
+  REALISTIC_PAIRS as REALISTIC_PAIRS_EN,
+} from "@/demo/fixtures/i18n/comment-threads.en";
+
 /** Limites alinhados ao comportamento real de comentários no Instagram + persona Iris. */
 export const DEMO_USER_COMMENT_MAX = 140;
 export const DEMO_BRAND_COMMENT_MIN = 200;
@@ -699,3 +706,18 @@ export const REALISTIC_PAIRS: Array<{ user: string; brand: string }> = [
     ),
   },
 ];
+
+export function getDemoCommentThreadBundle(locale: DemoLocale) {
+  if (locale === "en") {
+    return {
+      ELABORATE_THREADS: ELABORATE_THREADS_EN,
+      MEDIUM_THREADS: MEDIUM_THREADS_EN,
+      REALISTIC_PAIRS: REALISTIC_PAIRS_EN,
+    };
+  }
+  return {
+    ELABORATE_THREADS,
+    MEDIUM_THREADS,
+    REALISTIC_PAIRS,
+  };
+}

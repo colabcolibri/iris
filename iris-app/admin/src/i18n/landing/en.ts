@@ -15,6 +15,7 @@ export const landingEn: LandingMessages = {
     pricing: "Implementation",
     faq: "FAQ",
     contact: "Contact",
+    demo: "View demo",
   },
   hero: {
     eyebrow: "Your editorial agent and social media manager",

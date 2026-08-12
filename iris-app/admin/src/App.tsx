@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { GuestRoute } from "@/components/auth/guest-route";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AppLayout } from "@/components/layout/app-layout";
+import { DemoAppLayout } from "@/components/layout/demo-app-layout";
 import { AppSettingsProvider } from "@/contexts/app-settings-context";
 import { AuthSessionProvider } from "@/contexts/auth-session-context";
 import { ConfirmDialogProvider } from "@/contexts/confirm-dialog-context";
@@ -18,6 +19,7 @@ import { AgentRunsPage } from "@/pages/agent-runs-page";
 import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
 import { DemoModeProvider } from "@/demo/demo-mode-context";
+import { DemoLocaleProvider } from "@/demo/demo-locale-context";
 
 const ADMIN_APP_ROUTES = [
   { path: ROUTES.admin.root, element: <DashboardPage /> },
@@ -96,9 +98,11 @@ export function App() {
               <Route
                 element={
                   <DemoModeProvider>
-                    <MetaSessionProvider>
-                      <AppLayout />
-                    </MetaSessionProvider>
+                    <DemoLocaleProvider>
+                      <MetaSessionProvider>
+                        <DemoAppLayout />
+                      </MetaSessionProvider>
+                    </DemoLocaleProvider>
                   </DemoModeProvider>
                 }
               >

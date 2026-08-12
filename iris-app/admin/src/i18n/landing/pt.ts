@@ -15,6 +15,7 @@ export const landingPt: LandingMessages = {
     pricing: "Implementação",
     faq: "FAQ",
     contact: "Contato",
+    demo: "Ver demo",
   },
   hero: {
     eyebrow: "Sua agente editorial e gestora de mídias sociais",

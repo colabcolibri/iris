@@ -44,7 +44,7 @@ export function LandingHero() {
             <LandingPrimaryCta href={`#${LANDING_SECTIONS.contact}`}>
               {m.hero.cta}
             </LandingPrimaryCta>
-            <LandingPrimaryCta href={ROUTES.demo.root} variant="ghost">
+            <LandingPrimaryCta href={ROUTES.demo.root} variant="ghost" newTab>
               {m.hero.demoCta}
             </LandingPrimaryCta>
           </div>

@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Bot, BotOff, ClipboardCheck } from "lucide-react";
 import { replyModeOption } from "@/lib/reply-mode-options";
 import type { ReplyMode } from "@/lib/types";
+import { useDemoLocale } from "@/demo/demo-locale-context";
+import { useDemoMode } from "@/demo/demo-mode-context";
 import { useAppRoutes } from "@/demo/demo-routes";
 import { cn } from "@/lib/utils";
 
@@ -29,13 +31,27 @@ export function AgentGlobalStatusBadge({
   className,
 }: AgentGlobalStatusBadgeProps) {
   const routes = useAppRoutes();
+  const { isDemoMode } = useDemoMode();
+  const { m } = useDemoLocale();
   const Icon = ICONS[replyMode];
-  const label = replyModeOption(replyMode).label;
+  const label = isDemoMode
+    ? m.replyModeLabels[replyMode]
+    : replyModeOption(replyMode).label;
+  const title = isDemoMode
+    ? m.agentTitle(label)
+    : `Agente global: ${label}. Clique para abrir configurações.`;
+  const badgeText = loading
+    ? isDemoMode
+      ? m.agentLoading
+      : "Agente…"
+    : isDemoMode
+      ? m.agentBadge(label)
+      : `Agente: ${label.toLowerCase()}`;
 
   return (
     <Link
       to={routes.settings}
-      title={`Agente global: ${label}. Clique para abrir configurações.`}
+      title={title}
       className={cn(
         "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
         BADGE_STYLES[replyMode],
@@ -44,9 +60,7 @@ export function AgentGlobalStatusBadge({
       )}
     >
       <Icon className="size-3.5 shrink-0" />
-      <span className="hidden truncate sm:inline">
-        {loading ? "Agente…" : `Agente: ${label.toLowerCase()}`}
-      </span>
+      <span className="hidden truncate sm:inline">{badgeText}</span>
       <span
         className="size-2 shrink-0 rounded-full bg-current opacity-70"
         aria-hidden

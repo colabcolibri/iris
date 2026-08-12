@@ -8,6 +8,9 @@ import {
 import { toast } from "sonner";
 
 import { isDemoPath } from "@/demo/demo-path";
+import { useDemoLocale } from "@/demo/demo-locale-context";
+import { getActiveDemoLocale } from "@/demo/demo-state";
+import { getDemoUiMessages } from "@/demo/fixtures/i18n/ui";
 
 type DemoModeContextValue = {
   isDemoMode: boolean;
@@ -26,20 +29,32 @@ function setDemoModeActive(active: boolean) {
   demoModeActive = active;
 }
 
-export function showDemoToast(
-  message = "Modo demonstração — esta ação não é salva.",
-) {
-  toast.message(message, { duration: 2800 });
+export function showDemoToast(message?: string) {
+  const text =
+    message ?? getDemoUiMessages(getActiveDemoLocale()).demoToast;
+  toast.message(text, { duration: 2800 });
 }
 
 export function DemoBanner() {
+  const { m } = useDemoLocale();
+
   return (
-    <div
-      role="status"
-      className="flex h-10 shrink-0 items-center justify-center border-b border-amber-500/30 bg-amber-500/15 px-4 text-center text-sm font-medium text-amber-950"
-    >
-      Modo demonstração — explore o Iris com dados fictícios, sem cadastro.
-    </div>
+    <>
+      <div
+        role="status"
+        className="flex h-10 w-full shrink-0 items-center justify-center border-b border-amber-500/30 bg-amber-500/15 px-4 text-center text-sm font-medium text-amber-950"
+      >
+        {m.banner}
+      </div>
+      {m.contentDisclaimer ? (
+        <div
+          role="note"
+          className="flex w-full shrink-0 items-center justify-center border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-xs leading-snug text-amber-950/90 sm:text-sm"
+        >
+          {m.contentDisclaimer}
+        </div>
+      ) : null}
+    </>
   );
 }
 

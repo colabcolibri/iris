@@ -44,28 +44,38 @@ export function CalendarPostRow({
       onClick={() => onSelect(post)}
       title={`${POST_STATUS_LABELS[post.status]}${time ? ` · ${time}` : ""} · ${replyCopy.label} — ${post.caption ?? ""}`}
       className={cn(
-        "flex w-full min-w-0 flex-col gap-1 rounded-[var(--iris-radius-sm)] border border-border bg-background text-left shadow-none transition-colors hover:border-primary/40",
-        compact ? "px-2 py-1.5" : "gap-1.5 px-3 py-2.5 sm:px-4",
+        "flex w-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[var(--iris-radius-sm)] border border-border bg-background text-left shadow-none transition-colors hover:border-primary/40",
+        compact ? "shrink gap-0.5 px-1.5 py-1" : "gap-1.5 px-3 py-2.5 sm:px-4",
         selected && "border-primary ring-1 ring-primary",
       )}
     >
-      <div className="flex min-w-0 items-center gap-1.5">
-        <StatusBadge status={post.status} />
+      <div className="flex min-w-0 shrink-0 items-center gap-1">
+        <StatusBadge
+          status={post.status}
+          className={compact ? "px-1.5 py-0 text-[10px] leading-4" : undefined}
+        />
         {time ? (
-          <span className="shrink-0 text-xs text-muted-foreground">{time}</span>
+          <span
+            className={cn(
+              "shrink-0 text-muted-foreground",
+              compact ? "text-[10px] leading-4" : "text-xs",
+            )}
+          >
+            {time}
+          </span>
         ) : null}
       </div>
       <span
         className={cn(
-          "font-semibold text-foreground",
+          "min-w-0 font-semibold text-foreground",
           compact
-            ? "line-clamp-2 text-xs leading-snug"
+            ? "truncate text-[11px] leading-tight"
             : "line-clamp-2 text-sm leading-snug",
         )}
       >
         {label || "Sem legenda"}
       </span>
-      {ReplyIcon ? (
+      {!compact && ReplyIcon ? (
         <span
           className={cn(
             "inline-flex items-center gap-1 truncate text-xs font-semibold",

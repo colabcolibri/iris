@@ -166,7 +166,7 @@ export function CalendarView({
               className={cn(
                 "flex min-h-0 flex-col overflow-hidden rounded-(--iris-radius-sm) border transition-colors",
                 hasPosts
-                  ? "gap-1.5 border-border bg-card p-1.5 sm:p-2"
+                  ? "gap-1 border-border bg-card p-1 sm:p-1.5"
                   : "gap-0 border-transparent bg-muted/25 p-1",
                 isOutside && "opacity-35",
                 isToday &&
@@ -187,7 +187,7 @@ export function CalendarView({
               </span>
 
               {hasPosts ? (
-                <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
+                <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
                   {dayPosts.slice(0, 3).map((post) => (
                     <CalendarPostRow
                       key={post.id}
@@ -201,7 +201,7 @@ export function CalendarView({
                   ))}
 
                   {dayPosts.length > 3 ? (
-                    <span className="px-1 text-xs text-muted-foreground">
+                    <span className="shrink-0 truncate px-1 text-[10px] text-muted-foreground">
                       +{dayPosts.length - 3} mais
                     </span>
                   ) : null}

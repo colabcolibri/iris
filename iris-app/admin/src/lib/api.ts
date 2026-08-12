@@ -31,6 +31,8 @@ import type {
 } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 import { getDemoMode, showDemoToast } from "@/demo/demo-mode-context";
+import { getActiveDemoLocale } from "@/demo/demo-state";
+import { getDemoUiMessages } from "@/demo/fixtures/i18n/ui";
 import { demoApiFetch, demoFetchAssetBlob } from "@/demo/demo-api";
 
 export class UnauthorizedError extends Error {
@@ -675,7 +677,7 @@ export async function downloadWebhookEventsExport(
   } = {},
 ) {
   if (getDemoMode()) {
-    showDemoToast("Exportação disponível apenas no admin real.");
+    showDemoToast(getDemoUiMessages(getActiveDemoLocale()).exportNotAvailable);
     void limit;
     void filter;
     return;

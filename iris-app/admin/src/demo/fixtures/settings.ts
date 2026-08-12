@@ -8,13 +8,15 @@ import type {
   WebhookEvent,
   ReplyAudit,
 } from "@/lib/types";
+import type { DemoLocale } from "@/demo/locale";
 import { DEMO_IG_HANDLE, DEMO_MCP_HOST } from "@/demo/demo-brand";
 import {
-  DEMO_AGENT_CONTENT,
-  DEMO_REPLY_PERSONA,
-} from "@/demo/fixtures/persona";
+  getDemoAgentRunDetailsEn,
+  getDemoAgentRunsEn,
+  getDemoWebhookEventsEn,
+} from "@/demo/fixtures/i18n/settings-copy.en";
 
-export { DEMO_AGENT_CONTENT, DEMO_REPLY_PERSONA };
+export { DEMO_REPLY_PERSONA, DEMO_AGENT_CONTENT } from "@/demo/fixtures/persona";
 
 export const DEMO_META_STATUS: MetaStatus = {
   connected: true,
@@ -440,3 +442,17 @@ export const DEMO_AGENT_RUN_DETAILS: Record<string, AgentRunDetail> = {
     },
   },
 };
+
+export function getDemoWebhookEvents(locale: DemoLocale): WebhookEvent[] {
+  return locale === "en" ? getDemoWebhookEventsEn() : DEMO_WEBHOOK_EVENTS;
+}
+
+export function getDemoAgentRuns(locale: DemoLocale): AgentRunListItem[] {
+  return locale === "en" ? getDemoAgentRunsEn() : DEMO_AGENT_RUNS;
+}
+
+export function getDemoAgentRunDetails(
+  locale: DemoLocale,
+): Record<string, AgentRunDetail> {
+  return locale === "en" ? getDemoAgentRunDetailsEn() : DEMO_AGENT_RUN_DETAILS;
+}
