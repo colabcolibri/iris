@@ -13,8 +13,13 @@ export function handlePublishMediaRoute(
     return false;
   }
 
+  // /publish/media/{sig}/{postId}/{filename} → 5 segments
   const parts = pathname.split("/").filter(Boolean);
-  if (parts.length !== 4) {
+  if (
+    parts.length !== 5 ||
+    parts[0] !== "publish" ||
+    parts[1] !== "media"
+  ) {
     sendError(res, 404, "Not found");
     return true;
   }
