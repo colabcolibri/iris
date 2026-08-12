@@ -206,6 +206,85 @@ test("prepare + signed multipart upload ingests asset once", async () => {
   }
 });
 
+test("iris_update_post_asset sets alt_text and user_tags", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-asset-meta-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+    publicBaseUrl: "http://127.0.0.1:9876",
+    publishUrlSecret: "publish-secret",
+  });
+
+  const post = ctx.posts.create({ caption: "meta", channel: "instagram" });
+  const { ingestPostAsset } = await import("../../domain/posts/asset-ingest.ts");
+  const asset = await ingestPostAsset(
+    {
+      posts: ctx.posts,
+      assets: ctx.assets,
+      mediaStorage: ctx.mediaStorage,
+      imageOptimizer: ctx.imageOptimizer,
+    },
+    {
+      postId: post.id,
+      buffer: TINY_PNG,
+      filename: "pixel.png",
+      sortOrder: 1,
+    },
+  );
+
+  const mcp = createIrisMcpServer(ctx);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test", version: "1.0.0" });
+  await mcp.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  try {
+    const listedTools = await client.listTools();
+    assert.ok(
+      listedTools.tools.some((tool) => tool.name === "iris_update_post_asset"),
+    );
+
+    const updated = await client.callTool({
+      name: "iris_update_post_asset",
+      arguments: {
+        postId: post.id,
+        assetId: asset.id,
+        altText: "Blue product on white",
+        userTags: [{ username: "alice", x: 0.25, y: 0.75 }],
+      },
+    });
+    assert.ok(!updated.isError);
+    const payload = JSON.parse(
+      Array.isArray(updated.content) && updated.content[0]?.type === "text"
+        ? updated.content[0].text
+        : "{}",
+    ) as {
+      alt_text: string;
+      user_tags: Array<{ username: string; x: number; y: number }>;
+    };
+    assert.equal(payload.alt_text, "Blue product on white");
+    assert.deepEqual(payload.user_tags, [
+      { username: "alice", x: 0.25, y: 0.75 },
+    ]);
+
+    const stored = ctx.assets.findById(asset.id);
+    assert.equal(stored?.altText, "Blue product on white");
+    assert.deepEqual(stored?.userTags, [
+      { username: "alice", x: 0.25, y: 0.75 },
+    ]);
+  } finally {
+    await client.close();
+    await mcp.close();
+    db.close();
+    await rm(mediaRoot, { recursive: true, force: true });
+  }
+});
+
 test("iris_list_post_assets and iris_delete_post_asset", async () => {
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-asset-del-"));
   const db = openDatabase(":memory:");

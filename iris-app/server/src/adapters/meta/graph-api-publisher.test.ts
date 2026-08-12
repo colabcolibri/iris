@@ -36,12 +36,16 @@ test("graph api publisher uploads carousel and publishes", async () => {
       sortOrder: 1,
       storagePath: `${postId}/01.jpg`,
       mime: "image/jpeg",
+      altText: "First slide product",
+      userTags: [{ username: "alice", x: 0.2, y: 0.8 }],
     });
     assets.create({
       postId,
       sortOrder: 2,
       storagePath: `${postId}/02.jpg`,
       mime: "image/jpeg",
+      altText: "Second slide detail",
+      userTags: [{ username: "bob", x: 0.5, y: 0.5 }],
     });
 
     let mediaCounter = 0;
@@ -125,6 +129,17 @@ test("graph api publisher uploads carousel and publishes", async () => {
       !calls.some(
         (c) => c.body.is_carousel_item === "true" && c.body.collaborators,
       ),
+    );
+    const childCalls = calls.filter((c) => c.body.is_carousel_item === "true");
+    assert.equal(childCalls[0]?.body.alt_text, "First slide product");
+    assert.equal(
+      childCalls[0]?.body.user_tags,
+      JSON.stringify([{ username: "alice", x: 0.2, y: 0.8 }]),
+    );
+    assert.equal(childCalls[1]?.body.alt_text, "Second slide detail");
+    assert.equal(
+      childCalls[1]?.body.user_tags,
+      JSON.stringify([{ username: "bob", x: 0.5, y: 0.5 }]),
     );
     assert.ok(calls.some((c) => c.body.creation_id === "carousel-container"));
     assert.ok(

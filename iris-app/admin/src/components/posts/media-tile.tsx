@@ -16,8 +16,11 @@ type MediaTileProps = {
   total: number;
   readOnly?: boolean;
   busy?: boolean;
+  selected?: boolean;
+  selectable?: boolean;
   isDragging?: boolean;
   isDragOver?: boolean;
+  onSelect?: () => void;
   onDelete: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
@@ -33,8 +36,11 @@ export function MediaTile({
   total,
   readOnly = false,
   busy = false,
+  selected = false,
+  selectable = false,
   isDragging = false,
   isDragOver = false,
+  onSelect,
   onDelete,
   onMoveLeft,
   onMoveRight,
@@ -50,6 +56,23 @@ export function MediaTile({
 
   return (
     <div
+      role={selectable ? "button" : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      aria-pressed={selectable ? selected : undefined}
+      onClick={() => {
+        if (selectable) {
+          onSelect?.();
+        }
+      }}
+      onKeyDown={(event) => {
+        if (!selectable) {
+          return;
+        }
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect?.();
+        }
+      }}
       draggable={!readOnly && !busy}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -59,7 +82,10 @@ export function MediaTile({
         "group relative min-w-0 overflow-hidden rounded-[var(--iris-radius-sm)] border border-border bg-muted/20 transition-colors shadow-none",
         isDragOver && "border-primary ring-2 ring-primary/25",
         isDragging && "scale-[0.98] opacity-50",
-        !readOnly && "cursor-grab active:cursor-grabbing",
+        selected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+        selectable && "cursor-pointer",
+        !readOnly && !selectable && "cursor-grab active:cursor-grabbing",
+        !readOnly && selectable && "active:cursor-grabbing",
       )}
     >
       <div
@@ -68,7 +94,7 @@ export function MediaTile({
       >
         <img
           src={item.previewUrl}
-          alt=""
+          alt={item.altText?.trim() || ""}
           className="max-h-full max-w-full object-contain"
           draggable={false}
         />
@@ -84,6 +110,7 @@ export function MediaTile({
             "absolute top-2 right-2 flex items-center gap-0.5 rounded-[var(--iris-radius-sm)] border border-border bg-background/95 p-0.5 shadow-none",
             "opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
           )}
+          onClick={(event) => event.stopPropagation()}
         >
           <Button
             type="button"
