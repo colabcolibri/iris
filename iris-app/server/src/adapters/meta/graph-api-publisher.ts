@@ -2,6 +2,7 @@ import type { AssetRepository } from "../../ports/asset-repository.ts";
 import type { MetaPublisher } from "../../ports/meta-publisher.ts";
 import { metaPublishError } from "../../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../../ports/meta-token-store.ts";
+import type { PostRepository } from "../../ports/post-repository.ts";
 import {
   buildPublishImageUrl,
   filenameFromStoragePath,
@@ -21,6 +22,7 @@ export type GraphApiPublisherConfig = {
 
 type GraphApiPublisherDeps = {
   metaTokenStore: MetaTokenStore;
+  posts: PostRepository;
   assets: AssetRepository;
   config: GraphApiPublisherConfig;
 };
@@ -139,11 +141,17 @@ export function createGraphApiPublisher(
         throw metaPublishError("IG user id not configured");
       }
 
+      const post = deps.posts.findById(postId);
+      if (!post) {
+        throw metaPublishError("post not found");
+      }
+
       const assets = deps.assets.listByPostId(postId);
       if (assets.length === 0) {
         throw metaPublishError("post has no assets to publish");
       }
 
+      const caption = post.caption?.trim() ?? "";
       const containerIds: string[] = [];
 
       for (const asset of assets) {
@@ -159,6 +167,9 @@ export function createGraphApiPublisher(
 
         if (assets.length > 1) {
           body.is_carousel_item = "true";
+        } else if (caption) {
+          // Single image: caption goes on the media container
+          body.caption = caption;
         }
 
         const created = await graphPost(`/${igUserId}/media`, token, body);
@@ -174,10 +185,20 @@ export function createGraphApiPublisher(
       let publishContainerId = containerIds[0];
 
       if (containerIds.length > 1) {
-        const carousel = await graphPost(`/${igUserId}/media`, token, {
+        const carouselBody: Record<string, string> = {
           media_type: "CAROUSEL",
           children: containerIds.join(","),
-        });
+        };
+        if (caption) {
+          // Carousel: caption goes on the parent CAROUSEL container
+          carouselBody.caption = caption;
+        }
+
+        const carousel = await graphPost(
+          `/${igUserId}/media`,
+          token,
+          carouselBody,
+        );
 
         if (!carousel.id) {
           throw metaPublishError("Meta did not return carousel container id");

@@ -171,6 +171,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   };
 
   const assets = createSqliteAssetRepository(options.db);
+  const posts = createSqlitePostRepository(options.db);
   const metaAppSecret = options.metaAppSecret ?? process.env.META_APP_SECRET ?? "";
   const metaWebhookVerifyToken =
     options.metaWebhookVerifyToken ?? process.env.META_WEBHOOK_VERIFY_TOKEN ?? "";
@@ -179,6 +180,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     publicBaseUrl && publishUrlSecret
       ? createGraphApiPublisher({
           metaTokenStore,
+          posts,
           assets,
           config: {
             resolveIgUserId,
@@ -251,7 +253,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   });
 
   const replyContextAssembler: ReplyContextAssemblerDeps = {
-    posts: createSqlitePostRepository(options.db),
+    posts,
     assets,
     comments: createSqliteCommentRepository(options.db),
     personaStore: replyPersonaStore,

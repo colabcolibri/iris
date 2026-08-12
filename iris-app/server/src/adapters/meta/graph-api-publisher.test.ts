@@ -88,6 +88,7 @@ test("graph api publisher uploads carousel and publishes", async () => {
 
     const publisher = createGraphApiPublisher({
       metaTokenStore,
+      posts,
       assets,
       config: {
         resolveIgUserId: () => "123456789",
@@ -104,7 +105,14 @@ test("graph api publisher uploads carousel and publishes", async () => {
       calls.filter((c) => c.body.is_carousel_item === "true").length,
       2,
     );
-    assert.ok(calls.some((c) => c.body.media_type === "CAROUSEL"));
+    const carouselCall = calls.find((c) => c.body.media_type === "CAROUSEL");
+    assert.ok(carouselCall);
+    assert.equal(carouselCall.body.caption, "carousel");
+    assert.ok(
+      !calls.some(
+        (c) => c.body.is_carousel_item === "true" && c.body.caption,
+      ),
+    );
     assert.ok(calls.some((c) => c.body.creation_id === "carousel-container"));
     assert.ok(
       calls.filter((c) => c.method === "GET" && c.body.fields?.includes("status_code"))
@@ -173,6 +181,7 @@ test("graph api publisher publishes single image without carousel", async () => 
 
     const publisher = createGraphApiPublisher({
       metaTokenStore,
+      posts,
       assets,
       config: {
         resolveIgUserId: () => "123456789",
@@ -186,6 +195,8 @@ test("graph api publisher publishes single image without carousel", async () => 
     const result = await publisher.publish(postId);
     assert.equal(result.igMediaId, "ig-media-single");
     assert.equal(calls.filter((c) => c.path.endsWith("/media")).length, 1);
+    const mediaCall = calls.find((c) => c.path.endsWith("/media") && !c.body.media_type);
+    assert.equal(mediaCall?.body.caption, "single");
     assert.ok(calls.some((c) => c.body.creation_id === "single-container"));
   } finally {
     db.close();
@@ -239,6 +250,7 @@ test("graph api publisher fails when container status is ERROR", async () => {
 
     const publisher = createGraphApiPublisher({
       metaTokenStore,
+      posts,
       assets,
       config: {
         resolveIgUserId: () => "123456789",
