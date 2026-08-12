@@ -18,7 +18,7 @@ import { WebhooksPage } from "@/pages/webhooks-page";
 import { AgentRunsPage } from "@/pages/agent-runs-page";
 import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
-import { UmamiAnalyticsLayout } from "@/components/analytics/umami-analytics-layout";
+import { UmamiAnalytics } from "@/components/analytics/umami-analytics";
 import { DemoModeProvider } from "@/demo/demo-mode-context";
 import { DemoLocaleProvider } from "@/demo/demo-locale-context";
 
@@ -59,29 +59,12 @@ export function App() {
       <ConfirmDialogProvider>
         <AppSettingsProvider>
           <BrowserRouter>
+            <UmamiAnalytics />
             <Routes>
-              <Route element={<UmamiAnalyticsLayout />}>
-                <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
-                <Route path="/en" element={<LandingPage locale="en" />} />
-                <Route path={ROUTES.privacy} element={<PrivacyPolicyPage />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-
-                <Route
-                  element={
-                    <DemoModeProvider>
-                      <DemoLocaleProvider>
-                        <MetaSessionProvider>
-                          <DemoAppLayout />
-                        </MetaSessionProvider>
-                      </DemoLocaleProvider>
-                    </DemoModeProvider>
-                  }
-                >
-                  {DEMO_APP_ROUTES.map(({ path, element }) => (
-                    <Route key={path} path={path} element={element} />
-                  ))}
-                </Route>
-              </Route>
+              <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
+              <Route path="/en" element={<LandingPage locale="en" />} />
+              <Route path={ROUTES.privacy} element={<PrivacyPolicyPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
               {LEGACY_ADMIN_REDIRECTS.map(([from, to]) => (
                 <Route
@@ -110,6 +93,22 @@ export function App() {
                 }
               >
                 {ADMIN_APP_ROUTES.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
+              </Route>
+
+              <Route
+                element={
+                  <DemoModeProvider>
+                    <DemoLocaleProvider>
+                      <MetaSessionProvider>
+                        <DemoAppLayout />
+                      </MetaSessionProvider>
+                    </DemoLocaleProvider>
+                  </DemoModeProvider>
+                }
+              >
+                {DEMO_APP_ROUTES.map(({ path, element }) => (
                   <Route key={path} path={path} element={element} />
                 ))}
               </Route>
