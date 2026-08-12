@@ -13,6 +13,10 @@ export type GraphApiPublisherConfig = {
   publishUrlSecret: string;
   graphApiVersion?: string;
   fetchImpl?: typeof fetch;
+  /** Delay between container status polls (default 2s). */
+  containerPollIntervalMs?: number;
+  /** Max polls per container before timeout (default 90 ≈ 3 min). */
+  containerPollMaxAttempts?: number;
 };
 
 type GraphApiPublisherDeps = {
@@ -23,8 +27,16 @@ type GraphApiPublisherDeps = {
 
 type GraphResponse = {
   id?: string;
+  status_code?: string;
+  status?: string;
   error?: { message?: string; code?: number };
 };
+
+const TERMINAL_ERROR = new Set(["ERROR", "EXPIRED"]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export function createGraphApiPublisher(
   deps: GraphApiPublisherDeps,
@@ -32,6 +44,8 @@ export function createGraphApiPublisher(
   const fetchFn = deps.config.fetchImpl ?? fetch;
   const version = deps.config.graphApiVersion ?? "v21.0";
   const base = `https://graph.instagram.com/${version}`;
+  const pollIntervalMs = deps.config.containerPollIntervalMs ?? 2_000;
+  const pollMaxAttempts = deps.config.containerPollMaxAttempts ?? 90;
 
   async function graphPost(
     path: string,
@@ -53,6 +67,64 @@ export function createGraphApiPublisher(
     }
 
     return json;
+  }
+
+  async function graphGet(
+    path: string,
+    token: string,
+    fields: string,
+  ): Promise<GraphResponse> {
+    const params = new URLSearchParams({ fields, access_token: token });
+    const response = await fetchFn(`${base}${path}?${params.toString()}`, {
+      method: "GET",
+    });
+
+    const json = (await response.json()) as GraphResponse;
+
+    if (!response.ok || json.error) {
+      throw metaPublishError(
+        json.error?.message ?? `Meta API error (${response.status})`,
+        json.error?.code?.toString(),
+      );
+    }
+
+    return json;
+  }
+
+  /**
+   * Meta processes containers asynchronously. Publishing before FINISHED
+   * yields "Media ID is not available".
+   */
+  async function waitUntilContainerReady(
+    containerId: string,
+    token: string,
+  ): Promise<void> {
+    for (let attempt = 0; attempt < pollMaxAttempts; attempt += 1) {
+      const status = await graphGet(
+        `/${containerId}`,
+        token,
+        "status_code,status",
+      );
+      const code = status.status_code;
+
+      if (code === "FINISHED" || code === "PUBLISHED") {
+        return;
+      }
+
+      if (code && TERMINAL_ERROR.has(code)) {
+        throw metaPublishError(
+          `Meta container ${containerId} failed (${code})${
+            status.status ? `: ${status.status}` : ""
+          }`,
+        );
+      }
+
+      await sleep(pollIntervalMs);
+    }
+
+    throw metaPublishError(
+      `Meta container ${containerId} not ready after ${pollMaxAttempts} polls`,
+    );
   }
 
   return {
@@ -95,6 +167,7 @@ export function createGraphApiPublisher(
           throw metaPublishError("Meta did not return container id");
         }
 
+        await waitUntilContainerReady(created.id, token);
         containerIds.push(created.id);
       }
 
@@ -110,6 +183,7 @@ export function createGraphApiPublisher(
           throw metaPublishError("Meta did not return carousel container id");
         }
 
+        await waitUntilContainerReady(carousel.id, token);
         publishContainerId = carousel.id;
       }
 

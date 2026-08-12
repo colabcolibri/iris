@@ -11,7 +11,8 @@ const TEST_KEY = "b".repeat(64);
 
 test("graph api publisher uploads carousel and publishes", async () => {
   const db = openDatabase(":memory:");
-  const calls: { path: string; body: Record<string, string> }[] = [];
+  const calls: { method: string; path: string; body: Record<string, string> }[] =
+    [];
 
   try {
     runMigrations(db);
@@ -40,13 +41,26 @@ test("graph api publisher uploads carousel and publishes", async () => {
     });
 
     let mediaCounter = 0;
+    const pollsByContainer = new Map<string, number>();
 
     const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(typeof input === "string" ? input : input.toString());
       const path = url.pathname.replace("/v21.0", "");
+      const method = (init?.method ?? "GET").toUpperCase();
       const body = Object.fromEntries(url.searchParams.entries());
       delete body.access_token;
-      calls.push({ path, body });
+      calls.push({ method, path, body });
+
+      if (method === "GET" && url.searchParams.get("fields")?.includes("status_code")) {
+        const containerId = path.replace(/^\//, "");
+        const n = (pollsByContainer.get(containerId) ?? 0) + 1;
+        pollsByContainer.set(containerId, n);
+        // First poll IN_PROGRESS, then FINISHED — proves we wait
+        const status_code = n === 1 ? "IN_PROGRESS" : "FINISHED";
+        return new Response(JSON.stringify({ id: containerId, status_code }), {
+          status: 200,
+        });
+      }
 
       if (path.endsWith("/media") && body.is_carousel_item === "true") {
         mediaCounter += 1;
@@ -80,14 +94,22 @@ test("graph api publisher uploads carousel and publishes", async () => {
         publicBaseUrl: "https://iris.example.com",
         publishUrlSecret: "publish-secret",
         fetchImpl: fetchImpl as typeof fetch,
+        containerPollIntervalMs: 1,
       },
     });
 
     const result = await publisher.publish(postId);
     assert.equal(result.igMediaId, "ig-media-999");
-    assert.equal(calls.filter((c) => c.body.is_carousel_item === "true").length, 2);
+    assert.equal(
+      calls.filter((c) => c.body.is_carousel_item === "true").length,
+      2,
+    );
     assert.ok(calls.some((c) => c.body.media_type === "CAROUSEL"));
     assert.ok(calls.some((c) => c.body.creation_id === "carousel-container"));
+    assert.ok(
+      calls.filter((c) => c.method === "GET" && c.body.fields?.includes("status_code"))
+        .length >= 3,
+    );
   } finally {
     db.close();
   }
@@ -117,12 +139,20 @@ test("graph api publisher publishes single image without carousel", async () => 
       mime: "image/jpeg",
     });
 
-    const fetchImpl = async (input: string | URL | Request) => {
+    const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(typeof input === "string" ? input : input.toString());
       const path = url.pathname.replace("/v21.0", "");
+      const method = (init?.method ?? "GET").toUpperCase();
       const body = Object.fromEntries(url.searchParams.entries());
       delete body.access_token;
       calls.push({ path, body });
+
+      if (method === "GET" && url.searchParams.get("fields")?.includes("status_code")) {
+        return new Response(
+          JSON.stringify({ id: "single-container", status_code: "FINISHED" }),
+          { status: 200 },
+        );
+      }
 
       if (path.endsWith("/media") && !body.media_type) {
         return new Response(JSON.stringify({ id: "single-container" }), {
@@ -149,6 +179,7 @@ test("graph api publisher publishes single image without carousel", async () => 
         publicBaseUrl: "https://iris.example.com",
         publishUrlSecret: "publish-secret",
         fetchImpl: fetchImpl as typeof fetch,
+        containerPollIntervalMs: 1,
       },
     });
 
@@ -156,6 +187,72 @@ test("graph api publisher publishes single image without carousel", async () => 
     assert.equal(result.igMediaId, "ig-media-single");
     assert.equal(calls.filter((c) => c.path.endsWith("/media")).length, 1);
     assert.ok(calls.some((c) => c.body.creation_id === "single-container"));
+  } finally {
+    db.close();
+  }
+});
+
+test("graph api publisher fails when container status is ERROR", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const metaTokenStore = createSqliteMetaTokenStore(db, {
+      encryptionKey: TEST_KEY,
+    });
+    metaTokenStore.upsertToken("meta-access-token");
+    const assets = createSqliteAssetRepository(db);
+    const posts = createSqlitePostRepository(db);
+    const post = posts.create({ channel: "instagram", caption: "bad" });
+    assets.create({
+      postId: post.id,
+      sortOrder: 1,
+      storagePath: `${post.id}/01.jpg`,
+      mime: "image/jpeg",
+    });
+
+    const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(typeof input === "string" ? input : input.toString());
+      const path = url.pathname.replace("/v21.0", "");
+      const method = (init?.method ?? "GET").toUpperCase();
+      const body = Object.fromEntries(url.searchParams.entries());
+
+      if (method === "GET" && url.searchParams.get("fields")?.includes("status_code")) {
+        return new Response(
+          JSON.stringify({
+            id: "broken",
+            status_code: "ERROR",
+            status: "download failed",
+          }),
+          { status: 200 },
+        );
+      }
+
+      if (path.endsWith("/media")) {
+        return new Response(JSON.stringify({ id: "broken" }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "unexpected" } }), {
+        status: 400,
+      });
+    };
+
+    const publisher = createGraphApiPublisher({
+      metaTokenStore,
+      assets,
+      config: {
+        resolveIgUserId: () => "123456789",
+        publicBaseUrl: "https://iris.example.com",
+        publishUrlSecret: "publish-secret",
+        fetchImpl: fetchImpl as typeof fetch,
+        containerPollIntervalMs: 1,
+      },
+    });
+
+    await assert.rejects(
+      () => publisher.publish(post.id),
+      /container broken failed \(ERROR\)/,
+    );
   } finally {
     db.close();
   }
