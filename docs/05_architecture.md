@@ -1,8 +1,8 @@
 ---
 title: Architecture
-status: approved
-version: 1.3
-updated: 2026-08-11
+status: review
+version: 1.4
+updated: 2026-08-12
 depends_on: [00_scope.md, 01_tech_stack.md, 02_security.md, 03_user_types.md, 04_principles.md]
 blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_system.md]
 ---
@@ -139,7 +139,7 @@ iris/                     # workspace Meridian
 
 Webhook → `comments` → SSE → UI; worker auto-reply se habilitado.
 
-**Agente de respostas (v1.10):** gates globais (`auto_reply_enabled`) e por post (`reply_mode`) → `process-comment-reply` → harness em 3 estágios (triagem, rascunho, verificação) com conteúdo editorial em `data/agent/*.md` → `agent_runs` + `agent_run_steps` → draft local ou publicação Meta → UI inspeciona via `GET /api/comments/:id/reply-audit`.
+**Agente de respostas (v1.10):** gates globais (`auto_reply_enabled`) e por post (`reply_mode`) → `process-comment-reply` → harness em 3 estágios (triagem, rascunho, verificação) com conteúdo editorial em `data/agent/*.md` → barreiras `crisis` / `hate_violence` (`barrier_reply`: triage LLM classifica; barrier LLM escreve sob checklist — CVV 188 se `pt-BR`; sem texto canned) → `agent_runs` + `agent_run_steps` → draft local ou publicação Meta → UI inspeciona via `GET /api/comments/:id/reply-audit`.
 
 Diagramas: ver § Architecture diagrams (`iris-reply-agent-*`).
 
@@ -159,7 +159,8 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | ---- | ---- | ----- |
 | `architecture/diagrams/iris-reply-agent-flow.md` | flow | Sequência webhook/worker/simulador → gates → harness v2 → draft/Meta → audit UI |
 | `architecture/diagrams/iris-reply-agent-runtime.md` | runtime | Módulos, carousel_summary, response_language, output_json, simulador e SQLite |
-| `architecture/diagrams/iris-reply-agent-harness.md` | flow | Estados terminais: replyTier, blocked_harmful, light/full verify |
+| `architecture/diagrams/iris-reply-agent-harness.md` | flow | Estados terminais: replyTier, blocked_harmful, barrier_reply, light/full verify |
+| `architecture/diagrams/iris-admin-demo-mode.md` | runtime | Landing → `/demo` isolado, `demoApiFetch`, fixtures PT/EN, sem API real |
 
 ## Architecture detail files
 

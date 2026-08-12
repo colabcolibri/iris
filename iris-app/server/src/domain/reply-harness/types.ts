@@ -16,6 +16,7 @@ export type StageLlmTelemetry = {
 export type HarnessTerminalStatus =
   | "skipped_triage"
   | "blocked_harmful"
+  | "barrier_reply"
   | "rejected_verify"
   | "approved"
   | "approved_simple";

@@ -1,7 +1,7 @@
 ---
 title: Iris — estados do harness de resposta
-subtitle: replyTier, blocked_harmful, light verify e terminais
-updated: 2026-08-10
+subtitle: replyTier, blocked_harmful, barrier_reply, light verify e terminais
+updated: 2026-08-12
 source_doc: docs/05_architecture.md
 kind: flow
 ---
@@ -12,6 +12,7 @@ kind: flow
 stateDiagram-v2
   [*] --> Triage
 
+  Triage --> barrier_reply: blockCategory crisis ou hate_violence
   Triage --> blocked_harmful: blockCategory harmful
   Triage --> skipped_triage: replyTier none
   Triage --> DraftSimple: replyTier simple
@@ -29,6 +30,7 @@ stateDiagram-v2
   FullVerify --> rejected_verify: not approved / harmful / wrong language
   FullVerify --> approved: approved
 
+  barrier_reply --> [*]
   blocked_harmful --> [*]
   skipped_triage --> [*]
   rejected_verify --> [*]
@@ -37,7 +39,15 @@ stateDiagram-v2
 
   note right of Triage
     Prompts em inglês;
+    detector em código reforça crisis/hate;
     resposta pública em response_language
+  end note
+
+  note right of barrier_reply
+    Triagem LLM classifica;
+    barrier LLM escreve (idioma da config);
+    checklist de fatos (CVV 188 se pt-BR);
+    sem frase canned
   end note
 
   note right of DraftSimple

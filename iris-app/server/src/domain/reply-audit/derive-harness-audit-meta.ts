@@ -87,6 +87,7 @@ export function deriveHarnessTerminalStatus(
 
   if (
     summary === "blocked_harmful" ||
+    summary === "barrier_reply" ||
     summary === "skipped_triage" ||
     summary === "rejected_verify" ||
     summary === "approved_simple" ||
@@ -97,6 +98,13 @@ export function deriveHarnessTerminalStatus(
 
   const triageReason =
     signals.triageReason ?? signals.steps?.find((step) => step.stage === "triage")?.reason;
+
+  if (
+    triageReason?.includes("block:crisis") ||
+    triageReason?.includes("block:hate_violence")
+  ) {
+    return "barrier_reply";
+  }
 
   if (triageReason?.includes("block:harmful")) {
     return "blocked_harmful";

@@ -12,7 +12,11 @@ import { runReplyHarness, type RunReplyHarnessInput } from "./orchestrator.ts";
 import type { HarnessRunResult, StageResult } from "./types.ts";
 
 export function runStatusFromHarnessTerminal(terminalStatus: string): AgentRunStatus {
-  if (terminalStatus === "approved" || terminalStatus === "approved_simple") {
+  if (
+    terminalStatus === "approved" ||
+    terminalStatus === "approved_simple" ||
+    terminalStatus === "barrier_reply"
+  ) {
     return "ok";
   }
   if (terminalStatus === "skipped_triage" || terminalStatus === "blocked_harmful") {

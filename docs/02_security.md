@@ -82,5 +82,5 @@ Setup e troubleshooting: `docs/architecture/mcp-integration.md`.
 
 ## Compliance notes
 
-- Respostas automáticas devem respeitar políticas Meta e tom de voz da marca (configurável)
+- Compliance: respostas automáticas devem respeitar políticas Meta; barreiras `crisis` / `hate_violence` usam texto canned (CVV 188 em pt-BR) sem persona de marca
 - v1: uma conta; sem GDPR multi-tenant complexo

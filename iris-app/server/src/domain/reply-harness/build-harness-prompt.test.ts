@@ -48,6 +48,13 @@ test("harness prompts inject mandatory response language", () => {
   assert.match(prompt, /French/);
 });
 
+test("triage prompt includes crisis and hate_violence barrier categories", () => {
+  const prompt = buildTriagePrompt(mockContext(), "Be kind");
+  assert.match(prompt, /blockCategory "crisis"/);
+  assert.match(prompt, /blockCategory "hate_violence"/);
+  assert.match(prompt, /barrier LLM reply|life-risk/i);
+});
+
 test("triage prompt includes thread audience rules and not_for_brand category", () => {
   const context = mockContext();
   context.brandUsername = "colabcolibri";

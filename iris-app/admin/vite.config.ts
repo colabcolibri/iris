@@ -1,11 +1,29 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 
 const adminDir = path.dirname(fileURLToPath(import.meta.url));
 const envDir = path.resolve(adminDir, "..");
+const publicAssetsDir = path.resolve(adminDir, "../public/assets");
+
+/** Remove bundles Vite com hash de builds anteriores (logos e estáticos ficam). */
+function cleanStaleViteBundles(): Plugin {
+  return {
+    name: "clean-stale-vite-bundles",
+    buildStart() {
+      if (!fs.existsSync(publicAssetsDir)) return;
+
+      for (const entry of fs.readdirSync(publicAssetsDir)) {
+        if (/^index-[A-Za-z0-9_-]+\.(js|css)$/.test(entry)) {
+          fs.unlinkSync(path.join(publicAssetsDir, entry));
+        }
+      }
+    },
+  };
+}
 
 /** Dev-only: Vite host check. Prod serves static build — no Vite dev server. */
 function resolveDevAllowedHosts(env: Record<string, string>): string[] | true {
@@ -27,7 +45,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, envDir, "");
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), cleanStaleViteBundles()],
     envDir,
     resolve: {
       alias: {

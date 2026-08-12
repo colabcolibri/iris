@@ -31,6 +31,28 @@ test("normalizeTriageOutput forces none when blockCategory is set", () => {
   assert.equal(triage.blockCategory, "harmful");
 });
 
+test("normalizeTriageOutput accepts crisis and hate_violence", () => {
+  const crisis = normalizeTriageOutput({
+    shouldReply: true,
+    replyTier: "simple",
+    blockCategory: "crisis",
+    reason: "risk",
+    reasoning: "self-harm",
+  });
+  assert.equal(crisis.blockCategory, "crisis");
+  assert.equal(crisis.shouldReply, false);
+  assert.equal(crisis.replyTier, "none");
+
+  const hate = normalizeTriageOutput({
+    shouldReply: false,
+    replyTier: "none",
+    blockCategory: "hate_violence",
+    reason: "hate",
+    reasoning: "advocacy",
+  });
+  assert.equal(hate.blockCategory, "hate_violence");
+});
+
 test("normalizeTriageOutput accepts not_for_brand", () => {
   const triage = normalizeTriageOutput({
     shouldReply: false,

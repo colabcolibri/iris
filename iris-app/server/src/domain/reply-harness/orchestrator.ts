@@ -1,9 +1,11 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
+import { runBarrierStage } from "./barrier-stage.ts";
 import { runDraftStage } from "./draft-stage.ts";
 import { runLightVerifyStage } from "./light-verify.ts";
-import { simpleReplyMaxChars } from "./reply-tier.ts";
+import { simpleReplyMaxChars, type BlockCategory } from "./reply-tier.ts";
+import { isSafetyBarrierKind } from "./safety-barrier-policy.ts";
 import { runTriageStage } from "./triage-stage.ts";
 import { runVerifyStage } from "./verify-stage.ts";
 import type { HarnessRunResult, StageResult } from "./types.ts";
@@ -25,6 +27,16 @@ async function emitStep(
   }
 }
 
+function terminalForNoneTier(blockCategory: BlockCategory | undefined): HarnessRunResult["terminalStatus"] {
+  if (isSafetyBarrierKind(blockCategory)) {
+    return "barrier_reply";
+  }
+  if (blockCategory === "harmful") {
+    return "blocked_harmful";
+  }
+  return "skipped_triage";
+}
+
 export async function runReplyHarness(input: RunReplyHarnessInput): Promise<HarnessRunResult> {
   const personaMax = input.maxChars ?? input.context.persona.maxChars ?? 500;
   const steps: StageResult[] = [];
@@ -37,10 +49,36 @@ export async function runReplyHarness(input: RunReplyHarnessInput): Promise<Harn
   steps.push(triage);
   await emitStep(input.onStepComplete, triage);
 
+  if (isSafetyBarrierKind(triage.blockCategory)) {
+    const barrier = await runBarrierStage({
+      context: input.context,
+      llm: input.llm,
+      kind: triage.blockCategory,
+      maxChars: personaMax,
+    });
+    steps.push(barrier);
+    await emitStep(input.onStepComplete, barrier);
+
+    if (barrier.verdict !== "pass" || !barrier.finalText) {
+      return {
+        terminalStatus: "rejected_verify",
+        replyTier: "none",
+        steps,
+        finalText: null,
+      };
+    }
+
+    return {
+      terminalStatus: "barrier_reply",
+      replyTier: "none",
+      steps,
+      finalText: barrier.finalText,
+    };
+  }
+
   if (triage.replyTier === "none") {
     return {
-      terminalStatus:
-        triage.blockCategory === "harmful" ? "blocked_harmful" : "skipped_triage",
+      terminalStatus: terminalForNoneTier(triage.blockCategory),
       replyTier: "none",
       steps,
       finalText: null,

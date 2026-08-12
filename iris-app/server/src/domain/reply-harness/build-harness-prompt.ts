@@ -68,14 +68,17 @@ function buildKnowledgeBaseBlock(context: ReplyContext, knowledge: string): stri
 
 const TRIAGE_TIER_GUIDE = [
   "Classify the target comment:",
-  "- Set shouldReply=false and the right blockCategory when you should not reply.",
-  '- blockCategory "harmful": insults, harassment, hate speech.',
+  "- Set shouldReply=false and the right blockCategory when you should not draft a brand reply.",
+  '- blockCategory "crisis": suicide, self-harm, wanting to die, or clear acute life-risk distress. Prefer over-missing this.',
+  '- blockCategory "hate_violence": nazi/fascist advocacy, racism, misogyny, or calls to violence/crime. Informative refusal — not debate.',
+  '- blockCategory "harmful": insults/harassment that are NOT crisis and NOT hate_violence advocacy.',
   '- blockCategory "spam": irrelevant promos or bots.',
   '- blockCategory "off_topic": no link to the post or brand.',
   '- blockCategory "not_for_brand": users talking to each other; target is not directed at the brand (see Reply audience).',
-  '- replyTier "none": do not reply (includes any blockCategory other than none).',
+  '- replyTier "none": do not use brand draft (includes any blockCategory other than none).',
   '- replyTier "simple": a short reply is enough (thanks, praise, simple question, light ack/emoji/laughter).',
   '- replyTier "full": needs explanation, product context, conflict handling, or sensitive tone.',
+  "- Short laughter like Brazilian \"kkk\" is NOT hate_violence.",
   "",
   "Intent / evidence (read Target comment surface):",
   "- acknowledgment / emoji_reaction / laughter = LOW EVIDENCE. Prefer replyTier=simple if you reply.",
@@ -106,7 +109,7 @@ export function buildTriagePrompt(context: ReplyContext, restrictions: string): 
     buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
     "",
     "Reply with valid JSON only:",
-    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"harmful"|"spam"|"off_topic"|"not_for_brand"|"other","reason":"short label","reasoning":"brief explanation"}',
+    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"crisis"|"hate_violence"|"harmful"|"spam"|"off_topic"|"not_for_brand"|"other","reason":"short label","reasoning":"brief explanation"}',
   ].join("\n");
 }
 

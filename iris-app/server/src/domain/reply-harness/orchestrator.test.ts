@@ -90,6 +90,193 @@ test("runReplyHarness blocks harmful at triage", async () => {
   assert.match(result.steps[0]?.reason ?? "", /block:harmful/);
 });
 
+test("runReplyHarness crisis barrier uses LLM reply with CVV checklist", async () => {
+  let calls = 0;
+  const llm: LlmCompleter = {
+    async complete(prompt) {
+      calls += 1;
+      if (calls === 1) {
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: false,
+            replyTier: "none",
+            blockCategory: "crisis",
+            reason: "life_risk",
+            reasoning: "explicit wish to die",
+          }),
+        );
+      }
+      assert.match(prompt, /Barrier kind: crisis/);
+      assert.match(prompt, /CVV|188/);
+      return createTestLlmCompletion(
+        JSON.stringify({
+          finalText:
+            "@vera Se está em sofrimento, no Brasil ligue 188 para o CVV (https://www.cvv.org.br). Você não está sozinho(a).",
+          reasoning: "life risk phrasing",
+        }),
+      );
+    },
+  };
+
+  const context = mockContext();
+  context.targetComment = {
+    authorUsername: "vera",
+    text: "Quero morrer",
+    igCommentId: "c-crisis",
+  };
+
+  const result = await runReplyHarness({
+    context,
+    agentContent: defaultAgentContent(),
+    llm,
+  });
+
+  assert.equal(result.terminalStatus, "barrier_reply");
+  assert.equal(calls, 2);
+  assert.equal(result.steps.length, 2);
+  assert.equal(result.steps[1]?.stage, "draft");
+  assert.match(result.steps[1]?.reason ?? "", /barrier_llm:crisis/);
+  assert.match(result.finalText ?? "", /@vera/);
+  assert.match(result.finalText ?? "", /188/);
+  assert.match(result.finalText ?? "", /CVV/i);
+  assert.match(result.steps[0]?.reason ?? "", /block:crisis/);
+});
+
+test("runReplyHarness hate_violence barrier uses LLM informative refusal", async () => {
+  let calls = 0;
+  const llm: LlmCompleter = {
+    async complete() {
+      calls += 1;
+      if (calls === 1) {
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: false,
+            replyTier: "none",
+            blockCategory: "hate_violence",
+            reason: "nazi",
+            reasoning: "advocacy",
+          }),
+        );
+      }
+      return createTestLlmCompletion(
+        JSON.stringify({
+          finalText:
+            "@troll Como assistente virtual, não participo de ódio ou apologia a violência. Se quiser falar do post com respeito, estou aqui.",
+          reasoning: "hate advocacy",
+        }),
+      );
+    },
+  };
+
+  const context = mockContext();
+  context.targetComment = {
+    authorUsername: "troll",
+    text: "viva o nazismo",
+    igCommentId: "c-hate",
+  };
+
+  const result = await runReplyHarness({
+    context,
+    agentContent: defaultAgentContent(),
+    llm,
+  });
+
+  assert.equal(result.terminalStatus, "barrier_reply");
+  assert.equal(calls, 2);
+  assert.match(result.finalText ?? "", /assistente virtual/i);
+  assert.match(result.finalText ?? "", /não participo/i);
+});
+
+test("runReplyHarness en crisis barrier uses LLM local-help wording", async () => {
+  let calls = 0;
+  const llm: LlmCompleter = {
+    async complete() {
+      calls += 1;
+      if (calls === 1) {
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: false,
+            replyTier: "none",
+            blockCategory: "crisis",
+            reason: "crisis",
+            reasoning: "self-harm",
+          }),
+        );
+      }
+      return createTestLlmCompletion(
+        JSON.stringify({
+          finalText:
+            "@alex If you are in crisis, please contact local emergency services or a crisis hotline in your country. You do not have to face this alone.",
+          reasoning: "en crisis",
+        }),
+      );
+    },
+  };
+
+  const context = mockContext();
+  context.persona.responseLanguage = "en-US";
+  context.targetComment = {
+    authorUsername: "alex",
+    text: "I want to kill myself",
+    igCommentId: "c-en",
+  };
+
+  const result = await runReplyHarness({
+    context,
+    agentContent: defaultAgentContent(),
+    llm,
+  });
+
+  assert.equal(result.terminalStatus, "barrier_reply");
+  assert.equal(calls, 2);
+  assert.doesNotMatch(result.finalText ?? "", /188/);
+  assert.match(result.finalText ?? "", /local emergency|crisis hotline/i);
+});
+
+test("runReplyHarness rejects barrier when LLM never meets checklist (no canned fallback)", async () => {
+  let calls = 0;
+  const llm: LlmCompleter = {
+    async complete() {
+      calls += 1;
+      if (calls === 1) {
+        return createTestLlmCompletion(
+          JSON.stringify({
+            shouldReply: false,
+            replyTier: "none",
+            blockCategory: "crisis",
+            reason: "crisis",
+            reasoning: "risk",
+          }),
+        );
+      }
+      return createTestLlmCompletion(
+        JSON.stringify({
+          finalText: "Fica bem!",
+          reasoning: "too soft",
+        }),
+      );
+    },
+  };
+
+  const context = mockContext();
+  context.targetComment = {
+    authorUsername: "vera",
+    text: "Quero morrer",
+    igCommentId: "c-fallback",
+  };
+
+  const result = await runReplyHarness({
+    context,
+    agentContent: defaultAgentContent(),
+    llm,
+  });
+
+  assert.equal(result.terminalStatus, "rejected_verify");
+  assert.equal(result.finalText, null);
+  assert.equal(calls, 3);
+  assert.match(result.steps[1]?.reason ?? "", /barrier_incomplete:crisis/);
+});
+
 test("runReplyHarness approves full pipeline", async () => {
   let step = 0;
   const llm: LlmCompleter = {

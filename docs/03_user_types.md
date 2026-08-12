@@ -61,8 +61,9 @@ blocks: [05_architecture.md, 06_database.md]
 - Explorar o admin Iris com dados fictícios
 - Entender calendário editorial, comentários e fluxo do agente
 - Avaliar UX sem credenciais nem risco ao ambiente real
+- (Opcional) Alternar conteúdo editorial PT/EN no demo — shell do admin permanece em português
 
-**Permissions:** nenhuma — rota pública `/demo`, fixtures no client, sem sessão admin.
+**Permissions:** nenhuma — rota pública `/demo`, fixtures no client, sem sessão admin. Cookie `iris_session` existente no navegador é ignorado em `/demo`.
 
 **Surfaces:** `/demo/*` (mesmo deploy, shell visual do admin).
 

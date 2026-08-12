@@ -3,6 +3,8 @@ export type ReplyTier = "none" | "simple" | "full";
 export type BlockCategory =
   | "none"
   | "harmful"
+  | "crisis"
+  | "hate_violence"
   | "spam"
   | "off_topic"
   | "not_for_brand"
@@ -29,6 +31,8 @@ export type NormalizedTriageOutput = {
 const BLOCK_CATEGORIES: BlockCategory[] = [
   "none",
   "harmful",
+  "crisis",
+  "hate_violence",
   "spam",
   "off_topic",
   "not_for_brand",
