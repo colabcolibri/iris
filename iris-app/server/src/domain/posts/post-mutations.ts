@@ -3,12 +3,20 @@ import type { PostReplyModeSetting } from "./reply-mode.ts";
 import { isPostReplyModeSetting, isReplyMode, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
 import { ValidationError } from "../../api/json.ts";
 
+const REPLY_PROMPT_MAX_CHARS = 32_000;
+
 export type CreatePostPayload = {
   caption?: unknown;
   channel?: unknown;
   scheduled_at?: unknown;
   source_note?: unknown;
   status?: unknown;
+  carousel_summary?: unknown;
+  reply_prompt?: unknown;
+  silence_soul?: unknown;
+  silence_page?: unknown;
+  silence_knowledge?: unknown;
+  silence_restrictions?: unknown;
 };
 
 export type NormalizedCreatePost = {
@@ -17,6 +25,12 @@ export type NormalizedCreatePost = {
   scheduledAt: string | null;
   sourceNote: string | null;
   status: PostStatus;
+  carouselSummary: string | null;
+  replyPrompt: string | null;
+  silenceSoul: boolean;
+  silencePage: boolean;
+  silenceKnowledge: boolean;
+  silenceRestrictions: boolean;
 };
 
 export function normalizeCreatePost(body: CreatePostPayload): NormalizedCreatePost {
@@ -27,12 +41,84 @@ export function normalizeCreatePost(body: CreatePostPayload): NormalizedCreatePo
 
   const status = "draft";
 
+  let carouselSummary: string | null = null;
+  if ("carousel_summary" in body) {
+    carouselSummary =
+      body.carousel_summary === null
+        ? null
+        : typeof body.carousel_summary === "string"
+          ? body.carousel_summary
+          : undefined;
+
+    if (carouselSummary === undefined) {
+      throw new ValidationError("carousel_summary must be a string or null");
+    }
+  }
+
+  let replyPrompt: string | null = null;
+  if ("reply_prompt" in body) {
+    replyPrompt =
+      body.reply_prompt === null
+        ? null
+        : typeof body.reply_prompt === "string"
+          ? body.reply_prompt
+          : undefined;
+
+    if (replyPrompt === undefined) {
+      throw new ValidationError("reply_prompt must be a string or null");
+    }
+
+    if (replyPrompt !== null && replyPrompt.length > REPLY_PROMPT_MAX_CHARS) {
+      throw new ValidationError(
+        `reply_prompt must be at most ${REPLY_PROMPT_MAX_CHARS} characters`,
+      );
+    }
+  }
+
+  let silenceSoul = false;
+  if ("silence_soul" in body) {
+    if (typeof body.silence_soul !== "boolean") {
+      throw new ValidationError("silence_soul must be a boolean");
+    }
+    silenceSoul = body.silence_soul;
+  }
+
+  let silencePage = false;
+  if ("silence_page" in body) {
+    if (typeof body.silence_page !== "boolean") {
+      throw new ValidationError("silence_page must be a boolean");
+    }
+    silencePage = body.silence_page;
+  }
+
+  let silenceKnowledge = false;
+  if ("silence_knowledge" in body) {
+    if (typeof body.silence_knowledge !== "boolean") {
+      throw new ValidationError("silence_knowledge must be a boolean");
+    }
+    silenceKnowledge = body.silence_knowledge;
+  }
+
+  let silenceRestrictions = false;
+  if ("silence_restrictions" in body) {
+    if (typeof body.silence_restrictions !== "boolean") {
+      throw new ValidationError("silence_restrictions must be a boolean");
+    }
+    silenceRestrictions = body.silence_restrictions;
+  }
+
   return {
     caption: typeof body.caption === "string" ? body.caption : null,
     channel,
     scheduledAt: typeof body.scheduled_at === "string" ? body.scheduled_at : null,
     sourceNote: typeof body.source_note === "string" ? body.source_note : null,
     status,
+    carouselSummary,
+    replyPrompt,
+    silenceSoul,
+    silencePage,
+    silenceKnowledge,
+    silenceRestrictions,
   };
 }
 
@@ -51,8 +137,6 @@ export type UpdatePostPayload = {
   silence_knowledge?: unknown;
   silence_restrictions?: unknown;
 };
-
-const REPLY_PROMPT_MAX_CHARS = 32_000;
 
 export type NormalizedUpdatePost = {
   caption?: string | null;

@@ -38,6 +38,7 @@ import type {
 } from "@/lib/types";
 import { ThreadSortSelect } from "@/components/comments/thread-sort-select";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
+import { PostReplyBriefingEditor } from "@/components/posts/post-reply-briefing-editor";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { Label } from "@/components/ui/label";
 import { useAppSettings } from "@/contexts/app-settings-context";
@@ -205,7 +206,13 @@ function LastSyncedLabel({
   );
 }
 
-type DetailTab = "performance" | "comments" | "caption" | "config";
+type DetailTab =
+  | "performance"
+  | "comments"
+  | "caption"
+  | "summary"
+  | "briefing"
+  | "config";
 
 function PerformanceTabContent({
   insightsError,
@@ -485,12 +492,13 @@ export function PostDetailPanel({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <div className="shrink-0 border-b border-border bg-muted/20 px-4 pt-3 sm:px-5">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-border/50 pb-2">
+          <div className="-mx-1 overflow-x-auto">
+            <div className="flex min-w-0 flex-nowrap items-center gap-x-4 gap-y-1 border-b border-border/50 px-1 pb-2">
             <button
               type="button"
               onClick={() => setActiveTab("performance")}
               className={cn(
-                "pb-0.5 text-sm font-semibold transition-colors",
+                "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
                 activeTab === "performance"
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground",
@@ -502,7 +510,7 @@ export function PostDetailPanel({
               type="button"
               onClick={() => setActiveTab("comments")}
               className={cn(
-                "inline-flex items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
+                "inline-flex shrink-0 items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
                 activeTab === "comments"
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground",
@@ -524,7 +532,7 @@ export function PostDetailPanel({
               type="button"
               onClick={() => setActiveTab("caption")}
               className={cn(
-                "pb-0.5 text-sm font-semibold transition-colors",
+                "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
                 activeTab === "caption"
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground",
@@ -534,9 +542,33 @@ export function PostDetailPanel({
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab("summary")}
+              className={cn(
+                "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
+                activeTab === "summary"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Resumo
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("briefing")}
+              className={cn(
+                "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
+                activeTab === "briefing"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Prompt adicional
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab("config")}
               className={cn(
-                "inline-flex items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
+                "inline-flex shrink-0 items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
                 activeTab === "config"
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground",
@@ -550,6 +582,7 @@ export function PostDetailPanel({
                 className="hidden sm:inline-flex"
               />
             </button>
+            </div>
           </div>
         </div>
 
@@ -631,13 +664,27 @@ export function PostDetailPanel({
               )}
             </div>
           ) : activeTab === "caption" ? (
-            <div className="space-y-4">
+            <div className="min-w-0">
               <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
                 {captionPreview || "(sem legenda)"}
               </p>
+            </div>
+          ) : activeTab === "summary" ? (
+            <div className="min-w-0">
               <CarouselSummaryEditor
                 postId={post.post_id}
                 initialSummary={post.carousel_summary}
+              />
+            </div>
+          ) : activeTab === "briefing" ? (
+            <div className="min-w-0">
+              <PostReplyBriefingEditor
+                postId={post.post_id}
+                initialReplyPrompt={post.reply_prompt}
+                initialSilenceSoul={post.silence_soul}
+                initialSilencePage={post.silence_page}
+                initialSilenceKnowledge={post.silence_knowledge}
+                initialSilenceRestrictions={post.silence_restrictions}
               />
             </div>
           ) : (

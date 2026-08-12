@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Download, PanelLeft, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  PanelLeft,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +14,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import {
+  OpsEmptyState,
+  opsFilterSelectClassName,
+} from "@/components/templates/ops-empty-state";
 import { downloadWebhookEventsExport, fetchWebhookEvents } from "@/lib/api";
 import type { WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
 import { commentsThreadHref } from "@/lib/comments-href";
@@ -74,19 +91,19 @@ function StatusBadges({ event }: { event: WebhookEvent }) {
     <div className="flex flex-wrap items-center gap-1.5">
       <span
         className={cn(
-          "rounded px-2 py-0.5 text-xs font-semibold uppercase",
+          "rounded-sm px-2 py-0.5 text-xs font-semibold uppercase",
           statusClass(event.processing_status),
         )}
       >
         {STATUS_LABELS[event.processing_status]}
       </span>
       {verb ? (
-        <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+        <span className="rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
           {verb}
         </span>
       ) : null}
       {!event.signature_valid ? (
-        <span className="rounded bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">
+        <span className="rounded-sm bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">
           assinatura inválida
         </span>
       ) : null}
@@ -134,38 +151,92 @@ function CommentLink({ event }: { event: WebhookEvent }) {
 
 const EXPORT_LIMIT_OPTIONS = [100, 500, 1000, 5000] as const;
 
-function EventListRow({
-  event,
-  selected,
+function EventTable({
+  events,
+  selectedId,
   onSelect,
+  compact = false,
 }: {
-  event: WebhookEvent;
-  selected: boolean;
-  onSelect: () => void;
+  events: WebhookEvent[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  compact?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        "flex w-full flex-col gap-1.5 border-b border-border/60 px-4 py-4 text-left transition-colors hover:bg-muted/30",
-        selected && "bg-muted/40",
-      )}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <StatusBadges event={event} />
-        <span className="text-sm text-muted-foreground">
-          {new Date(event.received_at).toLocaleString("pt-BR")}
-        </span>
-      </div>
-      <p className="text-base font-semibold leading-snug text-foreground">
-        {event.webhook_type}
-      </p>
-      <p className="line-clamp-2 text-sm text-muted-foreground">
-        {event.author_username ? `@${event.author_username}` : "autor —"}
-        {event.text_preview ? ` · “${event.text_preview}”` : ""}
-      </p>
-    </button>
+    <Table>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className={cn(compact ? "px-3" : "sm:px-6")}>
+            Recebido
+          </TableHead>
+          <TableHead>Tipo</TableHead>
+          <TableHead>Status</TableHead>
+          {!compact ? (
+            <TableHead className="hidden md:table-cell">Autor / resumo</TableHead>
+          ) : null}
+          {!compact ? (
+            <TableHead className="hidden lg:table-cell">Post</TableHead>
+          ) : null}
+          {!compact ? (
+            <TableHead className="hidden lg:table-cell">Comentário</TableHead>
+          ) : null}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {events.map((event) => (
+          <TableRow
+            key={event.id}
+            data-state={event.id === selectedId ? "selected" : undefined}
+            className="cursor-pointer"
+            onClick={() => onSelect(event.id)}
+          >
+            <TableCell
+              className={cn(
+                "whitespace-nowrap text-muted-foreground",
+                compact ? "px-3" : "sm:px-6",
+              )}
+            >
+              {new Date(event.received_at).toLocaleString("pt-BR")}
+            </TableCell>
+            <TableCell>
+              <p className="font-semibold text-foreground">
+                {event.webhook_type}
+              </p>
+              {event.field ? (
+                <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+                  {event.field}
+                </p>
+              ) : null}
+            </TableCell>
+            <TableCell>
+              <StatusBadges event={event} />
+            </TableCell>
+            {!compact ? (
+              <TableCell className="hidden md:table-cell">
+                <p className="font-medium text-foreground">
+                  {event.author_username ? `@${event.author_username}` : "—"}
+                </p>
+                {event.text_preview ? (
+                  <p className="mt-1 line-clamp-2 max-w-md text-muted-foreground">
+                    “{event.text_preview}”
+                  </p>
+                ) : null}
+              </TableCell>
+            ) : null}
+            {!compact ? (
+              <TableCell className="hidden lg:table-cell">
+                <PostLink event={event} />
+              </TableCell>
+            ) : null}
+            {!compact ? (
+              <TableCell className="hidden lg:table-cell">
+                <CommentLink event={event} />
+              </TableCell>
+            ) : null}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -207,7 +278,7 @@ function EventListChrome({
         </label>
         <select
           id="webhook-status-filter"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          className={opsFilterSelectClassName}
           value={statusFilter}
           onChange={(event) =>
             setStatusFilter(
@@ -229,7 +300,7 @@ function EventListChrome({
         </label>
         <select
           id="webhook-field-filter"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          className={opsFilterSelectClassName}
           value={fieldFilter}
           onChange={(event) =>
             setFieldFilter(event.target.value as "all" | "comments")
@@ -256,7 +327,7 @@ function EventListChrome({
         </label>
         <select
           id="webhook-export-limit"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          className={opsFilterSelectClassName}
           value={exportLimit}
           onChange={(event) => setExportLimit(Number(event.target.value))}
           disabled={exporting}
@@ -383,33 +454,40 @@ export function WebhookEventsPanel() {
     />
   );
 
-  const listBody =
+  const listBody = loading && events.length === 0 ? (
+    <OpsEmptyState>Carregando eventos…</OpsEmptyState>
+  ) : events.length === 0 ? (
+    <OpsEmptyState title="Nenhum webhook">
+      Nenhum evento encontrado com os filtros atuais.
+    </OpsEmptyState>
+  ) : (
+    <EventTable
+      events={events}
+      selectedId={selectedId}
+      onSelect={selectEvent}
+    />
+  );
+
+  const sheetListBody =
     loading && events.length === 0 ? (
-      <p className="px-4 py-6 text-base text-muted-foreground">Carregando…</p>
+      <OpsEmptyState className="mx-3 my-4">Carregando…</OpsEmptyState>
     ) : events.length === 0 ? (
-      <p className="px-4 py-6 text-base text-muted-foreground">
-        Nenhum webhook encontrado com os filtros atuais.
-      </p>
+      <OpsEmptyState className="mx-3 my-4" title="Nenhum webhook">
+        Nenhum evento com os filtros atuais.
+      </OpsEmptyState>
     ) : (
-      events.map((event) => (
-        <EventListRow
-          key={event.id}
-          event={event}
-          selected={event.id === selectedId}
-          onSelect={() => selectEvent(event.id)}
-        />
-      ))
+      <EventTable
+        events={events}
+        selectedId={selectedId}
+        onSelect={selectEvent}
+        compact
+      />
     );
 
   if (!inStage) {
     return (
-      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 space-y-3 border-b border-border p-4 sm:px-6">
-          <h2 className="font-display text-xl font-semibold text-foreground">
-            Eventos
-          </h2>
-          {listChrome}
-        </div>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 px-4 pb-4 sm:px-6 md:px-8">{listChrome}</div>
         <PageScrollArea>{listBody}</PageScrollArea>
       </div>
     );
@@ -445,15 +523,15 @@ export function WebhookEventsPanel() {
         </p>
       </div>
 
-      <PageScrollArea contentClassName="p-4 sm:p-6">
+      <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
         {!selectedEvent ? (
-          <p className="mx-auto max-w-3xl text-base text-muted-foreground">
+          <OpsEmptyState>
             {loading
               ? "Carregando evento…"
               : "Evento não encontrado na lista atual (filtros podem estar ocultando)."}
-          </p>
+          </OpsEmptyState>
         ) : (
-          <div className="mx-auto max-w-3xl space-y-5">
+          <div className="w-full space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <StatusBadges event={selectedEvent} />
               <span className="text-sm text-muted-foreground">
@@ -483,7 +561,7 @@ export function WebhookEventsPanel() {
               </p>
             ) : null}
 
-            <div className="grid gap-4 rounded-[var(--iris-radius-lg)] border border-border/70 bg-muted/15 p-4 sm:grid-cols-2">
+            <div className="grid gap-4 rounded-[var(--iris-radius-lg)] border border-border bg-card p-4 shadow-none sm:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Post
@@ -525,8 +603,8 @@ export function WebhookEventsPanel() {
                 Payload
               </h3>
               <PageScrollArea
-                className="mt-2 h-[min(70vh,40rem)] max-h-[min(70vh,40rem)] flex-none rounded-[var(--iris-radius-lg)] border border-border/70"
-                contentClassName="bg-muted/30 p-4 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground"
+                className="mt-2 h-[min(70vh,40rem)] max-h-[min(70vh,40rem)] flex-none rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none"
+                contentClassName="p-4 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground"
               >
                 {selectedEvent.payload_json}
                 {selectedEvent.payload_truncated
@@ -551,7 +629,7 @@ export function WebhookEventsPanel() {
           <div className="shrink-0 space-y-3 border-b border-border p-4">
             {listChrome}
           </div>
-          <PageScrollArea>{listBody}</PageScrollArea>
+          <PageScrollArea>{sheetListBody}</PageScrollArea>
         </SheetContent>
       </Sheet>
     </div>

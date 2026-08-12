@@ -43,6 +43,12 @@ export const handlePostsRoute = createRouter([
       scheduledAt: input.scheduledAt,
       sourceNote: input.sourceNote,
       status: input.status,
+      carouselSummary: input.carouselSummary,
+      replyPrompt: input.replyPrompt,
+      silenceSoul: input.silenceSoul,
+      silencePage: input.silencePage,
+      silenceKnowledge: input.silenceKnowledge,
+      silenceRestrictions: input.silenceRestrictions,
     });
     notifyPostsChanged({ post_id: post.id });
     sendJson(match.res, 201, serializePost(post));

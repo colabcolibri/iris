@@ -183,8 +183,8 @@ export function AgentSimulatorPage() {
   return (
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card lg:flex-row">
-          <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-b border-border lg:w-[min(100%,420px)] lg:max-w-[420px] lg:border-r lg:border-b-0">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+          <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-[420px]">
             <PageScrollArea contentClassName="space-y-5 p-4 sm:p-5">
               <PageContainer.Header
                 eyebrow="Lab"
@@ -200,7 +200,7 @@ export function AgentSimulatorPage() {
                     <span
                       key={field.key}
                       className={cn(
-                        "rounded-md border px-2 py-0.5 text-xs",
+                        "rounded-[var(--iris-radius-sm)] border px-2 py-0.5 text-xs",
                         populated
                           ? "border-primary/30 bg-primary/5 text-foreground"
                           : "border-border text-muted-foreground",
@@ -225,7 +225,7 @@ export function AgentSimulatorPage() {
                 <Select value={scenarioId} onValueChange={handleScenarioChange}>
                   <SelectTrigger
                     id="sim-scenario"
-                    className="w-full bg-background"
+                    className="w-full bg-card"
                   >
                     <SelectValue>
                       {selectedScenario?.label ?? "Cenário"}
@@ -257,7 +257,7 @@ export function AgentSimulatorPage() {
                   >
                     <SelectTrigger
                       id="sim-language"
-                      className="w-full bg-background"
+                      className="w-full bg-card"
                     >
                       <SelectValue>{languageLabel}</SelectValue>
                     </SelectTrigger>
@@ -441,18 +441,21 @@ export function AgentSimulatorPage() {
           </aside>
 
           <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
-              <h2 className="font-display text-lg font-semibold text-foreground">
+            <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">
+              <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                Lab
+              </p>
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 Resultado
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-1 max-w-2xl text-base text-muted-foreground">
                 Resposta proposta e stages do harness no palco.
               </p>
             </div>
-            <PageScrollArea contentClassName="p-4 sm:p-6">
-              <div className="mx-auto max-w-3xl">
+            <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
+              <div className="w-full">
                 {!hasResult && !running ? (
-                  <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[var(--iris-radius-lg)] border border-dashed border-border/80 bg-muted/10 px-6 py-12 text-center">
+                  <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[var(--iris-radius-lg)] border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
                     <p className="font-display text-xl font-semibold text-foreground">
                       Monte a thread e rode o harness
                     </p>

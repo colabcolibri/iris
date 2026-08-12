@@ -8,6 +8,9 @@ test("agent runs page and api are wired", () => {
   assert.match(page, /fetchAgentRuns/);
   assert.match(page, /ReplyAuditTimeline/);
   assert.match(page, /run_id/);
+  assert.match(page, /from "@\/components\/ui\/table"/);
+  assert.match(page, /<Table/);
+  assert.match(page, /TableHeader/);
 
   const app = readFileSync("../admin/src/App.tsx", "utf8");
   assert.match(app, /agent-runs/);

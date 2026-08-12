@@ -109,12 +109,18 @@ Contrato visual: [`docs/09_design_system.md`](../09_design_system.md) § **Compo
 
 ```txt
 /admin/comments
-  browse (sem post_id)
-    lista Publicações | Atividade  →  empty state “selecione uma publicação”
-  stage (com post_id)
+  browse (sem post_id) — feed browse (v1.16)
+    PageContainer variant="fill" + inset parchment
+      [Header edge-to-edge: título + abas Publicações|Atividade + busca + CTAs]
+      grade full-bleed (2 / 3 / 4 / 5 colunas) de cards media-forward
+        aspect-square + caption + engajamento + StatusBadge
+        → clique no card seta ?post_id=
+  stage (com post_id) — stage focus (v1.15, inalterado)
     [rail/drawer lista — colapsável]  +  STAGE (≥60% inset)
-         PostDetailPanel: mídia em destaque + abas (Desempenho | Comentários | Legenda | Config)
+         PostDetailPanel: mídia em destaque + abas (Desempenho | Comentários | Legenda | Resumo | Prompt | Config)
 ```
+
+**Feed browse:** grade edge-to-edge — **não** coluna `max-w-2xl` centralizada, nem lista flat `border-l`. Cards: utility card (hairline + `radius-lg`, sem shadow) — ver `09` § **Feed browse**.
 
 - Entrar em stage ao setar `?post_id=` (e opcional `comment_id` para deep link / highlight).
 - Voltar ao browse ou reabrir lista via CTA / rail — **sem** manter lista + preview + painel como três colunas fixas.
@@ -124,6 +130,7 @@ Contrato visual: [`docs/09_design_system.md`](../09_design_system.md) § **Compo
 
 **Layout de três colunas permanentes** (aside lista ~340px + preview + painel lateral) no hub de comentários está **deprecated** a partir de v1.15 / US-0105. Não reintroduzir.
 
+**Lista flat / inbox `border-l`** e **coluna estreita centralizada** no browse de publicações estão **deprecated** — usar grade feed edge-to-edge (2–5 cols).
 ## Ops — webhooks e execuções (v1.16)
 
 Contrato: [`docs/09_design_system.md`](../09_design_system.md) § **Composição / foco** (stage focus + observabilidade).
@@ -132,18 +139,31 @@ Contrato: [`docs/09_design_system.md`](../09_design_system.md) § **Composição
 
 ```txt
 /admin/webhooks
-  browse (sem event_id)  →  lista editorial + filtros/export
-  stage (?event_id=)     →  [voltar | Lista Sheet] + STAGE (status, links, payload)
+  browse (sem event_id) — ops list/table (v1.16)
+    PageContainer variant="fill" + inset parchment
+      [Header: filtros + export no topo]
+      lista/tabela densa edge-to-edge (full width do inset)
+        linhas clicáveis: timestamp, tipo, status, post/comentário, resumo
+        → clique na linha seta ?event_id=
+  stage (?event_id=) — stage focus (v1.16, inalterado)
+    [voltar | Lista Sheet] + STAGE (status, links, payload)
 ```
 
-**Deprecated:** tabela wide (`min-w-[960px]`) com payload expandido na célula.
+**Ops list/table:** densidade alta, hairlines, sem coluna centralizada estreita; filtros permanecem acima da lista, não em painel lateral.
+
+**Deprecated:** feed browse com cards centralizados em webhooks (US-0122/0124 — revertido US-0127/0128); tabela wide com payload expandido na célula; split permanente lista + detalhe.
 
 ### Execuções do agente
 
 ```txt
 /admin/agent-runs
-  browse (sem run_id)  →  lista com status, tier, N stages, models[], duração
-  stage (?run_id=)     →  sumário da execução + cards de stages (modelo em destaque)
+  browse (sem run_id) — ops list/table (v1.16)
+    PageContainer variant="fill" + inset parchment
+      [Header: filtros + Atualizar no topo]
+      lista densa edge-to-edge (status, tier, modelos, duração, tokens)
+        → clique na linha seta ?run_id=
+  stage (?run_id=) — stage focus (v1.16, inalterado)
+    [voltar | Lista Sheet] + STAGE (sumário + timeline de stages)
 ```
 
 Hierarquia: `agent_run` (execução) → `agent_run_steps[]` (stages/chamadas). Listagem expõe `models: string[]` agregados dos steps.
@@ -186,8 +206,11 @@ Não é browse de itens históricos. Empty state do palco até a primeira simula
 - Estado local de calendário/kanban fora da URL em `/` (quebra highlight da sidebar).
 - Chamar `fetchMetaStatus` direto na página (usar `MetaSessionProvider`).
 - Três colunas permanentes no hub de comentários (lista + mídia + threads lado a lado).
+- Lista flat ou inbox `border-l` / coluna `max-w-2xl` centralizada no browse de **publicações** (usar grade feed 2–5 cols edge-to-edge).
+- Coluna estreita centralizada (`max-w-2xl mx-auto`) em webhooks ou execuções (usar ops list/table edge-to-edge).
+- Feed browse (cards centralizados) em webhooks — deprecated (US-0127/0128).
 - Grid de calendário onde células vazias dominam o viewport (usar mural editorial).
-- Tabela wide ou split 50/50 permanente em `/admin/webhooks` e `/admin/agent-runs`.
+- Split 50/50 permanente em `/admin/webhooks` e `/admin/agent-runs` (usar stage focus).
 - Esconder modelo LLM das stages em tipografia secundária minúscula.
 - `overflow-y-auto` + scrollbar nativa em regiões de página (usar `PageScrollArea`).
 - Tipografia de lista ops abaixo de 14px (caption) / 17px (body).

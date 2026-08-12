@@ -9,6 +9,11 @@ export type CommentPostSummary = {
   igMediaId: string;
   status: string;
   replyMode: PostReplyModeSetting;
+  replyPrompt: string | null;
+  silenceSoul: boolean;
+  silencePage: boolean;
+  silenceKnowledge: boolean;
+  silenceRestrictions: boolean;
   autoReplyEnabled: boolean;
   igMediaStatus: IgMediaStatus | null;
   igMediaStatusDetail: string | null;
@@ -28,6 +33,11 @@ export type ListCommentPostsDeps = {
     igMediaId: string | null;
     status: string;
     replyMode: PostReplyModeSetting;
+    replyPrompt: string | null;
+    silenceSoul: boolean;
+    silencePage: boolean;
+    silenceKnowledge: boolean;
+    silenceRestrictions: boolean;
     autoReplyEnabled: boolean;
     igMediaStatus: IgMediaStatus | null;
     igMediaStatusDetail: string | null;
@@ -53,6 +63,11 @@ export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary
         igMediaId: post.igMediaId,
         status: post.status,
         replyMode: post.replyMode,
+        replyPrompt: post.replyPrompt,
+        silenceSoul: post.silenceSoul,
+        silencePage: post.silencePage,
+        silenceKnowledge: post.silenceKnowledge,
+        silenceRestrictions: post.silenceRestrictions,
         autoReplyEnabled: post.autoReplyEnabled,
         igMediaStatus: post.igMediaStatus,
         igMediaStatusDetail: post.igMediaStatusDetail,

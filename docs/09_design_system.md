@@ -1,8 +1,8 @@
 ---
 title: Design system
 status: approved
-version: 2.2
-updated: 2026-08-11
+version: 2.3
+updated: 2026-08-12
 depends_on: [05_architecture.md]
 blocks: []
 ---
@@ -197,7 +197,9 @@ A pele Iris (tokens) não basta: o admin precisa de **um palco dominante** por t
 
 | Padrão | Quando usar | Regra |
 | --- | --- | --- |
-| **Stage focus** (padrão v1.15+) | Hub de comentários, webhooks, execuções e fluxos “selecionar item → trabalhar” | Lista é entrada (rail/drawer/voltar). Com item selecionado, o **stage** ocupa ≥ ~60% do inset. **Proibido:** três colunas permanentes no hub; **tabela wide** ou **split 50/50 permanente** em webhooks/execuções. |
+| **Feed browse** (v1.16) | Hub de **publicações** (`/admin/comments` sem `post_id`) | Grade **edge-to-edge** no inset (`grid` 2 → 3 → 4 → 5 colunas conforme breakpoint) de **cards media-forward** — **sem** coluna estreita centralizada (`max-w-2xl mx-auto`). **Proibido:** lista flat com `border-l`, tabela wide no browse editorial. |
+| **Ops list/table** (v1.16) | Webhooks (`/admin/webhooks` sem `event_id`) e execuções do agente (`/admin/agent-runs` sem `run_id`) | Lista densa ou tabela legível **full-bleed** dentro do inset parchment (`PageContainer.Content width="full"`). Hairlines entre linhas; tipografia ops ≥ 14px body; sem `box-shadow` em linhas. **Proibido:** coluna estreita centralizada (`max-w-xl`/`max-w-2xl`/`max-w-3xl` + `mx-auto`), utility cards tipo feed, stack de cards media-forward. |
+| **Stage focus** (padrão v1.15+) | Hubs com item selecionado (`post_id`, `event_id`, `run_id`); fluxos “selecionar item → trabalhar” | Lista é entrada (rail/drawer/voltar). Com item selecionado, o **stage** ocupa ≥ ~60% do inset. **Proibido:** três colunas permanentes no hub; **split 50/50 permanente** em webhooks/execuções. |
 | **Lab / workshop** (v1.16) | Simulador do agente | Setup compacto (cenário + thread) + **palco de resultado** dominante após simular. Não é browse de histórico. Thread como conversa; resposta + stages no palco. |
 | **Master-detail curto** | Só quando os dois painéis são igualmente leves (ex.: preferências raras) | Dois painéis no máximo; nenhum pode ser “terceira fatia” espremendo o trabalho. |
 | **Mural editorial** | Calendário mensal | Dias **com** post = tiles densos (thumb/status/trecho). Dias **vazios** são secundários (não dominam o viewport). Empty state do mês = mensagem curta + CTA, não mar de células hero. |
@@ -207,6 +209,76 @@ A pele Iris (tokens) não basta: o admin precisa de **um palco dominante** por t
 **Decisão v1.15:** modelo padrão = **stage focus**. **Thread-first** (conversa como coluna principal permanente, post só no header) foi avaliado e **rejeitado** nesta versão — a mídia editorial continua no palco junto com as threads.
 
 **Decisão v1.16:** webhooks e execuções seguem stage focus; simulador usa **lab/workshop** e reutiliza o painel de stages das execuções.
+
+**Decisão v1.16 (feed browse):** o browse de **publicações** usa **feed browse** antes da seleção; webhooks e execuções usam **ops list/table**. Ao escolher um item, a composição transita para **stage focus** — o padrão de browse não substitui o stage.
+
+### Feed browse
+
+Camada de composição **antes** da seleção de item. Aplica-se **somente** a `/admin/comments` (sem `post_id`). Tokens em `iris-app/admin/src/iris-design-tokens.css`; cards seguem § **Utility cards** — composição editorial, não rebranding v1.13.
+
+**Nota (publicações):** o feed é **grade full-bleed** no inset (tipicamente 2 / 3 / 4 / 5 colunas) — não coluna única centralizada.
+
+### Ops list/table
+
+Camada de composição **antes** da seleção em superfícies ops. Aplica-se a `/admin/webhooks` (sem `event_id`) e `/admin/agent-runs` (sem `run_id`).
+
+| Regra | Valor |
+| --- | --- |
+| Largura | Full-bleed no inset parchment — **sem** `max-w-xl`/`max-w-2xl`/`max-w-3xl` + `mx-auto` |
+| Layout | Lista densa (linhas clicáveis + hairline) ou tabela com colunas úteis (timestamp, tipo/status, relações, resumo) |
+| Densidade | Body ≥ 14px (`text-sm` mínimo); `font-mono` para ids/modelos quando relevante |
+| Mobile | Cards compactos ou lista empilhada contida no inset — sem overflow horizontal indevido |
+| Seleção | `bg-muted/40` ou hairline `border-primary` — sem utility card editorial nem `box-shadow` |
+
+**Deprecated:** feed browse (cards centralizados) em webhooks — revertido a partir de US-0127/0128; coluna estreita centralizada em ops é anti-padrão.
+
+#### Grade e fundo (feed browse)
+
+| Regra | Valor |
+| --- | --- |
+| Largura | Full-bleed no inset — **proibido** `max-w-xl`/`max-w-2xl` + `mx-auto` |
+| Layout | `grid` responsivo: 2 (mobile) → 3 (sm/md) → 4 (lg) → 5 (xl) |
+| Card | Utility card; mídia `aspect-square` dominante; caption + engajamento abaixo |
+| Fundo | `canvas-parchment` do inset — cards em `canvas` |
+| Mobile (`< 640px`) | 2 colunas |
+| Desktop | 3–5 colunas até abrir stage |
+
+#### Card de feed
+
+Cada item do feed é um **utility card** (hairline + `rounded-lg`, sem `box-shadow`). Contrato alinhado a `PostInboxList` (US-0123):
+
+| Zona | Conteúdo |
+| --- | --- |
+| Mídia / thumbnail | Plano dominante no topo do card (aspect ratio consistente; thumb do post) |
+| Legenda / resumo | Trecho truncado (`line-clamp-2` ou `truncate`) — caption do post |
+| Engajamento | Métricas quando aplicável (likes, comentários) em caption |
+| Status | `StatusBadge` — ver § **Status badges** |
+| Seleção / hover | `border-primary` ou `bg-primary/10` — accent Iris purple **só** em seleção/CTA |
+
+**Proibido no card de feed:** `box-shadow`; gradientes roxos; glassmorphism; card-in-card (painel aninhado com borda própria); `border-l-4` estilo inbox.
+
+#### Feed browse vs stage focus
+
+| Estado | Hub comentários/publicações | Ops (webhooks / execuções) |
+| --- | --- | --- |
+| **Browse** (sem item) | Grade edge-to-edge de cards (2–5 cols) + toolbar | Lista/tabela densa edge-to-edge + filtros no topo |
+| **Stage focus** (com item) | `?post_id=` → rail/drawer + stage ≥60% (`PostDetailPanel`) | `?event_id=` / `?run_id=` → voltar/lista + stage (payload, stages, metadados) |
+
+A transição browse → stage é por query param ou navegação; o browse **não** mantém lista wide ao lado do stage.
+
+#### Anti-padrões (feed browse — publicações)
+
+- Lista flat com `border-l` ou divisores verticais de inbox.
+- Tabela wide no browse editorial.
+- Sombra, gradiente roxo ou glass nos cards.
+- Três colunas ou split permanente no browse (isso é stage focus ou layout deprecated).
+
+#### Anti-padrões (ops list/table)
+
+- Coluna estreita centralizada (`max-w-2xl mx-auto`) em webhooks ou execuções.
+- Utility cards tipo feed (thumb + card editorial) em superfícies ops.
+- `box-shadow` em linhas de lista/tabela.
+- Payload expandido inline na célula da tabela (usar stage focus).
 
 ## Components (implementação)
 
@@ -263,5 +335,5 @@ Out of scope como tema separado. A sidebar escura é chrome fixo, não “dark m
 ## Referências
 
 - [`docs/design/DESIGN-rules.md`](design/DESIGN-rules.md) — gramática Iris completa
-- [`docs/architecture/admin-ui-layout.md`](architecture/admin-ui-layout.md) — árvore de layout + stage focus
+- [`docs/architecture/admin-ui-layout.md`](architecture/admin-ui-layout.md) — árvore de layout + feed browse + stage focus
 - [`docs/05_architecture.md`](05_architecture.md) — § Major components

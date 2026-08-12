@@ -5,8 +5,8 @@ export function WebhooksPage() {
   return (
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-          <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">
             <PageContainer.Header
               eyebrow="Operação"
               title="Webhooks"

@@ -86,7 +86,7 @@ function statusBadge(post: CommentPostSummary): {
   };
 }
 
-const PostInboxItem = memo(function PostInboxItem({
+const PostFeedCard = memo(function PostFeedCard({
   post,
   selected,
   thumbnailOverrides,
@@ -113,34 +113,32 @@ const PostInboxItem = memo(function PostInboxItem({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full items-start gap-3 border-l-4 p-4 text-left transition-colors",
-        selected
-          ? "border-l-primary bg-primary/10 hover:bg-muted/40"
-          : "border-l-transparent border-b border-border/50 hover:bg-muted/40",
+        "flex min-w-0 flex-col overflow-hidden rounded-[var(--iris-radius-lg)] border border-border/70 bg-card text-left shadow-none transition-colors",
+        selected ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted/40",
       )}
     >
-      <div className="relative size-16 shrink-0">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-muted">
         {preview ? (
           <img
             src={preview}
             alt=""
-            className="size-16 rounded-md border border-border/50 object-cover"
+            className="size-full object-cover"
             loading="lazy"
           />
         ) : (
-          <div className="flex size-16 items-center justify-center rounded-md border border-border/50 bg-muted">
-            <ImageIcon className="size-5 text-muted-foreground/70" />
+          <div className="flex size-full items-center justify-center">
+            <ImageIcon className="size-8 text-muted-foreground/70" />
           </div>
         )}
         {post.pending_count > 0 ? (
-          <span className="absolute -top-1.5 -right-1.5 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-xs font-semibold text-white">
+          <span className="absolute top-2 right-2 flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 py-0.5 text-xs font-semibold text-white">
             {post.pending_count > 9 ? "9+" : post.pending_count}
           </span>
         ) : null}
       </div>
 
-      <div className="min-w-0 flex-1 flex flex-col">
-        <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-col gap-1.5 p-3 sm:p-3.5">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-1">
             <span
               className={cn(
@@ -169,14 +167,14 @@ const PostInboxItem = memo(function PostInboxItem({
 
         <p
           className={cn(
-            "truncate text-base text-foreground",
+            "line-clamp-2 text-sm leading-snug text-foreground",
             selected ? "font-semibold" : "font-normal",
           )}
         >
           {listCaption(post.caption)}
         </p>
 
-        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+        <div className="flex items-center gap-3 text-muted-foreground">
           <span className="inline-flex items-center gap-1 text-xs">
             <Heart className="size-3.5 shrink-0" aria-hidden />
             <span className="tabular-nums">{likeLabel}</span>
@@ -198,9 +196,9 @@ export function PostInboxList({
   onSelect,
 }: PostInboxListProps) {
   return (
-    <div className="flex flex-col">
+    <div className="grid min-w-0 grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-4 sm:p-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {posts.map((post) => (
-        <PostInboxItem
+        <PostFeedCard
           key={post.post_id}
           post={post}
           selected={post.post_id === selectedPostId}

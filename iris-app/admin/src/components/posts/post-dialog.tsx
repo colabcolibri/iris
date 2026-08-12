@@ -9,7 +9,6 @@ import { ROUTES } from "@/lib/routes";
 import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { StatusBadge } from "@/components/posts/status-badge";
-import { PostFormSection } from "@/components/posts/post-form-section";
 import { PostMediaSection } from "@/components/posts/post-media-section";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
 import {
@@ -23,6 +22,7 @@ import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import {
@@ -46,10 +46,22 @@ type PostDialogProps = {
   caption: string;
   scheduledAt: string;
   replyMode: PostReplyModeSetting;
+  carouselSummary: string;
+  replyPrompt: string;
+  silenceSoul: boolean;
+  silencePage: boolean;
+  silenceKnowledge: boolean;
+  silenceRestrictions: boolean;
   onOpenChange: (open: boolean) => void;
   onCaptionChange: (value: string) => void;
   onScheduledAtChange: (value: string) => void;
   onReplyModeChange: (value: PostReplyModeSetting) => void;
+  onCarouselSummaryChange: (value: string) => void;
+  onReplyPromptChange: (value: string) => void;
+  onSilenceSoulChange: (value: boolean) => void;
+  onSilencePageChange: (value: boolean) => void;
+  onSilenceKnowledgeChange: (value: boolean) => void;
+  onSilenceRestrictionsChange: (value: boolean) => void;
   onFilesChange: (files: FileList | null) => void;
   onSaveDraft: () => void;
   onSchedule: () => void;
@@ -72,10 +84,22 @@ export function PostDialog({
   caption,
   scheduledAt,
   replyMode,
+  carouselSummary,
+  replyPrompt,
+  silenceSoul,
+  silencePage,
+  silenceKnowledge,
+  silenceRestrictions,
   onOpenChange,
   onCaptionChange,
   onScheduledAtChange,
   onReplyModeChange,
+  onCarouselSummaryChange,
+  onReplyPromptChange,
+  onSilenceSoulChange,
+  onSilencePageChange,
+  onSilenceKnowledgeChange,
+  onSilenceRestrictionsChange,
   onFilesChange,
   onSaveDraft,
   onSchedule,
@@ -90,10 +114,12 @@ export function PostDialog({
   const [loadingComments, setLoadingComments] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [openSections, setOpenSections] = useState<string[]>(["content"]);
+  const [contentTab, setContentTab] = useState("caption");
 
   useEffect(() => {
     if (open) {
       setOpenSections(["content"]);
+      setContentTab("caption");
     }
   }, [open]);
 
@@ -159,7 +185,7 @@ export function PostDialog({
 
   const statusHint = (() => {
     if (mode === "create") {
-      return "Preencha legenda e mídia. Use “Agendar” para entrar no calendário editorial.";
+      return "Preencha legenda, resumo e briefing antes de salvar. Use “Agendar” para entrar no calendário editorial.";
     }
     switch (status) {
       case "draft":
@@ -184,6 +210,8 @@ export function PostDialog({
       status === "monitored" ||
       loadingComments ||
       comments.length > 0);
+
+  const isPendingCreate = mode === "create" || !post?.id;
 
   const statusBadge =
     mode === "create" || !post ? (
@@ -233,19 +261,84 @@ export function PostDialog({
                 </p>
               ) : null}
 
-              <PostFormSection title="Legenda da postagem">
-                <Textarea
-                  id="post-caption"
-                  value={caption}
-                  onChange={(e) => onCaptionChange(e.target.value)}
-                  rows={8}
-                  className="min-h-40 w-full resize-y bg-background"
-                  placeholder="Escreva a legenda da publicação…"
-                  required
-                  readOnly={isReadOnly}
-                  disabled={isReadOnly}
-                />
-              </PostFormSection>
+              <Tabs
+                value={contentTab}
+                onValueChange={setContentTab}
+                className="w-full min-w-0"
+              >
+                <TabsList
+                  variant="line"
+                  className="mb-4 h-auto min-h-8 w-full max-w-full flex-wrap justify-start gap-x-1 overflow-x-auto overflow-y-hidden pb-1.5"
+                >
+                  <TabsTrigger value="caption" className="shrink-0">
+                    Legenda
+                  </TabsTrigger>
+                  <TabsTrigger value="summary" className="shrink-0">
+                    Resumo
+                  </TabsTrigger>
+                  <TabsTrigger value="prompt" className="shrink-0">
+                    Prompt adicional
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="caption" className="min-w-0">
+                  <Textarea
+                    id="post-caption"
+                    value={caption}
+                    onChange={(e) => onCaptionChange(e.target.value)}
+                    rows={8}
+                    className="min-h-40 w-full resize-y bg-background"
+                    placeholder="Escreva a legenda da publicação…"
+                    required
+                    readOnly={isReadOnly}
+                    disabled={isReadOnly}
+                  />
+                </TabsContent>
+
+                <TabsContent value="summary" className="min-w-0">
+                  {isPendingCreate ? (
+                    <CarouselSummaryEditor
+                      embedded
+                      summary={carouselSummary}
+                      onSummaryChange={onCarouselSummaryChange}
+                    />
+                  ) : (
+                    <CarouselSummaryEditor
+                      embedded
+                      postId={post!.id}
+                      initialSummary={post!.carousel_summary}
+                    />
+                  )}
+                </TabsContent>
+
+                <TabsContent value="prompt" className="min-w-0">
+                  {isPendingCreate ? (
+                    <PostReplyBriefingEditor
+                      embedded
+                      replyPrompt={replyPrompt}
+                      onReplyPromptChange={onReplyPromptChange}
+                      silenceSoul={silenceSoul}
+                      onSilenceSoulChange={onSilenceSoulChange}
+                      silencePage={silencePage}
+                      onSilencePageChange={onSilencePageChange}
+                      silenceKnowledge={silenceKnowledge}
+                      onSilenceKnowledgeChange={onSilenceKnowledgeChange}
+                      silenceRestrictions={silenceRestrictions}
+                      onSilenceRestrictionsChange={onSilenceRestrictionsChange}
+                    />
+                  ) : (
+                    <PostReplyBriefingEditor
+                      embedded
+                      postId={post!.id}
+                      initialReplyPrompt={post!.reply_prompt}
+                      initialSilenceSoul={post!.silence_soul}
+                      initialSilencePage={post!.silence_page}
+                      initialSilenceKnowledge={post!.silence_knowledge}
+                      initialSilenceRestrictions={post!.silence_restrictions}
+                    />
+                  )}
+                </TabsContent>
+              </Tabs>
 
               <PostMediaSection
                 postId={post?.id}
@@ -254,13 +347,6 @@ export function PostDialog({
                 mode={mode}
                 onFilesChange={onFilesChange}
               />
-
-              {mode === "edit" && post?.id ? (
-                <CarouselSummaryEditor
-                  postId={post.id}
-                  initialSummary={post.carousel_summary}
-                />
-              ) : null}
             </AppAccordion.Content>
           </AppAccordion.Item>
 
@@ -319,17 +405,6 @@ export function PostDialog({
                   </Link>
                 </p>
               </div>
-
-              {mode === "edit" && post?.id ? (
-                <PostReplyBriefingEditor
-                  postId={post.id}
-                  initialReplyPrompt={post.reply_prompt}
-                  initialSilenceSoul={post.silence_soul}
-                  initialSilencePage={post.silence_page}
-                  initialSilenceKnowledge={post.silence_knowledge}
-                  initialSilenceRestrictions={post.silence_restrictions}
-                />
-              ) : null}
 
               {showCommentsSection ? (
                 <section className="space-y-3 border-t border-border/60 pt-4">

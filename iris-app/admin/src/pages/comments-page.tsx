@@ -23,6 +23,7 @@ import { PostDetailPanel } from "@/components/comments/post-detail-panel";
 import { PostInboxList } from "@/components/comments/post-inbox-list";
 import { PageContainer } from "@/components/templates/page-container";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import { OpsEmptyState } from "@/components/templates/ops-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -116,6 +117,8 @@ export function CommentsPage() {
 
   const [posts, setPosts] = useState<CommentPostSummary[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  /** Post cujos `comments` estão no state — evita validar comment_id no post anterior. */
+  const [commentsPostId, setCommentsPostId] = useState("");
   const [insights, setInsights] = useState<PostInsightsResult | null>(null);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [refreshingPosts, setRefreshingPosts] = useState(false);
@@ -265,12 +268,14 @@ export function CommentsPage() {
       const { silent = false, force = false } = options;
       if (!postId) {
         setComments([]);
+        setCommentsPostId("");
         return;
       }
 
       const cached = postCacheRef.current.getComments(postId);
       if (cached) {
         setComments(cached.data);
+        setCommentsPostId(postId);
       }
 
       if (
@@ -292,6 +297,7 @@ export function CommentsPage() {
         setComments((current) =>
           commentsHaveChanged(current, nextComments) ? nextComments : current,
         );
+        setCommentsPostId(postId);
         syncPostCountsFromComments(postId, nextComments);
       } catch (err) {
         const message =
@@ -629,6 +635,7 @@ export function CommentsPage() {
         Date.now(),
       );
       setComments(result.comments);
+      setCommentsPostId(selectedPostId);
       syncPostCountsFromComments(selectedPostId, result.comments);
       setSyncWarning(result.warning);
       await loadInsights(selectedPostId, { silent: true, force: true });
@@ -663,6 +670,7 @@ export function CommentsPage() {
         previewAt,
       );
       setComments(preview.comments);
+      setCommentsPostId(selectedPostId);
       syncPostCountsFromComments(selectedPostId, preview.comments);
       if (preview.marked_deleted > 0) {
         toast.info(
@@ -714,6 +722,7 @@ export function CommentsPage() {
         reconciledAt,
       );
       setComments(result.comments);
+      setCommentsPostId(selectedPostId);
       syncPostCountsFromComments(selectedPostId, result.comments);
       if (result.warning) {
         setSyncWarning(result.warning);
@@ -774,6 +783,12 @@ export function CommentsPage() {
       return;
     }
 
+    // Só valida depois que `comments` for da publicação da URL — senão o clique
+    // na atividade dispara erro com a lista do post anterior ainda no state.
+    if (!selectedPostId || commentsPostId !== selectedPostId) {
+      return;
+    }
+
     if (comments.length === 0) {
       return;
     }
@@ -781,12 +796,11 @@ export function CommentsPage() {
     const exists = comments.some((comment) => comment.id === selectedCommentId);
     if (!exists) {
       toast.error("Comentário não encontrado nesta publicação.");
-      setSearchParams(selectedPostId ? { post_id: selectedPostId } : {}, {
-        replace: true,
-      });
+      setSearchParams({ post_id: selectedPostId }, { replace: true });
     }
   }, [
     comments,
+    commentsPostId,
     loadingComments,
     selectedCommentId,
     selectedPostId,
@@ -796,6 +810,7 @@ export function CommentsPage() {
   useEffect(() => {
     if (!selectedPostId) {
       setComments([]);
+      setCommentsPostId("");
       setInsights(null);
       setLastSyncedAt(null);
       return;
@@ -808,8 +823,10 @@ export function CommentsPage() {
 
     if (cachedComments) {
       setComments(cachedComments.data);
+      setCommentsPostId(selectedPostId);
     } else {
       setComments([]);
+      setCommentsPostId(selectedPostId);
     }
 
     if (cachedInsights) {
@@ -877,92 +894,101 @@ export function CommentsPage() {
   const inStage = Boolean(selectedPost);
 
   const listChrome = (
-    <>
-      <div className="mb-3 grid grid-cols-2 gap-1 rounded-[var(--iris-radius-sm)] border border-border bg-muted/20 p-1">
-        <button
-          type="button"
-          onClick={() => setLeftPanelMode("posts")}
-          className={cn(
-            "rounded-[var(--iris-radius-sm)] px-2 py-1.5 text-xs font-semibold transition-colors",
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <PageContainer.Header
+          eyebrow="Operação"
+          title={leftPanelMode === "posts" ? "Publicações" : "Atividade"}
+          description={
             leftPanelMode === "posts"
-              ? "bg-card text-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Publicações
-        </button>
-        <button
-          type="button"
-          onClick={() => setLeftPanelMode("activity")}
-          className={cn(
-            "rounded-[var(--iris-radius-sm)] px-2 py-1.5 text-xs font-semibold transition-colors",
-            leftPanelMode === "activity"
-              ? "bg-card text-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Atividade
-        </button>
+              ? "Escolha uma publicação para ver comentários, resumo e briefing."
+              : "Comentários recentes em todas as publicações monitoradas."
+          }
+        />
+        {leftPanelMode === "posts" ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-10 gap-1.5"
+              onClick={() => setImportDialogOpen(true)}
+              disabled={!meta?.connected}
+            >
+              <Download className="size-4" />
+              <span className="hidden sm:inline">Importar</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-10 gap-1.5"
+              onClick={() => setAddDialogOpen(true)}
+              disabled={!meta?.connected}
+            >
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Adicionar</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-10 shrink-0"
+              onClick={() => void loadPosts({ force: true })}
+              disabled={refreshingPosts}
+              aria-label="Recarregar lista"
+            >
+              {refreshingPosts ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
-      {leftPanelMode === "posts" ? (
-        <>
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="font-display text-xl font-semibold leading-tight text-foreground">
-              Publicações
-            </h2>
-            <div className="flex shrink-0 items-center gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                className="size-8 shrink-0"
-                onClick={() => setImportDialogOpen(true)}
-                disabled={!meta?.connected}
-                aria-label="Importar publicações"
-              >
-                <Download className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                className="size-8 shrink-0"
-                onClick={() => setAddDialogOpen(true)}
-                disabled={!meta?.connected}
-                aria-label="Adicionar publicação"
-              >
-                <Plus className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                className="size-8 shrink-0"
-                onClick={() => void loadPosts({ force: true })}
-                disabled={refreshingPosts}
-                aria-label="Recarregar lista"
-              >
-                {refreshingPosts ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="size-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-          <div className="relative">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex w-fit max-w-full gap-1 rounded-full border border-border bg-muted/30 p-1">
+          <button
+            type="button"
+            onClick={() => setLeftPanelMode("posts")}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+              leftPanelMode === "posts"
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Publicações
+          </button>
+          <button
+            type="button"
+            onClick={() => setLeftPanelMode("activity")}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+              leftPanelMode === "activity"
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Atividade
+          </button>
+        </div>
+
+        {leftPanelMode === "posts" ? (
+          <div className="relative w-full min-w-0 sm:max-w-sm">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Buscar legenda ou ID..."
-              className="h-10 border-border bg-muted/30 pl-10 text-sm focus-visible:ring-primary/40"
+              placeholder="Buscar legenda ou ID…"
+              className="h-10 pl-10 text-sm focus-visible:ring-primary/40"
             />
           </div>
-        </>
-      ) : null}
-    </>
+        ) : null}
+      </div>
+    </div>
   );
 
   const listBody: ReactNode =
@@ -972,13 +998,19 @@ export function CommentsPage() {
         refreshToken={activityRefreshToken}
       />
     ) : loadingPosts ? (
-      <p className="px-4 py-6 text-sm text-muted-foreground">Carregando…</p>
+      <OpsEmptyState>Carregando publicações…</OpsEmptyState>
     ) : filteredPosts.length === 0 ? (
-      <p className="px-4 py-6 text-sm text-muted-foreground">
+      <OpsEmptyState
+        title={
+          posts.length === 0
+            ? "Nenhuma publicação ainda"
+            : "Nada encontrado"
+        }
+      >
         {posts.length === 0
-          ? "Nenhuma publicação gerenciada ainda."
-          : "Nada encontrado na busca."}
-      </p>
+          ? "Importe ou adicione uma publicação para monitorar comentários."
+          : "Tente outra busca por legenda ou ID."}
+      </OpsEmptyState>
     ) : (
       <PostInboxList
         posts={filteredPosts}
@@ -1018,15 +1050,15 @@ export function CommentsPage() {
       ) : null}
 
       {!inStage ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-          <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
-            <div className="shrink-0 border-b p-4 sm:px-6">{listChrome}</div>
-            <PageScrollArea>{listBody}</PageScrollArea>
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">
+            {listChrome}
           </div>
+          <PageScrollArea className="bg-transparent">{listBody}</PageScrollArea>
         </div>
       ) : selectedPost ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-          <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 sm:px-4">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 sm:px-4">
             <Button
               type="button"
               variant="ghost"

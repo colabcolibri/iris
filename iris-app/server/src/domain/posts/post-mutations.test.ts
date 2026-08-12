@@ -1,7 +1,49 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeUpdatePost } from "./post-mutations.ts";
+import {
+  normalizeCreatePost,
+  normalizeUpdatePost,
+} from "./post-mutations.ts";
 import { ValidationError } from "../../api/json.ts";
+
+test("normalizeCreatePost accepts briefing and carousel_summary", () => {
+  const input = normalizeCreatePost({
+    channel: "instagram",
+    caption: "Legenda",
+    carousel_summary: "Slide 1: produto",
+    reply_prompt: "Promo R$ 99",
+    silence_knowledge: true,
+    silence_restrictions: false,
+  });
+  assert.equal(input.caption, "Legenda");
+  assert.equal(input.carouselSummary, "Slide 1: produto");
+  assert.equal(input.replyPrompt, "Promo R$ 99");
+  assert.equal(input.silenceKnowledge, true);
+  assert.equal(input.silenceRestrictions, false);
+  assert.equal(input.silenceSoul, false);
+});
+
+test("normalizeCreatePost rejects invalid carousel_summary", () => {
+  assert.throws(
+    () =>
+      normalizeCreatePost({
+        channel: "instagram",
+        carousel_summary: 42,
+      }),
+    ValidationError,
+  );
+});
+
+test("normalizeCreatePost rejects reply_prompt over max length", () => {
+  assert.throws(
+    () =>
+      normalizeCreatePost({
+        channel: "instagram",
+        reply_prompt: "x".repeat(32_001),
+      }),
+    ValidationError,
+  );
+});
 
 test("normalizeUpdatePost accepts auto_reply_enabled boolean", () => {
   const update = normalizeUpdatePost({ auto_reply_enabled: true });

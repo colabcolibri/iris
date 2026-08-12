@@ -102,6 +102,11 @@ export type CommentPostSummary = {
   status?: string;
   is_external?: boolean;
   reply_mode?: PostReplyModeSetting;
+  reply_prompt?: string | null;
+  silence_soul?: boolean;
+  silence_page?: boolean;
+  silence_knowledge?: boolean;
+  silence_restrictions?: boolean;
   auto_reply_enabled?: boolean;
   ig_media_status?: IgMediaStatus | null;
   ig_media_status_detail?: string | null;

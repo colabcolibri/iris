@@ -11,6 +11,12 @@ export type CreatePostInput = {
   igMediaId?: string | null;
   publishedAt?: string | null;
   replyMode?: PostReplyModeSetting;
+  carouselSummary?: string | null;
+  replyPrompt?: string | null;
+  silenceSoul?: boolean;
+  silencePage?: boolean;
+  silenceKnowledge?: boolean;
+  silenceRestrictions?: boolean;
 };
 
 export type UpdatePostInput = {

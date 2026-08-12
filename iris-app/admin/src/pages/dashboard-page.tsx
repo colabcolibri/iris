@@ -45,6 +45,12 @@ export function DashboardPage() {
   const [caption, setCaption] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [replyMode, setReplyMode] = useState<PostReplyModeSetting>("inherit");
+  const [carouselSummary, setCarouselSummary] = useState("");
+  const [replyPrompt, setReplyPrompt] = useState("");
+  const [silenceSoul, setSilenceSoul] = useState(false);
+  const [silencePage, setSilencePage] = useState(false);
+  const [silenceKnowledge, setSilenceKnowledge] = useState(false);
+  const [silenceRestrictions, setSilenceRestrictions] = useState(false);
   const [files, setFiles] = useState<FileList | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -95,12 +101,44 @@ export function DashboardPage() {
     return unsubscribe;
   }, [loadPosts, selectedPost?.id]);
 
+  function resetEditorialFields() {
+    setCarouselSummary("");
+    setReplyPrompt("");
+    setSilenceSoul(false);
+    setSilencePage(false);
+    setSilenceKnowledge(false);
+    setSilenceRestrictions(false);
+  }
+
+  function loadEditorialFieldsFromPost(post: Post) {
+    setCarouselSummary(post.carousel_summary ?? "");
+    setReplyPrompt(post.reply_prompt ?? "");
+    setSilenceSoul(post.silence_soul ?? false);
+    setSilencePage(post.silence_page ?? false);
+    setSilenceKnowledge(post.silence_knowledge ?? false);
+    setSilenceRestrictions(post.silence_restrictions ?? false);
+  }
+
+  function buildCreatePostBody() {
+    return {
+      caption,
+      channel: "instagram",
+      carousel_summary: carouselSummary.trim() || null,
+      reply_prompt: replyPrompt.trim() || null,
+      silence_soul: silenceSoul,
+      silence_page: silencePage,
+      silence_knowledge: silenceKnowledge,
+      silence_restrictions: silenceRestrictions,
+    };
+  }
+
   function openCreate() {
     setSelectedPost(null);
     setDialogMode("create");
     setCaption("");
     setScheduledAt("");
     setReplyMode("inherit");
+    resetEditorialFields();
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -114,6 +152,7 @@ export function DashboardPage() {
     setReplyMode(
       post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "inherit"),
     );
+    loadEditorialFieldsFromPost(post);
     setFiles(null);
     setError("");
     setDialogOpen(true);
@@ -195,10 +234,7 @@ export function DashboardPage() {
       let postId = selectedPost?.id;
 
       if (!postId) {
-        const created = await createPost({
-          caption,
-          channel: "instagram",
-        });
+        const created = await createPost(buildCreatePostBody());
         postId = created.id;
       }
 
@@ -243,6 +279,7 @@ export function DashboardPage() {
       const post = await fetchPost(postId);
       setSelectedPost(post);
       setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
+      loadEditorialFieldsFromPost(post);
       setDialogMode("edit");
     } catch (err) {
       if (!handleAuthError(err)) {
@@ -274,10 +311,7 @@ export function DashboardPage() {
       }
 
       if (!postId) {
-        const created = await createPost({
-          caption,
-          channel: "instagram",
-        });
+        const created = await createPost(buildCreatePostBody());
         postId = created.id;
       }
 
@@ -303,6 +337,7 @@ export function DashboardPage() {
       await loadPosts();
       setSelectedPost(post);
       setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
+      loadEditorialFieldsFromPost(post);
       setDialogMode("edit");
       setFiles(null);
       toast.success("Postagem publicada no Instagram.");
@@ -414,6 +449,12 @@ export function DashboardPage() {
         caption={caption}
         scheduledAt={scheduledAt}
         replyMode={replyMode}
+        carouselSummary={carouselSummary}
+        replyPrompt={replyPrompt}
+        silenceSoul={silenceSoul}
+        silencePage={silencePage}
+        silenceKnowledge={silenceKnowledge}
+        silenceRestrictions={silenceRestrictions}
         onOpenChange={(open) => {
           if (!open) closeDialog();
           else setDialogOpen(true);
@@ -421,6 +462,12 @@ export function DashboardPage() {
         onCaptionChange={setCaption}
         onScheduledAtChange={setScheduledAt}
         onReplyModeChange={setReplyMode}
+        onCarouselSummaryChange={setCarouselSummary}
+        onReplyPromptChange={setReplyPrompt}
+        onSilenceSoulChange={setSilenceSoul}
+        onSilencePageChange={setSilencePage}
+        onSilenceKnowledgeChange={setSilenceKnowledge}
+        onSilenceRestrictionsChange={setSilenceRestrictions}
         onFilesChange={(nextFiles) => {
           if (!nextFiles) {
             setFiles(null);

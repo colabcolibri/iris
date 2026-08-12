@@ -10,8 +10,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PageContainer } from "@/components/templates/page-container";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import {
+  OpsEmptyState,
+  opsFilterSelectClassName,
+} from "@/components/templates/ops-empty-state";
 import {
   fetchAgentRunDetail,
   fetchAgentRuns,
@@ -151,7 +163,7 @@ export function AgentRunsPage() {
   const listFilters = (
     <div className="flex flex-wrap items-center gap-3">
       <select
-        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        className={opsFilterSelectClassName}
         value={terminalFilter}
         onChange={(event) => setTerminalFilter(event.target.value)}
       >
@@ -163,7 +175,7 @@ export function AgentRunsPage() {
         ))}
       </select>
       <select
-        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        className={opsFilterSelectClassName}
         value={tierFilter}
         onChange={(event) => setTierFilter(event.target.value)}
       >
@@ -189,63 +201,82 @@ export function AgentRunsPage() {
 
   const listBody =
     loading && items.length === 0 ? (
-      <p className="px-4 py-6 text-base text-muted-foreground">Carregando…</p>
+      <OpsEmptyState>Carregando execuções…</OpsEmptyState>
     ) : items.length === 0 ? (
-      <p className="px-4 py-6 text-base text-muted-foreground">
-        Nenhuma execução encontrada.
-      </p>
+      <OpsEmptyState title="Nenhuma execução">
+        Nenhuma run encontrada com os filtros atuais.
+      </OpsEmptyState>
     ) : (
-      items.map((row) => (
-        <button
-          type="button"
-          key={row.id}
-          onClick={() => selectRun(row.id)}
-          className={cn(
-            "flex w-full flex-col gap-1.5 border-b border-border/60 px-4 py-4 text-left transition-colors hover:bg-muted/30",
-            selectedId === row.id && "bg-muted/40",
-          )}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span
-              className={cn(
-                "rounded px-2 py-0.5 text-xs font-semibold uppercase",
-                terminalBadgeClass(row.terminal_status),
-              )}
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="sm:px-6">Quando</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Trigger</TableHead>
+            <TableHead className="hidden md:table-cell">Tier</TableHead>
+            <TableHead className="hidden lg:table-cell">Modelo</TableHead>
+            <TableHead className="hidden sm:table-cell">Duração</TableHead>
+            <TableHead className="hidden lg:table-cell">Tokens</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((row) => (
+            <TableRow
+              key={row.id}
+              data-state={selectedId === row.id ? "selected" : undefined}
+              className="cursor-pointer"
+              onClick={() => selectRun(row.id)}
             >
-              {TERMINAL_LABELS[row.terminal_status ?? ""] ??
-                row.terminal_status ??
-                "—"}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {new Date(row.created_at).toLocaleString("pt-BR")}
-            </span>
-          </div>
-          <p className="text-base font-semibold leading-snug text-foreground">
-            {row.trigger}
-            {" · "}
-            {row.step_count === 1 ? "1 chamada" : `${row.step_count} chamadas`}
-            {row.reply_tier ? ` · tier ${row.reply_tier}` : ""}
-          </p>
-          <p className="truncate font-mono text-sm font-semibold text-primary">
-            {(row.models ?? []).length > 0
-              ? (row.models ?? []).join(", ")
-              : "sem modelo registrado"}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {formatDuration(row.duration_ms)}
-            {row.total_tokens != null ? ` · ${row.total_tokens} tokens` : ""}
-          </p>
-        </button>
-      ))
+              <TableCell className="whitespace-nowrap text-muted-foreground sm:px-6">
+                {new Date(row.created_at).toLocaleString("pt-BR")}
+              </TableCell>
+              <TableCell>
+                <span
+                  className={cn(
+                    "rounded-sm px-2 py-0.5 text-xs font-semibold uppercase",
+                    terminalBadgeClass(row.terminal_status),
+                  )}
+                >
+                  {TERMINAL_LABELS[row.terminal_status ?? ""] ??
+                    row.terminal_status ??
+                    "—"}
+                </span>
+              </TableCell>
+              <TableCell>
+                <p className="font-semibold text-foreground">{row.trigger}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {row.step_count === 1
+                    ? "1 chamada"
+                    : `${row.step_count} chamadas`}
+                </p>
+              </TableCell>
+              <TableCell className="hidden md:table-cell text-muted-foreground">
+                {row.reply_tier ?? "—"}
+              </TableCell>
+              <TableCell className="hidden max-w-[14rem] truncate font-mono text-sm font-semibold text-primary lg:table-cell">
+                {(row.models ?? []).length > 0
+                  ? (row.models ?? []).join(", ")
+                  : "—"}
+              </TableCell>
+              <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
+                {formatDuration(row.duration_ms)}
+              </TableCell>
+              <TableCell className="hidden tabular-nums text-muted-foreground lg:table-cell">
+                {row.total_tokens != null ? row.total_tokens : "—"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     );
 
   return (
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {!inStage ? (
-            <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
-              <div className="shrink-0 space-y-3 border-b border-border p-4 sm:px-6">
+            <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+              <div className="shrink-0 space-y-3 px-4 py-4 sm:px-6 md:px-8">
                 <PageContainer.Header
                   eyebrow="Operação"
                   title="Execuções do agente"
@@ -265,7 +296,7 @@ export function AgentRunsPage() {
             </div>
           ) : (
             <>
-              <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 sm:px-4">
+              <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 sm:px-4">
                 <Button
                   type="button"
                   variant="ghost"
@@ -293,12 +324,10 @@ export function AgentRunsPage() {
                 </p>
               </div>
 
-              <PageScrollArea contentClassName="p-4 sm:p-6">
-                <div className="mx-auto max-w-3xl">
+              <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
+                <div className="w-full">
                   {detailLoading ? (
-                    <p className="text-base text-muted-foreground">
-                      Carregando detalhe…
-                    </p>
+                    <OpsEmptyState>Carregando detalhe…</OpsEmptyState>
                   ) : detail?.audit ? (
                     <ReplyAuditTimeline
                       audit={detail.audit}
@@ -313,9 +342,9 @@ export function AgentRunsPage() {
                       }}
                     />
                   ) : (
-                    <p className="text-base text-muted-foreground">
-                      Sem dados de auditoria.
-                    </p>
+                    <OpsEmptyState title="Sem auditoria">
+                      Sem dados de auditoria para esta execução.
+                    </OpsEmptyState>
                   )}
                   {threadHref ? (
                     <p className="mt-4 text-base">

@@ -11,9 +11,11 @@ import { mapPostRow } from "./mappers.ts";
 export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
   const insert = db.prepare(`
     INSERT INTO posts (
-      id, status, channel, caption, scheduled_at, published_at, ig_media_id,
-      source_note, error_message, auto_reply_enabled, reply_mode, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)
+      id, status, channel, caption, carousel_summary, scheduled_at, published_at, ig_media_id,
+      source_note, error_message, auto_reply_enabled, reply_mode, reply_prompt,
+      silence_soul, silence_page, silence_knowledge, silence_restrictions,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const selectById = db.prepare("SELECT * FROM posts WHERE id = ?");
@@ -34,12 +36,18 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         input.status ?? "draft",
         input.channel,
         input.caption ?? null,
+        input.carouselSummary ?? null,
         input.scheduledAt ?? null,
         input.publishedAt ?? null,
         input.igMediaId ?? null,
         input.sourceNote ?? null,
         input.replyMode === "auto" || input.replyMode === "draft" ? 1 : 0,
         input.replyMode ?? "inherit",
+        input.replyPrompt ?? null,
+        input.silenceSoul ? 1 : 0,
+        input.silencePage ? 1 : 0,
+        input.silenceKnowledge ? 1 : 0,
+        input.silenceRestrictions ? 1 : 0,
         now,
         now,
       );

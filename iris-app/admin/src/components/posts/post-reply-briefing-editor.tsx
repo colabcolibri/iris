@@ -7,12 +7,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { updatePost } from "@/lib/api";
 
 type PostReplyBriefingEditorProps = {
-  postId: string;
+  postId?: string;
   initialReplyPrompt?: string | null;
   initialSilenceSoul?: boolean;
   initialSilencePage?: boolean;
   initialSilenceKnowledge?: boolean;
   initialSilenceRestrictions?: boolean;
+  replyPrompt?: string;
+  onReplyPromptChange?: (value: string) => void;
+  silenceSoul?: boolean;
+  onSilenceSoulChange?: (value: boolean) => void;
+  silencePage?: boolean;
+  onSilencePageChange?: (value: boolean) => void;
+  silenceKnowledge?: boolean;
+  onSilenceKnowledgeChange?: (value: boolean) => void;
+  silenceRestrictions?: boolean;
+  onSilenceRestrictionsChange?: (value: boolean) => void;
+  embedded?: boolean;
 };
 
 const SILENCE_BLOCKS = [
@@ -47,24 +58,76 @@ export function PostReplyBriefingEditor({
   initialSilencePage = false,
   initialSilenceKnowledge = false,
   initialSilenceRestrictions = false,
+  replyPrompt: controlledReplyPrompt,
+  onReplyPromptChange,
+  silenceSoul: controlledSilenceSoul,
+  onSilenceSoulChange,
+  silencePage: controlledSilencePage,
+  onSilencePageChange,
+  silenceKnowledge: controlledSilenceKnowledge,
+  onSilenceKnowledgeChange,
+  silenceRestrictions: controlledSilenceRestrictions,
+  onSilenceRestrictionsChange,
+  embedded = false,
 }: PostReplyBriefingEditorProps) {
-  const [replyPrompt, setReplyPrompt] = useState(initialReplyPrompt ?? "");
-  const [silenceSoul, setSilenceSoul] = useState(initialSilenceSoul);
-  const [silencePage, setSilencePage] = useState(initialSilencePage);
-  const [silenceKnowledge, setSilenceKnowledge] = useState(
+  const isReplyPromptControlled = onReplyPromptChange !== undefined;
+  const [internalReplyPrompt, setInternalReplyPrompt] = useState(
+    initialReplyPrompt ?? "",
+  );
+  const replyPrompt = isReplyPromptControlled
+    ? (controlledReplyPrompt ?? "")
+    : internalReplyPrompt;
+
+  const isSilenceSoulControlled = onSilenceSoulChange !== undefined;
+  const [internalSilenceSoul, setInternalSilenceSoul] = useState(
+    initialSilenceSoul,
+  );
+  const silenceSoul = isSilenceSoulControlled
+    ? (controlledSilenceSoul ?? false)
+    : internalSilenceSoul;
+
+  const isSilencePageControlled = onSilencePageChange !== undefined;
+  const [internalSilencePage, setInternalSilencePage] = useState(
+    initialSilencePage,
+  );
+  const silencePage = isSilencePageControlled
+    ? (controlledSilencePage ?? false)
+    : internalSilencePage;
+
+  const isSilenceKnowledgeControlled = onSilenceKnowledgeChange !== undefined;
+  const [internalSilenceKnowledge, setInternalSilenceKnowledge] = useState(
     initialSilenceKnowledge,
   );
-  const [silenceRestrictions, setSilenceRestrictions] = useState(
-    initialSilenceRestrictions,
-  );
+  const silenceKnowledge = isSilenceKnowledgeControlled
+    ? (controlledSilenceKnowledge ?? false)
+    : internalSilenceKnowledge;
+
+  const isSilenceRestrictionsControlled =
+    onSilenceRestrictionsChange !== undefined;
+  const [internalSilenceRestrictions, setInternalSilenceRestrictions] =
+    useState(initialSilenceRestrictions);
+  const silenceRestrictions = isSilenceRestrictionsControlled
+    ? (controlledSilenceRestrictions ?? false)
+    : internalSilenceRestrictions;
+
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setReplyPrompt(initialReplyPrompt ?? "");
-    setSilenceSoul(initialSilenceSoul);
-    setSilencePage(initialSilencePage);
-    setSilenceKnowledge(initialSilenceKnowledge);
-    setSilenceRestrictions(initialSilenceRestrictions);
+    if (!isReplyPromptControlled) {
+      setInternalReplyPrompt(initialReplyPrompt ?? "");
+    }
+    if (!isSilenceSoulControlled) {
+      setInternalSilenceSoul(initialSilenceSoul);
+    }
+    if (!isSilencePageControlled) {
+      setInternalSilencePage(initialSilencePage);
+    }
+    if (!isSilenceKnowledgeControlled) {
+      setInternalSilenceKnowledge(initialSilenceKnowledge);
+    }
+    if (!isSilenceRestrictionsControlled) {
+      setInternalSilenceRestrictions(initialSilenceRestrictions);
+    }
   }, [
     initialReplyPrompt,
     initialSilenceSoul,
@@ -72,6 +135,11 @@ export function PostReplyBriefingEditor({
     initialSilenceKnowledge,
     initialSilenceRestrictions,
     postId,
+    isReplyPromptControlled,
+    isSilenceSoulControlled,
+    isSilencePageControlled,
+    isSilenceKnowledgeControlled,
+    isSilenceRestrictionsControlled,
   ]);
 
   const silenceValues: Record<SilenceKey, boolean> = {
@@ -81,24 +149,49 @@ export function PostReplyBriefingEditor({
     silence_restrictions: silenceRestrictions,
   };
 
+  function setReplyPrompt(value: string) {
+    if (isReplyPromptControlled) {
+      onReplyPromptChange?.(value);
+    } else {
+      setInternalReplyPrompt(value);
+    }
+  }
+
   function setSilenceValue(key: SilenceKey, checked: boolean) {
     switch (key) {
       case "silence_soul":
-        setSilenceSoul(checked);
+        if (isSilenceSoulControlled) {
+          onSilenceSoulChange?.(checked);
+        } else {
+          setInternalSilenceSoul(checked);
+        }
         break;
       case "silence_page":
-        setSilencePage(checked);
+        if (isSilencePageControlled) {
+          onSilencePageChange?.(checked);
+        } else {
+          setInternalSilencePage(checked);
+        }
         break;
       case "silence_knowledge":
-        setSilenceKnowledge(checked);
+        if (isSilenceKnowledgeControlled) {
+          onSilenceKnowledgeChange?.(checked);
+        } else {
+          setInternalSilenceKnowledge(checked);
+        }
         break;
       case "silence_restrictions":
-        setSilenceRestrictions(checked);
+        if (isSilenceRestrictionsControlled) {
+          onSilenceRestrictionsChange?.(checked);
+        } else {
+          setInternalSilenceRestrictions(checked);
+        }
         break;
     }
   }
 
   async function handleSave() {
+    if (!postId) return;
     setSaving(true);
     try {
       await updatePost(postId, {
@@ -118,27 +211,10 @@ export function PostReplyBriefingEditor({
     }
   }
 
-  return (
-    <PostFormSection
-      title="Briefing de reply"
-      description="Contexto específico desta publicação no harness. Tem precedência sobre o conteúdo global do agente quando definido."
-      action={
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => void handleSave()}
-          disabled={saving}
-        >
-          {saving ? (
-            <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-          ) : null}
-          Salvar briefing
-        </Button>
-      }
-      className="w-full max-w-full min-w-0"
-    >
+  const formBody = (
+    <>
       <Textarea
-        id={`reply-prompt-${postId}`}
+        id={postId ? `reply-prompt-${postId}` : "reply-prompt-pending"}
         rows={6}
         value={replyPrompt}
         onChange={(event) => setReplyPrompt(event.target.value)}
@@ -185,6 +261,56 @@ export function PostReplyBriefingEditor({
           ))}
         </div>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="w-full max-w-full min-w-0 space-y-4">
+        <p className="text-xs text-muted-foreground">
+          Contexto específico desta publicação no harness. Tem precedência sobre
+          o conteúdo global do agente quando definido.
+        </p>
+        {formBody}
+        {postId ? (
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={saving}
+          >
+            {saving ? (
+              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+            ) : null}
+            Salvar briefing
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <PostFormSection
+      title="Briefing de reply"
+      description="Contexto específico desta publicação no harness. Tem precedência sobre o conteúdo global do agente quando definido."
+      action={
+        postId ? (
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={saving}
+          >
+            {saving ? (
+              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+            ) : null}
+            Salvar briefing
+          </Button>
+        ) : null
+      }
+      className="w-full max-w-full min-w-0"
+    >
+      {formBody}
     </PostFormSection>
   );
 }
