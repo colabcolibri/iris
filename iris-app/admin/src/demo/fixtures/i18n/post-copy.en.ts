@@ -1,13 +1,9 @@
 import { DEMO_STORE_URL } from "@/demo/demo-brand";
 
-const REPLY_PROMPT_STORE = `Store link: ${DEMO_STORE_URL}. Prioritize size, stock, and delivery questions.`;
-
 export const DEMO_POST_COPY_EN: Record<
   string,
   {
     caption?: string;
-    carousel_summary?: string;
-    reply_prompt?: string;
     assets?: Array<{ filename: string; alt_text?: string }>;
   }
 > = {
@@ -35,8 +31,6 @@ We put together a carousel with combinations that work Monday through Sunday.
 Save it for when you're getting dressed.
 
 #capsulewardrobe #casualstyle`,
-    carousel_summary:
-      "Three palettes, three complete looks, styling tips on the last slide.",
   },
   "demo-post-prev-04": {
     caption: `The Nômade bag started from a real need: room for laptop, water bottle, and an extra layer 👜
@@ -117,7 +111,6 @@ Three capsule pieces that save the week: linen dress, wide leg, and structured b
 Everything fits in the Nômade bag. Full list in the "Light travel" highlight.
 
 #travel #packing #estudionomade`,
-    carousel_summary: "Open suitcase, 5 numbered pieces, mirror outfit.",
   },
   "demo-post-carousel": {
     caption: `Summer capsule collection — fewer pieces, more outfits ✨
@@ -127,9 +120,6 @@ Sand linen dress · olive wide leg · straw belt · rustic sandals
 Size guide on the last slide. Size questions? Comment here.
 
 #casualstyle #summernomade #estudionomade`,
-    carousel_summary:
-      "Lookbook: cover, linen dress, wide leg, accessories, size chart.",
-    reply_prompt: REPLY_PROMPT_STORE,
     assets: [{ filename: "capa.jpg", alt_text: "Summer lookbook cover" }],
   },
   "demo-post-collab": {
@@ -185,9 +175,6 @@ In the carousel: flat lay, rooftop look, size guide, and store link.
 Save to build your capsule wardrobe!
 
 #lookbook #summer2026 #sustainablefashion #estudionomade`,
-    carousel_summary:
-      "6 slides: cover, flat lay, rooftop look, sandals, size guide, store CTA.",
-    reply_prompt: REPLY_PROMPT_STORE,
   },
   "demo-post-draft": {
     caption: `Behind the scenes of the summer capsule ☀️
@@ -261,8 +248,6 @@ Fine knit, wide leg pants, and that effortless "tidy home" feeling.
 Waitlist in bio — first in line gets the link.
 
 #liveshop #lightautumn #estudionomade`,
-    carousel_summary:
-      "Event cover, light knit preview, date and waitlist CTA.",
   },
   "demo-post-cal-20": {
     caption: `Inside the sand linen dress ✂️
@@ -281,9 +266,6 @@ Everything we answer most in DMs — now in a carousel to save.
 First free exchange within 7 days. Store link in bio.
 
 #onlinestore #consciousfashion #estudionomade`,
-    carousel_summary:
-      "4 slides: regional delivery, free exchange, size guide, contact.",
-    reply_prompt: REPLY_PROMPT_STORE,
   },
   "demo-post-cal-22": {
     caption: `@julia.style tried PP and M of the linen dress — results are in stories 💬

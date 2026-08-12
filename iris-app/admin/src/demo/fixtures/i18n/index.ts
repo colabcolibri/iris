@@ -24,10 +24,6 @@ export function getDemoPostTemplates(locale: DemoLocale): DemoPostTemplate[] {
 
     const merged: DemoPostTemplate = { ...template };
     if (copy.caption != null) merged.caption = copy.caption;
-    if (copy.carousel_summary != null) {
-      merged.carousel_summary = copy.carousel_summary;
-    }
-    if (copy.reply_prompt != null) merged.reply_prompt = copy.reply_prompt;
     if (copy.assets && template.assets) {
       merged.assets = template.assets.map((asset) => {
         const overlay = copy.assets?.find(

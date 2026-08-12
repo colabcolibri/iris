@@ -1,8 +1,6 @@
 import type { PostReplyModeSetting, PostStatus } from "@/lib/types";
 import { DEMO_STORE_URL } from "@/demo/demo-brand";
 
-const REPLY_PROMPT_LOJA = `Link da loja: ${DEMO_STORE_URL}. Priorizar dúvidas de tamanho, estoque e prazo.`;
-
 export type DemoAssetSpec = {
   id?: string;
   filename: string;
@@ -46,7 +44,13 @@ Qual peça de linho vocês usam mais no calor?
 
 #verao #linho #estudionomade`,
     ig_media_id: "17890001001112223",
-    assets: [{ filename: "linho-sol.jpg" }],
+    assets: [
+      { filename: "linho-sol-capa.jpg", alt_text: "Capa verão linho" },
+      { filename: "linho-vestido.jpg", alt_text: "Vestido linho areia" },
+      { filename: "linho-sandalia.jpg", alt_text: "Sandália rústica" },
+      { filename: "linho-cafe.jpg", alt_text: "Look com café gelado" },
+      { filename: "linho-detalhe.jpg", alt_text: "Close tecido linho" },
+    ],
   },
   {
     id: "demo-post-prev-02",
@@ -56,7 +60,13 @@ Look confortável não precisa ser bagunça — wide leg + regata off-white e pr
 
 #lifestyle #feira #estudionomade`,
     ig_media_id: "17890001002223334",
-    assets: [{ filename: "feira-domingo.jpg" }],
+    assets: [
+      { filename: "feira-capa.jpg", alt_text: "Domingo de feira" },
+      { filename: "feira-look.jpg", alt_text: "Wide leg e regata off-white" },
+      { filename: "feira-bolsa.jpg", alt_text: "Bolsa Nômade com compras" },
+      { filename: "feira-caminhada.jpg", alt_text: "Entre as barracas" },
+      { filename: "feira-cafe.jpg", alt_text: "Café depois da feira" },
+    ],
   },
   {
     id: "demo-post-prev-03",
@@ -67,12 +77,13 @@ Montamos um carrossel só com combinações que funcionam de segunda a domingo.
 Salva pra consultar na hora de vestir.
 
 #capsulewardrobe #modacasual`,
-    carousel_summary: "Três paletas, três looks completos, dicas de combinação no último slide.",
     ig_media_id: "17890001003334445",
     assets: [
-      { filename: "paleta-1.jpg" },
-      { filename: "paleta-2.jpg" },
-      { filename: "paleta-3.jpg" },
+      { filename: "paleta-capa.jpg", alt_text: "Três cores do armário" },
+      { filename: "paleta-1.jpg", alt_text: "Look areia" },
+      { filename: "paleta-2.jpg", alt_text: "Look oliva" },
+      { filename: "paleta-3.jpg", alt_text: "Look off-white" },
+      { filename: "paleta-resumo.jpg", alt_text: "Combinações da semana" },
     ],
   },
   {
@@ -96,7 +107,12 @@ Vestido linho + cinto de palha + jaqueta leve nos ombros — pronto pra noite fr
 #collab #styling #estudionomade`,
     collaborators: ["@marina.mods"],
     ig_media_id: "17890001005556667",
-    assets: [{ filename: "marina-transicao.jpg" }],
+    assets: [
+      { filename: "marina-capa.jpg", alt_text: "Collab transição de estação" },
+      { filename: "marina-vestido.jpg", alt_text: "Vestido linho e cinto" },
+      { filename: "marina-jaqueta.jpg", alt_text: "Jaqueta leve nos ombros" },
+      { filename: "marina-detalhe.jpg", alt_text: "Sandália e sombra" },
+    ],
   },
   {
     id: "demo-post-prev-06",
@@ -109,7 +125,13 @@ Link na bio se ainda não viu.
 #modaconsciente #lojavirtual`,
     ig_media_id: "17890001006667778",
     reply_mode: "auto",
-    assets: [{ filename: "guia-antigo.jpg" }],
+    assets: [
+      { filename: "guia-capa.jpg", alt_text: "Como saber se vai servir" },
+      { filename: "guia-tabela.jpg", alt_text: "Tabela de medidas" },
+      { filename: "guia-fitape.jpg", alt_text: "Medindo com fita" },
+      { filename: "guia-comparativo.jpg", alt_text: "PP vs M" },
+      { filename: "guia-cta.jpg", alt_text: "Link na bio" },
+    ],
   },
   {
     id: "demo-post-prev-07",
@@ -119,7 +141,12 @@ Regata de algodão + calça wide leg + brinco discreto — produzida sem apertar
 
 #trabalhoremoto #homeoffice #estudionomade`,
     ig_media_id: "17890001007778889",
-    assets: [{ filename: "home-office.jpg" }],
+    assets: [
+      { filename: "home-setup.jpg", alt_text: "Mesa home office" },
+      { filename: "home-look.jpg", alt_text: "Regata e wide leg" },
+      { filename: "home-tecido.jpg", alt_text: "Close do tecido" },
+      { filename: "home-pausa.jpg", alt_text: "Pausa do café" },
+    ],
   },
   {
     id: "demo-post-prev-08",
@@ -129,7 +156,12 @@ A gente acredita que receber o pedido tem que ser tão bonito quanto vestir a pe
 
 #slowfashion #sustentabilidade`,
     ig_media_id: "17890001008889990",
-    assets: [{ filename: "embalagem-antiga.jpg" }],
+    assets: [
+      { filename: "emb-capa.jpg", alt_text: "Caixa fechada" },
+      { filename: "emb-abertura.jpg", alt_text: "Papel reciclado" },
+      { filename: "emb-cartao.jpg", alt_text: "Cartão de cuidados" },
+      { filename: "emb-peca.jpg", alt_text: "Peça dentro da caixa" },
+    ],
   },
   {
     id: "demo-post-prev-09",
@@ -142,8 +174,11 @@ Já tem a sua?
 #wideleg #modacasual`,
     ig_media_id: "17890001009990001",
     assets: [
-      { filename: "wide-leg-launch-1.jpg" },
-      { filename: "wide-leg-launch-2.jpg" },
+      { filename: "wide-leg-capa.jpg", alt_text: "Wide leg oliva" },
+      { filename: "wide-leg-lateral.jpg", alt_text: "Caimento lateral" },
+      { filename: "wide-leg-look.jpg", alt_text: "Com regata off-white" },
+      { filename: "wide-leg-tecido.jpg", alt_text: "Close do tecido" },
+      { filename: "wide-leg-depo.jpg", alt_text: "Depoimento da comunidade" },
     ],
   },
   {
@@ -158,7 +193,13 @@ Qual foi a favorita de vocês?
     status: "monitored",
     ig_media_id: "17890001010001112",
     reply_mode: "draft",
-    assets: [{ filename: "comunidade-capsula.jpg" }],
+    assets: [
+      { filename: "comunidade-mosaico.jpg", alt_text: "Stories da comunidade" },
+      { filename: "comunidade-pecas.jpg", alt_text: "Quatro peças da cápsula" },
+      { filename: "comunidade-look1.jpg", alt_text: "Look vestido linho" },
+      { filename: "comunidade-look2.jpg", alt_text: "Look wide leg" },
+      { filename: "comunidade-pergunta.jpg", alt_text: "Qual foi a favorita?" },
+    ],
   },
 
   // —— Mês atual (15) ——
@@ -173,7 +214,13 @@ Primeira troca grátis em 7 dias → ${DEMO_STORE_URL.replace("https://", "")}
 #lojavirtual #modafeminina #estudionomade`,
     ig_media_id: "17890002223334445",
     reply_mode: "auto",
-    assets: [{ filename: "guia-medidas.jpg" }],
+    assets: [
+      { filename: "guia-mockup.jpg", alt_text: "Guia no celular" },
+      { filename: "guia-tabela.jpg", alt_text: "Tabela de medidas" },
+      { filename: "guia-caimento.jpg", alt_text: "Dica de caimento" },
+      { filename: "guia-troca.jpg", alt_text: "Primeira troca grátis" },
+      { filename: "guia-link.jpg", alt_text: "Link da loja" },
+    ],
   },
   {
     id: "demo-post-cal-02",
@@ -191,12 +238,13 @@ Três peças da cápsula que salvam a semana: vestido linho, wide leg e bolsa es
 Tudo cabe na bolsa Nômade. Lista completa no destaque "Viagem leve".
 
 #viagem #packing #estudionomade`,
-    carousel_summary: "Mala aberta, 5 peças numeradas, look no espelho.",
     ig_media_id: "17890007778889990",
     assets: [
-      { filename: "mala.jpg" },
-      { filename: "pecas.jpg" },
-      { filename: "look-espelho.jpg" },
+      { filename: "mala-aberta.jpg", alt_text: "Mala organizada" },
+      { filename: "mala-pecas.jpg", alt_text: "Cinco peças numeradas" },
+      { filename: "mala-bolsa.jpg", alt_text: "Tudo na bolsa Nômade" },
+      { filename: "look-espelho.jpg", alt_text: "Look no espelho" },
+      { filename: "mala-checklist.jpg", alt_text: "Checklist de viagem" },
     ],
   },
   {
@@ -210,9 +258,6 @@ Guia de medidas no último slide. Dúvidas de tamanho? Comenta aqui.
 #modacasual #veranonômade #estudionomade`,
     status: "monitored",
     collaborators: ["@marina.mods", "@julia.style"],
-    carousel_summary:
-      "Lookbook: capa, vestido linho, wide leg, acessórios, tabela de medidas.",
-    reply_prompt: REPLY_PROMPT_LOJA,
     reply_mode: "draft",
     ig_media_id: "17890005556667788",
     assets: [
@@ -241,7 +286,12 @@ Qual você usaria num almoço de domingo?
     collaborators: ["@marina.mods"],
     reply_mode: "draft",
     ig_media_id: "17890006665554443",
-    assets: [{ filename: "collab-look-1.jpg" }, { filename: "collab-look-2.jpg" }],
+    assets: [
+      { filename: "collab-capa.jpg", alt_text: "Collab Estúdio Nômade" },
+      { filename: "collab-look-1.jpg", alt_text: "Look vestido linho" },
+      { filename: "collab-look-2.jpg", alt_text: "Look wide leg" },
+      { filename: "collab-cabide.jpg", alt_text: "Peças no cabide" },
+    ],
   },
   {
     id: "demo-post-failed",
@@ -288,7 +338,12 @@ Não é sobre estar produzida o tempo todo — é sobre se sentir bem.
 #trabalhoremoto #slowliving #estudionomade`,
     status: "monitored",
     ig_media_id: "17890009988776655",
-    assets: [{ filename: "rotina.jpg" }],
+    assets: [
+      { filename: "rotina-manha.jpg", alt_text: "Café e laptop" },
+      { filename: "rotina-look.jpg", alt_text: "Look confortável" },
+      { filename: "rotina-pausa.jpg", alt_text: "Pausa do meio-dia" },
+      { filename: "rotina-frase.jpg", alt_text: "Mensagem slow living" },
+    ],
   },
   {
     id: "demo-post-scheduled",
@@ -302,9 +357,6 @@ Salva pra montar o armário cápsula!
 
 #lookbook #verao2026 #modasustentavel #estudionomade`,
     status: "scheduled",
-    carousel_summary:
-      "6 slides: capa, flat lay, look rooftop, sandália, medidas, CTA loja.",
-    reply_prompt: REPLY_PROMPT_LOJA,
     reply_mode: "draft",
     assets: [
       { filename: "capa-lookbook.jpg" },
@@ -341,7 +393,12 @@ Já recebeu o seu? Marca a gente nos stories!
 
 #sustentabilidade #slowfashion`,
     ig_media_id: "17890008887776665",
-    assets: [{ filename: "embalagem.jpg" }],
+    assets: [
+      { filename: "emb-capa.jpg", alt_text: "Pacote fechado" },
+      { filename: "emb-abertura.jpg", alt_text: "Abrindo a caixa" },
+      { filename: "emb-cartao.jpg", alt_text: "Cartão de cuidados" },
+      { filename: "embalagem.jpg", alt_text: "Cliente com a peça" },
+    ],
   },
   {
     id: "demo-post-cal-13",
@@ -445,8 +502,6 @@ Primeira troca grátis em 7 dias. Link da loja na bio.
 
 #lojavirtual #modaconsciente #estudionomade`,
     status: "scheduled",
-    carousel_summary: "4 slides: prazo por região, troca grátis, guia de medidas, contato.",
-    reply_prompt: REPLY_PROMPT_LOJA,
     reply_mode: "draft",
     assets: [
       { filename: "faq-prazo.jpg" },

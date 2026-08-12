@@ -1,6 +1,6 @@
 import type { Asset, Post, PostStatus } from "@/lib/types";
 import type { DemoLocale } from "@/demo/locale";
-import { DEMO_STORE_URL } from "@/demo/demo-brand";
+import { getDemoEditorialCopy } from "./demo-editorial-copy";
 import type { DemoPostTemplate } from "@/demo/fixtures/demo-post-templates";
 import { getDemoPostTemplates } from "@/demo/fixtures/i18n";
 
@@ -63,31 +63,6 @@ function resolveIgMediaId(
     return demoIgMediaId(template.id);
   }
   return null;
-}
-
-function captionHook(caption: string): string {
-  return caption.split("\n").map((line) => line.trim()).find(Boolean) ?? "";
-}
-
-function demoReplyPromptDefault(locale: DemoLocale): string {
-  if (locale === "en") {
-    return `Store link: ${DEMO_STORE_URL}. Prioritize size, stock, and delivery questions.`;
-  }
-  return `Link da loja: ${DEMO_STORE_URL}. Priorizar dúvidas de tamanho, estoque e prazo.`;
-}
-
-function demoCarouselSummaryDefault(
-  template: DemoPostTemplate,
-  locale: DemoLocale,
-): string {
-  const hook = captionHook(template.caption);
-  const slideCount = template.assets?.length ?? 0;
-  if (slideCount > 1) {
-    return locale === "en"
-      ? `Carousel (${slideCount} slides): ${hook}`
-      : `Carrossel (${slideCount} slides): ${hook}`;
-  }
-  return locale === "en" ? `Single post: ${hook}` : `Post único: ${hook}`;
 }
 
 function isOnAirPost(status: PostStatus, igMediaId: string | null): boolean {
@@ -260,16 +235,16 @@ export function buildDemoPosts(
     const ig_media_id = resolveIgMediaId(template, status);
     const onAir = isOnAirPost(status, ig_media_id);
 
+    const editorial = onAir ? getDemoEditorialCopy(template.id, locale) : null;
+
     return {
       id: template.id,
       caption: template.caption,
       channel: "instagram",
       collaborators: template.collaborators,
       carousel_summary:
-        template.carousel_summary ??
-        (onAir ? demoCarouselSummaryDefault(template, locale) : null),
-      reply_prompt:
-        template.reply_prompt ?? (onAir ? demoReplyPromptDefault(locale) : null),
+        editorial?.carousel_summary ?? template.carousel_summary ?? null,
+      reply_prompt: editorial?.reply_prompt ?? template.reply_prompt ?? null,
       reply_mode: template.reply_mode ?? "inherit",
       ig_media_id,
       assets_count: assets.length,
@@ -358,7 +333,8 @@ export function buildDemoPostInsights(
     if (post.status !== "published" && post.status !== "monitored") continue;
     if (!post.ig_media_id) continue;
     const template = templates.find((t) => t.id === post.id);
-    const preview = template?.assets?.[0]?.filename ?? "cover.jpg";
+    const filenames =
+      template?.assets?.map((a) => a.filename) ?? ["cover.jpg"];
     insights[post.id] = {
       ok: true,
       post_id: post.id,
@@ -373,13 +349,11 @@ export function buildDemoPostInsights(
       ],
       media: {
         source: "local",
-        items: [
-          {
-            source: "local",
-            preview_filename: preview,
-            preview_mime: preview.endsWith(".mp4") ? "video/mp4" : "image/jpeg",
-          },
-        ],
+        items: filenames.map((preview) => ({
+          source: "local" as const,
+          preview_filename: preview,
+          preview_mime: preview.endsWith(".mp4") ? "video/mp4" : "image/jpeg",
+        })),
       },
     };
   }
@@ -387,4 +361,4 @@ export function buildDemoPostInsights(
   return insights;
 }
 
-export const DEMO_REPLY_PROMPT_LOJA = `Link da loja: ${DEMO_STORE_URL}. Priorizar dúvidas de tamanho, estoque e prazo.`;
+export { getDemoEditorialCopy } from "./demo-editorial-copy";
