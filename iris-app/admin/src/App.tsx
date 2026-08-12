@@ -18,6 +18,7 @@ import { WebhooksPage } from "@/pages/webhooks-page";
 import { AgentRunsPage } from "@/pages/agent-runs-page";
 import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
+import { UmamiAnalytics } from "@/components/analytics/umami-analytics";
 import { DemoModeProvider } from "@/demo/demo-mode-context";
 import { DemoLocaleProvider } from "@/demo/demo-locale-context";
 
@@ -58,6 +59,7 @@ export function App() {
       <ConfirmDialogProvider>
         <AppSettingsProvider>
           <BrowserRouter>
+            <UmamiAnalytics />
             <Routes>
               <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
               <Route path="/en" element={<LandingPage locale="en" />} />

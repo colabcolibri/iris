@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { ROUTES } from "@/lib/routes";
 
-const LAST_UPDATED = "10 de agosto de 2026";
+const LAST_UPDATED = "12 de agosto de 2026";
 
 export function PrivacyPolicyPage() {
   return (
@@ -93,6 +93,13 @@ export function PrivacyPolicyPage() {
                 </strong>{" "}
                 registros básicos de uso do serviço (por exemplo, horário de
                 acesso e erros) para operação e segurança.
+              </li>
+              <li>
+                <strong className="font-medium text-foreground">
+                  Analytics do site:
+                </strong>{" "}
+                páginas visitadas e eventos agregados via Umami (analytics
+                privacy-first, sem cookies de publicidade nem venda de dados).
               </li>
             </ul>
           </PolicySection>
