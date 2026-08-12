@@ -32,15 +32,13 @@ export function LandingFeatures() {
             className="grid grid-cols-1 gap-6 py-10 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
           >
             <div className="min-w-0">
-              <div className="flex items-baseline gap-4">
-                <span className="font-display text-3xl text-[color:var(--iris-ink-muted)] sm:text-4xl">
+              <p className="font-display text-2xl leading-[1.2] font-semibold text-[color:var(--iris-ink)] sm:text-3xl sm:leading-[1.15]">
+                <span className="mr-3 tabular-nums text-[color:var(--iris-ink-muted)]">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <p className="font-display text-2xl leading-[1.15] font-semibold text-[color:var(--iris-ink)] sm:text-3xl">
-                  {feature.title}
-                </p>
-              </div>
-              <p className="mt-3 max-w-md text-base leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
+                {feature.title}
+              </p>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
                 {feature.description}
               </p>
               {feature.highlight ? (
@@ -61,6 +59,9 @@ export function LandingFeatures() {
 }
 
 function FeatureVisual({ index }: { index: number }) {
+  const { locale } = useLandingI18n();
+  const pt = locale === "pt";
+
   if (index === 0) {
     return (
       <div className="iris-utility-card overflow-hidden">
@@ -95,7 +96,7 @@ function FeatureVisual({ index }: { index: number }) {
       <div className="iris-utility-card overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
           <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
-            Agosto · calendário
+            {pt ? "Agosto · calendário" : "August · calendar"}
           </span>
         </div>
         <div className="grid grid-cols-7 gap-px bg-[color:var(--iris-hairline)] p-px">
@@ -120,39 +121,100 @@ function FeatureVisual({ index }: { index: number }) {
   }
 
   if (index === 2) {
+    const blocks = pt
+      ? ([
+          ["SOUL", "Quem a marca é", "Tom acolhedor, direto, sem jargão"],
+          ["PAGE", "O que a página vende", "Estúdio · coleções em SP"],
+          ["KNOWLEDGE", "Fatos que ela pode citar", "Frete, prazos, FAQs"],
+          ["RESTRICTIONS", "O que nunca dizer", "Sem desconto inventado"],
+        ] as const)
+      : ([
+          ["SOUL", "Who the brand is", "Warm, direct, no jargon"],
+          ["PAGE", "What the page sells", "Studio · collections in SP"],
+          ["KNOWLEDGE", "Facts it can cite", "Shipping, lead times, FAQs"],
+          ["RESTRICTIONS", "What it must never say", "No made-up discounts"],
+        ] as const);
+
     return (
       <div className="iris-utility-card overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
           <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
-            Briefing · deste post
+            {pt ? "Persona · prompt geral" : "Persona · general prompt"}
+          </span>
+        </div>
+        <div className="divide-y divide-[color:var(--iris-hairline)]">
+          {blocks.map(([code, role, sample]) => (
+            <div key={code} className="flex min-w-0 items-start gap-3 px-5 py-3.5">
+              <span className="shrink-0 rounded-[var(--iris-radius-xs)] bg-[color:var(--iris-primary)]/10 px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-[color:var(--iris-primary)]">
+                {code}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[color:var(--iris-ink)]">
+                  {role}
+                </p>
+                <p className="mt-0.5 text-xs leading-snug text-[color:var(--iris-ink-muted)]">
+                  {sample}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 3) {
+    const rows = pt
+      ? ([
+          ["SOUL", "ativo", true],
+          ["PAGE", "ativo", true],
+          ["KNOWLEDGE", "silenciado", false],
+          ["RESTRICTIONS", "ativo", true],
+        ] as const)
+      : ([
+          ["SOUL", "on", true],
+          ["PAGE", "on", true],
+          ["KNOWLEDGE", "silenced", false],
+          ["RESTRICTIONS", "on", true],
+        ] as const);
+
+    return (
+      <div className="iris-utility-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
+          <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
+            {pt ? "Briefing · deste post" : "Briefing · this post"}
           </span>
         </div>
         <div className="space-y-4 p-5">
           <div>
             <p className="text-xs font-semibold tracking-[0.08em] text-[color:var(--iris-ink-muted)] uppercase">
-              Prompt adicional
+              {pt ? "Prompt adicional" : "Additional prompt"}
             </p>
-            <p className="mt-1.5 text-sm leading-snug text-[color:var(--iris-ink-soft)]">
-              Promo R$ 99 · link na bio · tom direto
+            <p className="mt-1.5 text-sm leading-snug text-[color:var(--iris-ink)]">
+              {pt
+                ? "Lançamento Ateliê: se perguntarem preço ou disponibilidade, diga que a pré-venda abre sexta e o link sai nos stories. Não cite valores do catálogo antigo."
+                : "Atelier launch: if they ask price or availability, say pre-sale opens Friday and the link goes in Stories. Do not quote prices from the old catalog."}
+            </p>
+            <p className="mt-1 text-xs text-[color:var(--iris-ink-muted)]">
+              {pt
+                ? "Vale só nesta publicação — não altera a persona geral."
+                : "Applies only to this post — brand persona stays intact."}
             </p>
           </div>
           <div className="space-y-2 border-t border-[color:var(--iris-hairline)] pt-4">
             <p className="text-xs font-semibold tracking-[0.08em] text-[color:var(--iris-ink-muted)] uppercase">
-              Prompt geral da marca
+              {pt
+                ? "Blocos do prompt geral neste post"
+                : "General prompt blocks on this post"}
             </p>
-            {(
-              [
-                ["Persona", true],
-                ["Página", true],
-                ["Conhecimento", false],
-                ["Restrições", true],
-              ] as const
-            ).map(([label, on]) => (
+            {rows.map(([code, state, on]) => (
               <div
-                key={label}
+                key={code}
                 className="flex items-center justify-between gap-3 text-sm"
               >
-                <span className="text-[color:var(--iris-ink)]">{label}</span>
+                <span className="font-mono text-xs font-bold tracking-wide text-[color:var(--iris-ink)]">
+                  {code}
+                </span>
                 <span
                   className={cn(
                     "text-xs font-semibold tracking-wide uppercase",
@@ -161,10 +223,15 @@ function FeatureVisual({ index }: { index: number }) {
                       : "text-[color:var(--iris-ink-muted)] line-through",
                   )}
                 >
-                  {on ? "ativo" : "silenciado"}
+                  {state}
                 </span>
               </div>
             ))}
+            <p className="pt-1 text-xs leading-snug text-[color:var(--iris-ink-muted)]">
+              {pt
+                ? "Knowledge silenciado para a resposta não misturar preço novo com tabela antiga."
+                : "Knowledge silenced so the reply does not mix the new price with the old price list."}
+            </p>
           </div>
         </div>
       </div>
@@ -184,15 +251,16 @@ function FeatureVisual({ index }: { index: number }) {
             X-Hub-Signature-256
           </p>
           <p className="mt-2 font-mono text-xs break-all text-[color:var(--iris-ink-soft)]">
-            sha256=4f2a9c…e81d — assinatura verificada
+            sha256=4f2a9c…e81d —{" "}
+            {pt ? "assinatura verificada" : "signature verified"}
           </p>
         </div>
         <p className="mt-4 text-sm text-[color:var(--iris-ink-soft)]">
-          Evento{" "}
+          {pt ? "Evento" : "Event"}{" "}
           <span className="font-medium text-[color:var(--iris-primary)]">
             comments
           </span>{" "}
-          sincronizado em 340ms.
+          {pt ? "sincronizado em 340ms." : "synced in 340ms."}
         </p>
       </div>
     </div>

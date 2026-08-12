@@ -72,7 +72,7 @@ export const landingPt: LandingMessages = {
     title: "Feito para quem publica com",
     titleAccent: "intenção",
     subtitle:
-      "Quatro pilares sustentam a operação: seu agente de IA conectado à Íris, um calendário editorial de verdade, comentários respondidos com critério — inclusive com instruções por postagem — e uma integração oficial e segura com o Instagram.",
+      "Cinco peças da operação: agente de IA, calendário editorial, persona da marca, briefing por postagem e conexão oficial com o Instagram.",
     items: [
       {
         title: "Seu agente de IA cria e agenda posts",
@@ -83,12 +83,17 @@ export const landingPt: LandingMessages = {
       {
         title: "Calendário editorial",
         description:
-          "Veja tudo num só lugar: o que está em rascunho, o que já tem data marcada e o que já foi publicado. Organize por quadro (tipo um Trello), por mês ou em lista só com os dias que têm post — a tela atualiza sozinha, sem precisar recarregar a página.",
+          "Veja tudo num só lugar: o que está em rascunho, o que já tem data marcada e o que já foi publicado. Organize por quadro (tipo um Trello), por mês ou em lista só com os dias que têm post.",
       },
       {
-        title: "Respostas de comentários com critério",
+        title: "Persona da marca",
         description:
-          "Cada comentário passa por uma checagem em várias etapas antes da Íris responder: ela decide se vale a pena responder, escreve um rascunho e depois revisa o próprio texto — sempre respeitando o tom, os limites e o idioma que você configurou. Em qualquer postagem dá para acrescentar um prompt só dela (ex.: preço, link, oferta) e, se precisar, silenciar pedaços do prompt geral da marca — sem reescrever a persona inteira. Dá para testar tudo num modo simulação, sem publicar nada de verdade.",
+          "É a base fixa da voz: você configura uma vez nas preferências e a Íris usa isso em todo comentário — tom, o que a página vende, fatos que ela pode citar e o que está fora de limite. Sem reescrever a cada post; a marca fala igual de segunda a domingo.",
+      },
+      {
+        title: "Briefing só daquela postagem",
+        description:
+          "Quando um post tem contexto próprio (lançamento, pré-venda, look específico), você adiciona instruções só nele e pode desligar pedaços do prompt geral que atrapalhariam — por exemplo o catálogo antigo. A persona continua; só aquele post muda o que vale.",
       },
       {
         title: "Conexão oficial e seus dados protegidos",
@@ -110,9 +115,9 @@ export const landingPt: LandingMessages = {
           "Você pode ligar ou desligar as respostas automáticas quando quiser — para todos os posts de uma vez ou só para um em específico — e ainda escolher um tempo de espera antes do envio. Em cada postagem, também dá para orientar a resposta com um briefing próprio e silenciar blocos do prompt geral (persona, página, conhecimento ou restrições), quando aquele conteúdo pedir outra abordagem.",
       },
       {
-        title: 'Ninguém consegue "hackear" as respostas',
+        title: "Comentários não mandam na marca",
         description:
-          "Já vimos gente tentar enganar assistentes de IA escrevendo instruções escondidas dentro de um comentário. A Íris é treinada para ignorar esse tipo de truque — um comentário não consegue fazer ela fugir do tom, do idioma ou das regras da sua marca.",
+          "Dá para tentar empurrar instruções dentro de um comentário — pedir outro tom, outro idioma, outra regra. A Íris passa por checagens em etapas e pelas restrições da sua persona justamente para reduzir esse risco: o comentário entra como conteúdo a responder, não como comando. Não é garantia absoluta; é desenho para lidar o melhor possível com isso.",
       },
       {
         title: "Histórico de tudo que foi respondido",
@@ -196,7 +201,7 @@ export const landingPt: LandingMessages = {
     title: "Tem interesse?",
     titleAccent: "Vamos conversar",
     bodyBeforeEmail:
-      "Cada implementação da Íris é individual, pensada para a sua marca. Se você quer entender o investimento ou tirar dúvidas, envie uma mensagem — a resposta vem de",
+      "Cada implementação é individual. Use o formulário abaixo para falar de investimento, dúvidas ou se a Íris faz sentido para a sua marca — você receberá um retorno meu através do email",
     bodyAfterEmail: ".",
     email: "ola@sergioluciano.com",
     form: {

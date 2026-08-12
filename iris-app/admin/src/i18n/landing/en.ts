@@ -72,7 +72,7 @@ export const landingEn: LandingMessages = {
     title: "Built for people who publish with",
     titleAccent: "intent",
     subtitle:
-      "Four pillars support the operation: your AI agent connected to Iris, a real editorial calendar, comments answered with judgment — including per-post instructions — and a secure, official Instagram integration.",
+      "Five pieces of the operation: AI agent, editorial calendar, brand persona, per-post briefing, and an official Instagram connection.",
     items: [
       {
         title: "Your AI agent creates and schedules posts",
@@ -83,12 +83,17 @@ export const landingEn: LandingMessages = {
       {
         title: "Editorial calendar",
         description:
-          "See everything in one place: what's in draft, what's scheduled, and what's already published. Organize it as a board (like Trello), by month, or as a list of only the days that have posts — the screen updates on its own, no reload needed.",
+          "See everything in one place: what's in draft, what's scheduled, and what's already published. Organize it as a board (like Trello), by month, or as a list of only the days that have posts.",
       },
       {
-        title: "Comment replies with judgment",
+        title: "Brand persona",
         description:
-          "Every comment goes through a multi-step check before Iris replies: it decides whether replying is worth it, drafts a reply, then reviews its own text — always respecting the tone, limits, and language you set. On any post you can add a prompt just for it (e.g. price, link, offer) and, if needed, silence pieces of the brand's general prompt — without rewriting the whole persona. You can test it all in a simulation mode without publishing anything for real.",
+          "It's the fixed base of the voice: you set it once in preferences and Iris uses it on every comment — tone, what the page sells, facts it can cite, and what is off-limits. No rewriting for each post; the brand sounds the same Monday through Sunday.",
+      },
+      {
+        title: "Briefing for that one post",
+        description:
+          "When a post has its own context (launch, pre-sale, a specific look), you add instructions just for it and can turn off pieces of the general prompt that would get in the way — for example the old catalog. The persona stays; only that post changes what counts.",
       },
       {
         title: "Official connection, your data protected",
@@ -110,9 +115,9 @@ export const landingEn: LandingMessages = {
           "You can turn automatic replies on or off whenever you want — for every post at once, or just one — and set a waiting time before sending. On each post, you can also steer the reply with its own briefing and silence blocks from the general prompt (persona, page, knowledge, or restrictions) when that content needs a different approach.",
       },
       {
-        title: 'No one can "trick" the replies',
+        title: "Comments don't run the brand",
         description:
-          "We've seen people try to fool AI assistants by hiding instructions inside a comment. Iris is trained to ignore that kind of trick — a comment can't make it drop its tone, language, or your brand's rules.",
+          "People can try to push instructions inside a comment — ask for another tone, language, or rule. Iris goes through staged checks and your persona restrictions specifically to reduce that risk: the comment is content to answer, not a command. It isn't an absolute guarantee; it's designed to handle this as well as possible.",
       },
       {
         title: "A record of everything it replied",
@@ -195,7 +200,7 @@ export const landingEn: LandingMessages = {
     title: "Interested?",
     titleAccent: "Let's talk",
     bodyBeforeEmail:
-      "Every Iris implementation is individual, built for your brand. If you want to understand the investment or have questions, send a message — you'll hear back from",
+      "Every implementation is individual. Use the form below for investment questions, doubts, or whether Iris fits your brand — you'll get a reply from me through",
     bodyAfterEmail: ".",
     email: "ola@sergioluciano.com",
     form: {

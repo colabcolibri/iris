@@ -92,12 +92,9 @@ export function LandingContact() {
 
         <p className="mt-4 text-base leading-normal text-[color:var(--iris-ink-soft)]">
           {m.contact.bodyBeforeEmail}{" "}
-          <a
-            href={`mailto:${m.contact.email}`}
-            className="font-medium text-[color:var(--iris-primary)] underline-offset-4 hover:underline"
-          >
+          <span className="font-medium text-[color:var(--iris-ink)]">
             {m.contact.email}
-          </a>
+          </span>
           {m.contact.bodyAfterEmail}
         </p>
 

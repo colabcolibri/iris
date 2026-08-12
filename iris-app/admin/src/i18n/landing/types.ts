@@ -96,6 +96,7 @@ export type LandingMessages = {
       LandingFeatureMessages,
       LandingFeatureMessages,
       LandingFeatureMessages,
+      LandingFeatureMessages,
     ];
   };
   trust: {
