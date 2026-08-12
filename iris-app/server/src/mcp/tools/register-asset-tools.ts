@@ -139,7 +139,7 @@ export function registerAssetTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_generate_post_carousel_summary",
-    "Generate posts.carousel_summary from the post images using server-side LLM vision (same pipeline as the admin UI). Does not send caption to the model.",
+    "Generate posts.carousel_summary (visual carousel/reel description for reply context) from the post images using server-side LLM vision — same as admin UI Resumo. Does NOT write reply_prompt/briefing; does not send caption to the model.",
     {
       postId: z.string().min(1),
     },

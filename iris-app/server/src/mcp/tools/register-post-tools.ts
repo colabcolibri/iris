@@ -48,7 +48,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_get_post",
-    "Get a post by id with asset metadata",
+    "Get a post by id with asset metadata. Includes carousel_summary (visual description of the carousel/reel for reply context — not reply instructions) and reply_prompt (post-specific reply briefing: promo, price, link, tone — overrides conflicting global editorial blocks).",
     {
       postId: z.string().min(1),
     },
@@ -102,12 +102,24 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_update_post",
-    "Update caption, carousel_summary, reply_prompt, silence flags, schedule or status for a post. Do NOT set status=cancelled here — use iris_cancel_post after user confirmation.",
+    "Update caption, carousel summary, reply briefing, silence flags, schedule or status for a post. carouselSummary = visual description of what is in the slides (context for the reply agent; not instructions). replyPrompt = post-specific reply briefing (promo, price, CTA, tone) that overrides conflicting global editorial content. Do NOT put reply instructions into carouselSummary. Do NOT set status=cancelled here — use iris_cancel_post after user confirmation.",
     {
       postId: z.string().min(1),
       caption: z.string().optional(),
-      carouselSummary: z.string().nullable().optional(),
-      replyPrompt: z.string().nullable().optional(),
+      carouselSummary: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "Resumo do carrossel/reel: descrição visual do que aparece nas imagens (slide a slide se útil). Usado como contexto factual no harness de reply. NÃO é briefing nem instrução de resposta — para isso use replyPrompt.",
+        ),
+      replyPrompt: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "Prompt adicional / briefing de reply só deste post (promoção, preço, link, tom). No harness vira bloco com precedência sobre SOUL/página/conhecimento/restrições globais quando houver conflito. NÃO descreva as imagens aqui — use carouselSummary.",
+        ),
       silenceSoul: z.boolean().optional(),
       silencePage: z.boolean().optional(),
       silenceKnowledge: z.boolean().optional(),

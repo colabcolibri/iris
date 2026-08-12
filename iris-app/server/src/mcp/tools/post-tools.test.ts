@@ -81,6 +81,53 @@ test("MCP post tools create and list posts", async () => {
   await rm(mediaRoot, { recursive: true, force: true });
 });
 
+test("MCP update/get/generate tools distinguish carousel_summary vs reply_prompt", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-field-dx-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+  });
+  const { client, close } = await createMcpClient(ctx);
+
+  try {
+    const tools = await client.listTools();
+    const update = tools.tools.find((t) => t.name === "iris_update_post");
+    const get = tools.tools.find((t) => t.name === "iris_get_post");
+    const generate = tools.tools.find(
+      (t) => t.name === "iris_generate_post_carousel_summary",
+    );
+    assert.ok(update && get && generate);
+
+    assert.match(update.description ?? "", /carouselSummary/i);
+    assert.match(update.description ?? "", /replyPrompt/i);
+    assert.match(update.description ?? "", /visual/i);
+    assert.match(update.description ?? "", /briefing/i);
+
+    const props = (update.inputSchema as {
+      properties?: {
+        carouselSummary?: { description?: string };
+        replyPrompt?: { description?: string };
+      };
+    }).properties;
+    assert.match(props?.carouselSummary?.description ?? "", /resumo|visual|imagens/i);
+    assert.match(props?.replyPrompt?.description ?? "", /briefing|promo|replyPrompt|carouselSummary/i);
+
+    assert.match(get.description ?? "", /carousel_summary/i);
+    assert.match(get.description ?? "", /reply_prompt/i);
+    assert.match(generate.description ?? "", /visual|Resumo|carousel_summary/i);
+    assert.match(generate.description ?? "", /reply_prompt|briefing/i);
+  } finally {
+    await close();
+    db.close();
+    await rm(mediaRoot, { recursive: true, force: true });
+  }
+});
+
 test("MCP post tools get/update reply_prompt and silence flags", async () => {
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-reply-briefing-"));
   const db = openDatabase(":memory:");
