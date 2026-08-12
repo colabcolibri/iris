@@ -52,5 +52,7 @@ export type PostAsset = {
   height: number | null;
   originalSizeBytes: number | null;
   optimizedSizeBytes: number | null;
+  altText: string | null;
+  userTags: Array<{ username: string; x: number; y: number }>;
   createdAt: string;
 };

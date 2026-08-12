@@ -113,7 +113,7 @@ const PostFeedCard = memo(function PostFeedCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex min-w-0 flex-col overflow-hidden rounded-[var(--iris-radius-lg)] border border-border/70 bg-card text-left shadow-none transition-colors",
+        "flex min-w-0 flex-col overflow-hidden rounded-(--iris-radius-lg) border border-border/70 bg-card text-left shadow-none transition-colors",
         selected ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted/40",
       )}
     >

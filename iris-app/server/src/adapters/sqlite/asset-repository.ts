@@ -1,14 +1,19 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { AssetRepository, CreateAssetInput } from "../../ports/asset-repository.ts";
+import type {
+  AssetRepository,
+  CreateAssetInput,
+  UpdateAssetInput,
+} from "../../ports/asset-repository.ts";
+import { userTagsToDb } from "../../domain/posts/asset-tags.ts";
 import { mapAssetRow } from "./mappers.ts";
 
 export function createSqliteAssetRepository(db: DatabaseSync): AssetRepository {
   const insert = db.prepare(`
     INSERT INTO post_assets (
       id, post_id, sort_order, storage_path, original_filename, mime,
-      width, height, original_size_bytes, optimized_size_bytes, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      width, height, original_size_bytes, optimized_size_bytes, alt_text, user_tags, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const listByPostId = db.prepare(`
@@ -24,6 +29,11 @@ export function createSqliteAssetRepository(db: DatabaseSync): AssetRepository {
   const deleteByIdStmt = db.prepare(`DELETE FROM post_assets WHERE id = ?`);
   const updateSortOrderStmt = db.prepare(`
     UPDATE post_assets SET sort_order = ? WHERE id = ? AND post_id = ?
+  `);
+  const updateMetaStmt = db.prepare(`
+    UPDATE post_assets
+    SET alt_text = ?, user_tags = ?
+    WHERE id = ?
   `);
 
   return {
@@ -42,6 +52,8 @@ export function createSqliteAssetRepository(db: DatabaseSync): AssetRepository {
         input.height ?? null,
         input.originalSizeBytes ?? null,
         input.optimizedSizeBytes ?? null,
+        input.altText ?? null,
+        userTagsToDb(input.userTags ?? []),
         createdAt,
       );
 
@@ -85,6 +97,21 @@ export function createSqliteAssetRepository(db: DatabaseSync): AssetRepository {
       }
 
       return listByPostId.all(postId).map((row) => mapAssetRow(row as never));
+    },
+
+    update(id, input: UpdateAssetInput) {
+      const current = this.findById(id);
+      if (!current) {
+        return null;
+      }
+
+      const nextAlt =
+        input.altText !== undefined ? input.altText : current.altText;
+      const nextTags =
+        input.userTags !== undefined ? input.userTags : current.userTags;
+
+      updateMetaStmt.run(nextAlt, userTagsToDb(nextTags), id);
+      return this.findById(id);
     },
   };
 }

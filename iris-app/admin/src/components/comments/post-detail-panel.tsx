@@ -156,7 +156,7 @@ function InsightMetricCard({
   loading: boolean;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 rounded-[var(--iris-radius-lg)] border border-border/70 bg-card p-4">
+    <div className="flex min-w-0 flex-col gap-3 rounded-(--iris-radius-lg) border border-border/70 bg-card p-4">
       <div className="flex items-center gap-2.5">
         <div
           className={cn(

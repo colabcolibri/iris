@@ -54,6 +54,8 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | height | INTEGER | px após resize |
 | original_size_bytes | INTEGER | Upload bruto |
 | optimized_size_bytes | INTEGER | Em disco |
+| alt_text | TEXT | Texto alternativo (a11y) enviado à Meta no publish |
+| user_tags | TEXT | JSON `[{username,x,y}]` — tags na imagem (≠ collaborators) |
 | created_at | TEXT | |
 
 ### `comments`

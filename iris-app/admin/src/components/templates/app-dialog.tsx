@@ -65,7 +65,7 @@ export function AppDialog({
           className={cn(
             SIZE_CLASS[size],
             HEIGHT_CLASS[height],
-            "!flex min-h-0 flex-col gap-0 overflow-hidden p-0",
+            "flex! min-h-0 flex-col gap-0 overflow-hidden p-0",
             className,
           )}
         >

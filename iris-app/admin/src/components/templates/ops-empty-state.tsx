@@ -16,7 +16,7 @@ export function OpsEmptyState({
   return (
     <div
       className={cn(
-        "mx-4 my-6 rounded-[var(--iris-radius-lg)] border border-dashed border-border bg-muted/20 px-4 py-8 text-center sm:mx-6",
+        "mx-4 my-6 rounded-(--iris-radius-lg) border border-dashed border-border bg-muted/20 px-4 py-8 text-center sm:mx-6",
         className,
       )}
     >

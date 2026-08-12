@@ -253,7 +253,7 @@ export function AgentRunsPage() {
               <TableCell className="hidden md:table-cell text-muted-foreground">
                 {row.reply_tier ?? "—"}
               </TableCell>
-              <TableCell className="hidden max-w-[14rem] truncate font-mono text-sm font-semibold text-primary lg:table-cell">
+              <TableCell className="hidden max-w-56 truncate font-mono text-sm font-semibold text-primary lg:table-cell">
                 {(row.models ?? []).length > 0
                   ? (row.models ?? []).join(", ")
                   : "—"}

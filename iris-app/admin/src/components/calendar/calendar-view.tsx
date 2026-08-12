@@ -164,7 +164,7 @@ export function CalendarView({
             <div
               key={day.toISOString()}
               className={cn(
-                "flex min-h-0 flex-col overflow-hidden rounded-[var(--iris-radius-sm)] border transition-colors",
+                "flex min-h-0 flex-col overflow-hidden rounded-(--iris-radius-sm) border transition-colors",
                 hasPosts
                   ? "gap-1.5 border-border bg-card p-1.5 sm:p-2"
                   : "gap-0 border-transparent bg-muted/25 p-1",
@@ -180,7 +180,7 @@ export function CalendarView({
                   "inline-flex w-max shrink-0 px-1 text-xs font-semibold tabular-nums",
                   hasPosts ? "text-foreground" : "text-muted-foreground/70",
                   isToday &&
-                    "rounded-[var(--iris-radius-sm)] bg-primary/15 text-primary",
+                    "rounded-(--iris-radius-sm) bg-primary/15 text-primary",
                 )}
               >
                 {day.getDate()}

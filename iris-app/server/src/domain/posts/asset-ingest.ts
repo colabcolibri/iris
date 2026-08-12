@@ -1,7 +1,8 @@
-import type { Asset, AssetRepository } from "../../ports/asset-repository.ts";
+import type { AssetRepository } from "../../ports/asset-repository.ts";
 import type { ImageOptimizer } from "../../ports/image-optimizer.ts";
 import type { MediaStorage } from "../../ports/media-storage.ts";
 import type { PostRepository } from "../../ports/post-repository.ts";
+import type { PostAsset } from "./post.ts";
 import { getImageLimits } from "./image-limits.ts";
 import { ImageOptimizationError } from "../../ports/image-optimizer.ts";
 
@@ -33,7 +34,7 @@ export type AssetIngestInput = {
 export async function ingestPostAsset(
   deps: AssetIngestDeps,
   input: AssetIngestInput,
-): Promise<Asset> {
+): Promise<PostAsset> {
   const post = deps.posts.findById(input.postId);
   if (!post) {
     throw new AssetIngestError("post not found", 404);

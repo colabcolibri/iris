@@ -219,7 +219,7 @@ export function PostReplyBriefingEditor({
         value={replyPrompt}
         onChange={(event) => setReplyPrompt(event.target.value)}
         placeholder="Ex.: produto em destaque, preço promocional, link da landing…"
-        className="min-h-[9rem] w-full max-w-full resize-y bg-background"
+        className="min-h-36 w-full max-w-full resize-y bg-background"
       />
 
       <div className="w-full max-w-full min-w-0 space-y-3 border-t border-border/60 pt-4">
@@ -238,7 +238,7 @@ export function PostReplyBriefingEditor({
           {SILENCE_BLOCKS.map((block) => (
             <label
               key={block.key}
-              className="flex min-w-0 items-start gap-2 rounded-[var(--iris-radius-sm)] border border-border/60 bg-muted/10 px-3 py-2.5 text-sm"
+              className="flex min-w-0 items-start gap-2 rounded-(--iris-radius-sm) border border-border/60 bg-muted/10 px-3 py-2.5 text-sm"
             >
               <input
                 type="checkbox"

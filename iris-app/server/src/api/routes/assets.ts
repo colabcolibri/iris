@@ -1,4 +1,4 @@
-import { readJsonBody, sendError, sendJson } from "../json.ts";
+import { readJsonBody, sendError, sendJson, ValidationError } from "../json.ts";
 import { createRouter, route } from "../router.ts";
 import { requirePost, routeParam } from "../route-resources.ts";
 import { getImageLimits } from "../../domain/posts/image-limits.ts";
@@ -8,6 +8,10 @@ import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import {
   ingestPostAsset,
 } from "../../domain/posts/asset-ingest.ts";
+import {
+  normalizeAltText,
+  normalizeUserTags,
+} from "../../domain/posts/asset-tags.ts";
 import {
   deletePostAsset,
   reorderPostAssets,
@@ -92,6 +96,55 @@ export const handleAssetsRoute = createRouter([
       sendJson(match.res, 200, { assets: assets.map(serializeAsset) });
     },
     { paramNames: ["postId"] },
+  ),
+
+  route(
+    "PATCH",
+    /^\/api\/posts\/([^/]+)\/assets\/([^/]+)$/,
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      const assetId = routeParam(match, "assetId");
+      if (!requirePost(match, postId)) {
+        return;
+      }
+
+      const asset = match.ctx.assets.findById(assetId);
+      if (!asset || asset.postId !== postId) {
+        sendError(match.res, 404, "asset not found");
+        return;
+      }
+
+      const body = await readJsonBody<Record<string, unknown>>(match.req);
+      try {
+        const update: { altText?: string | null; userTags?: ReturnType<typeof normalizeUserTags> } =
+          {};
+        if ("alt_text" in body) {
+          update.altText = normalizeAltText(body.alt_text);
+        }
+        if ("user_tags" in body) {
+          update.userTags = normalizeUserTags(body.user_tags);
+        }
+        if (update.altText === undefined && update.userTags === undefined) {
+          sendError(match.res, 422, "alt_text or user_tags required");
+          return;
+        }
+
+        const updated = match.ctx.assets.update(assetId, update);
+        if (!updated) {
+          sendError(match.res, 404, "asset not found");
+          return;
+        }
+        notifyPostsChanged({ post_id: postId });
+        sendJson(match.res, 200, serializeAsset(updated));
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          sendError(match.res, 422, error.message);
+          return;
+        }
+        throw error;
+      }
+    },
+    { paramNames: ["postId", "assetId"] },
   ),
 
   route(

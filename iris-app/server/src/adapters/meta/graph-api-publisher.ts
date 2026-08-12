@@ -177,6 +177,14 @@ export function createGraphApiPublisher(
           }
         }
 
+        const altText = asset.altText?.trim();
+        if (altText) {
+          body.alt_text = altText;
+        }
+        if (asset.userTags.length > 0) {
+          body.user_tags = JSON.stringify(asset.userTags);
+        }
+
         const created = await graphPost(`/${igUserId}/media`, token, body);
 
         if (!created.id) {

@@ -4,6 +4,7 @@ import { isPostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
 import type { IgMediaStatus } from "../../domain/meta/ig-media-status.ts";
 import type { Comment } from "../../domain/comments/comment.ts";
 import { collaboratorsFromDb } from "../../domain/posts/collaborators.ts";
+import { userTagsFromDb } from "../../domain/posts/asset-tags.ts";
 
 type PostRow = {
   id: string;
@@ -59,6 +60,8 @@ type AssetRow = {
   height: number | null;
   original_size_bytes: number | null;
   optimized_size_bytes: number | null;
+  alt_text: string | null;
+  user_tags: string | null;
   created_at: string;
 };
 
@@ -154,6 +157,8 @@ export function mapAssetRow(row: AssetRow): PostAsset {
     height: row.height,
     originalSizeBytes: row.original_size_bytes,
     optimizedSizeBytes: row.optimized_size_bytes,
+    altText: row.alt_text ?? null,
+    userTags: userTagsFromDb(row.user_tags),
     createdAt: row.created_at,
   };
 }
@@ -204,6 +209,8 @@ export function serializeAsset(asset: PostAsset) {
     height: asset.height,
     original_size_bytes: asset.originalSizeBytes,
     optimized_size_bytes: asset.optimizedSizeBytes,
+    alt_text: asset.altText,
+    user_tags: asset.userTags,
     created_at: asset.createdAt,
   };
 }

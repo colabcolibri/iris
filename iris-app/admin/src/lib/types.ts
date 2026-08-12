@@ -46,6 +46,12 @@ export type UpdatePostBody = {
   auto_reply_enabled?: boolean;
 };
 
+export type AssetUserTag = {
+  username: string;
+  x: number;
+  y: number;
+};
+
 export type Asset = {
   id: string;
   post_id: string;
@@ -55,6 +61,8 @@ export type Asset = {
   mime?: string;
   width?: number | null;
   height?: number | null;
+  alt_text?: string | null;
+  user_tags?: AssetUserTag[];
 };
 
 export type Comment = {

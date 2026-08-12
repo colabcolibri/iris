@@ -235,7 +235,7 @@ export function PostDialog({
 
       <AppDialog.Body>
         {isFailed && post?.error_message ? (
-          <p className="mb-4 rounded-[var(--iris-radius-sm)] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p className="mb-4 rounded-(--iris-radius-sm) border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             Causa da falha: {post.error_message}
           </p>
         ) : null}
@@ -452,7 +452,7 @@ export function PostDialog({
                   {loadingComments ? (
                     <p className="text-sm text-muted-foreground">Carregando…</p>
                   ) : comments.length === 0 ? (
-                    <p className="rounded-[var(--iris-radius-sm)] border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
+                    <p className="rounded-(--iris-radius-sm) border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
                       Nenhum comentário neste post ainda.
                     </p>
                   ) : (
@@ -460,7 +460,7 @@ export function PostDialog({
                       {comments.slice(0, 6).map((comment) => (
                         <article
                           key={comment.id}
-                          className="rounded-[var(--iris-radius-sm)] border border-border/60 bg-background p-3 text-sm"
+                          className="rounded-(--iris-radius-sm) border border-border/60 bg-background p-3 text-sm"
                         >
                           <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span className="font-semibold text-foreground">
@@ -581,7 +581,7 @@ export function PostDialog({
                       type="datetime-local"
                       value={scheduledAt}
                       onChange={(e) => onScheduledAtChange(e.target.value)}
-                      className="h-11 w-[17.5rem] max-w-full shrink-0 bg-background text-base sm:text-sm"
+                      className="h-11 w-70 max-w-full shrink-0 bg-background text-base sm:text-sm"
                       disabled={isReadOnly || isCancelled}
                     />
                     {scheduledAt &&
@@ -619,7 +619,7 @@ export function PostDialog({
 
         {operationStatus ? (
           <p
-            className="mt-4 flex items-start gap-2 rounded-[var(--iris-radius-sm)] border border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
+            className="mt-4 flex items-start gap-2 rounded-(--iris-radius-sm) border border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
             role="status"
             aria-live="polite"
           >
@@ -629,7 +629,7 @@ export function PostDialog({
         ) : null}
 
         {error ? (
-          <p className="mt-4 rounded-[var(--iris-radius-sm)] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p className="mt-4 rounded-(--iris-radius-sm) border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         ) : null}

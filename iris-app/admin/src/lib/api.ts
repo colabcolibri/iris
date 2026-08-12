@@ -4,6 +4,7 @@ import type {
   AppSettings,
   AgentContent,
   Asset,
+  AssetUserTag,
   BrowseMediaPage,
   Comment,
   CommentActivityItem,
@@ -153,6 +154,20 @@ export function uploadAsset(postId: string, file: File, sortOrder: number) {
 export function deletePostAsset(postId: string, assetId: string) {
   return apiFetch<void>(`/api/posts/${postId}/assets/${assetId}`, {
     method: "DELETE",
+  });
+}
+
+export function updatePostAsset(
+  postId: string,
+  assetId: string,
+  body: {
+    alt_text?: string | null;
+    user_tags?: AssetUserTag[] | string | null;
+  },
+) {
+  return apiFetch<Asset>(`/api/posts/${postId}/assets/${assetId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
   });
 }
 

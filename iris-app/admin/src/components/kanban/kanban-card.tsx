@@ -110,7 +110,7 @@ export function KanbanCard({
       }
     >
       {isPublished && assetsCount > 0 && (
-        <div className="relative -mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-[var(--iris-radius-lg)] bg-muted">
+        <div className="relative -mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-(--iris-radius-lg) bg-muted">
           <div className="flex h-full items-center justify-center bg-linear-to-br from-primary/10 to-muted">
             <PlayCircle className="size-8 text-primary/60" />
           </div>

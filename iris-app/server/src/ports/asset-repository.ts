@@ -1,4 +1,5 @@
 import type { PostAsset } from "../domain/posts/post.ts";
+import type { AssetUserTag } from "../domain/posts/asset-tags.ts";
 
 export type CreateAssetInput = {
   postId: string;
@@ -10,6 +11,13 @@ export type CreateAssetInput = {
   height?: number | null;
   originalSizeBytes?: number | null;
   optimizedSizeBytes?: number | null;
+  altText?: string | null;
+  userTags?: AssetUserTag[];
+};
+
+export type UpdateAssetInput = {
+  altText?: string | null;
+  userTags?: AssetUserTag[];
 };
 
 export type AssetRepository = {
@@ -19,4 +27,5 @@ export type AssetRepository = {
   findByPostIdAndFilename(postId: string, filename: string): PostAsset | null;
   deleteById(id: string): boolean;
   reorder(postId: string, orderedAssetIds: string[]): PostAsset[];
+  update(id: string, input: UpdateAssetInput): PostAsset | null;
 };

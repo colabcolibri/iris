@@ -79,7 +79,7 @@ export function CarouselSummaryEditor({
       value={summary}
       onChange={(event) => setSummary(event.target.value)}
       placeholder="Descreva o que aparece no carrossel…"
-      className="min-h-[7.5rem] resize-y bg-background"
+      className="min-h-30 resize-y bg-background"
     />
   );
 

@@ -83,16 +83,16 @@ export function LandingContact() {
           title={
             <>
               {m.contact.title}{" "}
-              <span className="italic text-[color:var(--iris-primary)]">
+              <span className="italic text-(--iris-primary)">
                 {m.contact.titleAccent}
               </span>
             </>
           }
         />
 
-        <p className="mt-4 text-base leading-normal text-[color:var(--iris-ink-soft)]">
+        <p className="mt-4 text-base leading-normal text-(--iris-ink-soft)">
           {m.contact.bodyBeforeEmail}{" "}
-          <span className="font-medium text-[color:var(--iris-ink)]">
+          <span className="font-medium text-(--iris-ink)">
             {m.contact.email}
           </span>
           {m.contact.bodyAfterEmail}
@@ -102,14 +102,14 @@ export function LandingContact() {
           {state === "done" ? (
             <p
               role="status"
-              className="text-base leading-normal text-[color:var(--iris-ink)]"
+              className="text-base leading-normal text-(--iris-ink)"
             >
               {form.success}
             </p>
           ) : (
             <form onSubmit={onSubmit} className="iris-contact-form">
               <div
-                className="absolute -left-[9999px] h-px w-px overflow-hidden"
+                className="absolute left-[-9999px] h-px w-px overflow-hidden"
                 aria-hidden
               >
                 <label htmlFor={honeypotId}>Website</label>

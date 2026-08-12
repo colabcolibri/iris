@@ -561,7 +561,7 @@ export function WebhookEventsPanel() {
               </p>
             ) : null}
 
-            <div className="grid gap-4 rounded-[var(--iris-radius-lg)] border border-border bg-card p-4 shadow-none sm:grid-cols-2">
+            <div className="grid gap-4 rounded-(--iris-radius-lg) border border-border bg-card p-4 shadow-none sm:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Post
@@ -603,7 +603,7 @@ export function WebhookEventsPanel() {
                 Payload
               </h3>
               <PageScrollArea
-                className="mt-2 h-[min(70vh,40rem)] max-h-[min(70vh,40rem)] flex-none rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none"
+                className="mt-2 h-[min(70vh,40rem)] max-h-[min(70vh,40rem)] flex-none rounded-(--iris-radius-lg) border border-border bg-card shadow-none"
                 contentClassName="p-4 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground"
               >
                 {selectedEvent.payload_json}

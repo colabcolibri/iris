@@ -184,7 +184,7 @@ export function AgentSimulatorPage() {
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-          <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-[420px]">
+          <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-(--iris-radius-lg) border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-105">
             <PageScrollArea contentClassName="space-y-5 p-4 sm:p-5">
               <PageContainer.Header
                 eyebrow="Lab"
@@ -200,7 +200,7 @@ export function AgentSimulatorPage() {
                     <span
                       key={field.key}
                       className={cn(
-                        "rounded-[var(--iris-radius-sm)] border px-2 py-0.5 text-xs",
+                        "rounded-(--iris-radius-sm) border px-2 py-0.5 text-xs",
                         populated
                           ? "border-primary/30 bg-primary/5 text-foreground"
                           : "border-border text-muted-foreground",
@@ -330,7 +330,7 @@ export function AgentSimulatorPage() {
                       >
                         <div
                           className={cn(
-                            "w-full max-w-[95%] rounded-[var(--iris-radius-lg)] border p-3",
+                            "w-full max-w-[95%] rounded-(--iris-radius-lg) border p-3",
                             isBrand
                               ? "border-primary/25 bg-primary/5"
                               : "border-border/70 bg-muted/20",
@@ -407,7 +407,7 @@ export function AgentSimulatorPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-[var(--iris-radius-lg)] border border-primary/30 bg-primary/5 p-3">
+              <div className="space-y-2 rounded-(--iris-radius-lg) border border-primary/30 bg-primary/5 p-3">
                 <p className="text-xs font-semibold tracking-wide text-primary uppercase">
                   Comentário alvo
                 </p>
@@ -455,7 +455,7 @@ export function AgentSimulatorPage() {
             <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
               <div className="w-full">
                 {!hasResult && !running ? (
-                  <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[var(--iris-radius-lg)] border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
+                  <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-(--iris-radius-lg) border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
                     <p className="font-display text-xl font-semibold text-foreground">
                       Monte a thread e rode o harness
                     </p>

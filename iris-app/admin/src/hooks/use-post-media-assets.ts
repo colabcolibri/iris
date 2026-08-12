@@ -5,7 +5,9 @@ import {
   fetchAssetBlob,
   listAssets,
   reorderPostAssets,
+  updatePostAsset,
 } from "@/lib/api";
+import type { AssetUserTag } from "@/lib/types";
 
 export type PostMediaAsset = {
   id: string;
@@ -13,6 +15,8 @@ export type PostMediaAsset = {
   previewUrl: string;
   width: number | null;
   height: number | null;
+  altText: string | null;
+  userTags: AssetUserTag[];
 };
 
 function filenameFromStoragePath(storagePath: string): string | null {
@@ -120,6 +124,8 @@ export function usePostMediaAssets(
             previewUrl,
             width: asset.width ?? null,
             height: asset.height ?? null,
+            altText: asset.alt_text ?? null,
+            userTags: asset.user_tags ?? [],
           });
         }
 
@@ -227,6 +233,43 @@ export function usePostMediaAssets(
     [postId],
   );
 
+  const updateAssetMeta = useCallback(
+    async (
+      assetId: string,
+      body: { alt_text?: string | null; user_tags?: AssetUserTag[] | null },
+    ) => {
+      if (!postId) {
+        return;
+      }
+      setBusyId(assetId);
+      try {
+        const updated = await updatePostAsset(postId, assetId, body);
+        setItems((previous) =>
+          previous.map((item) =>
+            item.id === assetId
+              ? {
+                  ...item,
+                  altText: updated.alt_text ?? null,
+                  userTags: updated.user_tags ?? [],
+                }
+              : item,
+          ),
+        );
+        toast.success("Metadados da mídia salvos.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Falha ao salvar metadados da mídia.",
+        );
+        throw err;
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [postId],
+  );
+
   const reorder = useCallback(
     (sourceId: string, targetId: string) => {
       applyReorder(reorderById(items, sourceId, targetId));
@@ -246,6 +289,7 @@ export function usePostMediaAssets(
     loading,
     busyId,
     deleteAsset,
+    updateAssetMeta,
     reorder,
     move,
   };

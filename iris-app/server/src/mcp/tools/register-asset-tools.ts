@@ -6,6 +6,10 @@ import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import { ValidationError } from "../../api/json.ts";
 import { generateCarouselSummaryForPost } from "../../domain/carousel-summary/generate-carousel-summary.ts";
 import { AssetIngestError } from "../../domain/posts/asset-ingest.ts";
+import {
+  normalizeAltText,
+  normalizeUserTags,
+} from "../../domain/posts/asset-tags.ts";
 import { deletePostAsset } from "../../domain/posts/post-assets.ts";
 import {
   buildPublishImageUrl,
@@ -31,7 +35,7 @@ function signedAssetUrl(
 export function registerAssetTools(server: McpServer, ctx: AppContext): void {
   server.tool(
     "iris_list_post_assets",
-    "List image assets for a post with metadata and short-lived signed URLs (no image bytes in the tool response)",
+    "List image assets for a post with metadata (incl. alt_text, user_tags), and short-lived signed URLs (no image bytes in the tool response)",
     {
       postId: z.string().min(1),
     },
@@ -46,6 +50,72 @@ export function registerAssetTools(server: McpServer, ctx: AppContext): void {
         url: signedAssetUrl(ctx, args.postId, asset.storagePath),
       }));
       return jsonToolContent({ post_id: args.postId, assets });
+    },
+  );
+
+  server.tool(
+    "iris_update_post_asset",
+    "Update alt_text (accessibility) and/or user_tags (people tagged in the image with x/y 0–1) for one post asset. Sent to Meta on publish. Not the same as collaborators.",
+    {
+      postId: z.string().min(1),
+      assetId: z.string().min(1),
+      altText: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Image alt text for accessibility. Null clears."),
+      userTags: z
+        .array(
+          z.object({
+            username: z.string().min(1),
+            x: z.number().min(0).max(1),
+            y: z.number().min(0).max(1),
+          }),
+        )
+        .nullable()
+        .optional()
+        .describe(
+          "People tagged in the photo. x/y are relative 0–1 from left/top. Pass [] or null to clear. Not collab invites.",
+        ),
+    },
+    async (args) => {
+      const post = ctx.posts.findById(args.postId);
+      if (!post) {
+        return toolError("post not found");
+      }
+      const asset = ctx.assets.findById(args.assetId);
+      if (!asset || asset.postId !== args.postId) {
+        return toolError("asset not found");
+      }
+      if (args.altText === undefined && args.userTags === undefined) {
+        return toolError("altText or userTags required");
+      }
+
+      try {
+        const update: {
+          altText?: string | null;
+          userTags?: ReturnType<typeof normalizeUserTags>;
+        } = {};
+        if (args.altText !== undefined) {
+          update.altText = normalizeAltText(args.altText);
+        }
+        if (args.userTags !== undefined) {
+          update.userTags = normalizeUserTags(args.userTags);
+        }
+        const updated = ctx.assets.update(args.assetId, update);
+        if (!updated) {
+          return toolError("asset not found");
+        }
+        notifyPostsChanged({ post_id: args.postId });
+        return jsonToolContent(serializeAsset(updated));
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          return toolError(error.message);
+        }
+        return toolError(
+          error instanceof Error ? error.message : "update failed",
+        );
+      }
     },
   );
 

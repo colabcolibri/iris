@@ -69,7 +69,8 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_cancel_post` | Soft-delete (`cancelled`). Exige confirmação do usuário + `confirmPhrase: "cancelar"` |
 | `iris_purge_cancelled_post` | Delete permanente (só `cancelled`). Exige confirmação do usuário + `confirmPhrase: "deletar"` |
 | `iris_prepare_post_asset_upload` | URL assinada one-shot + `curl` multipart (sem base64) |
-| `iris_list_post_assets` | Lista metadados + `url` assinada (TTL) das imagens |
+| `iris_list_post_assets` | Lista metadados + `url` assinada (TTL); inclui `alt_text` e `user_tags` |
+| `iris_update_post_asset` | Atualiza `altText` e/ou `userTags` (`[{username,x,y}]`, coords 0–1) de um asset — vai no publish Meta. ≠ collaborators |
 | `iris_delete_post_asset` | Remove asset (row + arquivo em `data/media/`) |
 | `iris_generate_post_carousel_summary` | Gera só `carousel_summary` (resumo visual) via vision no server — **não** altera `reply_prompt` |
 | `iris_list_post_comments` | Comentários sincronizados do post |
