@@ -41,4 +41,21 @@ export function formatChipTime(iso: string, timeZone: string) {
   });
 }
 
+/** Chave estável do dia editorial na timezone (YYYY-MM-DD). */
+export function calendarDayKey(iso: string, timeZone: string) {
+  const local = utcIsoToZonedLocal(iso, timeZone);
+  return local ? local.slice(0, 10) : "—";
+}
+
+/** Cabeçalho de dia na lista editorial, ex.: "Quarta-feira, 12 de agosto". */
+export function formatCalendarDayHeading(iso: string, timeZone: string) {
+  const raw = formatInTimeZone(iso, timeZone, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  if (!raw || raw === "—") return raw;
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 export { formatInTimeZone };

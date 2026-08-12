@@ -63,7 +63,7 @@ export const landingPt: LandingMessages = {
       {
         title: "A Íris responde os comentários",
         description:
-          "Quando alguém comenta no post, a Íris lê o comentário e o contexto da publicação, e escreve uma resposta na voz da sua marca. Você escolhe se quer aprovar cada resposta antes de ela ir ao ar, ou deixar a Íris responder sozinha dentro dos limites que você definiu.",
+          "Quando alguém comenta no post, a Íris lê o comentário, o contexto da publicação e — se você quiser — um briefing só daquele post (promoção, preço, link, tom diferente). Você escolhe se quer aprovar cada resposta antes de ela ir ao ar, ou deixar a Íris responder sozinha dentro dos limites que você definiu.",
       },
     ],
   },
@@ -72,7 +72,7 @@ export const landingPt: LandingMessages = {
     title: "Feito para quem publica com",
     titleAccent: "intenção",
     subtitle:
-      "Quatro pilares sustentam a operação: seu agente de IA conectado à Íris, um calendário editorial de verdade, comentários respondidos com critério e uma integração oficial e segura com o Instagram.",
+      "Quatro pilares sustentam a operação: seu agente de IA conectado à Íris, um calendário editorial de verdade, comentários respondidos com critério — inclusive com instruções por postagem — e uma integração oficial e segura com o Instagram.",
     items: [
       {
         title: "Seu agente de IA cria e agenda posts",
@@ -83,12 +83,12 @@ export const landingPt: LandingMessages = {
       {
         title: "Calendário editorial",
         description:
-          "Veja tudo num só lugar: o que está em rascunho, o que já tem data marcada e o que já foi publicado. Organize por quadro (tipo um Trello) ou por mês — a tela atualiza sozinha, sem precisar recarregar a página.",
+          "Veja tudo num só lugar: o que está em rascunho, o que já tem data marcada e o que já foi publicado. Organize por quadro (tipo um Trello), por mês ou em lista só com os dias que têm post — a tela atualiza sozinha, sem precisar recarregar a página.",
       },
       {
         title: "Respostas de comentários com critério",
         description:
-          "Cada comentário passa por uma checagem em várias etapas antes da Íris responder: ela decide se vale a pena responder, escreve um rascunho e depois revisa o próprio texto — sempre respeitando o tom, os limites e o idioma que você configurou. Dá para testar tudo isso num modo simulação, sem publicar nada de verdade, e depois conferir o histórico de cada resposta.",
+          "Cada comentário passa por uma checagem em várias etapas antes da Íris responder: ela decide se vale a pena responder, escreve um rascunho e depois revisa o próprio texto — sempre respeitando o tom, os limites e o idioma que você configurou. Em qualquer postagem dá para acrescentar um prompt só dela (ex.: preço, link, oferta) e, se precisar, silenciar pedaços do prompt geral da marca — sem reescrever a persona inteira. Dá para testar tudo num modo simulação, sem publicar nada de verdade.",
       },
       {
         title: "Conexão oficial e seus dados protegidos",
@@ -107,7 +107,7 @@ export const landingPt: LandingMessages = {
       {
         title: "Autonomia configurável",
         description:
-          "Você pode ligar ou desligar as respostas automáticas quando quiser — para todos os posts de uma vez ou só para um em específico — e ainda escolher um tempo de espera antes do envio, como uma última chance de revisar.",
+          "Você pode ligar ou desligar as respostas automáticas quando quiser — para todos os posts de uma vez ou só para um em específico — e ainda escolher um tempo de espera antes do envio. Em cada postagem, também dá para orientar a resposta com um briefing próprio e silenciar blocos do prompt geral (persona, página, conhecimento ou restrições), quando aquele conteúdo pedir outra abordagem.",
       },
       {
         title: 'Ninguém consegue "hackear" as respostas',
@@ -182,7 +182,7 @@ export const landingPt: LandingMessages = {
       {
         question: "As respostas automáticas são publicadas sem revisão?",
         answer:
-          "Você escolhe. Dá para exigir sua aprovação antes de cada resposta ir ao ar, ou deixar a Íris responder sozinha dentro do tom e dos limites que você define. Em qualquer um dos dois casos, também dá para configurar um tempo de espera antes do envio, como uma segurança a mais.",
+          "Você escolhe. Dá para exigir sua aprovação antes de cada resposta ir ao ar, ou deixar a Íris responder sozinha dentro do tom e dos limites que você define. Em qualquer um dos dois casos, também dá para configurar um tempo de espera antes do envio — e, em posts específicos, um briefing extra (ou silenciar partes do prompt geral) para a resposta não misturar regras da marca com o contexto daquela publicação.",
       },
       {
         question: "Como faço para ter a Íris na minha marca?",

@@ -240,5 +240,65 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
       cancelStmt.run(updatedAt, id);
       return this.findById(id);
     },
+
+    purgeCancelled(id) {
+      const current = this.findById(id);
+      if (!current || current.status !== "cancelled") {
+        return false;
+      }
+
+      const nullSteps = db.prepare(`
+        UPDATE agent_run_steps
+        SET comment_id = NULL
+        WHERE comment_id IN (SELECT id FROM comments WHERE post_id = ?)
+      `);
+      const nullWebhookComments = db.prepare(`
+        UPDATE meta_webhook_events
+        SET comment_id = NULL
+        WHERE comment_id IN (SELECT id FROM comments WHERE post_id = ?)
+      `);
+      const nullWebhookPost = db.prepare(`
+        UPDATE meta_webhook_events
+        SET post_id = NULL
+        WHERE post_id = ?
+      `);
+      const deleteReplies = db.prepare(`
+        DELETE FROM comment_replies
+        WHERE comment_id IN (SELECT id FROM comments WHERE post_id = ?)
+      `);
+      const deleteComments = db.prepare(`
+        DELETE FROM comments WHERE post_id = ?
+      `);
+      const deleteInsights = db.prepare(`
+        DELETE FROM post_insights_snapshots WHERE post_id = ?
+      `);
+      const deleteAssets = db.prepare(`
+        DELETE FROM post_assets WHERE post_id = ?
+      `);
+      const deletePost = db.prepare(`
+        DELETE FROM posts WHERE id = ? AND status = 'cancelled'
+      `);
+
+      db.exec("BEGIN");
+      try {
+        nullSteps.run(id);
+        nullWebhookComments.run(id);
+        nullWebhookPost.run(id);
+        deleteReplies.run(id);
+        deleteComments.run(id);
+        deleteInsights.run(id);
+        deleteAssets.run(id);
+        const result = deletePost.run(id);
+        if (result.changes === 0) {
+          db.exec("ROLLBACK");
+          return false;
+        }
+        db.exec("COMMIT");
+        return true;
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
   };
 }

@@ -114,7 +114,7 @@ test("published and monitored have no edit actions", () => {
   }
 });
 
-test("cancelled shows Restaurar rascunho ghost without delete", () => {
+test("cancelled shows Restaurar rascunho and permanent delete", () => {
   const actions = getPostDialogFooterActions({
     ...base,
     status: "cancelled",
@@ -122,6 +122,11 @@ test("cancelled shows Restaurar rascunho ghost without delete", () => {
     hasSchedule: false,
   });
   assert.deepEqual(actions, [
+    {
+      id: "delete",
+      label: "Deletar permanentemente",
+      variant: "ghost",
+    },
     { id: "revert_to_draft", label: "Restaurar rascunho", variant: "ghost" },
   ]);
 });

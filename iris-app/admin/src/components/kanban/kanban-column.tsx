@@ -13,6 +13,7 @@ type KanbanColumnProps = {
   globalReplyMode: ReplyMode;
   onOpenPost: (post: Post) => void;
   onStatusChange: (post: Post, status: PostStatus) => void;
+  onPurgePost?: (post: Post) => void;
 };
 
 export function KanbanColumn({
@@ -22,6 +23,7 @@ export function KanbanColumn({
   globalReplyMode,
   onOpenPost,
   onStatusChange,
+  onPurgePost,
 }: KanbanColumnProps) {
   return (
     <KanbanColumnShell
@@ -40,6 +42,7 @@ export function KanbanColumn({
             globalReplyMode={globalReplyMode}
             onOpen={() => onOpenPost(post)}
             onStatusChange={(status) => onStatusChange(post, status)}
+            onPurge={onPurgePost ? () => onPurgePost(post) : undefined}
           />
         ))
       )}

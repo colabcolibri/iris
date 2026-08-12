@@ -63,7 +63,7 @@ export const landingEn: LandingMessages = {
       {
         title: "Iris replies to comments",
         description:
-          "When someone comments on a post, Iris reads the comment and the post's own content, and writes a reply in your brand's voice. You choose whether you want to approve every reply before it goes live, or let Iris reply on its own within the limits you set.",
+          "When someone comments on a post, Iris reads the comment, the post's own content, and — if you want — a briefing just for that post (promo, price, link, a different tone). You choose whether you want to approve every reply before it goes live, or let Iris reply on its own within the limits you set.",
       },
     ],
   },
@@ -72,7 +72,7 @@ export const landingEn: LandingMessages = {
     title: "Built for people who publish with",
     titleAccent: "intent",
     subtitle:
-      "Four pillars support the operation: your AI agent connected to Iris, a real editorial calendar, comments answered with judgment, and a secure, official Instagram integration.",
+      "Four pillars support the operation: your AI agent connected to Iris, a real editorial calendar, comments answered with judgment — including per-post instructions — and a secure, official Instagram integration.",
     items: [
       {
         title: "Your AI agent creates and schedules posts",
@@ -83,12 +83,12 @@ export const landingEn: LandingMessages = {
       {
         title: "Editorial calendar",
         description:
-          "See everything in one place: what's in draft, what's scheduled, and what's already published. Organize it as a board (like Trello) or by month — the screen updates on its own, no reload needed.",
+          "See everything in one place: what's in draft, what's scheduled, and what's already published. Organize it as a board (like Trello), by month, or as a list of only the days that have posts — the screen updates on its own, no reload needed.",
       },
       {
         title: "Comment replies with judgment",
         description:
-          "Every comment goes through a multi-step check before Iris replies: it decides whether replying is worth it, drafts a reply, then reviews its own text — always respecting the tone, limits, and language you set. You can test all of this in a simulation mode without publishing anything for real, and check the history of every reply afterward.",
+          "Every comment goes through a multi-step check before Iris replies: it decides whether replying is worth it, drafts a reply, then reviews its own text — always respecting the tone, limits, and language you set. On any post you can add a prompt just for it (e.g. price, link, offer) and, if needed, silence pieces of the brand's general prompt — without rewriting the whole persona. You can test it all in a simulation mode without publishing anything for real.",
       },
       {
         title: "Official connection, your data protected",
@@ -107,7 +107,7 @@ export const landingEn: LandingMessages = {
       {
         title: "Configurable autonomy",
         description:
-          "You can turn automatic replies on or off whenever you want — for every post at once, or just one — and set a waiting time before sending, as a last chance to review.",
+          "You can turn automatic replies on or off whenever you want — for every post at once, or just one — and set a waiting time before sending. On each post, you can also steer the reply with its own briefing and silence blocks from the general prompt (persona, page, knowledge, or restrictions) when that content needs a different approach.",
       },
       {
         title: 'No one can "trick" the replies',
@@ -181,7 +181,7 @@ export const landingEn: LandingMessages = {
       {
         question: "Are automatic replies published without review?",
         answer:
-          "You choose. You can require your approval before every reply goes live, or let Iris reply on its own within the tone and limits you define. Either way, you can also set a waiting time before sending, as an extra layer of safety.",
+          "You choose. You can require your approval before every reply goes live, or let Iris reply on its own within the tone and limits you define. Either way, you can also set a waiting time before sending — and, on specific posts, an extra briefing (or silence parts of the general prompt) so the reply doesn't mix brand-wide rules with that post's context.",
       },
       {
         question: "How do I get Iris for my brand?",

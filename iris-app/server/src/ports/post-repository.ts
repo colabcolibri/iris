@@ -59,4 +59,6 @@ export type PostRepository = {
   list(filter?: ListPostsFilter): Post[];
   update(id: string, input: UpdatePostInput): Post | null;
   cancel(id: string): Post | null;
+  /** Remove do banco só se `status === 'cancelled'`. Retorna false se não achar / não cancelado. */
+  purgeCancelled(id: string): boolean;
 };

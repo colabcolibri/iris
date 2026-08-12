@@ -1,4 +1,5 @@
 import type { Post } from "@/lib/types";
+import { calendarDayKey } from "@/lib/datetime";
 
 export const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -52,6 +53,40 @@ export function sameDay(a: Date, b: Date) {
 
 export function addMonths(date: Date, delta: number) {
   return new Date(date.getFullYear(), date.getMonth() + delta, 1);
+}
+
+/** Agrupa postagens por dia editorial (chave YYYY-MM-DD na timezone). Só dias com conteúdo. */
+export function groupPostsByCalendarDay(
+  posts: Post[],
+  timeZone: string,
+): { dayKey: string; sortIso: string; posts: Post[] }[] {
+  const buckets = new Map<string, { sortIso: string; posts: Post[] }>();
+
+  for (const post of posts) {
+    const raw = postCalendarDate(post);
+    if (!raw) continue;
+    const key = calendarDayKey(raw, timeZone);
+    if (!key || key === "—") continue;
+    const bucket = buckets.get(key);
+    if (bucket) {
+      bucket.posts.push(post);
+      if (raw < bucket.sortIso) bucket.sortIso = raw;
+    } else {
+      buckets.set(key, { sortIso: raw, posts: [post] });
+    }
+  }
+
+  return [...buckets.entries()]
+    .map(([key, value]) => ({
+      dayKey: key,
+      sortIso: value.sortIso,
+      posts: [...value.posts].sort((a, b) => {
+        const aIso = postCalendarDate(a) ?? "";
+        const bIso = postCalendarDate(b) ?? "";
+        return aIso.localeCompare(bIso);
+      }),
+    }))
+    .sort((a, b) => a.sortIso.localeCompare(b.sortIso));
 }
 
 export function calendarCells(year: number, monthIndex: number) {

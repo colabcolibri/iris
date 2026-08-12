@@ -153,6 +153,47 @@ test("posts crud and asset upload flow", async () => {
   });
 });
 
+test("permanent delete only works for cancelled posts", async () => {
+  await withIntegrationServer(async ({ baseUrl }) => {
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ caption: "purge me", channel: "instagram" }),
+    });
+    assert.equal(createResponse.status, 201);
+    const created = (await createResponse.json()) as { id: string };
+
+    const rejectDraft = await fetch(
+      `${baseUrl}/api/posts/${created.id}/permanent`,
+      {
+        method: "DELETE",
+        headers: authHeaders(ADMIN),
+      },
+    );
+    assert.equal(rejectDraft.status, 409);
+
+    const cancelResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "DELETE",
+      headers: authHeaders(ADMIN),
+    });
+    assert.equal(cancelResponse.status, 200);
+
+    const purgeResponse = await fetch(
+      `${baseUrl}/api/posts/${created.id}/permanent`,
+      {
+        method: "DELETE",
+        headers: authHeaders(ADMIN),
+      },
+    );
+    assert.equal(purgeResponse.status, 204);
+
+    const missing = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      headers: authHeaders(ADMIN),
+    });
+    assert.equal(missing.status, 404);
+  });
+});
+
 test("agent cannot delete posts", async () => {
   await withIntegrationServer(async ({ baseUrl }) => {
     const createResponse = await fetch(`${baseUrl}/api/posts`, {

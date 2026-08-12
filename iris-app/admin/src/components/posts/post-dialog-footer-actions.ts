@@ -65,6 +65,7 @@ export function getPostDialogFooterActions(
 
   const withDelete = (
     actions: PostDialogFooterAction[],
+    label = "Deletar",
   ): PostDialogFooterAction[] => {
     if (!canDelete) {
       return actions;
@@ -72,7 +73,7 @@ export function getPostDialogFooterActions(
     return [
       {
         id: "delete",
-        label: "Deletar",
+        label,
         variant: "ghost",
       },
       ...actions,
@@ -188,7 +189,7 @@ export function getPostDialogFooterActions(
           variant: "ghost",
         });
       }
-      return actions;
+      return withDelete(actions, "Deletar permanentemente");
     }
 
     case "published":

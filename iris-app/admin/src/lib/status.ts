@@ -23,18 +23,26 @@ export const MOVE_STATUS_OPTIONS: { value: PostStatus; label: string }[] = [
   { value: "cancelled", label: "Cancelado" },
 ];
 
-type PostAction = {
-  status: PostStatus;
-  label: string;
-  variant?: "default" | "destructive";
-};
+export type KanbanMenuAction =
+  | {
+      kind: "status";
+      status: PostStatus;
+      label: string;
+      variant?: "default" | "destructive";
+    }
+  | {
+      kind: "purge";
+      label: string;
+      variant: "destructive";
+    };
 
 /** Ações contextuais por status — labels claros para o menu do kanban. */
-export function getKanbanActions(status: PostStatus): PostAction[] {
+export function getKanbanActions(status: PostStatus): KanbanMenuAction[] {
   switch (status) {
     case "draft":
       return [
         {
+          kind: "status",
           status: "cancelled",
           label: "Cancelar postagem",
           variant: "destructive",
@@ -42,8 +50,13 @@ export function getKanbanActions(status: PostStatus): PostAction[] {
       ];
     case "scheduled":
       return [
-        { status: "draft", label: "Desagendar (voltar a rascunho)" },
         {
+          kind: "status",
+          status: "draft",
+          label: "Desagendar (voltar a rascunho)",
+        },
+        {
+          kind: "status",
           status: "cancelled",
           label: "Cancelar postagem",
           variant: "destructive",
@@ -51,15 +64,23 @@ export function getKanbanActions(status: PostStatus): PostAction[] {
       ];
     case "failed":
       return [
-        { status: "draft", label: "Voltar a rascunho" },
+        { kind: "status", status: "draft", label: "Voltar a rascunho" },
         {
+          kind: "status",
           status: "cancelled",
           label: "Cancelar postagem",
           variant: "destructive",
         },
       ];
     case "cancelled":
-      return [{ status: "draft", label: "Restaurar como rascunho" }];
+      return [
+        { kind: "status", status: "draft", label: "Restaurar como rascunho" },
+        {
+          kind: "purge",
+          label: "Deletar permanentemente",
+          variant: "destructive",
+        },
+      ];
     default:
       return [];
   }

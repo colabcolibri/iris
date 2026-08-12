@@ -22,6 +22,7 @@ type KanbanCardProps = {
   globalReplyMode: ReplyMode;
   onOpen: () => void;
   onStatusChange: (status: PostStatus) => void;
+  onPurge?: () => void;
 };
 
 function dateMeta(post: Post, timeZone: string) {
@@ -54,6 +55,7 @@ export function KanbanCard({
   globalReplyMode,
   onOpen,
   onStatusChange,
+  onPurge,
 }: KanbanCardProps) {
   const actions = getKanbanActions(post.status);
   const meta = dateMeta(post, timeZone);
@@ -84,9 +86,19 @@ export function KanbanCard({
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                 {actions.map((action) => (
                   <DropdownMenuItem
-                    key={action.status}
+                    key={
+                      action.kind === "status"
+                        ? `status-${action.status}`
+                        : "purge"
+                    }
                     variant={action.variant}
-                    onClick={() => onStatusChange(action.status)}
+                    onClick={() => {
+                      if (action.kind === "purge") {
+                        onPurge?.();
+                        return;
+                      }
+                      onStatusChange(action.status);
+                    }}
                   >
                     {action.label}
                   </DropdownMenuItem>

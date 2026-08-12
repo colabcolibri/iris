@@ -124,29 +124,48 @@ function FeatureVisual({ index }: { index: number }) {
       <div className="iris-utility-card overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[color:var(--iris-hairline)] px-5 py-3">
           <span className="text-xs font-semibold tracking-[0.1em] text-[color:var(--iris-ink-muted)] uppercase">
-            Harness · 3 etapas
+            Briefing · deste post
           </span>
         </div>
-        <div className="space-y-3 p-5">
-          {[
-            ["Triagem", "shouldReply · replyTier · blockCategory"],
-            ["Rascunho", "persona + restrições + contexto da thread"],
-            ["Verificação", "idioma, limites e tom auditados"],
-          ].map(([step, detail], i) => (
-            <div key={step} className="flex items-start gap-3">
-              <span className="font-display text-sm text-[color:var(--iris-ink-muted)]">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[color:var(--iris-ink)]">
-                  {step}
-                </p>
-                <p className="mt-0.5 truncate text-xs text-[color:var(--iris-ink-muted)]">
-                  {detail}
-                </p>
+        <div className="space-y-4 p-5">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.08em] text-[color:var(--iris-ink-muted)] uppercase">
+              Prompt adicional
+            </p>
+            <p className="mt-1.5 text-sm leading-snug text-[color:var(--iris-ink-soft)]">
+              Promo R$ 99 · link na bio · tom direto
+            </p>
+          </div>
+          <div className="space-y-2 border-t border-[color:var(--iris-hairline)] pt-4">
+            <p className="text-xs font-semibold tracking-[0.08em] text-[color:var(--iris-ink-muted)] uppercase">
+              Prompt geral da marca
+            </p>
+            {(
+              [
+                ["Persona", true],
+                ["Página", true],
+                ["Conhecimento", false],
+                ["Restrições", true],
+              ] as const
+            ).map(([label, on]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between gap-3 text-sm"
+              >
+                <span className="text-[color:var(--iris-ink)]">{label}</span>
+                <span
+                  className={cn(
+                    "text-xs font-semibold tracking-wide uppercase",
+                    on
+                      ? "text-[color:var(--iris-primary)]"
+                      : "text-[color:var(--iris-ink-muted)] line-through",
+                  )}
+                >
+                  {on ? "ativo" : "silenciado"}
+                </span>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     );

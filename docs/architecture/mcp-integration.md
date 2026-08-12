@@ -65,7 +65,9 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_list_posts` | Lista posts (`status`, `from`, `to` opcionais) |
 | `iris_get_post` | Post + metadados de assets; resposta inclui `reply_prompt` e `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
 | `iris_create_post` | Cria rascunho (`caption`, `channel`, `scheduledAt`) |
-| `iris_update_post` | Atualiza legenda, `carouselSummary` → `carousel_summary`, `replyPrompt` → `reply_prompt`, flags `silenceSoul`/`silencePage`/`silenceKnowledge`/`silenceRestrictions` (camelCase no input; resposta snake_case), agenda ou status. Silenciar `silenceRestrictions` não remove guardrails hardcoded do harness |
+| `iris_update_post` | Atualiza legenda, `carouselSummary` → `carousel_summary`, `replyPrompt` → `reply_prompt`, flags `silenceSoul`/`silencePage`/`silenceKnowledge`/`silenceRestrictions` (camelCase no input; resposta snake_case), agenda ou status. **Não** aceita `status=cancelled` — use `iris_cancel_post`. Silenciar `silenceRestrictions` não remove guardrails hardcoded do harness |
+| `iris_cancel_post` | Soft-delete (`cancelled`). Exige confirmação do usuário + `confirmPhrase: "cancelar"` |
+| `iris_purge_cancelled_post` | Delete permanente (só `cancelled`). Exige confirmação do usuário + `confirmPhrase: "deletar"` |
 | `iris_prepare_post_asset_upload` | URL assinada one-shot + `curl` multipart (sem base64) |
 | `iris_list_post_assets` | Lista metadados + `url` assinada (TTL) das imagens |
 | `iris_delete_post_asset` | Remove asset (row + arquivo em `data/media/`) |

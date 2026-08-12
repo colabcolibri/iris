@@ -15,6 +15,10 @@ import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import { generateCarouselSummaryForPost } from "../../domain/carousel-summary/generate-carousel-summary.ts";
 import { publishPostNow } from "../../domain/posts/publish-post.ts";
 import { enqueueSchedulablePendingComments } from "../../domain/comments/enqueue-schedulable-pending-comments.ts";
+import {
+  purgeCancelledPost,
+  PurgeCancelledPostError,
+} from "../../domain/posts/purge-cancelled-post.ts";
 
 export const handlePostsRoute = createRouter([
   route("GET", "/api/posts", async (match) => {
@@ -189,6 +193,33 @@ export const handlePostsRoute = createRouter([
 
       notifyPostsChanged({ post_id: postId });
       sendJson(match.res, 200, serializePost(cancelled));
+    },
+    { paramNames: ["postId"] },
+  ),
+
+  route(
+    "DELETE",
+    /^\/api\/posts\/([^/]+)\/permanent$/,
+    { admin: true },
+    async (match) => {
+      const postId = routeParam(match, "postId");
+      try {
+        await purgeCancelledPost(postId, {
+          posts: match.ctx.posts,
+          assets: match.ctx.assets,
+          mediaStorage: match.ctx.mediaStorage,
+        });
+      } catch (error) {
+        if (error instanceof PurgeCancelledPostError) {
+          sendError(match.res, error.status, error.message);
+          return;
+        }
+        throw error;
+      }
+
+      notifyPostsChanged({ post_id: postId });
+      match.res.writeHead(204);
+      match.res.end();
     },
     { paramNames: ["postId"] },
   ),

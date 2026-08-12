@@ -163,8 +163,7 @@ export function PostDialog({
       Boolean(onDelete) &&
       mode === "edit" &&
       Boolean(post?.id) &&
-      !isReadOnly &&
-      !isCancelled,
+      !isReadOnly,
   });
   const footerHandlers: Partial<Record<PostDialogFooterActionId, () => void>> =
     {

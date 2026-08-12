@@ -1,7 +1,7 @@
 import { AppNavigation } from "@/components/layout/app-navigation";
 import { IrisSidebar } from "@/components/layout/iris-sidebar";
 
-export type AppView = "calendar" | "kanban";
+export type AppView = "calendar" | "list" | "kanban";
 
 type AppSidebarProps = {
   view?: AppView;

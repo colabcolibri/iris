@@ -3,6 +3,7 @@ import {
   Bot,
   FlaskConical,
   LayoutGrid,
+  List,
   MessageCircle,
   Settings,
   Sparkles,
@@ -24,8 +25,15 @@ import {
 const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] =
   [
     { id: "calendar", label: "Calendário", icon: CalendarDays },
+    { id: "list", label: "Lista", icon: List },
     { id: "kanban", label: "Kanban", icon: LayoutGrid },
   ];
+
+function viewHref(view: AppView) {
+  if (view === "kanban") return `${ROUTES.admin.root}?view=kanban`;
+  if (view === "list") return `${ROUTES.admin.root}?view=list`;
+  return ROUTES.admin.root;
+}
 
 const MAIN_ROUTE_ITEMS = [
   { to: ROUTES.admin.comments, label: "Comentários", icon: MessageCircle },
@@ -86,11 +94,7 @@ export function AppNavigation({
                       if (onDashboard && onViewChange) {
                         onViewChange(item.id);
                       } else {
-                        navigate(
-                          item.id === "kanban"
-                            ? `${ROUTES.admin.root}?view=kanban`
-                            : ROUTES.admin.root,
-                        );
+                        navigate(viewHref(item.id));
                       }
                       handleNavigate();
                     }}

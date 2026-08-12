@@ -93,7 +93,9 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_list_posts` | `GET /api/posts` | Lista com `status`, `from`, `to` |
 | `iris_get_post` | `GET /api/posts/:id` | Post + metadados de assets |
 | `iris_create_post` | `POST /api/posts` | Cria rascunho |
-| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, `carousel_summary`, `reply_prompt`, flags `silence_*`, agenda ou status |
+| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, `carousel_summary`, `reply_prompt`, flags `silence_*`, agenda ou status (**bloqueia** `status=cancelled` — use `iris_cancel_post`) |
+| `iris_cancel_post` | `DELETE /api/posts/:id` | Soft-delete → `cancelled`. Exige `confirmPhrase: "cancelar"` após o usuário confirmar |
+| `iris_purge_cancelled_post` | `DELETE /api/posts/:id/permanent` | Apaga do banco só se já estiver `cancelled`. Exige `confirmPhrase: "deletar"` após o usuário confirmar |
 | `iris_list_post_assets` | `GET /api/posts/:id/assets` | Metadados + `url` assinada (`/publish/media/…`) |
 | `iris_prepare_post_asset_upload` | `POST /upload/assets/:sig/:postId` | Prepara URL assinada; host faz `curl -F file=@…` (sem base64) |
 | `iris_delete_post_asset` | `DELETE /api/posts/:id/assets/:assetId` | Remove asset (row + arquivo) |
@@ -143,7 +145,8 @@ Erros de domínio Meta podem incluir `code` (ex.: `meta_not_connected`).
 | POST | `/api/posts` | admin, agent | Cria post |
 | GET | `/api/posts/:id` | admin, agent | Detalhe |
 | PATCH | `/api/posts/:id` | admin, agent | Atualiza (`auto_reply_enabled` exige admin). Campos opcionais: `reply_prompt` (string\|null, máx. 32 000), `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
-| DELETE | `/api/posts/:id` | admin | Cancela (`status=cancelled`) |
+| DELETE | `/api/posts/:id` | admin | Cancela (`status=cancelled`) — soft-delete |
+| DELETE | `/api/posts/:id/permanent` | admin | Apaga do banco só se já estiver `cancelled` (mídias + comentários vinculados; `agent_runs` preservados) |
 | POST | `/api/posts/:id/publish` | admin, agent | Publica agora (bypass agenda) |
 | POST | `/api/posts/:id/generate-carousel-summary` | admin | Gera resumo de carrossel via LLM |
 

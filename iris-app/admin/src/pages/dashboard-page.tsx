@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { CalendarListView } from "@/components/calendar/calendar-list-view";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import {
@@ -20,6 +21,7 @@ import {
   fetchPosts,
   listAssets,
   publishPostNow,
+  purgeCancelledPost,
   subscribeRealtimeEvents,
   UnauthorizedError,
   updatePost,
@@ -57,7 +59,7 @@ export function DashboardPage() {
 
   const loadPosts = useCallback(async () => {
     const data =
-      view === "calendar"
+      view === "calendar" || view === "list"
         ? await fetchPosts({
             ...monthRange(cursor, timezone),
             calendarOnly: true,
@@ -364,6 +366,37 @@ export function DashboardPage() {
 
   async function deleteSelectedPost() {
     if (!selectedPost) return;
+
+    if (selectedPost.status === "cancelled") {
+      const ok = await confirm({
+        title: "Deletar permanentemente?",
+        description:
+          "A postagem e as mídias saem do banco de dados. Esta ação não pode ser desfeita.",
+        confirmLabel: "Deletar permanentemente",
+        confirmPhrase: "deletar",
+        variant: "destructive",
+      });
+      if (!ok) return;
+
+      setSaving(true);
+      setError("");
+      try {
+        await purgeCancelledPost(selectedPost.id);
+        await loadPosts();
+        toast.success("Postagem removida do banco.");
+        closeDialog();
+      } catch (err) {
+        if (!handleAuthError(err)) {
+          setError(
+            err instanceof Error ? err.message : "Falha ao deletar permanentemente.",
+          );
+        }
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     const ok = await confirm({
       title: "Deletar postagem?",
       description:
@@ -387,6 +420,35 @@ export function DashboardPage() {
       }
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function purgePost(post: Post) {
+    const ok = await confirm({
+      title: "Deletar permanentemente?",
+      description:
+        "A postagem e as mídias saem do banco de dados. Esta ação não pode ser desfeita.",
+      confirmLabel: "Deletar permanentemente",
+      confirmPhrase: "deletar",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
+    try {
+      await purgeCancelledPost(post.id);
+      await loadPosts();
+      if (selectedPost?.id === post.id) {
+        closeDialog();
+      }
+      toast.success("Postagem removida do banco.");
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Falha ao deletar permanentemente.",
+        );
+      }
     }
   }
 
@@ -422,6 +484,18 @@ export function DashboardPage() {
             globalReplyMode={globalReplyMode}
             onOpenPost={openPost}
             onStatusChange={(post, status) => void changeStatus(post, status)}
+            onPurgePost={(post) => void purgePost(post)}
+          />
+        ) : view === "list" ? (
+          <CalendarListView
+            posts={posts}
+            cursor={cursor}
+            selectedId={selectedPost?.id ?? null}
+            timeZone={timezone}
+            globalReplyMode={globalReplyMode}
+            onCursorChange={setCursor}
+            onSelect={openPost}
+            onCreatePost={openCreate}
           />
         ) : (
           <CalendarView
@@ -492,8 +566,7 @@ export function DashboardPage() {
         onDelete={
           selectedPost &&
           selectedPost.status !== "published" &&
-          selectedPost.status !== "monitored" &&
-          selectedPost.status !== "cancelled"
+          selectedPost.status !== "monitored"
             ? () => void deleteSelectedPost()
             : undefined
         }

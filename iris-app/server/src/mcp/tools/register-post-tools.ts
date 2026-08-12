@@ -14,7 +14,15 @@ import {
 } from "../../domain/posts/post-mutations.ts";
 import type { PostStatus } from "../../domain/posts/post.ts";
 import { applyScheduleRules } from "../../domain/posts/schedule.ts";
+import {
+  purgeCancelledPost,
+  PurgeCancelledPostError,
+} from "../../domain/posts/purge-cancelled-post.ts";
+import { confirmPhraseMatches } from "../../domain/safety/confirm-phrase.ts";
 import { jsonToolContent, toolError } from "../tool-response.ts";
+
+const CANCEL_CONFIRM_PHRASE = "cancelar";
+const PURGE_CONFIRM_PHRASE = "deletar";
 
 export function registerPostTools(server: McpServer, ctx: AppContext): void {
   server.tool(
@@ -94,7 +102,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_update_post",
-    "Update caption, carousel_summary, reply_prompt, silence flags, schedule or status for a post",
+    "Update caption, carousel_summary, reply_prompt, silence flags, schedule or status for a post. Do NOT set status=cancelled here — use iris_cancel_post after user confirmation.",
     {
       postId: z.string().min(1),
       caption: z.string().optional(),
@@ -109,6 +117,12 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
     },
     async (args) => {
       try {
+        if (args.status === "cancelled") {
+          return toolError(
+            `status=cancelled is blocked here. Ask the user to confirm, then call iris_cancel_post with confirmPhrase "${CANCEL_CONFIRM_PHRASE}".`,
+          );
+        }
+
         const body: Record<string, unknown> = {};
         if (args.caption !== undefined) body.caption = args.caption;
         if (args.carouselSummary !== undefined) {
@@ -177,6 +191,81 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         }
         return toolError(error instanceof Error ? error.message : "update failed");
       }
+    },
+  );
+
+  server.tool(
+    "iris_cancel_post",
+    `Soft-delete a post (status=cancelled). Reversible via restore to draft. REQUIRED: ask the user to confirm first, then pass confirmPhrase "${CANCEL_CONFIRM_PHRASE}". Do not invent confirmation.`,
+    {
+      postId: z.string().min(1),
+      confirmPhrase: z
+        .string()
+        .min(1)
+        .describe(
+          `Must be exactly "${CANCEL_CONFIRM_PHRASE}" after the user explicitly confirms cancellation`,
+        ),
+    },
+    async (args) => {
+      if (!confirmPhraseMatches(args.confirmPhrase, CANCEL_CONFIRM_PHRASE)) {
+        return toolError(
+          `Confirmation required. Ask the user to confirm cancellation, then retry with confirmPhrase "${CANCEL_CONFIRM_PHRASE}".`,
+        );
+      }
+
+      const cancelled = ctx.posts.cancel(args.postId);
+      if (!cancelled) {
+        return toolError("post not found");
+      }
+
+      notifyPostsChanged({ post_id: args.postId });
+      return jsonToolContent({
+        cancelled: true,
+        post: serializePost(cancelled),
+        note: "Post marked cancelled. Permanent delete requires iris_purge_cancelled_post after a second user confirmation.",
+      });
+    },
+  );
+
+  server.tool(
+    "iris_purge_cancelled_post",
+    `Permanently delete a CANCELLED post from the database (media + linked comments). Irreversible. REQUIRED: ask the user to confirm deletion of this cancelled post, then pass confirmPhrase "${PURGE_CONFIRM_PHRASE}". Refuses if the post is not cancelled.`,
+    {
+      postId: z.string().min(1),
+      confirmPhrase: z
+        .string()
+        .min(1)
+        .describe(
+          `Must be exactly "${PURGE_CONFIRM_PHRASE}" after the user explicitly confirms permanent deletion`,
+        ),
+    },
+    async (args) => {
+      if (!confirmPhraseMatches(args.confirmPhrase, PURGE_CONFIRM_PHRASE)) {
+        return toolError(
+          `Confirmation required. Ask the user to confirm permanent deletion of this cancelled post, then retry with confirmPhrase "${PURGE_CONFIRM_PHRASE}".`,
+        );
+      }
+
+      try {
+        await purgeCancelledPost(args.postId, {
+          posts: ctx.posts,
+          assets: ctx.assets,
+          mediaStorage: ctx.mediaStorage,
+        });
+      } catch (error) {
+        if (error instanceof PurgeCancelledPostError) {
+          return toolError(error.message);
+        }
+        return toolError(
+          error instanceof Error ? error.message : "purge failed",
+        );
+      }
+
+      notifyPostsChanged({ post_id: args.postId });
+      return jsonToolContent({
+        purged: true,
+        post_id: args.postId,
+      });
     },
   );
 }

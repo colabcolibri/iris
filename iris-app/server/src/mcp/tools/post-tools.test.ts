@@ -58,6 +58,8 @@ test("MCP post tools create and list posts", async () => {
   const toolNames = tools.tools.map((tool) => tool.name);
   assert.ok(toolNames.includes("iris_create_post"));
   assert.ok(toolNames.includes("iris_list_posts"));
+  assert.ok(toolNames.includes("iris_cancel_post"));
+  assert.ok(toolNames.includes("iris_purge_cancelled_post"));
 
   const createResult = await client.callTool({
     name: "iris_create_post",
@@ -149,6 +151,79 @@ test("MCP post tools get/update reply_prompt and silence flags", async () => {
     assert.equal(post.silence_page, true);
     assert.equal(post.silence_knowledge, true);
     assert.equal(post.carousel_summary, "Produto azul no fundo branco.");
+  } finally {
+    await close();
+    db.close();
+    await rm(mediaRoot, { recursive: true, force: true });
+  }
+});
+
+test("MCP cancel and purge require confirmPhrase and cancelled status", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-cancel-purge-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+  });
+
+  const { client, close } = await createMcpClient(ctx);
+
+  try {
+    const createResult = await client.callTool({
+      name: "iris_create_post",
+      arguments: { caption: "to cancel", status: "draft" },
+    });
+    assert.notEqual(createResult.isError, true);
+    const created = parseToolJson(createResult) as { id: string };
+    const postId = created.id;
+
+    const blockedUpdate = await client.callTool({
+      name: "iris_update_post",
+      arguments: { postId, status: "cancelled" },
+    });
+    assert.equal(blockedUpdate.isError, true);
+
+    const missingPhrase = await client.callTool({
+      name: "iris_cancel_post",
+      arguments: { postId, confirmPhrase: "nope" },
+    });
+    assert.equal(missingPhrase.isError, true);
+
+    const cancelResult = await client.callTool({
+      name: "iris_cancel_post",
+      arguments: { postId, confirmPhrase: "cancelar" },
+    });
+    assert.notEqual(cancelResult.isError, true);
+    const cancelled = parseToolJson(cancelResult) as {
+      cancelled: boolean;
+      post: { status: string };
+    };
+    assert.equal(cancelled.cancelled, true);
+    assert.equal(cancelled.post.status, "cancelled");
+
+    const purgeTooSoon = await client.callTool({
+      name: "iris_purge_cancelled_post",
+      arguments: { postId, confirmPhrase: "wrong" },
+    });
+    assert.equal(purgeTooSoon.isError, true);
+
+    const purgeResult = await client.callTool({
+      name: "iris_purge_cancelled_post",
+      arguments: { postId, confirmPhrase: "deletar" },
+    });
+    assert.notEqual(purgeResult.isError, true);
+    const purged = parseToolJson(purgeResult) as {
+      purged: boolean;
+      post_id: string;
+    };
+    assert.equal(purged.purged, true);
+    assert.equal(purged.post_id, postId);
+    assert.equal(ctx.posts.findById(postId), null);
   } finally {
     await close();
     db.close();

@@ -120,6 +120,13 @@ export function deletePost(postId: string) {
   });
 }
 
+/** Hard-delete: remove postagem cancelada do banco (e mídias). */
+export function purgeCancelledPost(postId: string) {
+  return apiFetch<null>(`/api/posts/${postId}/permanent`, {
+    method: "DELETE",
+  });
+}
+
 export function publishPostNow(postId: string) {
   return apiFetch<Post>(`/api/posts/${postId}/publish`, {
     method: "POST",

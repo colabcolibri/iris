@@ -186,6 +186,8 @@ test("POST /mcp lists registered tools", async () => {
     };
     const names = body.result?.tools?.map((tool) => tool.name) ?? [];
     assert.ok(names.includes("iris_list_posts"));
+    assert.ok(names.includes("iris_cancel_post"));
+    assert.ok(names.includes("iris_purge_cancelled_post"));
     assert.ok(names.includes("iris_prepare_post_asset_upload"));
     assert.ok(names.includes("iris_list_post_assets"));
     assert.ok(names.includes("iris_delete_post_asset"));
