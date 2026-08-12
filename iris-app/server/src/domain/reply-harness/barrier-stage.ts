@@ -65,8 +65,9 @@ function buildBarrierPrompt(
     : [
         "Crisis content (config language is not Brazilian Portuguese):",
         "- Write in the mandatory response language from config.",
-        "- One brief empathy line + point to local emergency services or a crisis hotline in their country.",
-        "- Do not invent Brazilian numbers or CVV.",
+        "- One brief empathy line + point to a concrete local crisis/emergency resource for that locale.",
+        "- Examples of locale-appropriate resources (pick what fits the language/region — do not invent Brazil CVV):",
+        "  Portugal (pt-PT): SNS24; many EU locales: 112; US: 988.",
         "- Keep it to 2 short sentences after @mention.",
       ];
 
@@ -133,11 +134,13 @@ export async function runBarrierStage(input: BarrierStageInput): Promise<StageRe
   const personaMax = input.maxChars ?? input.context.persona.maxChars ?? 500;
   const maxChars = barrierCharBudget(input.kind, personaMax);
   let lastReasoning = "";
+  let lastDraftText = "";
   let lastLlm: StageResult["llm"];
 
   for (let attempt = 1; attempt <= MAX_BARRIER_ATTEMPTS; attempt += 1) {
     const draft = await completeBarrierDraft(input, maxChars, attempt);
     lastReasoning = draft.reasoning;
+    lastDraftText = draft.text;
     lastLlm = draft.llm;
 
     const withinBudget = draft.text.length <= maxChars + 40;
@@ -175,10 +178,11 @@ export async function runBarrierStage(input: BarrierStageInput): Promise<StageRe
     reasoning:
       lastReasoning ||
       "Barrier LLM did not meet short-form + mandatory facts after retries; refusing canned fallback.",
+    draftText: lastDraftText || undefined,
     structured: {
       replyTier: "none",
       contextSummary: `barrier:${input.kind}:incomplete`,
-      draftPreview: "",
+      draftPreview: (lastDraftText || "").slice(0, 200),
     },
     llm: lastLlm,
   };

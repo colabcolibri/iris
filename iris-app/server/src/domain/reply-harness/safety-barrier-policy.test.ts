@@ -49,6 +49,14 @@ test("barrierReplyMeetsRequirements checks facts not templates", () => {
   );
   assert.equal(
     barrierReplyMeetsRequirements(
+      "crisis",
+      "pt-PT",
+      "@ana Sinto muito. Em Portugal pode ligar SNS24 — não precisa passar por isso sozinha.",
+    ),
+    true,
+  );
+  assert.equal(
+    barrierReplyMeetsRequirements(
       "hate_violence",
       "pt-BR",
       "Como assistente virtual, não entro em ódio ou violência.",

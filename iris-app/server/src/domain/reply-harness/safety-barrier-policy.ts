@@ -48,8 +48,12 @@ export function barrierReplyMeetsRequirements(
     if (usesBrazilCrisisResources(responseLanguage)) {
       return normalized.includes("188") && normalized.includes("cvv");
     }
-    return /emergency|hotline|crisis|ajuda|emergenc|secours|ayuda|nothilfe|emergenza/.test(
-      normalized,
+    // Non-BR: accept concrete local help (hotline name, emergency number, or URL).
+    // pt-PT often cites SNS24 — must not force Brazil CVV.
+    return (
+      /sns\s*24|112|988|911|999|samu|\b192\b|\b190\b|emergency|hotline|crisis|ajuda|emerg[eê]nc|secours|ayuda|nothilfe|emergenza|socorro|linha\s+(?:de\s+)?(?:apoio|ajuda|vida)/.test(
+        normalized,
+      ) || /https?:\/\//.test(normalized) || /\b\d{3,}\b/.test(normalized)
     );
   }
 
