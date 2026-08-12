@@ -53,6 +53,21 @@ blocks: [05_architecture.md, 06_database.md]
 
 ---
 
+### Visitante demo
+
+**Who:** Prospect ou curioso que chega pela landing e quer ver o produto antes de pedir acesso.
+
+**Goals:**
+- Explorar o admin Iris com dados fictícios
+- Entender calendário editorial, comentários e fluxo do agente
+- Avaliar UX sem credenciais nem risco ao ambiente real
+
+**Permissions:** nenhuma — rota pública `/demo`, fixtures no client, sem sessão admin.
+
+**Surfaces:** `/demo/*` (mesmo deploy, shell visual do admin).
+
+---
+
 ### Sistema Meta (webhook)
 
 **Who:** Instagram Graph API.
@@ -63,12 +78,13 @@ blocks: [05_architecture.md, 06_database.md]
 
 ## Profile matrix
 
-| Action | Operador | Agente / MCP | Worker | Meta |
-| ------ | -------- | ------------ | ------ | ---- |
-| CRUD posts | yes | yes | no | no |
-| Upload mídia | yes | yes | no | no |
-| Schedule | yes | yes | no | no |
-| Publish IG | no | no | yes | no |
-| List comments | yes | yes | no | no |
-| Ingest comment | no | no | no | yes |
-| Auto-reply | no | no | yes | no |
+| Action | Operador | Agente / MCP | Worker | Meta | Visitante demo |
+| ------ | -------- | ------------ | ------ | ---- | -------------- |
+| CRUD posts | yes | yes | no | no | fake only |
+| Upload mídia | yes | yes | no | no | preview local |
+| Schedule | yes | yes | no | no | fake only |
+| Publish IG | no | no | yes | no | no |
+| List comments | yes | yes | no | no | fixtures |
+| Ingest comment | no | no | no | yes | no |
+| Auto-reply | no | no | yes | no | no |
+| Ver admin UI | yes | no | no | no | yes (`/demo`) |

@@ -54,7 +54,7 @@ export async function generateReply(
         }
       : null,
     thread: { entries: [] },
-    imageContext: { summaries: [] },
+    imageContext: { summaries: [], visionEnabled: false },
     brandUsername: null,
     targetComment: {
       authorUsername: legacy.authorUsername,

@@ -25,7 +25,7 @@ function mockContext(): ReplyContext {
       assets: [],
     },
     thread: { entries: [] },
-    imageContext: { summaries: [] },
+    imageContext: { summaries: [], visionEnabled: false },
     brandUsername: null,
     targetComment: {
       authorUsername: "fan",

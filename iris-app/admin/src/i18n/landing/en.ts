@@ -24,6 +24,7 @@ export const landingEn: LandingMessages = {
     subtitle:
       "Iris publishes to your Instagram and replies to the people commenting, always in your brand's voice — at whatever level of autonomy you choose.",
     cta: "I want to meet Iris",
+    demoCta: "View demo",
     stage: {
       postHandle: "@nomad.studio",
       postCaption:

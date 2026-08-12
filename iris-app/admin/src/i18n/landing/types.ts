@@ -72,6 +72,7 @@ export type LandingMessages = {
     titleLine2Accent: string;
     subtitle: string;
     cta: string;
+    demoCta: string;
     stage: LandingHeroStageMessages;
   };
   workflow: {

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { AppView } from "@/components/layout/app-sidebar";
+import { useDemoMode } from "@/demo/demo-mode-context";
 import { ROUTES } from "@/lib/routes";
 
 function readView(search: string): AppView {
@@ -10,23 +11,26 @@ function readView(search: string): AppView {
   return "calendar";
 }
 
-function viewHref(view: AppView) {
-  if (view === "kanban") return `${ROUTES.admin.root}?view=kanban`;
-  if (view === "list") return `${ROUTES.admin.root}?view=list`;
-  return ROUTES.admin.root;
-}
-
 export function useDashboardView() {
   const location = useLocation();
   const navigate = useNavigate();
-  const onDashboard = location.pathname === ROUTES.admin.root;
+  const { isDemoMode } = useDemoMode();
+  const dashboardRoot = isDemoMode ? ROUTES.demo.root : ROUTES.admin.root;
+
+  function viewHref(view: AppView) {
+    if (view === "kanban") return `${dashboardRoot}?view=kanban`;
+    if (view === "list") return `${dashboardRoot}?view=list`;
+    return dashboardRoot;
+  }
+
+  const onDashboard = location.pathname === dashboardRoot;
   const view = onDashboard ? readView(location.search) : "calendar";
 
   const setView = useCallback(
     (next: AppView) => {
       navigate(viewHref(next));
     },
-    [navigate],
+    [navigate, dashboardRoot],
   );
 
   return { view, setView, onDashboard };

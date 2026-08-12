@@ -24,11 +24,13 @@ import { useAuthSession } from "@/contexts/auth-session-context";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
+import { useDemoMode } from "@/demo/demo-mode-context";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const navigate = useNavigate();
+  const { isDemoMode } = useDemoMode();
   const { signOut } = useAuthSession();
   const { replyMode, loading: settingsLoading } = useAppSettings();
   const { confirm } = useConfirmDialog();
@@ -89,7 +91,7 @@ export function AppHeader() {
           </div>
         </div>
 
-        {!connected ? (
+        {!connected && !isDemoMode ? (
           <p className="hidden max-w-xs text-sm text-sidebar-foreground/70 lg:block">
             {tokenExpired
               ? "Sua sessão com o Instagram expirou. Conecte de novo para agendar publicações."
@@ -104,7 +106,7 @@ export function AppHeader() {
           loading={settingsLoading}
         />
 
-        {!connected ? (
+        {!connected && !isDemoMode ? (
           <a
             href="/auth/meta"
             className={cn(
@@ -120,6 +122,12 @@ export function AppHeader() {
             </span>
             <span className="sm:hidden">Conectar</span>
           </a>
+        ) : isDemoMode && connected && handle ? (
+          <div className="inline-flex h-11 items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 text-sm text-sidebar-foreground">
+            <InstagramIcon className="size-4 text-emerald-300" />
+            <span className="max-w-[9rem] truncate sm:max-w-none">{handle}</span>
+            <span className="text-xs text-sidebar-foreground/60">(demo)</span>
+          </div>
         ) : (
           handle && (
             <DropdownMenu>
@@ -172,6 +180,7 @@ export function AppHeader() {
           )
         )}
 
+        {!isDemoMode ? (
         <Button
           variant="ghost"
           size="sm"
@@ -181,6 +190,7 @@ export function AppHeader() {
           <LogOut className="mr-2 size-4" />
           Sair
         </Button>
+        ) : null}
       </div>
     </header>
   );

@@ -1,5 +1,6 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
+import { ROUTES } from "@/lib/routes";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { LandingHeroStage } from "@/components/landing/landing-hero-stage";
 import { LandingPrimaryCta } from "@/components/landing/landing-section";
@@ -42,6 +43,9 @@ export function LandingHero() {
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <LandingPrimaryCta href={`#${LANDING_SECTIONS.contact}`}>
               {m.hero.cta}
+            </LandingPrimaryCta>
+            <LandingPrimaryCta href={ROUTES.demo.root} variant="ghost">
+              {m.hero.demoCta}
             </LandingPrimaryCta>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { ReplyAudit, ReplyAuditStep } from "@/lib/types";
-import { ROUTES } from "@/lib/routes";
+import { useAppRoutes } from "@/demo/demo-routes";
 import {
   REPLY_AUDIT_BADGE_STYLES,
   REPLY_AUDIT_STAGE_LABELS,
@@ -68,6 +68,7 @@ export function ReplyAuditTimeline({
   proposedReply,
   proposedReplyLanguageLabel,
 }: ReplyAuditTimelineProps) {
+  const routes = useAppRoutes();
   const suggestEdit = audit.steps.some((step) =>
     shouldSuggestAgentContentEdit(step.reason),
   );
@@ -259,7 +260,7 @@ export function ReplyAuditTimeline({
         <p className="text-sm text-muted-foreground">
           Ajuste as regras em{" "}
           <Link
-            to={ROUTES.admin.persona}
+            to={routes.persona}
             className="font-semibold text-primary underline-offset-4 hover:underline"
           >
             conteúdo do agente

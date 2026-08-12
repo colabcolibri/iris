@@ -29,7 +29,7 @@ function mockContext(responseLanguage = "pt-BR"): ReplyContext {
       assets: [],
     },
     thread: { entries: [] },
-    imageContext: { summaries: [] },
+    imageContext: { summaries: [], visionEnabled: false },
     brandUsername: null,
     targetComment: { authorUsername: "fan", text: "How much?", igCommentId: null },
   };
@@ -147,4 +147,30 @@ test("simple draft omits knowledge when silenced", () => {
   });
   const prompt = buildSimpleDraftPrompt(context, agent, 200);
   assert.doesNotMatch(prompt, /## Links and facts/);
+});
+
+test("triage and simple draft handle low-signal Sim! without projecting post theme", () => {
+  const context = mockContext();
+  context.post!.caption =
+    'Quando alguém diz “tanto faz”, o que você escuta?';
+  context.post!.carouselSummary =
+    `${"A".repeat(400)} UNIQUE_TAIL_SHOULD_NOT_APPEAR_IN_TRIAGE`;
+  context.targetComment = {
+    authorUsername: "veralucia239r",
+    text: "Sim !",
+    igCommentId: "c-sim",
+  };
+
+  const triage = buildTriagePrompt(context, defaultAgentContent().restrictions);
+  assert.match(triage, /Signal: acknowledgment/);
+  assert.match(triage, /LOW EVIDENCE/i);
+  assert.match(triage, /Do NOT invent the user's meaning/i);
+  assert.match(triage, /Target comment surface/);
+  assert.doesNotMatch(triage, /UNIQUE_TAIL_SHOULD_NOT_APPEAR_IN_TRIAGE/);
+  assert.match(triage, /Carousel summary: A{10,}/);
+
+  const simple = buildSimpleDraftPrompt(context, defaultAgentContent(), 180);
+  assert.match(simple, /Anti over-inference/);
+  assert.match(simple, /do not treat "Sim!" as an ambiguous phrase/i);
+  assert.match(simple, /Signal: acknowledgment/);
 });

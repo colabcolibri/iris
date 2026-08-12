@@ -21,7 +21,7 @@ import {
   fetchReplyPersona,
   simulateAgentReply,
 } from "@/lib/api";
-import { ROUTES } from "@/lib/routes";
+import { useAppRoutes } from "@/demo/demo-routes";
 import type { ReplyAudit } from "@/lib/types";
 import type { SimulateThreadMessage } from "@/lib/api";
 import {
@@ -76,6 +76,7 @@ const CONTENT_FIELD_STATS: ContentFieldStat[] = [
 ];
 
 export function AgentSimulatorPage() {
+  const routes = useAppRoutes();
   const initialForm = applyScenarioToState(initialScenario);
   const [scenarioId, setScenarioId] = useState(DEFAULT_SIMULATOR_SCENARIO_ID);
   const [caption, setCaption] = useState(initialForm.caption);
@@ -213,7 +214,7 @@ export function AgentSimulatorPage() {
                   );
                 })}
                 <Link
-                  to={ROUTES.admin.persona}
+                  to={routes.persona}
                   className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
                 >
                   Persona

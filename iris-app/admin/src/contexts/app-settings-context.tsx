@@ -7,6 +7,7 @@ import {
 } from "react";
 import { DEFAULT_TIMEZONE } from "@iris/domain/timezone";
 import { useAuthSession } from "@/contexts/auth-session-context";
+import { getDemoMode } from "@/demo/demo-mode-context";
 import { fetchAppSettings, updateAppSettings } from "@/lib/api";
 import type { ReplyMode } from "@/lib/types";
 
@@ -71,7 +72,7 @@ export function AppSettingsProvider({
   }, [applySettings]);
 
   useEffect(() => {
-    if (status !== "authenticated") {
+    if (status !== "authenticated" && !getDemoMode()) {
       return;
     }
     void refresh();

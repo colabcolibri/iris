@@ -171,6 +171,7 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | `docs/architecture/meta-app-review.md` | Checklist revisão app Meta (IGIris) |
 | `docs/architecture/srp-modules.md` | Módulos e dependências |
 | `docs/architecture/admin-ui-layout.md` | Admin React — shell persistente, `PageContainer`, providers |
+| `docs/architecture/admin-demo-mode.md` | Demo público `/demo` — fixtures client-side, isolamento de sessão |
 
 ## Gaps
 

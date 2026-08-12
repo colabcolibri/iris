@@ -24,6 +24,8 @@ import {
   DEFAULT_RESPONSE_LANGUAGE,
   RESPONSE_LANGUAGE_OPTIONS,
 } from "@iris/domain/reply-language/response-languages";
+import { DEMO_BRAND_NAME } from "@/demo/demo-brand";
+import { useDemoMode } from "@/demo/demo-mode-context";
 
 type FieldHintProps = {
   children: React.ReactNode;
@@ -36,6 +38,13 @@ function FieldHint({ children }: FieldHintProps) {
 }
 
 export function PersonaPage() {
+  const { isDemoMode } = useDemoMode();
+  const brandPlaceholder = isDemoMode
+    ? `Ex.: ${DEMO_BRAND_NAME}`
+    : "Ex.: Nome da sua marca";
+  const signaturePlaceholder = isDemoMode
+    ? `Ex.: Assine como assistente virtual do ${DEMO_BRAND_NAME}.`
+    : "Ex.: Assine sempre com o nome da equipe ou do atendente.";
   const [persona, setPersona] = useState<ReplyPersona | null>(null);
   const [responseLanguage, setResponseLanguage] = useState(
     DEFAULT_RESPONSE_LANGUAGE,
@@ -167,7 +176,7 @@ export function PersonaPage() {
                   id="brand-name"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
-                  placeholder="Ex.: Colab Colibri"
+                  placeholder={brandPlaceholder}
                 />
                 <FieldHint>
                   Nome exibido no topo dos prompts de rascunho, logo após o
@@ -184,7 +193,7 @@ export function PersonaPage() {
                   rows={3}
                   value={signatureInstruction}
                   onChange={(e) => setSignatureInstruction(e.target.value)}
-                  placeholder="Ex.: Assine sempre com “— Equipe Colab” ou use o primeiro nome do atendente."
+                  placeholder={signaturePlaceholder}
                 />
                 <FieldHint>
                   Como a IA deve encerrar a resposta. Na publicação, corpo e

@@ -24,6 +24,7 @@ export const landingPt: LandingMessages = {
     subtitle:
       "A Íris publica no seu Instagram e responde quem comenta, sempre na voz da sua marca — com o nível de autonomia que você escolher.",
     cta: "Quero conhecer a Íris",
+    demoCta: "Ver demonstração",
     stage: {
       postHandle: "@estudio.nomade",
       postCaption:

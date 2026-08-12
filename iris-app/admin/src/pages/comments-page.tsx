@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/sheet";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
-import { ROUTES } from "@/lib/routes";
+import { useAppRoutes } from "@/demo/demo-routes";
 import { firstMediaSlideSrc } from "@/hooks/use-post-preview";
 import {
   approveCommentReply,
@@ -106,6 +106,7 @@ function commentsHaveChanged(current: Comment[], next: Comment[]): boolean {
 }
 
 export function CommentsPage() {
+  const routes = useAppRoutes();
   const { meta } = useMetaSession();
   const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1026,7 +1027,7 @@ export function CommentsPage() {
         <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
           Conecte o Instagram em{" "}
           <Link
-            to={ROUTES.admin.settings}
+            to={routes.settings}
             className="text-primary underline-offset-4 hover:underline"
           >
             configurações

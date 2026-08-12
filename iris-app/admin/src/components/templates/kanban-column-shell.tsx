@@ -62,7 +62,7 @@ export function KanbanColumnShell({
 
 type KanbanCardShellProps = {
   children: ReactNode;
-  footer?: ReactNode;
+  actions?: ReactNode;
   onOpen: () => void;
   className?: string;
   variant?: "default" | "failed";
@@ -70,7 +70,7 @@ type KanbanCardShellProps = {
 
 KanbanColumnShell.Card = function KanbanCardShell({
   children,
-  footer,
+  actions,
   onOpen,
   className,
   variant = "default",
@@ -78,33 +78,30 @@ KanbanColumnShell.Card = function KanbanCardShell({
   return (
     <article
       className={cn(
-        "group rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none transition-colors hover:border-primary/30",
+        "group relative rounded-[var(--iris-radius-lg)] border border-border bg-card shadow-none transition-colors hover:border-primary/30",
         variant === "failed" &&
-          "relative overflow-hidden border-destructive/30 bg-destructive/5",
+          "overflow-hidden border-destructive/30 bg-destructive/5",
         className,
       )}
     >
       {variant === "failed" && (
         <div
-          className="absolute top-0 bottom-0 left-0 w-1 bg-destructive"
+          className="absolute top-0 bottom-0 left-0 z-10 w-1 bg-destructive"
           aria-hidden
         />
       )}
+      {actions}
       <button
         type="button"
         onClick={onOpen}
         className={cn(
-          "w-full rounded-t-[var(--iris-radius-lg)] px-4 pt-4 pb-2 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          "w-full rounded-[var(--iris-radius-lg)] px-4 pt-4 pb-4 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           variant === "failed" && "pl-5",
+          actions && "pr-10",
         )}
       >
         {children}
       </button>
-      {footer ? (
-        <div className="flex items-center justify-end border-t border-border px-2 py-1.5">
-          {footer}
-        </div>
-      ) : null}
     </article>
   );
 };

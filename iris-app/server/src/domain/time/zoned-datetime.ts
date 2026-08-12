@@ -137,6 +137,48 @@ export function monthRangeInTimeZone(year: number, monthIndex: number, timeZone:
   return { from, to };
 }
 
+function shiftZonedCalendarDay(
+  anchor: Date,
+  timeZone: string,
+  dayOffset: number,
+): ZonedParts {
+  const parts = readZonedParts(anchor, timeZone);
+  const utc = Date.UTC(parts.year, parts.month - 1, parts.day + dayOffset, 12, 0, 0);
+  return readZonedParts(new Date(utc), timeZone);
+}
+
+/** Início e fim de um dia editorial (offset relativo a hoje na timezone). */
+export function zonedCalendarDayBounds(
+  timeZone: string,
+  anchor: Date,
+  dayOffset: number,
+): { from: string; to: string } {
+  const target = shiftZonedCalendarDay(anchor, timeZone, dayOffset);
+  const y = target.year;
+  const m = pad(target.month);
+  const d = pad(target.day);
+  const from =
+    zonedLocalToUtcIso(`${y}-${m}-${d}T00:00`, timeZone) ??
+    new Date(Date.UTC(y, target.month - 1, target.day)).toISOString();
+  const endLocal = zonedLocalToUtcIso(`${y}-${m}-${d}T23:59`, timeZone);
+  const to = endLocal
+    ? new Date(new Date(endLocal).getTime() + 59_999).toISOString()
+    : new Date(Date.UTC(y, target.month - 1, target.day, 23, 59, 59, 999)).toISOString();
+  return { from, to };
+}
+
+/** Janela editorial ancorada em hoje: N dias para trás e M dias para frente. */
+export function zonedCalendarWindowBounds(
+  timeZone: string,
+  anchor: Date,
+  pastDays: number,
+  futureDays: number,
+): { from: string; to: string } {
+  const start = zonedCalendarDayBounds(timeZone, anchor, -Math.max(0, pastDays));
+  const end = zonedCalendarDayBounds(timeZone, anchor, Math.max(0, futureDays));
+  return { from: start.from, to: end.to };
+}
+
 function daysInMonth(year: number, monthIndex: number) {
   return new Date(year, monthIndex + 1, 0).getDate();
 }

@@ -25,7 +25,10 @@ test("buildReplyPrompt includes context and mandatory language", () => {
         },
       ],
     },
-    imageContext: { summaries: ["Carousel with 2 image(s)."] },
+    imageContext: {
+      summaries: ["Carousel with 2 image(s)."],
+      visionEnabled: false,
+    },
     brandUsername: null,
     targetComment: { authorUsername: "fan", text: "Hi", igCommentId: null },
   });

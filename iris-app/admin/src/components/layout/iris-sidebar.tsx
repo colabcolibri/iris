@@ -10,16 +10,26 @@ import { cn } from "@/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
 
 const IRIS_SIDEBAR_WIDTH = "17.5rem";
+/** h-14 — altura do AppHeader */
+const IRIS_HEADER_HEIGHT = "3.5rem";
+/** h-10 — altura do DemoBanner */
+const IRIS_DEMO_BANNER_HEIGHT = "2.5rem";
 
 type IrisSidebarProviderProps = {
   children: ReactNode;
   className?: string;
+  demoChrome?: boolean;
 };
 
 export function IrisSidebarProvider({
   children,
   className,
+  demoChrome = false,
 }: IrisSidebarProviderProps) {
+  const chromeTop = demoChrome
+    ? `calc(${IRIS_DEMO_BANNER_HEIGHT} + ${IRIS_HEADER_HEIGHT})`
+    : IRIS_HEADER_HEIGHT;
+
   return (
     <SidebarProvider
       defaultOpen={false}
@@ -27,7 +37,12 @@ export function IrisSidebarProvider({
         "flex h-svh flex-col overflow-hidden bg-background",
         className,
       )}
-      style={{ "--sidebar-width": IRIS_SIDEBAR_WIDTH } as CSSProperties}
+      style={
+        {
+          "--sidebar-width": IRIS_SIDEBAR_WIDTH,
+          "--iris-chrome-top": chromeTop,
+        } as CSSProperties
+      }
     >
       {children}
     </SidebarProvider>
@@ -44,7 +59,7 @@ export function IrisSidebar({ children, className }: IrisSidebarProps) {
     <Sidebar
       collapsible="icon"
       className={cn(
-        "top-14 h-[calc(100svh-3.5rem)] border-sidebar-border bg-sidebar shadow-none",
+        "top-[var(--iris-chrome-top,3.5rem)] h-[calc(100svh-var(--iris-chrome-top,3.5rem))] border-sidebar-border bg-sidebar shadow-none",
         className,
       )}
     >

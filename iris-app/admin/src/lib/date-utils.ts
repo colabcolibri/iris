@@ -28,7 +28,7 @@ export function postDisplayDate(post: Post) {
 
 /** Data usada no calendário — só agendamentos e publicações reais, nunca created_at. */
 export function postCalendarDate(post: Post): string | null {
-  if (post.status === "published") {
+  if (post.status === "published" || post.status === "monitored") {
     return post.published_at ?? post.scheduled_at;
   }
   if (post.status === "scheduled" || post.status === "failed") {

@@ -4,6 +4,7 @@ import { openDatabase } from "../../adapters/sqlite/connection.ts";
 import { runMigrations } from "../../adapters/sqlite/migrate.ts";
 import { createSqlitePostRepository } from "../../adapters/sqlite/post-repository.ts";
 import { createSqliteCommentRepository } from "../../adapters/sqlite/comment-repository.ts";
+import { isManagedCommentPost } from "./is-managed-comment-post.ts";
 import { listCommentPosts } from "./list-comment-posts.ts";
 import { syncPostComments } from "./sync-post-comments.ts";
 
@@ -46,11 +47,7 @@ test("listCommentPosts returns published iris posts with local counts", () => {
       listManagedPosts: () =>
         posts
           .list()
-          .filter(
-            (post) =>
-              Boolean(post.igMediaId) &&
-              (post.status === "published" || post.status === "monitored"),
-          )
+          .filter((post) => isManagedCommentPost(post))
           .map((post) => ({
             id: post.id,
             caption: post.caption,

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Bot, BotOff, ClipboardCheck } from "lucide-react";
 import { replyModeOption } from "@/lib/reply-mode-options";
 import type { ReplyMode } from "@/lib/types";
-import { ROUTES } from "@/lib/routes";
+import { useAppRoutes } from "@/demo/demo-routes";
 import { cn } from "@/lib/utils";
 
 type AgentGlobalStatusBadgeProps = {
@@ -28,12 +28,13 @@ export function AgentGlobalStatusBadge({
   loading = false,
   className,
 }: AgentGlobalStatusBadgeProps) {
+  const routes = useAppRoutes();
   const Icon = ICONS[replyMode];
   const label = replyModeOption(replyMode).label;
 
   return (
     <Link
-      to={ROUTES.admin.settings}
+      to={routes.settings}
       title={`Agente global: ${label}. Clique para abrir configurações.`}
       className={cn(
         "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",

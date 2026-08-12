@@ -30,6 +30,8 @@ import type {
   WebhookProcessingStatus,
 } from "@/lib/types";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
+import { getDemoMode, showDemoToast } from "@/demo/demo-mode-context";
+import { demoApiFetch, demoFetchAssetBlob } from "@/demo/demo-api";
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -42,6 +44,10 @@ async function apiFetch<T = unknown>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  if (getDemoMode()) {
+    return demoApiFetch<T>(path, options);
+  }
+
   const headers = new Headers(options.headers ?? {});
 
   if (options.body && !(options.body instanceof FormData)) {
@@ -343,6 +349,10 @@ export async function fetchAuthMe(): Promise<{
   authenticated: true;
   email: string;
 } | null> {
+  if (getDemoMode()) {
+    return null;
+  }
+
   const response = await fetch("/api/auth/me", { credentials: "include" });
   if (response.status === 401) {
     return null;
@@ -371,6 +381,10 @@ export function disconnectMeta() {
 }
 
 export async function fetchAssetBlob(postId: string, filename: string) {
+  if (getDemoMode()) {
+    return demoFetchAssetBlob(postId, filename);
+  }
+
   const response = await fetch(`/api/posts/${postId}/assets/${filename}`, {
     credentials: "include",
   });
@@ -402,6 +416,13 @@ export function subscribeRealtimeEvents(handlers: {
   onCommentsChanged?: (data: { post_id?: string }) => void;
   onConnectionChange?: (connected: boolean) => void;
 }) {
+  if (getDemoMode()) {
+    handlers.onConnectionChange?.(false);
+    return () => {
+      handlers.onConnectionChange?.(false);
+    };
+  }
+
   let aborted = false;
   let retryMs = 1000;
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -505,6 +526,12 @@ export function updateAgentContent(body: {
 export async function fetchReplyAudit(
   commentId: string,
 ): Promise<ReplyAudit | null> {
+  if (getDemoMode()) {
+    return demoApiFetch<ReplyAudit | null>(
+      `/api/comments/${commentId}/reply-audit`,
+    );
+  }
+
   const response = await fetch(`/api/comments/${commentId}/reply-audit`, {
     credentials: "include",
   });
@@ -647,6 +674,13 @@ export async function downloadWebhookEventsExport(
     signatureValid?: boolean;
   } = {},
 ) {
+  if (getDemoMode()) {
+    showDemoToast("Exportação disponível apenas no admin real.");
+    void limit;
+    void filter;
+    return;
+  }
+
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 10_000);
   const params = new URLSearchParams({ limit: String(safeLimit) });
   if (filter.status) {

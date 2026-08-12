@@ -5,6 +5,7 @@ import {
   IrisSidebarInset,
   IrisSidebarProvider,
 } from "@/components/layout/iris-sidebar";
+import { DemoBanner, useDemoMode } from "@/demo/demo-mode-context";
 
 type AppShellProps = {
   sidebarView?: AppView;
@@ -17,8 +18,11 @@ export function AppShell({
   onSidebarViewChange,
   children,
 }: AppShellProps) {
+  const { isDemoMode } = useDemoMode();
+
   return (
-    <IrisSidebarProvider>
+    <IrisSidebarProvider demoChrome={isDemoMode}>
+      {isDemoMode ? <DemoBanner /> : null}
       <AppHeader />
 
       <div className="flex min-h-0 flex-1">

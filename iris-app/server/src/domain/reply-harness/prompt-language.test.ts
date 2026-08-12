@@ -13,7 +13,7 @@ function mockContext(authorUsername = "maria_escuta"): ReplyContext {
     persona: defaultReplyPersona(),
     post: null,
     thread: { entries: [] },
-    imageContext: { summaries: [] },
+    imageContext: { summaries: [], visionEnabled: false },
     brandUsername: null,
     targetComment: { authorUsername, text: "Adorei o post!", igCommentId: null },
   };

@@ -1,4 +1,4 @@
-import { Clock, ImageIcon, MoreHorizontal, PlayCircle } from "lucide-react";
+import { Clock, ImageIcon, MoreVertical, PlayCircle } from "lucide-react";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
 import { KanbanColumnShell } from "@/components/templates/kanban-column-shell";
@@ -63,51 +63,56 @@ export function KanbanCard({
   const isPublished = post.status === "published";
   const assetsCount = post.assets_count ?? 0;
 
+  const menu =
+    actions.length > 0 ? (
+      <div className="absolute top-2 right-2 z-20">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-popup-open:opacity-100"
+                aria-label="Ações da postagem"
+                onClick={(event) => event.stopPropagation()}
+              />
+            }
+          >
+            <MoreVertical className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              {actions.map((action) => (
+                <DropdownMenuItem
+                  key={
+                    action.kind === "status"
+                      ? `status-${action.status}`
+                      : "purge"
+                  }
+                  variant={action.variant}
+                  onClick={() => {
+                    if (action.kind === "purge") {
+                      onPurge?.();
+                      return;
+                    }
+                    onStatusChange(action.status);
+                  }}
+                >
+                  {action.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ) : null;
+
   return (
     <KanbanColumnShell.Card
       onOpen={onOpen}
       variant={isFailed ? "failed" : "default"}
-      footer={
-        actions.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Ações da postagem"
-                />
-              }
-            >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                {actions.map((action) => (
-                  <DropdownMenuItem
-                    key={
-                      action.kind === "status"
-                        ? `status-${action.status}`
-                        : "purge"
-                    }
-                    variant={action.variant}
-                    onClick={() => {
-                      if (action.kind === "purge") {
-                        onPurge?.();
-                        return;
-                      }
-                      onStatusChange(action.status);
-                    }}
-                  >
-                    {action.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : undefined
-      }
+      actions={menu}
     >
       {isPublished && assetsCount > 0 && (
         <div className="relative -mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-(--iris-radius-lg) bg-muted">

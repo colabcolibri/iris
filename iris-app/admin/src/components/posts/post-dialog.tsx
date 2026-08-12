@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { ROUTES } from "@/lib/routes";
+import { useAppRoutes } from "@/demo/demo-routes";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { CommentThread } from "@/components/comments/comment-thread";
 import { StatusBadge } from "@/components/posts/status-badge";
@@ -127,6 +127,7 @@ export function PostDialog({
   onRetrySchedule,
 }: PostDialogProps) {
   const { replyMode: globalReplyMode } = useAppSettings();
+  const routes = useAppRoutes();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -552,7 +553,7 @@ export function PostDialog({
                     `Estado efetivo agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
                   {" · "}
                   <Link
-                    to={ROUTES.admin.persona}
+                    to={routes.persona}
                     className="text-primary underline-offset-4 hover:underline"
                   >
                     Editar persona

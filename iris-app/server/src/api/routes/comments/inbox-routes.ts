@@ -3,6 +3,7 @@ import { createRouter, route } from "../../router.ts";
 import { serializePost } from "../../../adapters/sqlite/mappers.ts";
 import { buildCommentsInbox, buildLocalCommentsInbox } from "../../../domain/comments/build-comments-inbox.ts";
 import { listCommentPosts } from "../../../domain/comments/list-comment-posts.ts";
+import { isManagedCommentPost } from "../../../domain/comments/is-managed-comment-post.ts";
 import {
   firstPostMediaUrl,
   resolvePostMedia,
@@ -16,11 +17,7 @@ export const commentsInboxRouter = createRouter([
       listManagedPosts: () =>
         match.ctx.posts
           .list()
-          .filter(
-            (post) =>
-              Boolean(post.igMediaId) &&
-              (post.status === "published" || post.status === "monitored"),
-          )
+          .filter((post) => isManagedCommentPost(post))
           .map((post) => ({
             id: post.id,
             caption: post.caption,

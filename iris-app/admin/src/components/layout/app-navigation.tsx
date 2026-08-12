@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import type { AppView } from "@/components/layout/app-sidebar";
-import { ROUTES } from "@/lib/routes";
+import {
+  dashboardViewHref,
+  useAppRoutes,
+} from "@/demo/demo-routes";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -29,23 +32,17 @@ const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] =
     { id: "kanban", label: "Kanban", icon: LayoutGrid },
   ];
 
-function viewHref(view: AppView) {
-  if (view === "kanban") return `${ROUTES.admin.root}?view=kanban`;
-  if (view === "list") return `${ROUTES.admin.root}?view=list`;
-  return ROUTES.admin.root;
-}
+const MAIN_ROUTE_DEFS = [
+  { key: "comments" as const, label: "Comentários", icon: MessageCircle },
+  { key: "webhooks" as const, label: "Webhooks", icon: Webhook },
+  { key: "agentSimulator" as const, label: "Simulador", icon: FlaskConical },
+  { key: "agentRuns" as const, label: "Execuções", icon: Bot },
+];
 
-const MAIN_ROUTE_ITEMS = [
-  { to: ROUTES.admin.comments, label: "Comentários", icon: MessageCircle },
-  { to: ROUTES.admin.webhooks, label: "Webhooks", icon: Webhook },
-  { to: ROUTES.admin.agentSimulator, label: "Simulador", icon: FlaskConical },
-  { to: ROUTES.admin.agentRuns, label: "Execuções", icon: Bot },
-] as const;
-
-const FOOTER_ROUTE_ITEMS = [
-  { to: ROUTES.admin.settings, label: "Configurações", icon: Settings },
-  { to: ROUTES.admin.persona, label: "Persona", icon: Sparkles },
-] as const;
+const FOOTER_ROUTE_DEFS = [
+  { key: "settings" as const, label: "Configurações", icon: Settings },
+  { key: "persona" as const, label: "Persona", icon: Sparkles },
+];
 
 const MENU_BUTTON_CLASS =
   "h-11 min-h-11 text-xs font-normal text-sidebar-foreground/70 transition-transform active:scale-95 group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-primary data-active:shadow-none";
@@ -65,10 +62,11 @@ export function AppNavigation({
   onNavigate,
   showFooter = true,
 }: AppNavigationProps) {
+  const routes = useAppRoutes();
   const location = useLocation();
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
-  const onDashboard = location.pathname === ROUTES.admin.root;
+  const onDashboard = location.pathname === routes.root;
 
   function handleNavigate() {
     onNavigate?.();
@@ -94,7 +92,7 @@ export function AppNavigation({
                       if (onDashboard && onViewChange) {
                         onViewChange(item.id);
                       } else {
-                        navigate(viewHref(item.id));
+                        navigate(dashboardViewHref(routes, item.id));
                       }
                       handleNavigate();
                     }}
@@ -106,13 +104,14 @@ export function AppNavigation({
               );
             })}
 
-            {MAIN_ROUTE_ITEMS.map((item) => {
+            {MAIN_ROUTE_DEFS.map((item) => {
+              const to = routes[item.key];
               const Icon = item.icon;
               return (
-                <SidebarMenuItem key={item.to}>
+                <SidebarMenuItem key={to}>
                   <SidebarMenuButton
-                    render={<NavLink to={item.to} />}
-                    isActive={location.pathname === item.to}
+                    render={<NavLink to={to} />}
+                    isActive={location.pathname === to}
                     tooltip={item.label}
                     size="default"
                     className={MENU_BUTTON_CLASS}
@@ -134,13 +133,14 @@ export function AppNavigation({
           <SidebarGroup className="mt-auto group-data-[collapsible=icon]:p-0">
             <SidebarGroupContent>
               <SidebarMenu>
-                {FOOTER_ROUTE_ITEMS.map((item) => {
+                {FOOTER_ROUTE_DEFS.map((item) => {
+                  const to = routes[item.key];
                   const Icon = item.icon;
                   return (
-                    <SidebarMenuItem key={item.to}>
+                    <SidebarMenuItem key={to}>
                       <SidebarMenuButton
-                        render={<NavLink to={item.to} />}
-                        isActive={location.pathname === item.to}
+                        render={<NavLink to={to} />}
+                        isActive={location.pathname === to}
                         tooltip={item.label}
                         size="default"
                         className={MENU_BUTTON_CLASS}

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchAuthMe, logout } from "@/lib/api";
+import { isDemoPath } from "@/demo/demo-path";
 import { setUnauthorizedListener } from "@/lib/auth-unauthorized";
 
 type AuthStatus = "loading" | "authenticated" | "anonymous";
@@ -51,6 +52,11 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(
     async (options?: { silent?: boolean }) => {
+      if (isDemoPath()) {
+        applyAnonymous();
+        return false;
+      }
+
       if (!options?.silent) {
         setStatus("loading");
       }
@@ -81,8 +87,12 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
   }, [applyAnonymous]);
 
   useEffect(() => {
+    if (isDemoPath()) {
+      applyAnonymous();
+      return;
+    }
     void refresh();
-  }, [refresh]);
+  }, [refresh, applyAnonymous]);
 
   useEffect(() => {
     setUnauthorizedListener(() => {

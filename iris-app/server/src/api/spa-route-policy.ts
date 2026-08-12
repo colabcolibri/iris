@@ -30,6 +30,10 @@ export function isPublicSpaPath(pathname: string): boolean {
     return true;
   }
 
+  if (pathname === "/demo" || pathname.startsWith("/demo/")) {
+    return true;
+  }
+
   return ADMIN_LOGIN_PATHS.has(pathname);
 }
 

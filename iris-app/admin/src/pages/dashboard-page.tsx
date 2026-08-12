@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CalendarListView } from "@/components/calendar/calendar-list-view";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
+import { PipelineDateFilterMenu } from "@/components/kanban/pipeline-date-filter-menu";
 import {
   PostDialog,
   type PostDialogMode,
@@ -15,6 +16,7 @@ import { useAppSettings } from "@/contexts/app-settings-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useDashboardView } from "@/hooks/use-dashboard-view";
+import { usePipelineDateFilter } from "@/hooks/use-pipeline-date-filter";
 import {
   createPost,
   deletePost,
@@ -34,11 +36,14 @@ import {
   toIsoFromDatetimeLocal,
 } from "@/lib/datetime";
 import type { Post, PostStatus, PostReplyModeSetting } from "@/lib/types";
+import { filterPostsByPipelineDate } from "@iris/domain/posts/pipeline-date-filter";
 
 export function DashboardPage() {
   const { timezone, replyMode: globalReplyMode } = useAppSettings();
   const { meta } = useMetaSession();
   const { view } = useDashboardView();
+  const { filter: pipelineDateFilter, setFilter: setPipelineDateFilter, label: pipelineDateLabel } =
+    usePipelineDateFilter(timezone);
   const { confirm } = useConfirmDialog();
   const [posts, setPosts] = useState<Post[]>([]);
   const [cursor, setCursor] = useState(() => new Date());
@@ -96,6 +101,12 @@ export function DashboardPage() {
       if (!handleAuthError(err)) toast.error("Falha ao carregar postagens.");
     });
   }, [loadPosts, handleAuthError]);
+
+  const kanbanPosts = useMemo(
+    () =>
+      filterPostsByPipelineDate(posts, pipelineDateFilter, timezone),
+    [posts, pipelineDateFilter, timezone],
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -514,7 +525,7 @@ export function DashboardPage() {
     <>
       {view === "kanban" && (
         <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 px-8 pt-8 pb-4">
-          <div>
+          <div className="min-w-0">
             <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
               Pipeline editorial
             </h1>
@@ -522,22 +533,30 @@ export function DashboardPage() {
               Organize rascunhos, agendamentos e publicações.
             </p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            onClick={openCreate}
-            className="h-11 shrink-0 sm:px-6"
-          >
-            <Plus className="mr-2 size-4" />
-            Nova postagem
-          </Button>
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+            <PipelineDateFilterMenu
+              filter={pipelineDateFilter}
+              label={pipelineDateLabel}
+              onChange={setPipelineDateFilter}
+              className="min-w-0 flex-1 sm:flex-none"
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={openCreate}
+              className="h-11 shrink-0 sm:px-6"
+            >
+              <Plus className="mr-2 size-4" />
+              Nova postagem
+            </Button>
+          </div>
         </header>
       )}
 
       <PageContainer variant="fill" className="px-8 pb-8">
         {view === "kanban" ? (
           <KanbanBoard
-            posts={posts}
+            posts={kanbanPosts}
             timeZone={timezone}
             globalReplyMode={globalReplyMode}
             onOpenPost={openPost}

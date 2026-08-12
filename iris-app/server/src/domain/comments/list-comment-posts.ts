@@ -1,5 +1,6 @@
 import type { PostReplyModeSetting } from "../posts/reply-mode.ts";
 import type { IgMediaStatus } from "../meta/ig-media-status.ts";
+import { isManagedCommentPost } from "./is-managed-comment-post.ts";
 
 export type CommentPostSummary = {
   postId: string;
@@ -48,9 +49,14 @@ export type ListCommentPostsDeps = {
   countCommentsByPostId: (postId: string) => { total: number; pending: number };
 };
 
-export function listCommentPosts(deps: ListCommentPostsDeps): CommentPostSummary[] {
+export function listCommentPosts(
+  deps: ListCommentPostsDeps,
+  options?: { now?: Date },
+): CommentPostSummary[] {
+  const now = options?.now ?? new Date();
   return deps
     .listManagedPosts()
+    .filter((post) => isManagedCommentPost(post, now))
     .filter((post): post is typeof post & { igMediaId: string } => Boolean(post.igMediaId))
     .map((post) => {
       const counts = deps.countCommentsByPostId(post.id);

@@ -17,6 +17,27 @@ import { WebhooksPage } from "@/pages/webhooks-page";
 import { AgentRunsPage } from "@/pages/agent-runs-page";
 import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
+import { DemoModeProvider } from "@/demo/demo-mode-context";
+
+const ADMIN_APP_ROUTES = [
+  { path: ROUTES.admin.root, element: <DashboardPage /> },
+  { path: ROUTES.admin.comments, element: <CommentsPage /> },
+  { path: ROUTES.admin.webhooks, element: <WebhooksPage /> },
+  { path: ROUTES.admin.agentRuns, element: <AgentRunsPage /> },
+  { path: ROUTES.admin.agentSimulator, element: <AgentSimulatorPage /> },
+  { path: ROUTES.admin.settings, element: <SettingsPage /> },
+  { path: ROUTES.admin.persona, element: <PersonaPage /> },
+] as const;
+
+const DEMO_APP_ROUTES = [
+  { path: ROUTES.demo.root, element: <DashboardPage /> },
+  { path: ROUTES.demo.comments, element: <CommentsPage /> },
+  { path: ROUTES.demo.webhooks, element: <WebhooksPage /> },
+  { path: ROUTES.demo.agentRuns, element: <AgentRunsPage /> },
+  { path: ROUTES.demo.agentSimulator, element: <AgentSimulatorPage /> },
+  { path: ROUTES.demo.settings, element: <SettingsPage /> },
+  { path: ROUTES.demo.persona, element: <PersonaPage /> },
+] as const;
 
 const LEGACY_ADMIN_REDIRECTS = [
   ["/login", ROUTES.admin.login],
@@ -67,28 +88,23 @@ export function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route path={ROUTES.admin.root} element={<DashboardPage />} />
-                <Route
-                  path={ROUTES.admin.comments}
-                  element={<CommentsPage />}
-                />
-                <Route
-                  path={ROUTES.admin.webhooks}
-                  element={<WebhooksPage />}
-                />
-                <Route
-                  path={ROUTES.admin.agentRuns}
-                  element={<AgentRunsPage />}
-                />
-                <Route
-                  path={ROUTES.admin.agentSimulator}
-                  element={<AgentSimulatorPage />}
-                />
-                <Route
-                  path={ROUTES.admin.settings}
-                  element={<SettingsPage />}
-                />
-                <Route path={ROUTES.admin.persona} element={<PersonaPage />} />
+                {ADMIN_APP_ROUTES.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
+              </Route>
+
+              <Route
+                element={
+                  <DemoModeProvider>
+                    <MetaSessionProvider>
+                      <AppLayout />
+                    </MetaSessionProvider>
+                  </DemoModeProvider>
+                }
+              >
+                {DEMO_APP_ROUTES.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
               </Route>
 
               <Route path="*" element={<Navigate to={ROUTES.home} replace />} />

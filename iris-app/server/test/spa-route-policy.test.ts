@@ -19,6 +19,8 @@ test("shouldGateSpaGet allows landing and public routes", () => {
   assert.equal(shouldGateSpaGet("/en", "GET"), false);
   assert.equal(shouldGateSpaGet("/privacy", "GET"), false);
   assert.equal(shouldGateSpaGet("/admin/login", "GET"), false);
+  assert.equal(shouldGateSpaGet("/demo", "GET"), false);
+  assert.equal(shouldGateSpaGet("/demo/comments", "GET"), false);
   assert.equal(shouldGateSpaGet("/health", "GET"), false);
   assert.equal(shouldGateSpaGet("/api/posts", "GET"), false);
   assert.equal(shouldGateSpaGet("/auth/meta", "GET"), false);
@@ -41,4 +43,6 @@ test("isProtectedSpaPath and isPublicSpaPath", () => {
   assert.equal(isProtectedSpaPath("/admin/login"), false);
   assert.equal(isPublicSpaPath("/"), true);
   assert.equal(isPublicSpaPath("/admin/login"), true);
+  assert.equal(isPublicSpaPath("/demo"), true);
+  assert.equal(isPublicSpaPath("/demo/settings"), true);
 });
