@@ -82,7 +82,7 @@ export function registerInsightsTools(server: McpServer, ctx: AppContext): void 
 
   server.tool(
     "iris_refresh_all_post_insights",
-    "Refresh insights for published/monitored posts one-by-one (rate-limited)",
+    "Refresh insights for published/monitored posts one-by-one (rate-limited). Optional since/until ISO filter on published_at.",
     {
       limit: z.number().int().min(1).optional(),
       delayMs: z.number().int().min(250).max(5000).optional(),

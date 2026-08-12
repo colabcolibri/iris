@@ -599,6 +599,9 @@ export function refreshAllPostInsights(
     limit?: number;
     delay_ms?: number;
     force?: boolean;
+    /** ISO — filtra por published_at */
+    since?: string;
+    until?: string;
   } = {},
 ) {
   return apiFetch<{

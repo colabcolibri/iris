@@ -71,6 +71,7 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_delete_post_asset` | Remove asset (row + arquivo em `data/media/`) |
 | `iris_generate_post_carousel_summary` | Gera `carousel_summary` via vision no server |
 | `iris_list_post_comments` | Comentários sincronizados do post |
+| `iris_refresh_all_post_insights` | Refresh em lote; `since`/`until` ISO filtram `published_at` |
 
 ### Upload de imagem via MCP
 

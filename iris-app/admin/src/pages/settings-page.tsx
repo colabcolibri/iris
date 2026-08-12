@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { AgentAutoReplyCard } from "@/components/settings/agent-auto-reply-card";
 import { AutoMonitorCard } from "@/components/settings/auto-monitor-card";
+import { InsightsRefreshCard } from "@/components/settings/insights-refresh-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
 import { useAppSettings } from "@/contexts/app-settings-context";
 import { formatInTimeZone } from "@/lib/datetime";
@@ -46,7 +47,7 @@ export function SettingsPage() {
         <PageContainer.Header
           eyebrow="Preferências"
           title="Configurações"
-          description="Fuso horário editorial, monitoramento Instagram, conexão MCP e provedor de IA."
+          description="Fuso horário editorial, monitoramento Instagram, insights em lote, conexão MCP e provedor de IA."
         />
 
         <Card className="space-y-5 border-border bg-card p-6 shadow-none">
@@ -104,6 +105,8 @@ export function SettingsPage() {
         </Card>
 
         <AutoMonitorCard />
+
+        <InsightsRefreshCard />
 
         <AgentAutoReplyCard />
 
