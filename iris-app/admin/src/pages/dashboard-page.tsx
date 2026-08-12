@@ -8,6 +8,7 @@ import {
   PostDialog,
   type PostDialogMode,
 } from "@/components/posts/post-dialog";
+import type { PostDialogFooterActionId } from "@/components/posts/post-dialog-footer-actions";
 import { PageContainer } from "@/components/templates/page-container";
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/contexts/app-settings-context";
@@ -55,8 +56,24 @@ export function DashboardPage() {
   const [silenceRestrictions, setSilenceRestrictions] = useState(false);
   const [files, setFiles] = useState<FileList | null>(null);
   const [saving, setSaving] = useState(false);
+  const [busyAction, setBusyAction] = useState<PostDialogFooterActionId | null>(
+    null,
+  );
+  const [operationStatus, setOperationStatus] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  function beginBusy(action: PostDialogFooterActionId, status?: string) {
+    setSaving(true);
+    setBusyAction(action);
+    setOperationStatus(status ?? null);
+    setError("");
+  }
+
+  function endBusy() {
+    setSaving(false);
+    setBusyAction(null);
+    setOperationStatus(null);
+  }
   const loadPosts = useCallback(async () => {
     const data =
       view === "calendar" || view === "list"
@@ -208,8 +225,12 @@ export function DashboardPage() {
 
   async function revertToDraft() {
     if (!selectedPost) return;
-    setSaving(true);
-    setError("");
+    beginBusy(
+      "revert_to_draft",
+      selectedPost.status === "scheduled"
+        ? "Removendo do calendário…"
+        : "Restaurando como rascunho…",
+    );
     try {
       await updatePost(selectedPost.id, { status: "draft" });
       await loadPosts();
@@ -225,24 +246,33 @@ export function DashboardPage() {
         setError(err instanceof Error ? err.message : "Falha ao atualizar.");
       }
     } finally {
-      setSaving(false);
+      endBusy();
     }
   }
 
   async function savePost(schedule: boolean) {
-    setSaving(true);
-    setError("");
+    beginBusy(
+      schedule ? "schedule" : selectedPost?.status === "scheduled" ? "save_scheduled" : "save_draft",
+      schedule ? "Agendando postagem…" : "Salvando…",
+    );
     try {
       let postId = selectedPost?.id;
 
       if (!postId) {
+        setOperationStatus("Criando postagem…");
         const created = await createPost(buildCreatePostBody());
         postId = created.id;
       }
 
       if (files && files.length > 0) {
+        setOperationStatus(
+          `Enviando mídias (0/${files.length})…`,
+        );
         let sortOrder = (await listAssets(postId)).length + 1;
+        let index = 0;
         for (const file of [...files]) {
+          index += 1;
+          setOperationStatus(`Enviando mídias (${index}/${files.length})…`);
           await uploadAsset(postId, file, sortOrder);
           sortOrder += 1;
         }
@@ -253,6 +283,7 @@ export function DashboardPage() {
           throw new Error("Conecte Instagram antes de agendar.");
         const scheduledIso = toIsoFromDatetimeLocal(scheduledAt, timezone);
         if (!scheduledIso) throw new Error("Informe data e hora para agendar.");
+        setOperationStatus("Confirmando agendamento…");
         await updatePost(postId, {
           caption,
           reply_mode: replyMode,
@@ -269,6 +300,7 @@ export function DashboardPage() {
         if (!scheduledAt.trim() && isDraftSave) {
           updateBody.scheduled_at = null;
         }
+        setOperationStatus("Salvando alterações…");
         await updatePost(postId, updateBody);
         toast.success(
           selectedPost?.status === "scheduled"
@@ -288,7 +320,7 @@ export function DashboardPage() {
         setError(err instanceof Error ? err.message : "Falha ao salvar.");
       }
     } finally {
-      setSaving(false);
+      endBusy();
     }
   }
 
@@ -304,8 +336,7 @@ export function DashboardPage() {
     });
     if (!ok) return;
 
-    setSaving(true);
-    setError("");
+    beginBusy("publish_now", "Preparando publicação…");
     let postId = selectedPost?.id;
     try {
       if (!meta?.connected) {
@@ -313,18 +344,23 @@ export function DashboardPage() {
       }
 
       if (!postId) {
+        setOperationStatus("Criando postagem…");
         const created = await createPost(buildCreatePostBody());
         postId = created.id;
       }
 
       if (files && files.length > 0) {
         let sortOrder = (await listAssets(postId)).length + 1;
+        let index = 0;
         for (const file of [...files]) {
+          index += 1;
+          setOperationStatus(`Enviando mídias (${index}/${files.length})…`);
           await uploadAsset(postId, file, sortOrder);
           sortOrder += 1;
         }
       }
 
+      setOperationStatus("Salvando legenda e configurações…");
       await updatePost(postId, {
         caption,
         reply_mode: replyMode,
@@ -335,6 +371,11 @@ export function DashboardPage() {
         throw new Error("Adicione pelo menos uma mídia antes de publicar.");
       }
 
+      setOperationStatus(
+        assets.length > 1
+          ? `Publicando carrossel (${assets.length} imagens) no Instagram… A Meta processa cada slide — pode levar um minuto.`
+          : "Publicando no Instagram… A Meta processa a imagem — pode levar alguns segundos.",
+      );
       const post = await publishPostNow(postId);
       await loadPosts();
       setSelectedPost(post);
@@ -360,10 +401,9 @@ export function DashboardPage() {
         }
       }
     } finally {
-      setSaving(false);
+      endBusy();
     }
   }
-
   async function deleteSelectedPost() {
     if (!selectedPost) return;
 
@@ -378,8 +418,7 @@ export function DashboardPage() {
       });
       if (!ok) return;
 
-      setSaving(true);
-      setError("");
+      beginBusy("delete", "Removendo permanentemente…");
       try {
         await purgeCancelledPost(selectedPost.id);
         await loadPosts();
@@ -392,7 +431,7 @@ export function DashboardPage() {
           );
         }
       } finally {
-        setSaving(false);
+        endBusy();
       }
       return;
     }
@@ -407,8 +446,7 @@ export function DashboardPage() {
     });
     if (!ok) return;
 
-    setSaving(true);
-    setError("");
+    beginBusy("delete", "Cancelando postagem…");
     try {
       await deletePost(selectedPost.id);
       await loadPosts();
@@ -419,7 +457,7 @@ export function DashboardPage() {
         setError(err instanceof Error ? err.message : "Falha ao deletar.");
       }
     } finally {
-      setSaving(false);
+      endBusy();
     }
   }
 
@@ -519,6 +557,8 @@ export function DashboardPage() {
         metaIgUsername={meta?.igUsername}
         timeZone={timezone}
         saving={saving}
+        busyAction={busyAction}
+        operationStatus={operationStatus}
         error={error}
         caption={caption}
         scheduledAt={scheduledAt}

@@ -42,6 +42,10 @@ type PostDialogProps = {
   metaIgUsername?: string | null;
   timeZone: string;
   saving: boolean;
+  /** Qual ação do rodapé está em andamento — só esse botão mostra spinner. */
+  busyAction?: PostDialogFooterActionId | null;
+  /** Texto de progresso (ex.: etapas do publish). */
+  operationStatus?: string | null;
   error: string;
   caption: string;
   scheduledAt: string;
@@ -80,6 +84,8 @@ export function PostDialog({
   metaIgUsername,
   timeZone,
   saving,
+  busyAction = null,
+  operationStatus = null,
   error,
   caption,
   scheduledAt,
@@ -588,6 +594,17 @@ export function PostDialog({
           </AppAccordion.Item>
         </AppAccordion>
 
+        {operationStatus ? (
+          <p
+            className="mt-4 flex items-start gap-2 rounded-[var(--iris-radius-sm)] border border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground" />
+            <span>{operationStatus}</span>
+          </p>
+        ) : null}
+
         {error ? (
           <p className="mt-4 rounded-[var(--iris-radius-sm)] border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
@@ -622,12 +639,7 @@ export function PostDialog({
                 onClick={handler}
                 disabled={saving || Boolean(action.disabled)}
               >
-                {saving &&
-                (action.id === "save_draft" ||
-                  action.id === "save_scheduled" ||
-                  action.id === "publish_now" ||
-                  action.id === "schedule" ||
-                  action.id === "retry_schedule") ? (
+                {saving && busyAction === action.id ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : null}
                 {action.label}
