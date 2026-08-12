@@ -17,6 +17,7 @@ import type {
   McpSettingsGenerateResult,
   Post,
   PostInsightsResult,
+  UpdatePostBody,
   ReconcileCommentsPreview,
   ReconcileCommentsResult,
   ReplyAudit,
@@ -105,7 +106,7 @@ export function createPost(body: Record<string, unknown>) {
   });
 }
 
-export function updatePost(postId: string, body: Record<string, unknown>) {
+export function updatePost(postId: string, body: UpdatePostBody) {
   return apiFetch<Post>(`/api/posts/${postId}`, {
     method: "PATCH",
     body: JSON.stringify(body),

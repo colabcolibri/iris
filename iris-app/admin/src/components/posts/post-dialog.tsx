@@ -18,6 +18,7 @@ import {
 } from "@/components/posts/post-dialog-footer-actions";
 import { AppDialog } from "@/components/templates/app-dialog";
 import { AppAccordion } from "@/components/templates/app-accordion";
+import { PostReplyBriefingEditor } from "@/components/posts/post-reply-briefing-editor";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -275,7 +276,7 @@ export function PostDialog({
                 ) : null}
               </span>
             </AppAccordion.Trigger>
-            <AppAccordion.Content className="space-y-5">
+            <AppAccordion.Content className="w-full max-w-full min-w-0 space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">
@@ -292,7 +293,7 @@ export function PostDialog({
                 />
               </div>
 
-              <div className="max-w-xl space-y-2">
+              <div className="w-full max-w-full min-w-0 space-y-2">
                 <Label
                   htmlFor="post-reply-mode"
                   className="text-sm font-semibold"
@@ -318,6 +319,17 @@ export function PostDialog({
                   </Link>
                 </p>
               </div>
+
+              {mode === "edit" && post?.id ? (
+                <PostReplyBriefingEditor
+                  postId={post.id}
+                  initialReplyPrompt={post.reply_prompt}
+                  initialSilenceSoul={post.silence_soul}
+                  initialSilencePage={post.silence_page}
+                  initialSilenceKnowledge={post.silence_knowledge}
+                  initialSilenceRestrictions={post.silence_restrictions}
+                />
+              ) : null}
 
               {showCommentsSection ? (
                 <section className="space-y-3 border-t border-border/60 pt-4">

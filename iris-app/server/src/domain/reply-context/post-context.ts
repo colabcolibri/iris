@@ -11,6 +11,11 @@ export type PostReplyContext = {
   postId: string;
   caption: string | null;
   carouselSummary: string | null;
+  replyPrompt: string | null;
+  silenceSoul: boolean;
+  silencePage: boolean;
+  silenceKnowledge: boolean;
+  silenceRestrictions: boolean;
   channel: string;
   status: string;
   scheduledAt: string | null;

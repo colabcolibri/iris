@@ -29,6 +29,11 @@ SQLite (`node:sqlite`). Path: `IRIS_DB_PATH` (default `./data/iris.db`). Migrati
 | source_note | TEXT | Opcional — texto livre (rastreio humano) |
 | error_message | TEXT | Último erro Meta |
 | auto_reply_enabled | INTEGER | 0/1 |
+| reply_prompt | TEXT | Briefing de reply por post (nullable) |
+| silence_soul | INTEGER | 0/1 — omite SOUL no harness deste post |
+| silence_page | INTEGER | 0/1 — omite page no harness deste post |
+| silence_knowledge | INTEGER | 0/1 — omite knowledge no harness deste post |
+| silence_restrictions | INTEGER | 0/1 — omite restrições editoriais globais (guardrails hardcoded permanecem) |
 | created_at | TEXT | |
 | updated_at | TEXT | |
 

@@ -28,6 +28,11 @@ export type UpdatePostInput = {
   errorMessage?: string | null;
   autoReplyEnabled?: boolean;
   replyMode?: PostReplyModeSetting;
+  replyPrompt?: string | null;
+  silenceSoul?: boolean;
+  silencePage?: boolean;
+  silenceKnowledge?: boolean;
+  silenceRestrictions?: boolean;
   likeCount?: number | null;
   reportedCommentsCount?: number | null;
 };

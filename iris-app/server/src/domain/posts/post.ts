@@ -25,6 +25,11 @@ export type Post = {
   errorMessage: string | null;
   autoReplyEnabled: boolean;
   replyMode: PostReplyModeSetting;
+  replyPrompt: string | null;
+  silenceSoul: boolean;
+  silencePage: boolean;
+  silenceKnowledge: boolean;
+  silenceRestrictions: boolean;
   /** Curtidas Meta (nullable até sync/insights). */
   likeCount: number | null;
   /** comments_count reportado pela Meta (nullable até sync). */

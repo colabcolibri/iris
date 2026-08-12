@@ -396,6 +396,47 @@ test("schedule without meta connection returns meta_not_connected", async () => 
   );
 });
 
+test("PATCH post persists reply_prompt and silence flags", async () => {
+  await withIntegrationServer(async ({ baseUrl }) => {
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ caption: "produto", channel: "instagram" }),
+    });
+    const created = (await createResponse.json()) as { id: string };
+
+    const patchResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      method: "PATCH",
+      headers: authHeaders(ADMIN),
+      body: JSON.stringify({
+        reply_prompt: "R$ 99 — link: shop.example.com",
+        silence_knowledge: true,
+        silence_restrictions: false,
+      }),
+    });
+    assert.equal(patchResponse.status, 200);
+    const patched = (await patchResponse.json()) as {
+      reply_prompt: string;
+      silence_knowledge: boolean;
+      silence_restrictions: boolean;
+    };
+    assert.equal(patched.reply_prompt, "R$ 99 — link: shop.example.com");
+    assert.equal(patched.silence_knowledge, true);
+    assert.equal(patched.silence_restrictions, false);
+
+    const getResponse = await fetch(`${baseUrl}/api/posts/${created.id}`, {
+      headers: { Authorization: `Bearer ${AGENT}` },
+    });
+    assert.equal(getResponse.status, 200);
+    const fetched = (await getResponse.json()) as {
+      reply_prompt: string;
+      silence_knowledge: boolean;
+    };
+    assert.equal(fetched.reply_prompt, "R$ 99 — link: shop.example.com");
+    assert.equal(fetched.silence_knowledge, true);
+  });
+});
+
 test("failed post can return to draft or be rescheduled when meta connected", async () => {
   await withIntegrationServer(async ({ baseUrl }) => {
     const createResponse = await fetch(`${baseUrl}/api/posts`, {

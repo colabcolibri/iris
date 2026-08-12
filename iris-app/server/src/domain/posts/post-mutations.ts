@@ -45,7 +45,14 @@ export type UpdatePostPayload = {
   auto_reply_enabled?: unknown;
   reply_mode?: unknown;
   carousel_summary?: unknown;
+  reply_prompt?: unknown;
+  silence_soul?: unknown;
+  silence_page?: unknown;
+  silence_knowledge?: unknown;
+  silence_restrictions?: unknown;
 };
+
+const REPLY_PROMPT_MAX_CHARS = 32_000;
 
 export type NormalizedUpdatePost = {
   caption?: string | null;
@@ -56,6 +63,11 @@ export type NormalizedUpdatePost = {
   autoReplyEnabled?: boolean;
   replyMode?: PostReplyModeSetting;
   carouselSummary?: string | null;
+  replyPrompt?: string | null;
+  silenceSoul?: boolean;
+  silencePage?: boolean;
+  silenceKnowledge?: boolean;
+  silenceRestrictions?: boolean;
 };
 
 export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePost {
@@ -134,6 +146,53 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
       throw new ValidationError("reply_mode must be inherit, off, auto, or draft");
     }
     update.replyMode = body.reply_mode;
+  }
+
+  if ("reply_prompt" in body) {
+    update.replyPrompt =
+      body.reply_prompt === null
+        ? null
+        : typeof body.reply_prompt === "string"
+          ? body.reply_prompt
+          : undefined;
+
+    if (update.replyPrompt === undefined) {
+      throw new ValidationError("reply_prompt must be a string or null");
+    }
+
+    if (update.replyPrompt !== null && update.replyPrompt.length > REPLY_PROMPT_MAX_CHARS) {
+      throw new ValidationError(
+        `reply_prompt must be at most ${REPLY_PROMPT_MAX_CHARS} characters`,
+      );
+    }
+  }
+
+  if ("silence_soul" in body) {
+    if (typeof body.silence_soul !== "boolean") {
+      throw new ValidationError("silence_soul must be a boolean");
+    }
+    update.silenceSoul = body.silence_soul;
+  }
+
+  if ("silence_page" in body) {
+    if (typeof body.silence_page !== "boolean") {
+      throw new ValidationError("silence_page must be a boolean");
+    }
+    update.silencePage = body.silence_page;
+  }
+
+  if ("silence_knowledge" in body) {
+    if (typeof body.silence_knowledge !== "boolean") {
+      throw new ValidationError("silence_knowledge must be a boolean");
+    }
+    update.silenceKnowledge = body.silence_knowledge;
+  }
+
+  if ("silence_restrictions" in body) {
+    if (typeof body.silence_restrictions !== "boolean") {
+      throw new ValidationError("silence_restrictions must be a boolean");
+    }
+    update.silenceRestrictions = body.silence_restrictions;
   }
 
   if ("auto_reply_enabled" in body) {

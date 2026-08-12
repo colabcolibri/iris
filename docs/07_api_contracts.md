@@ -93,7 +93,7 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_list_posts` | `GET /api/posts` | Lista com `status`, `from`, `to` |
 | `iris_get_post` | `GET /api/posts/:id` | Post + metadados de assets |
 | `iris_create_post` | `POST /api/posts` | Cria rascunho |
-| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, `carousel_summary`, agenda ou status |
+| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, `carousel_summary`, `reply_prompt`, flags `silence_*`, agenda ou status |
 | `iris_list_post_assets` | `GET /api/posts/:id/assets` | Metadados + `url` assinada (`/publish/media/…`) |
 | `iris_prepare_post_asset_upload` | `POST /upload/assets/:sig/:postId` | Prepara URL assinada; host faz `curl -F file=@…` (sem base64) |
 | `iris_delete_post_asset` | `DELETE /api/posts/:id/assets/:assetId` | Remove asset (row + arquivo) |
@@ -116,6 +116,17 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_create_simulator_scenario` | `POST /api/agent/simulator-scenarios` | Cria cenário com mesmas validações REST admin |
 | `iris_simulate_reply` | `POST /api/agent/simulate` | Executa harness sandbox (`scenario_id` ou inline; opcional `response_language`) — não publica na Meta |
 
+### MCP post tools — `iris_get_post` / `iris_update_post`
+
+Paridade com REST (`PATCH /api/posts/:id`), com convenção de naming do client MCP:
+
+| Direção | Convenção | Campos |
+| ------- | --------- | ------ |
+| Resposta (`iris_get_post`, `iris_list_posts`, retorno de update) | snake_case via `serializePost` | `reply_prompt` (string\|null), `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
+| Argumentos (`iris_update_post`) | camelCase (mesmo padrão de `carouselSummary`) | `replyPrompt` (string\|null, máx. 32 000), `silenceSoul`, `silencePage`, `silenceKnowledge`, `silenceRestrictions` (boolean opcionais) |
+
+Validação e persistência delegadas a `normalizeUpdatePost` — mesmas regras que REST. Silenciar `silenceRestrictions` não desliga guardrails hardcoded do harness de resposta.
+
 ## Error envelope
 
 ```json
@@ -131,7 +142,7 @@ Erros de domínio Meta podem incluir `code` (ex.: `meta_not_connected`).
 | GET | `/api/posts` | admin, agent | Lista (`status`, `from`, `to`, `calendar_only=1`) |
 | POST | `/api/posts` | admin, agent | Cria post |
 | GET | `/api/posts/:id` | admin, agent | Detalhe |
-| PATCH | `/api/posts/:id` | admin, agent | Atualiza (`auto_reply_enabled` exige admin) |
+| PATCH | `/api/posts/:id` | admin, agent | Atualiza (`auto_reply_enabled` exige admin). Campos opcionais: `reply_prompt` (string\|null, máx. 32 000), `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
 | DELETE | `/api/posts/:id` | admin | Cancela (`status=cancelled`) |
 | POST | `/api/posts/:id/publish` | admin, agent | Publica agora (bypass agenda) |
 | POST | `/api/posts/:id/generate-carousel-summary` | admin | Gera resumo de carrossel via LLM |

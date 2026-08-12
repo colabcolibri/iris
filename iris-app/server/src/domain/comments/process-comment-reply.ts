@@ -17,6 +17,7 @@ import {
   recordFailedHarnessRun,
 } from "../reply-harness/execute-and-record-harness.ts";
 import { getAgentContentOrDefault } from "../settings/agent-content-defaults.ts";
+import { filterAgentContentForPost } from "../reply-harness/filter-agent-content-for-post.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
@@ -54,7 +55,15 @@ async function processCommentReplyCore(
     return false;
   }
 
-  const agentContent = getAgentContentOrDefault(ctx.agentContentStore);
+  const agentContent = filterAgentContentForPost(
+    getAgentContentOrDefault(ctx.agentContentStore),
+    {
+      silenceSoul: post.silenceSoul,
+      silencePage: post.silencePage,
+      silenceKnowledge: post.silenceKnowledge,
+      silenceRestrictions: post.silenceRestrictions,
+    },
+  );
   const inputSummary = serializeReplyAuditSummary(buildReplyAuditSummary(context));
 
   let run: AgentRun;

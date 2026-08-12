@@ -20,6 +20,11 @@ type PostRow = {
   error_message: string | null;
   auto_reply_enabled: number;
   reply_mode: string;
+  reply_prompt: string | null;
+  silence_soul: number;
+  silence_page: number;
+  silence_knowledge: number;
+  silence_restrictions: number;
   like_count: number | null;
   reported_comments_count: number | null;
   created_at: string;
@@ -81,6 +86,11 @@ export function mapPostRow(row: PostRow): Post {
     replyMode: isPostReplyModeSetting(row.reply_mode)
       ? row.reply_mode
       : "off",
+    replyPrompt: row.reply_prompt ?? null,
+    silenceSoul: row.silence_soul === 1,
+    silencePage: row.silence_page === 1,
+    silenceKnowledge: row.silence_knowledge === 1,
+    silenceRestrictions: row.silence_restrictions === 1,
     likeCount:
       row.like_count === null || row.like_count === undefined
         ? null
@@ -162,6 +172,11 @@ export function serializePost(post: Post) {
     error_message: post.errorMessage,
     auto_reply_enabled: post.autoReplyEnabled,
     reply_mode: post.replyMode,
+    reply_prompt: post.replyPrompt,
+    silence_soul: post.silenceSoul,
+    silence_page: post.silencePage,
+    silence_knowledge: post.silenceKnowledge,
+    silence_restrictions: post.silenceRestrictions,
     created_at: post.createdAt,
     updated_at: post.updatedAt,
   };

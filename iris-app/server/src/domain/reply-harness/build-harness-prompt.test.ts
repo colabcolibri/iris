@@ -1,17 +1,29 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildTriagePrompt } from "./build-harness-prompt.ts";
+import {
+  buildFullDraftPrompt,
+  buildSimpleDraftPrompt,
+  buildTriagePrompt,
+} from "./build-harness-prompt.ts";
 import { defaultAgentContent } from "../settings/agent-content-defaults.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
+import { filterAgentContentForPost } from "./filter-agent-content-for-post.ts";
 
 function mockContext(responseLanguage = "pt-BR"): ReplyContext {
   return {
     persona: { ...defaultReplyPersona(), responseLanguage, brandName: "Iris" },
     post: {
+      postId: "p1",
       channel: "instagram",
       status: "published",
       caption: "New product",
+      carouselSummary: null,
+      replyPrompt: null,
+      silenceSoul: false,
+      silencePage: false,
+      silenceKnowledge: false,
+      silenceRestrictions: false,
       scheduledAt: null,
       publishedAt: new Date().toISOString(),
       assets: [],
@@ -82,4 +94,57 @@ test("triage prompt includes thread audience rules and not_for_brand category", 
   assert.match(prompt, />>> TARGET/);
   assert.match(prompt, /oldest to newest/i);
   assert.doesNotMatch(prompt, /\[depth=/);
+});
+
+test("triage prompt injects post briefing when reply_prompt is set", () => {
+  const context = mockContext();
+  context.post!.replyPrompt = "Price is R$ 49. Link: shop.example.com/p49";
+  const prompt = buildTriagePrompt(context, defaultAgentContent().restrictions);
+  assert.match(prompt, /## Post briefing/);
+  assert.match(prompt, /OVERRIDES conflicting global editorial content/);
+  assert.match(prompt, /Price is R\$ 49/);
+});
+
+test("triage prompt omits brand restrictions when silenced", () => {
+  const context = mockContext();
+  context.post!.silenceRestrictions = true;
+  const agent = defaultAgentContent();
+  const filtered = filterAgentContentForPost(agent, {
+    silenceSoul: false,
+    silencePage: false,
+    silenceKnowledge: false,
+    silenceRestrictions: true,
+  });
+  const prompt = buildTriagePrompt(context, filtered.restrictions);
+  assert.doesNotMatch(prompt, /## Brand restrictions/);
+  assert.match(prompt, /## Default guardrails/);
+});
+
+test("full draft omits silenced soul and knowledge sections", () => {
+  const context = mockContext();
+  context.post!.silenceSoul = true;
+  context.post!.silenceKnowledge = true;
+  const agent = filterAgentContentForPost(defaultAgentContent(), {
+    silenceSoul: true,
+    silencePage: false,
+    silenceKnowledge: true,
+    silenceRestrictions: false,
+  });
+  const prompt = buildFullDraftPrompt(context, agent, 500);
+  assert.doesNotMatch(prompt, /## SOUL/);
+  assert.doesNotMatch(prompt, /## Knowledge base/);
+  assert.match(prompt, /## About the page/);
+});
+
+test("simple draft omits knowledge when silenced", () => {
+  const context = mockContext();
+  context.post!.silenceKnowledge = true;
+  const agent = filterAgentContentForPost(defaultAgentContent(), {
+    silenceSoul: false,
+    silencePage: false,
+    silenceKnowledge: true,
+    silenceRestrictions: false,
+  });
+  const prompt = buildSimpleDraftPrompt(context, agent, 200);
+  assert.doesNotMatch(prompt, /## Links and facts/);
 });

@@ -94,11 +94,16 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_update_post",
-    "Update caption, carousel_summary, schedule or status for a post",
+    "Update caption, carousel_summary, reply_prompt, silence flags, schedule or status for a post",
     {
       postId: z.string().min(1),
       caption: z.string().optional(),
       carouselSummary: z.string().nullable().optional(),
+      replyPrompt: z.string().nullable().optional(),
+      silenceSoul: z.boolean().optional(),
+      silencePage: z.boolean().optional(),
+      silenceKnowledge: z.boolean().optional(),
+      silenceRestrictions: z.boolean().optional(),
       scheduledAt: z.string().nullable().optional(),
       status: z.string().optional(),
     },
@@ -108,6 +113,15 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         if (args.caption !== undefined) body.caption = args.caption;
         if (args.carouselSummary !== undefined) {
           body.carousel_summary = args.carouselSummary;
+        }
+        if (args.replyPrompt !== undefined) body.reply_prompt = args.replyPrompt;
+        if (args.silenceSoul !== undefined) body.silence_soul = args.silenceSoul;
+        if (args.silencePage !== undefined) body.silence_page = args.silencePage;
+        if (args.silenceKnowledge !== undefined) {
+          body.silence_knowledge = args.silenceKnowledge;
+        }
+        if (args.silenceRestrictions !== undefined) {
+          body.silence_restrictions = args.silenceRestrictions;
         }
         if (args.scheduledAt !== undefined) body.scheduled_at = args.scheduledAt;
         if (args.status !== undefined) body.status = args.status;

@@ -20,3 +20,33 @@ test("normalizeUpdatePost rejects invalid auto_reply_enabled", () => {
     ValidationError,
   );
 });
+
+test("normalizeUpdatePost accepts reply_prompt and silence flags", () => {
+  const update = normalizeUpdatePost({
+    reply_prompt: "Product: R$ 99 — buy at example.com",
+    silence_knowledge: true,
+    silence_restrictions: false,
+  });
+  assert.equal(update.replyPrompt, "Product: R$ 99 — buy at example.com");
+  assert.equal(update.silenceKnowledge, true);
+  assert.equal(update.silenceRestrictions, false);
+});
+
+test("normalizeUpdatePost accepts null reply_prompt", () => {
+  const update = normalizeUpdatePost({ reply_prompt: null });
+  assert.equal(update.replyPrompt, null);
+});
+
+test("normalizeUpdatePost rejects reply_prompt over max length", () => {
+  assert.throws(
+    () => normalizeUpdatePost({ reply_prompt: "x".repeat(32_001) }),
+    ValidationError,
+  );
+});
+
+test("normalizeUpdatePost rejects invalid silence_soul", () => {
+  assert.throws(
+    () => normalizeUpdatePost({ silence_soul: 1 }),
+    ValidationError,
+  );
+});

@@ -12,6 +12,11 @@ export type Post = {
   id: string;
   caption: string;
   carousel_summary?: string | null;
+  reply_prompt?: string | null;
+  silence_soul?: boolean;
+  silence_page?: boolean;
+  silence_knowledge?: boolean;
+  silence_restrictions?: boolean;
   channel: string;
   status: PostStatus;
   scheduled_at: string | null;
@@ -23,6 +28,20 @@ export type Post = {
   assets_count?: number;
   error_message?: string | null;
   ig_media_id?: string | null;
+};
+
+export type UpdatePostBody = {
+  caption?: string;
+  carousel_summary?: string | null;
+  reply_prompt?: string | null;
+  silence_soul?: boolean;
+  silence_page?: boolean;
+  silence_knowledge?: boolean;
+  silence_restrictions?: boolean;
+  scheduled_at?: string | null;
+  status?: PostStatus;
+  reply_mode?: PostReplyModeSetting;
+  auto_reply_enabled?: boolean;
 };
 
 export type Asset = {

@@ -1,7 +1,13 @@
 import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { DEFAULT_GUARDRAIL_RULES } from "./default-guardrails.ts";
-import { buildBrandBlock, buildMentionDirective, buildMentionVerifyNote, buildResponseLanguageDirective, buildSignatureVerificationBlock } from "./prompt-language.ts";
+import {
+  buildBrandBlock,
+  buildMentionDirective,
+  buildMentionVerifyNote,
+  buildResponseLanguageDirective,
+  buildSignatureVerificationBlock,
+} from "./prompt-language.ts";
 import {
   buildContextSection,
   buildTriageContextSection,
@@ -11,6 +17,53 @@ import {
 } from "./prompt-sections.ts";
 import type { ReplyTier } from "./reply-tier.ts";
 import { SIGNATURE_SEPARATOR } from "./reply-signature-format.ts";
+
+const POST_BRIEFING_PRECEDENCE =
+  "This post-specific briefing OVERRIDES conflicting global editorial content (SOUL, page, knowledge, restrictions). Prioritize it when they disagree.";
+
+function buildPostBriefingBlock(context: ReplyContext): string[] {
+  const text = context.post?.replyPrompt?.trim();
+  if (!text) {
+    return [];
+  }
+  return ["## Post briefing", POST_BRIEFING_PRECEDENCE, text, ""];
+}
+
+function buildRestrictionsBlock(restrictions: string): string[] {
+  if (!restrictions.trim()) {
+    return [];
+  }
+  return ["## Brand restrictions", restrictions, ""];
+}
+
+function buildKnowledgeBlock(context: ReplyContext, knowledge: string): string[] {
+  if (context.post?.silenceKnowledge) {
+    return [];
+  }
+  const text = knowledge.trim() || "(no extra links — point to colabcolibri.com if needed)";
+  return ["## Links and facts (only if the comment asks)", text, ""];
+}
+
+function buildSoulBlock(soul: string): string[] {
+  if (!soul.trim()) {
+    return [];
+  }
+  return ["## SOUL", soul, ""];
+}
+
+function buildPageBlock(page: string): string[] {
+  if (!page.trim()) {
+    return [];
+  }
+  return ["## About the page", page, ""];
+}
+
+function buildKnowledgeBaseBlock(context: ReplyContext, knowledge: string): string[] {
+  if (context.post?.silenceKnowledge) {
+    return [];
+  }
+  return ["## Knowledge base", knowledge.trim() || "(empty)", ""];
+}
 
 const TRIAGE_TIER_GUIDE = [
   "Classify the target comment:",
@@ -34,9 +87,8 @@ export function buildTriagePrompt(context: ReplyContext, restrictions: string): 
     "",
     TRIAGE_TIER_GUIDE,
     "",
-    "## Brand restrictions",
-    restrictions,
-    "",
+    ...buildPostBriefingBlock(context),
+    ...buildRestrictionsBlock(restrictions),
     "## Default guardrails",
     DEFAULT_GUARDRAIL_RULES,
     "",
@@ -67,12 +119,9 @@ export function buildSimpleDraftPrompt(
     ...(brandBlock ? ["", brandBlock] : []),
     ...(mentionBlock ? ["", mentionBlock] : []),
     "",
-    "## Brand restrictions",
-    agentContent.restrictions,
-    "",
-    "## Links and facts (only if the comment asks)",
-    agentContent.knowledge || "(no extra links — point to colabcolibri.com if needed)",
-    "",
+    ...buildPostBriefingBlock(context),
+    ...buildRestrictionsBlock(agentContent.restrictions),
+    ...buildKnowledgeBlock(context, agentContent.knowledge),
     "## Context",
     buildContextSection(context, "simple"),
     "",
@@ -97,18 +146,11 @@ export function buildFullDraftPrompt(
     ...(brandBlock ? ["", brandBlock] : []),
     ...(mentionBlock ? ["", mentionBlock] : []),
     "",
-    "## SOUL",
-    agentContent.soul,
-    "",
-    "## About the page",
-    agentContent.page,
-    "",
-    "## Knowledge base",
-    agentContent.knowledge || "(empty)",
-    "",
-    "## Brand restrictions",
-    agentContent.restrictions,
-    "",
+    ...buildPostBriefingBlock(context),
+    ...buildSoulBlock(agentContent.soul),
+    ...buildPageBlock(agentContent.page),
+    ...buildKnowledgeBaseBlock(context, agentContent.knowledge),
+    ...buildRestrictionsBlock(agentContent.restrictions),
     "## Context",
     buildContextSection(context, "full"),
     "",
@@ -151,9 +193,8 @@ export function buildVerifyPrompt(
     ...(mentionNote ? ["", mentionNote] : []),
     ...(signatureBlock ? ["", signatureBlock] : []),
     "",
-    "## Brand restrictions",
-    agentContent.restrictions,
-    "",
+    ...buildPostBriefingBlock(context),
+    ...buildRestrictionsBlock(agentContent.restrictions),
     "## Default guardrails",
     DEFAULT_GUARDRAIL_RULES,
     "",

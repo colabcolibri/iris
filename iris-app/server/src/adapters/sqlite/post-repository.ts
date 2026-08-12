@@ -151,6 +151,20 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
             : current.autoReplyEnabled,
         replyMode:
           input.replyMode !== undefined ? input.replyMode : current.replyMode,
+        replyPrompt:
+          input.replyPrompt !== undefined ? input.replyPrompt : current.replyPrompt,
+        silenceSoul:
+          input.silenceSoul !== undefined ? input.silenceSoul : current.silenceSoul,
+        silencePage:
+          input.silencePage !== undefined ? input.silencePage : current.silencePage,
+        silenceKnowledge:
+          input.silenceKnowledge !== undefined
+            ? input.silenceKnowledge
+            : current.silenceKnowledge,
+        silenceRestrictions:
+          input.silenceRestrictions !== undefined
+            ? input.silenceRestrictions
+            : current.silenceRestrictions,
         likeCount:
           input.likeCount !== undefined ? input.likeCount : current.likeCount,
         reportedCommentsCount:
@@ -176,7 +190,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         SET caption = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
             published_at = ?, ig_media_id = ?, ig_media_status = ?, ig_media_status_detail = ?,
             ig_media_status_checked_at = ?, error_message = ?, auto_reply_enabled = ?,
-            reply_mode = ?, like_count = ?, reported_comments_count = ?, updated_at = ?
+            reply_mode = ?, reply_prompt = ?, silence_soul = ?, silence_page = ?,
+            silence_knowledge = ?, silence_restrictions = ?, like_count = ?, reported_comments_count = ?, updated_at = ?
         WHERE id = ?
       `).run(
         next.caption,
@@ -193,6 +208,11 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.errorMessage,
         autoReplyEnabled ? 1 : 0,
         next.replyMode,
+        next.replyPrompt,
+        next.silenceSoul ? 1 : 0,
+        next.silencePage ? 1 : 0,
+        next.silenceKnowledge ? 1 : 0,
+        next.silenceRestrictions ? 1 : 0,
         next.likeCount,
         next.reportedCommentsCount,
         updatedAt,
