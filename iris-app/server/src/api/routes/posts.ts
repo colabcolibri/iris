@@ -43,6 +43,7 @@ export const handlePostsRoute = createRouter([
     const input = normalizeCreatePost(body);
     const post = match.ctx.posts.create({
       caption: input.caption,
+      collaborators: input.collaborators,
       channel: input.channel,
       scheduledAt: input.scheduledAt,
       sourceNote: input.sourceNote,

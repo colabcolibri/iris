@@ -14,6 +14,8 @@ export type Post = {
   status: PostStatus;
   channel: string;
   caption: string | null;
+  /** Instagram collaborator usernames (max 3) — invite on publish. */
+  collaborators: string[];
   carouselSummary: string | null;
   scheduledAt: string | null;
   publishedAt: string | null;

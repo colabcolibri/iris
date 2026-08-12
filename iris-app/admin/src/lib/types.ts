@@ -11,6 +11,7 @@ export type PostReplyModeSetting = ReplyMode | "inherit";
 export type Post = {
   id: string;
   caption: string;
+  collaborators?: string[];
   carousel_summary?: string | null;
   reply_prompt?: string | null;
   silence_soul?: boolean;
@@ -32,6 +33,7 @@ export type Post = {
 
 export type UpdatePostBody = {
   caption?: string;
+  collaborators?: string[];
   carousel_summary?: string | null;
   reply_prompt?: string | null;
   silence_soul?: boolean;

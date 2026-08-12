@@ -46,6 +46,7 @@ export function DashboardPage() {
   const [dialogMode, setDialogMode] = useState<PostDialogMode | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [caption, setCaption] = useState("");
+  const [collaboratorsText, setCollaboratorsText] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [replyMode, setReplyMode] = useState<PostReplyModeSetting>("inherit");
   const [carouselSummary, setCarouselSummary] = useState("");
@@ -120,6 +121,18 @@ export function DashboardPage() {
     return unsubscribe;
   }, [loadPosts, selectedPost?.id]);
 
+  function parseCollaboratorsInput(raw: string): string[] {
+    return raw
+      .split(/[\s,]+/)
+      .map((item) => item.trim().replace(/^@+/, ""))
+      .filter(Boolean)
+      .slice(0, 3);
+  }
+
+  function formatCollaborators(list: string[] | undefined): string {
+    return (list ?? []).join(", ");
+  }
+
   function resetEditorialFields() {
     setCarouselSummary("");
     setReplyPrompt("");
@@ -130,6 +143,7 @@ export function DashboardPage() {
   }
 
   function loadEditorialFieldsFromPost(post: Post) {
+    setCollaboratorsText(formatCollaborators(post.collaborators));
     setCarouselSummary(post.carousel_summary ?? "");
     setReplyPrompt(post.reply_prompt ?? "");
     setSilenceSoul(post.silence_soul ?? false);
@@ -142,6 +156,7 @@ export function DashboardPage() {
     return {
       caption,
       channel: "instagram",
+      collaborators: parseCollaboratorsInput(collaboratorsText),
       carousel_summary: carouselSummary.trim() || null,
       reply_prompt: replyPrompt.trim() || null,
       silence_soul: silenceSoul,
@@ -155,6 +170,7 @@ export function DashboardPage() {
     setSelectedPost(null);
     setDialogMode("create");
     setCaption("");
+    setCollaboratorsText("");
     setScheduledAt("");
     setReplyMode("inherit");
     resetEditorialFields();
@@ -167,6 +183,7 @@ export function DashboardPage() {
     setSelectedPost(post);
     setDialogMode("edit");
     setCaption(post.caption ?? "");
+    setCollaboratorsText(formatCollaborators(post.collaborators));
     setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
     setReplyMode(
       post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "inherit"),
@@ -286,6 +303,7 @@ export function DashboardPage() {
         setOperationStatus("Confirmando agendamento…");
         await updatePost(postId, {
           caption,
+          collaborators: parseCollaboratorsInput(collaboratorsText),
           reply_mode: replyMode,
           status: "scheduled",
           scheduled_at: scheduledIso,
@@ -294,6 +312,7 @@ export function DashboardPage() {
       } else {
         const updateBody: Record<string, unknown> = {
           caption,
+          collaborators: parseCollaboratorsInput(collaboratorsText),
           reply_mode: replyMode,
         };
         const isDraftSave = !selectedPost || selectedPost.status === "draft";
@@ -363,6 +382,7 @@ export function DashboardPage() {
       setOperationStatus("Salvando legenda e configurações…");
       await updatePost(postId, {
         caption,
+        collaborators: parseCollaboratorsInput(collaboratorsText),
         reply_mode: replyMode,
       });
 
@@ -561,6 +581,7 @@ export function DashboardPage() {
         operationStatus={operationStatus}
         error={error}
         caption={caption}
+        collaboratorsText={collaboratorsText}
         scheduledAt={scheduledAt}
         replyMode={replyMode}
         carouselSummary={carouselSummary}
@@ -574,6 +595,7 @@ export function DashboardPage() {
           else setDialogOpen(true);
         }}
         onCaptionChange={setCaption}
+        onCollaboratorsTextChange={setCollaboratorsText}
         onScheduledAtChange={setScheduledAt}
         onReplyModeChange={setReplyMode}
         onCarouselSummaryChange={setCarouselSummary}

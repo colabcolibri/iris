@@ -1,12 +1,14 @@
 import type { PostStatus } from "./post.ts";
 import type { PostReplyModeSetting } from "./reply-mode.ts";
-import { isPostReplyModeSetting, isReplyMode, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
+import { isPostReplyModeSetting, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
 import { ValidationError } from "../../api/json.ts";
+import { normalizeCollaborators } from "./collaborators.ts";
 
 const REPLY_PROMPT_MAX_CHARS = 32_000;
 
 export type CreatePostPayload = {
   caption?: unknown;
+  collaborators?: unknown;
   channel?: unknown;
   scheduled_at?: unknown;
   source_note?: unknown;
@@ -21,6 +23,7 @@ export type CreatePostPayload = {
 
 export type NormalizedCreatePost = {
   caption: string | null;
+  collaborators: string[];
   channel: string;
   scheduledAt: string | null;
   sourceNote: string | null;
@@ -40,6 +43,11 @@ export function normalizeCreatePost(body: CreatePostPayload): NormalizedCreatePo
   }
 
   const status = "draft";
+
+  let collaborators: string[] = [];
+  if ("collaborators" in body) {
+    collaborators = normalizeCollaborators(body.collaborators);
+  }
 
   let carouselSummary: string | null = null;
   if ("carousel_summary" in body) {
@@ -109,6 +117,7 @@ export function normalizeCreatePost(body: CreatePostPayload): NormalizedCreatePo
 
   return {
     caption: typeof body.caption === "string" ? body.caption : null,
+    collaborators,
     channel,
     scheduledAt: typeof body.scheduled_at === "string" ? body.scheduled_at : null,
     sourceNote: typeof body.source_note === "string" ? body.source_note : null,
@@ -124,6 +133,7 @@ export function normalizeCreatePost(body: CreatePostPayload): NormalizedCreatePo
 
 export type UpdatePostPayload = {
   caption?: unknown;
+  collaborators?: unknown;
   channel?: unknown;
   scheduled_at?: unknown;
   source_note?: unknown;
@@ -140,6 +150,7 @@ export type UpdatePostPayload = {
 
 export type NormalizedUpdatePost = {
   caption?: string | null;
+  collaborators?: string[];
   channel?: string;
   scheduledAt?: string | null;
   sourceNote?: string | null;
@@ -159,6 +170,10 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
 
   if ("caption" in body) {
     update.caption = typeof body.caption === "string" ? body.caption : null;
+  }
+
+  if ("collaborators" in body) {
+    update.collaborators = normalizeCollaborators(body.collaborators);
   }
 
   if ("channel" in body) {

@@ -3,12 +3,14 @@ import type { PostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
 import { isPostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
 import type { IgMediaStatus } from "../../domain/meta/ig-media-status.ts";
 import type { Comment } from "../../domain/comments/comment.ts";
+import { collaboratorsFromDb } from "../../domain/posts/collaborators.ts";
 
 type PostRow = {
   id: string;
   status: string;
   channel: string;
   caption: string | null;
+  collaborators: string | null;
   carousel_summary: string | null;
   scheduled_at: string | null;
   published_at: string | null;
@@ -73,6 +75,7 @@ export function mapPostRow(row: PostRow): Post {
     status: row.status as Post["status"],
     channel: row.channel,
     caption: row.caption,
+    collaborators: collaboratorsFromDb(row.collaborators),
     carouselSummary: row.carousel_summary ?? null,
     scheduledAt: row.scheduled_at,
     publishedAt: row.published_at,
@@ -161,6 +164,7 @@ export function serializePost(post: Post) {
     status: post.status,
     channel: post.channel,
     caption: post.caption,
+    collaborators: post.collaborators,
     carousel_summary: post.carouselSummary,
     scheduled_at: post.scheduledAt,
     published_at: post.publishedAt,

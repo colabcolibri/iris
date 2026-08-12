@@ -152,6 +152,7 @@ export function createGraphApiPublisher(
       }
 
       const caption = post.caption?.trim() ?? "";
+      const collaborators = post.collaborators ?? [];
       const containerIds: string[] = [];
 
       for (const asset of assets) {
@@ -167,9 +168,13 @@ export function createGraphApiPublisher(
 
         if (assets.length > 1) {
           body.is_carousel_item = "true";
-        } else if (caption) {
-          // Single image: caption goes on the media container
-          body.caption = caption;
+        } else {
+          if (caption) {
+            body.caption = caption;
+          }
+          if (collaborators.length > 0) {
+            body.collaborators = JSON.stringify(collaborators);
+          }
         }
 
         const created = await graphPost(`/${igUserId}/media`, token, body);
@@ -190,8 +195,10 @@ export function createGraphApiPublisher(
           children: containerIds.join(","),
         };
         if (caption) {
-          // Carousel: caption goes on the parent CAROUSEL container
           carouselBody.caption = caption;
+        }
+        if (collaborators.length > 0) {
+          carouselBody.collaborators = JSON.stringify(collaborators);
         }
 
         const carousel = await graphPost(

@@ -23,6 +23,7 @@ SQLite (`node:sqlite`). Path: `IRIS_DB_PATH` (default `./data/iris.db`). Migrati
 | status | TEXT | `draft`, `scheduled`, `published`, `cancelled`, `failed` |
 | channel | TEXT | `instagram` (v1); extensível |
 | caption | TEXT | Legenda |
+| collaborators | TEXT | JSON array de até 3 usernames IG (collab no publish); null se vazio |
 | scheduled_at | TEXT ISO | Nullable |
 | published_at | TEXT ISO | Nullable |
 | ig_media_id | TEXT | Após publish Meta |

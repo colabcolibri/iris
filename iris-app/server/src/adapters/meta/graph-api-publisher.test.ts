@@ -24,7 +24,11 @@ test("graph api publisher uploads carousel and publishes", async () => {
 
     const assets = createSqliteAssetRepository(db);
     const posts = createSqlitePostRepository(db);
-    const post = posts.create({ channel: "instagram", caption: "carousel" });
+    const post = posts.create({
+      channel: "instagram",
+      caption: "carousel",
+      collaborators: ["partner_one", "partner_two"],
+    });
     const postId = post.id;
 
     assets.create({
@@ -108,9 +112,18 @@ test("graph api publisher uploads carousel and publishes", async () => {
     const carouselCall = calls.find((c) => c.body.media_type === "CAROUSEL");
     assert.ok(carouselCall);
     assert.equal(carouselCall.body.caption, "carousel");
+    assert.equal(
+      carouselCall.body.collaborators,
+      JSON.stringify(["partner_one", "partner_two"]),
+    );
     assert.ok(
       !calls.some(
         (c) => c.body.is_carousel_item === "true" && c.body.caption,
+      ),
+    );
+    assert.ok(
+      !calls.some(
+        (c) => c.body.is_carousel_item === "true" && c.body.collaborators,
       ),
     );
     assert.ok(calls.some((c) => c.body.creation_id === "carousel-container"));

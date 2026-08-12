@@ -4,6 +4,7 @@ import type { IgMediaStatus } from "../domain/meta/ig-media-status.ts";
 
 export type CreatePostInput = {
   caption?: string | null;
+  collaborators?: string[];
   channel: string;
   scheduledAt?: string | null;
   sourceNote?: string | null;
@@ -21,6 +22,7 @@ export type CreatePostInput = {
 
 export type UpdatePostInput = {
   caption?: string | null;
+  collaborators?: string[];
   carouselSummary?: string | null;
   channel?: string;
   scheduledAt?: string | null;

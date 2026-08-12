@@ -48,6 +48,7 @@ type PostDialogProps = {
   operationStatus?: string | null;
   error: string;
   caption: string;
+  collaboratorsText: string;
   scheduledAt: string;
   replyMode: PostReplyModeSetting;
   carouselSummary: string;
@@ -58,6 +59,7 @@ type PostDialogProps = {
   silenceRestrictions: boolean;
   onOpenChange: (open: boolean) => void;
   onCaptionChange: (value: string) => void;
+  onCollaboratorsTextChange: (value: string) => void;
   onScheduledAtChange: (value: string) => void;
   onReplyModeChange: (value: PostReplyModeSetting) => void;
   onCarouselSummaryChange: (value: string) => void;
@@ -88,6 +90,7 @@ export function PostDialog({
   operationStatus = null,
   error,
   caption,
+  collaboratorsText,
   scheduledAt,
   replyMode,
   carouselSummary,
@@ -98,6 +101,7 @@ export function PostDialog({
   silenceRestrictions,
   onOpenChange,
   onCaptionChange,
+  onCollaboratorsTextChange,
   onScheduledAtChange,
   onReplyModeChange,
   onCarouselSummaryChange,
@@ -286,7 +290,7 @@ export function PostDialog({
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="caption" className="min-w-0">
+                <TabsContent value="caption" className="min-w-0 space-y-4">
                   <Textarea
                     id="post-caption"
                     value={caption}
@@ -298,6 +302,25 @@ export function PostDialog({
                     readOnly={isReadOnly}
                     disabled={isReadOnly}
                   />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="post-collaborators">
+                      Colaboradores (Instagram)
+                    </Label>
+                    <Input
+                      id="post-collaborators"
+                      value={collaboratorsText}
+                      onChange={(e) => onCollaboratorsTextChange(e.target.value)}
+                      placeholder="user1, user2 (até 3, sem @)"
+                      readOnly={isReadOnly}
+                      disabled={isReadOnly}
+                      autoComplete="off"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Até 3 usernames convidados como collab no publish. Eles
+                      precisam aceitar o convite no Instagram. Não é tag na
+                      foto.
+                    </p>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="summary" className="min-w-0">

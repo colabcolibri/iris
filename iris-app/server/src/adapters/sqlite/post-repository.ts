@@ -6,16 +6,17 @@ import type {
   PostRepository,
   UpdatePostInput,
 } from "../../ports/post-repository.ts";
+import { collaboratorsToDb } from "../../domain/posts/collaborators.ts";
 import { mapPostRow } from "./mappers.ts";
 
 export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
   const insert = db.prepare(`
     INSERT INTO posts (
-      id, status, channel, caption, carousel_summary, scheduled_at, published_at, ig_media_id,
+      id, status, channel, caption, collaborators, carousel_summary, scheduled_at, published_at, ig_media_id,
       source_note, error_message, auto_reply_enabled, reply_mode, reply_prompt,
       silence_soul, silence_page, silence_knowledge, silence_restrictions,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const selectById = db.prepare("SELECT * FROM posts WHERE id = ?");
@@ -36,6 +37,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         input.status ?? "draft",
         input.channel,
         input.caption ?? null,
+        collaboratorsToDb(input.collaborators ?? []),
         input.carouselSummary ?? null,
         input.scheduledAt ?? null,
         input.publishedAt ?? null,
@@ -125,6 +127,10 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
 
       const next = {
         caption: input.caption !== undefined ? input.caption : current.caption,
+        collaborators:
+          input.collaborators !== undefined
+            ? input.collaborators
+            : current.collaborators,
         carouselSummary:
           input.carouselSummary !== undefined ? input.carouselSummary : current.carouselSummary,
         channel: input.channel !== undefined ? input.channel : current.channel,
@@ -195,7 +201,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
 
       db.prepare(`
         UPDATE posts
-        SET caption = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
+        SET caption = ?, collaborators = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
             published_at = ?, ig_media_id = ?, ig_media_status = ?, ig_media_status_detail = ?,
             ig_media_status_checked_at = ?, error_message = ?, auto_reply_enabled = ?,
             reply_mode = ?, reply_prompt = ?, silence_soul = ?, silence_page = ?,
@@ -203,6 +209,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         WHERE id = ?
       `).run(
         next.caption,
+        collaboratorsToDb(next.collaborators),
         next.carouselSummary,
         next.channel,
         next.scheduledAt,

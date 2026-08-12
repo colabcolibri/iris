@@ -48,7 +48,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_get_post",
-    "Get a post by id with asset metadata. Includes carousel_summary (visual description of the carousel/reel for reply context — not reply instructions) and reply_prompt (post-specific reply briefing: promo, price, link, tone — overrides conflicting global editorial blocks).",
+    "Get a post by id with asset metadata. Includes collaborators (up to 3 Instagram usernames invited as collab on publish), carousel_summary (visual description of the carousel/reel for reply context — not reply instructions) and reply_prompt (post-specific reply briefing: promo, price, link, tone — overrides conflicting global editorial blocks).",
     {
       postId: z.string().min(1),
     },
@@ -68,9 +68,16 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_create_post",
-    "Create a draft or scheduled post",
+    "Create a draft post. Optional collaborators: up to 3 Instagram usernames (without @) invited as collab when the post is published.",
     {
       caption: z.string().optional(),
+      collaborators: z
+        .array(z.string())
+        .max(3)
+        .optional()
+        .describe(
+          "Up to 3 Instagram usernames (no @) invited as collaborators on publish. Not photo tags.",
+        ),
       channel: z.string().default("instagram"),
       scheduledAt: z.string().nullable().optional(),
       sourceNote: z.string().optional(),
@@ -80,6 +87,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
       try {
         const input = normalizeCreatePost({
           caption: args.caption,
+          collaborators: args.collaborators,
           channel: args.channel,
           scheduled_at: args.scheduledAt,
           source_note: args.sourceNote,
@@ -87,6 +95,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         });
         const post = ctx.posts.create({
           caption: input.caption,
+          collaborators: input.collaborators,
           channel: input.channel,
           scheduledAt: input.scheduledAt,
           sourceNote: input.sourceNote,
@@ -102,10 +111,18 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_update_post",
-    "Update caption, carousel summary, reply briefing, silence flags, schedule or status for a post. carouselSummary = visual description of what is in the slides (context for the reply agent; not instructions). replyPrompt = post-specific reply briefing (promo, price, CTA, tone) that overrides conflicting global editorial content. Do NOT put reply instructions into carouselSummary. Do NOT set status=cancelled here — use iris_cancel_post after user confirmation.",
+    "Update caption, collaborators, carousel summary, reply briefing, silence flags, schedule or status for a post. collaborators = up to 3 Instagram usernames invited as collab on publish (not photo tags). carouselSummary = visual description of slides. replyPrompt = post-specific reply briefing. Do NOT set status=cancelled here — use iris_cancel_post after user confirmation.",
     {
       postId: z.string().min(1),
       caption: z.string().optional(),
+      collaborators: z
+        .array(z.string())
+        .max(3)
+        .nullable()
+        .optional()
+        .describe(
+          "Up to 3 Instagram usernames (no @) as collab invites on publish. Pass [] or null to clear. Not the same as tagging people in the image.",
+        ),
       carouselSummary: z
         .string()
         .nullable()
@@ -137,6 +154,9 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
         const body: Record<string, unknown> = {};
         if (args.caption !== undefined) body.caption = args.caption;
+        if (args.collaborators !== undefined) {
+          body.collaborators = args.collaborators;
+        }
         if (args.carouselSummary !== undefined) {
           body.carousel_summary = args.carouselSummary;
         }
