@@ -403,8 +403,8 @@ export function PostDetailPanel({
   const title = postTitle(post.caption);
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
-      <div className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden lg:w-[42%] lg:border-r lg:border-border">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+      <div className="flex max-h-[min(48vh,22rem)] min-h-0 w-full shrink-0 flex-col overflow-hidden border-b border-border lg:max-h-none lg:w-[42%] lg:border-b-0 lg:border-r">
         <PageScrollArea>
           <PostMetaToolbar
             permalink={permalink}
@@ -492,10 +492,16 @@ export function PostDetailPanel({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <div className="shrink-0 border-b border-border bg-muted/20 px-4 pt-3 sm:px-5">
-          <div className="-mx-1 overflow-x-auto">
-            <div className="flex min-w-0 flex-nowrap items-center gap-x-4 gap-y-1 border-b border-border/50 px-1 pb-2">
+          <div className="-mx-1 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
+            <div
+              role="tablist"
+              aria-label="Detalhes da publicação"
+              className="flex w-max min-w-full flex-nowrap items-center gap-x-4 border-b border-border/50 px-1 pb-2"
+            >
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "performance"}
               onClick={() => setActiveTab("performance")}
               className={cn(
                 "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
@@ -508,6 +514,8 @@ export function PostDetailPanel({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "comments"}
               onClick={() => setActiveTab("comments")}
               className={cn(
                 "inline-flex shrink-0 items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",
@@ -530,6 +538,8 @@ export function PostDetailPanel({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "caption"}
               onClick={() => setActiveTab("caption")}
               className={cn(
                 "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
@@ -542,6 +552,8 @@ export function PostDetailPanel({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "summary"}
               onClick={() => setActiveTab("summary")}
               className={cn(
                 "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
@@ -554,6 +566,8 @@ export function PostDetailPanel({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "briefing"}
               onClick={() => setActiveTab("briefing")}
               className={cn(
                 "shrink-0 pb-0.5 text-sm font-semibold transition-colors",
@@ -566,6 +580,8 @@ export function PostDetailPanel({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "config"}
               onClick={() => setActiveTab("config")}
               className={cn(
                 "inline-flex shrink-0 items-center gap-1.5 pb-0.5 text-sm font-semibold transition-colors",

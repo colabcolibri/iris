@@ -6,7 +6,7 @@ import {
   IrisSidebarProvider,
 } from "@/components/layout/iris-sidebar";
 import { DemoBanner, useDemoMode } from "@/demo/demo-mode-context";
-import { useDemoLocale } from "@/demo/demo-locale-context";
+import { useChromeTop } from "@/hooks/use-chrome-top";
 
 type AppShellProps = {
   sidebarView?: AppView;
@@ -20,15 +20,14 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const { isDemoMode } = useDemoMode();
-  const { locale } = useDemoLocale();
+  const { chromeRef, chromeTop } = useChromeTop();
 
   return (
-    <IrisSidebarProvider
-      demoChrome={isDemoMode}
-      demoLocale={isDemoMode ? locale : undefined}
-    >
-      {isDemoMode ? <DemoBanner /> : null}
-      <AppHeader />
+    <IrisSidebarProvider chromeTop={chromeTop}>
+      <div ref={chromeRef} className="shrink-0">
+        {isDemoMode ? <DemoBanner /> : null}
+        <AppHeader />
+      </div>
 
       <div className="flex min-h-0 flex-1">
         <AppSidebar view={sidebarView} onViewChange={onSidebarViewChange} />

@@ -8,37 +8,23 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
-import type { DemoLocale } from "@/demo/locale";
 
 const IRIS_SIDEBAR_WIDTH = "17.5rem";
-/** h-14 — altura do AppHeader */
+/** h-14 — fallback do AppHeader quando a medição ainda não rodou */
 const IRIS_HEADER_HEIGHT = "3.5rem";
-/** h-10 — altura do DemoBanner (só PT) */
-const IRIS_DEMO_BANNER_HEIGHT = "2.5rem";
-/** faixa do disclaimer EN abaixo do banner */
-const IRIS_DEMO_DISCLAIMER_HEIGHT = "2.75rem";
 
 type IrisSidebarProviderProps = {
   children: ReactNode;
   className?: string;
-  demoChrome?: boolean;
-  demoLocale?: DemoLocale;
+  /** Altura medida do stack banner + header (px). */
+  chromeTop?: string;
 };
 
 export function IrisSidebarProvider({
   children,
   className,
-  demoChrome = false,
-  demoLocale,
+  chromeTop = IRIS_HEADER_HEIGHT,
 }: IrisSidebarProviderProps) {
-  const demoBannerHeight =
-    demoChrome && demoLocale === "en"
-      ? `calc(${IRIS_DEMO_BANNER_HEIGHT} + ${IRIS_DEMO_DISCLAIMER_HEIGHT})`
-      : IRIS_DEMO_BANNER_HEIGHT;
-  const chromeTop = demoChrome
-    ? `calc(${demoBannerHeight} + ${IRIS_HEADER_HEIGHT})`
-    : IRIS_HEADER_HEIGHT;
-
   return (
     <SidebarProvider
       defaultOpen={false}
@@ -68,7 +54,7 @@ export function IrisSidebar({ children, className }: IrisSidebarProps) {
     <Sidebar
       collapsible="icon"
       className={cn(
-        "top-[var(--iris-chrome-top,3.5rem)] h-[calc(100svh-var(--iris-chrome-top,3.5rem))] border-sidebar-border bg-sidebar shadow-none",
+        "!top-[var(--iris-chrome-top,3.5rem)] bottom-0 !h-auto max-h-none border-sidebar-border bg-sidebar shadow-none",
         className,
       )}
     >

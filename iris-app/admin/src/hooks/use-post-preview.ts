@@ -3,8 +3,22 @@ import type {
   PostInsightsMedia,
   PostMediaSlide,
 } from "@/lib/types";
+import { getDemoMode } from "@/demo/demo-mode-context";
+import { demoAssetImageUrl } from "@/demo/demo-images";
 
-export function localAssetUrl(postId: string, filename: string): string {
+export function localAssetUrl(
+  postId: string,
+  filename: string,
+  size?: { width?: number; height?: number },
+): string {
+  if (getDemoMode()) {
+    return demoAssetImageUrl(
+      postId,
+      filename,
+      size?.width ?? 1080,
+      size?.height ?? 1350,
+    );
+  }
   return `/api/posts/${encodeURIComponent(postId)}/assets/${encodeURIComponent(filename)}`;
 }
 

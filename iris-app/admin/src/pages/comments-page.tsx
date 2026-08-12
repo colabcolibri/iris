@@ -37,6 +37,7 @@ import {
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useAppRoutes } from "@/demo/demo-routes";
+import { useDemoMode } from "@/demo/demo-mode-context";
 import { firstMediaSlideSrc } from "@/hooks/use-post-preview";
 import {
   approveCommentReply,
@@ -107,6 +108,7 @@ function commentsHaveChanged(current: Comment[], next: Comment[]): boolean {
 
 export function CommentsPage() {
   const routes = useAppRoutes();
+  const { isDemoMode } = useDemoMode();
   const { meta } = useMetaSession();
   const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1042,7 +1044,7 @@ export function CommentsPage() {
         </p>
       ) : null}
 
-      {!liveConnected ? (
+      {!liveConnected && !isDemoMode ? (
         <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
           Atualização em tempo real indisponível. A lista local será recarregada
           a cada minuto nesta aba, ou use o botão de sincronizar para buscar

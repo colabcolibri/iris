@@ -7,6 +7,8 @@ import {
   reorderPostAssets,
   updatePostAsset,
 } from "@/lib/api";
+import { getDemoMode } from "@/demo/demo-mode-context";
+import { demoAssetImageUrl } from "@/demo/demo-images";
 import type { AssetUserTag } from "@/lib/types";
 
 export type PostMediaAsset = {
@@ -58,13 +60,17 @@ function moveByOffset<T extends { id: string }>(
 
 function revokePreviewUrls(items: PostMediaAsset[]) {
   for (const item of items) {
-    URL.revokeObjectURL(item.previewUrl);
+    if (item.previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(item.previewUrl);
+    }
   }
 }
 
 function revokeUrlList(urls: string[]) {
   for (const url of urls) {
-    URL.revokeObjectURL(url);
+    if (url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
   }
 }
 
@@ -89,6 +95,7 @@ export function usePostMediaAssets(
 
       setLoading(true);
       const createdUrls: string[] = [];
+      const isDemo = getDemoMode();
 
       try {
         const assets = await listAssets(postId);
@@ -110,14 +117,24 @@ export function usePostMediaAssets(
             continue;
           }
 
-          const blob = await fetchAssetBlob(postId, filename);
-          if (signal.aborted) {
-            revokeUrlList(createdUrls);
-            return;
+          let previewUrl: string;
+          if (isDemo) {
+            previewUrl = demoAssetImageUrl(
+              postId,
+              filename,
+              asset.width ?? 1080,
+              asset.height ?? 1350,
+            );
+          } else {
+            const blob = await fetchAssetBlob(postId, filename);
+            if (signal.aborted) {
+              revokeUrlList(createdUrls);
+              return;
+            }
+            previewUrl = URL.createObjectURL(blob);
+            createdUrls.push(previewUrl);
           }
 
-          const previewUrl = URL.createObjectURL(blob);
-          createdUrls.push(previewUrl);
           nextItems.push({
             id: asset.id,
             sortOrder: asset.sort_order,
@@ -216,7 +233,7 @@ export function usePostMediaAssets(
         await deletePostAsset(postId, assetId);
         setItems((previous) => {
           const removed = previous.find((item) => item.id === assetId);
-          if (removed) {
+          if (removed?.previewUrl.startsWith("blob:")) {
             URL.revokeObjectURL(removed.previewUrl);
           }
           return previous.filter((item) => item.id !== assetId);

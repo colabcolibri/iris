@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Heart, ImageIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postPreviewUrl } from "@/hooks/use-post-preview";
+import { getDemoMode } from "@/demo/demo-mode-context";
 import type { CommentPostSummary, IgMediaStatus } from "@/lib/types";
 import { igMediaStatusPresentation } from "@iris/domain/meta/ig-media-status";
 
@@ -36,6 +37,9 @@ function resolveThumbnail(
 ): string | null {
   const override = thumbnailOverrides?.[post.post_id];
   if (override) {
+    if (getDemoMode() && override.startsWith("/api/posts/")) {
+      return postPreviewUrl(post);
+    }
     return override;
   }
   return postPreviewUrl(post);

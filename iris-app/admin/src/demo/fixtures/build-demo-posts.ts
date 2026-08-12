@@ -64,6 +64,37 @@ function resolveIgMediaId(
   }
   return null;
 }
+
+function captionHook(caption: string): string {
+  return caption.split("\n").map((line) => line.trim()).find(Boolean) ?? "";
+}
+
+function demoReplyPromptDefault(locale: DemoLocale): string {
+  if (locale === "en") {
+    return `Store link: ${DEMO_STORE_URL}. Prioritize size, stock, and delivery questions.`;
+  }
+  return `Link da loja: ${DEMO_STORE_URL}. Priorizar dúvidas de tamanho, estoque e prazo.`;
+}
+
+function demoCarouselSummaryDefault(
+  template: DemoPostTemplate,
+  locale: DemoLocale,
+): string {
+  const hook = captionHook(template.caption);
+  const slideCount = template.assets?.length ?? 0;
+  if (slideCount > 1) {
+    return locale === "en"
+      ? `Carousel (${slideCount} slides): ${hook}`
+      : `Carrossel (${slideCount} slides): ${hook}`;
+  }
+  return locale === "en" ? `Single post: ${hook}` : `Post único: ${hook}`;
+}
+
+function isOnAirPost(status: PostStatus, igMediaId: string | null): boolean {
+  return (
+    Boolean(igMediaId) && (status === "published" || status === "monitored")
+  );
+}
 function resolveStatus(
   template: DemoPostTemplate,
   year: number,
@@ -226,15 +257,21 @@ export function buildDemoPosts(
 
     const assets = template.assets ?? [];
     const status = dates.status;
+    const ig_media_id = resolveIgMediaId(template, status);
+    const onAir = isOnAirPost(status, ig_media_id);
+
     return {
       id: template.id,
       caption: template.caption,
       channel: "instagram",
       collaborators: template.collaborators,
-      carousel_summary: template.carousel_summary ?? null,
-      reply_prompt: template.reply_prompt ?? null,
+      carousel_summary:
+        template.carousel_summary ??
+        (onAir ? demoCarouselSummaryDefault(template, locale) : null),
+      reply_prompt:
+        template.reply_prompt ?? (onAir ? demoReplyPromptDefault(locale) : null),
       reply_mode: template.reply_mode ?? "inherit",
-      ig_media_id: resolveIgMediaId(template, status),
+      ig_media_id,
       assets_count: assets.length,
       ...dates,
     } satisfies Post;
