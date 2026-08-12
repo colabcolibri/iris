@@ -1,15 +1,13 @@
 import { ADMIN_BASE } from "@/lib/routes";
 
-const DEFAULT_SCRIPT_URL = "https://umami.sergioluciano.com/script.js";
-
 export const umamiConfig = {
   websiteId: import.meta.env.VITE_UMAMI_WEBSITE_ID?.trim() ?? "",
-  scriptUrl:
-    import.meta.env.VITE_UMAMI_SCRIPT_URL?.trim() || DEFAULT_SCRIPT_URL,
+  scriptUrl: import.meta.env.VITE_UMAMI_SCRIPT_URL?.trim() ?? "",
 } as const;
 
+/** Ativo só com as duas variáveis VITE definidas no build — sem defaults embutidos. */
 export function isUmamiEnabled(): boolean {
-  return umamiConfig.websiteId.length > 0;
+  return umamiConfig.websiteId.length > 0 && umamiConfig.scriptUrl.length > 0;
 }
 
 export function isUmamiExcludedPath(pathname: string): boolean {

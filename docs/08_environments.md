@@ -138,8 +138,8 @@ Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar 
 | `LLM_API_KEY` | For comment responder (v1-S6) |
 | `IRIS_REPLY_MAX_CONCURRENT` | Default `10` — ajuste conforme quota/custo do provedor LLM |
 | `IRIS_RETENTION_DAYS` | Default `90` — purge de `meta_webhook_events` antigos |
-| `VITE_UMAMI_WEBSITE_ID` | Website ID Umami (build-time; omitir em dev local) |
-| `VITE_UMAMI_SCRIPT_URL` | Opcional — default `https://umami.sergioluciano.com/script.js` |
+| `VITE_UMAMI_WEBSITE_ID` | Opcional — website ID Umami (build-time; exige também `VITE_UMAMI_SCRIPT_URL`) |
+| `VITE_UMAMI_SCRIPT_URL` | Opcional — URL do `script.js` do Umami (build-time; sem default no código) |
 
 Requirements:
 - HTTPS (Meta webhooks require public URL)
