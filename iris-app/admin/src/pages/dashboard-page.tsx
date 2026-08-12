@@ -622,6 +622,7 @@ export function DashboardPage() {
             return transfer.files;
           });
         }}
+        onFilesReplace={setFiles}
         onSaveDraft={() => void savePost(false)}
         onSchedule={() => void savePost(true)}
         onPublishNow={() => void publishNow()}

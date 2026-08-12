@@ -11,6 +11,7 @@ import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-ed
 import { StatusBadge } from "@/components/posts/status-badge";
 import { PostMediaSection } from "@/components/posts/post-media-section";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
+import { UsernamePillsField } from "@/components/posts/username-pills-field";
 import {
   getPostDialogFooterActions,
   type PostDialogFooterActionId,
@@ -69,6 +70,7 @@ type PostDialogProps = {
   onSilenceKnowledgeChange: (value: boolean) => void;
   onSilenceRestrictionsChange: (value: boolean) => void;
   onFilesChange: (files: FileList | null) => void;
+  onFilesReplace: (files: FileList | null) => void;
   onSaveDraft: () => void;
   onSchedule: () => void;
   onPublishNow?: () => void;
@@ -111,6 +113,7 @@ export function PostDialog({
   onSilenceKnowledgeChange,
   onSilenceRestrictionsChange,
   onFilesChange,
+  onFilesReplace,
   onSaveDraft,
   onSchedule,
   onPublishNow,
@@ -306,14 +309,18 @@ export function PostDialog({
                     <Label htmlFor="post-collaborators">
                       Colaboradores (Instagram)
                     </Label>
-                    <Input
+                    <UsernamePillsField
                       id="post-collaborators"
-                      value={collaboratorsText}
-                      onChange={(e) => onCollaboratorsTextChange(e.target.value)}
-                      placeholder="user1, user2 (até 3, sem @)"
-                      readOnly={isReadOnly}
+                      values={collaboratorsText
+                        .split(",")
+                        .map((part) => part.trim().replace(/^@+/, ""))
+                        .filter(Boolean)}
+                      onChange={(next: string[]) =>
+                        onCollaboratorsTextChange(next.join(", "))
+                      }
+                      max={3}
                       disabled={isReadOnly}
-                      autoComplete="off"
+                      placeholder="username + Enter (até 3)"
                     />
                     <p className="text-xs text-muted-foreground">
                       Até 3 usernames convidados como collab no publish. Eles
@@ -374,6 +381,7 @@ export function PostDialog({
                 refreshKey={post?.updated_at}
                 mode={mode}
                 onFilesChange={onFilesChange}
+                onFilesReplace={onFilesReplace}
               />
             </AppAccordion.Content>
           </AppAccordion.Item>

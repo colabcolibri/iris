@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
+import { AssetUserTagsEditor } from "@/components/posts/asset-user-tags-editor";
 import { MediaTile } from "@/components/posts/media-tile";
 import { PostFormSection } from "@/components/posts/post-form-section";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { usePostMediaAssets } from "@/hooks/use-post-media-assets";
+import type { AssetUserTag } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type PostMediaSectionProps = {
@@ -15,6 +17,7 @@ type PostMediaSectionProps = {
   refreshKey?: string;
   mode: "create" | "edit";
   onFilesChange: (files: FileList | null) => void;
+  onFilesReplace: (files: FileList | null) => void;
 };
 
 type PendingPreview = {
@@ -22,6 +25,7 @@ type PendingPreview = {
   previewUrl: string;
   width: number | null;
   height: number | null;
+  file: File;
 };
 
 function readImageDimensions(
@@ -42,47 +46,13 @@ function readImageDimensions(
   });
 }
 
-function formatUserTagsInput(
-  tags: Array<{ username: string; x: number; y: number }>,
-): string {
-  return tags
-    .map((tag) =>
-      tag.x === 0.5 && tag.y === 0.5
-        ? tag.username
-        : `${tag.username} ${tag.x} ${tag.y}`,
-    )
-    .join(", ");
-}
-
-function parseUserTagsInput(
-  raw: string,
-): Array<{ username: string; x: number; y: number }> {
-  const parts = raw
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-  const tags: Array<{ username: string; x: number; y: number }> = [];
-  for (const part of parts) {
-    const tokens = part.split(/\s+/).filter(Boolean);
-    const username = (tokens[0] ?? "").replace(/^@+/, "");
-    if (!username) continue;
-    const x = tokens[1] !== undefined ? Number(tokens[1]) : 0.5;
-    const y = tokens[2] !== undefined ? Number(tokens[2]) : 0.5;
-    tags.push({
-      username,
-      x: Number.isFinite(x) ? x : 0.5,
-      y: Number.isFinite(y) ? y : 0.5,
-    });
-  }
-  return tags;
-}
-
 export function PostMediaSection({
   postId,
   readOnly = false,
   refreshKey,
   mode,
   onFilesChange,
+  onFilesReplace,
 }: PostMediaSectionProps) {
   const { items, loading, busyId, deleteAsset, updateAssetMeta, reorder, move } =
     usePostMediaAssets(postId, refreshKey);
@@ -91,12 +61,33 @@ export function PostMediaSection({
   const [pendingPreviews, setPendingPreviews] = useState<PendingPreview[]>([]);
   const [inputKey, setInputKey] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [metaEditorOpen, setMetaEditorOpen] = useState(false);
   const [altDraft, setAltDraft] = useState("");
-  const [tagsDraft, setTagsDraft] = useState("");
+  const [tagsDraft, setTagsDraft] = useState<AssetUserTag[]>([]);
   const [savingMeta, setSavingMeta] = useState(false);
 
   const canManage = mode === "edit" && Boolean(postId);
   const showAddButton = !readOnly;
+
+  useEffect(() => {
+    if (!canManage || items.length === 0) {
+      setSelectedId(null);
+      setMetaEditorOpen(false);
+      return;
+    }
+    setSelectedId((current) => {
+      if (current && items.some((item) => item.id === current)) {
+        return current;
+      }
+      return items[0]?.id ?? null;
+    });
+  }, [canManage, items]);
+
+  useEffect(() => {
+    if (!selectedId || !items.some((item) => item.id === selectedId)) {
+      setMetaEditorOpen(false);
+    }
+  }, [items, selectedId]);
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -106,11 +97,11 @@ export function PostMediaSection({
   useEffect(() => {
     if (!selected) {
       setAltDraft("");
-      setTagsDraft("");
+      setTagsDraft([]);
       return;
     }
     setAltDraft(selected.altText ?? "");
-    setTagsDraft(formatUserTagsInput(selected.userTags));
+    setTagsDraft(selected.userTags);
   }, [selected]);
 
   useEffect(() => {
@@ -150,6 +141,7 @@ export function PostMediaSection({
           previewUrl: URL.createObjectURL(file),
           width: dimensions.width,
           height: dimensions.height,
+          file,
         });
       } catch {
         nextPending.push({
@@ -157,6 +149,7 @@ export function PostMediaSection({
           previewUrl: URL.createObjectURL(file),
           width: null,
           height: null,
+          file,
         });
       }
     }
@@ -174,11 +167,35 @@ export function PostMediaSection({
     try {
       await updateAssetMeta(selected.id, {
         alt_text: altDraft.trim() || null,
-        user_tags: parseUserTagsInput(tagsDraft),
+        user_tags: tagsDraft,
       });
     } finally {
       setSavingMeta(false);
     }
+  }
+
+  function removePendingPreview(previewId: string) {
+    setPendingPreviews((previous) => {
+      const next = previous.filter((preview) => preview.id !== previewId);
+      const removed = previous.find((preview) => preview.id === previewId);
+      if (removed) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+      const transfer = new DataTransfer();
+      for (const preview of next) {
+        transfer.items.add(preview.file);
+      }
+      onFilesReplace(transfer.files.length > 0 ? transfer.files : null);
+      return next;
+    });
+  }
+
+  async function handleDelete(itemId: string) {
+    if (canManage) {
+      await deleteAsset(itemId);
+      return;
+    }
+    removePendingPreview(itemId);
   }
 
   const addMediaControl = showAddButton ? (
@@ -213,7 +230,7 @@ export function PostMediaSection({
       width: preview.width,
       height: preview.height,
       altText: null as string | null,
-      userTags: [] as Array<{ username: string; x: number; y: number }>,
+      userTags: [] as AssetUserTag[],
     }));
   }, [canManage, items, pendingPreviews]);
 
@@ -222,8 +239,8 @@ export function PostMediaSection({
       title="Mídia"
       description={
         canManage
-          ? "PNG, JPEG ou WebP · clique num slide para alt text e tags · arraste para reordenar"
-          : "PNG, JPEG ou WebP · salve o rascunho para reordenar, alt text e tags"
+          ? "PNG, JPEG ou WebP · barrinha: ordenar, metadados (tags) e remover"
+          : "PNG, JPEG ou WebP · salve o rascunho para editar alt text, tags e ordem"
       }
       action={addMediaControl}
     >
@@ -254,14 +271,32 @@ export function PostMediaSection({
                 item={item}
                 index={index}
                 total={gridItems.length}
-                readOnly={readOnly || !canManage}
+                readOnly={readOnly}
+                canReorder={canManage}
+                canEditMeta={canManage}
                 selectable={canManage}
                 selected={canManage && selectedId === item.id}
+                metaOpen={
+                  canManage && metaEditorOpen && selectedId === item.id
+                }
                 busy={busyId === item.id}
                 isDragging={draggingId === item.id}
                 isDragOver={dragOverId === item.id && draggingId !== item.id}
                 onSelect={() => setSelectedId(item.id)}
-                onDelete={() => void deleteAsset(item.id)}
+                onToggleMeta={() => {
+                  if (selectedId === item.id && metaEditorOpen) {
+                    setMetaEditorOpen(false);
+                    return;
+                  }
+                  setSelectedId(item.id);
+                  setMetaEditorOpen(true);
+                }}
+                onDelete={() => {
+                  if (selectedId === item.id) {
+                    setMetaEditorOpen(false);
+                  }
+                  void handleDelete(item.id);
+                }}
                 onMoveLeft={() => move(item.id, -1)}
                 onMoveRight={() => move(item.id, 1)}
                 onDragStart={() => setDraggingId(item.id)}
@@ -289,12 +324,29 @@ export function PostMediaSection({
             ))}
           </div>
 
-          {canManage && selected ? (
+          {canManage && selected && metaEditorOpen ? (
             <div className="space-y-3 rounded-(--iris-radius-sm) border border-border bg-muted/10 p-3">
-              <p className="text-sm font-medium text-foreground">
-                Slide {items.findIndex((item) => item.id === selected.id) + 1} —
-                acessibilidade e tags
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    Slide{" "}
+                    {items.findIndex((item) => item.id === selected.id) + 1} —
+                    acessibilidade e tags
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Tags aqui ≠ colaboradores da aba Legenda.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setMetaEditorOpen(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="asset-alt-text">Texto alternativo</Label>
                 <Textarea
@@ -307,19 +359,16 @@ export function PostMediaSection({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="asset-user-tags">Tags na imagem</Label>
-                <Input
-                  id="asset-user-tags"
-                  value={tagsDraft}
-                  onChange={(event) => setTagsDraft(event.target.value)}
-                  placeholder="user1, user2 0.3 0.7"
+                <Label>Tags na imagem</Label>
+                <AssetUserTagsEditor
+                  key={selected.id}
+                  previewUrl={selected.previewUrl}
+                  width={selected.width}
+                  height={selected.height}
+                  tags={tagsDraft}
+                  onChange={setTagsDraft}
                   disabled={readOnly || savingMeta || busyId === selected.id}
-                  autoComplete="off"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Usernames separados por vírgula. Opcional: `user x y` (0–1).
-                  Centro padrão 0.5 0.5. Não é collab do post.
-                </p>
               </div>
               {!readOnly ? (
                 <Button
