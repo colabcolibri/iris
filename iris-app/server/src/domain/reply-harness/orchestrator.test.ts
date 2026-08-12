@@ -111,7 +111,7 @@ test("runReplyHarness crisis barrier uses LLM reply with CVV checklist", async (
       return createTestLlmCompletion(
         JSON.stringify({
           finalText:
-            "@vera Se está em sofrimento, no Brasil ligue 188 para o CVV (https://www.cvv.org.br). Você não está sozinho(a).",
+            "@vera Sinto muito por esse momento. Você não precisa passar por isso sozinha — no Brasil o CVV atende no 188 ou em https://www.cvv.org.br.",
           reasoning: "life risk phrasing",
         }),
       );
@@ -206,7 +206,7 @@ test("runReplyHarness en crisis barrier uses LLM local-help wording", async () =
       return createTestLlmCompletion(
         JSON.stringify({
           finalText:
-            "@alex If you are in crisis, please contact local emergency services or a crisis hotline in your country. You do not have to face this alone.",
+            "@alex I'm sorry you're hurting. Please reach a local crisis hotline or emergency services now — you don't have to face this alone.",
           reasoning: "en crisis",
         }),
       );

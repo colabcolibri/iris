@@ -26,6 +26,15 @@ type BarrierLlmJson = {
 
 const MAX_BARRIER_ATTEMPTS = 2;
 
+/** Public IG crisis replies must stay short — distress reduces ability to process long text. */
+const CRISIS_BARRIER_MAX_CHARS = 280;
+const HATE_BARRIER_MAX_CHARS = 220;
+
+function barrierCharBudget(kind: SafetyBarrierKind, personaMax: number): number {
+  const softCap = kind === "crisis" ? CRISIS_BARRIER_MAX_CHARS : HATE_BARRIER_MAX_CHARS;
+  return Math.min(softCap, Math.max(160, personaMax));
+}
+
 function buildBarrierPrompt(
   context: ReplyContext,
   kind: SafetyBarrierKind,
@@ -35,53 +44,63 @@ function buildBarrierPrompt(
   const brazil = usesBrazilCrisisResources(context.persona.responseLanguage);
   const handle = context.targetComment.authorUsername?.trim().replace(/^@/, "") ?? "";
 
+  const styleRules = [
+    "Instagram comment style (mandatory):",
+    "- Maximum 2 short sentences after the @mention (3 only if unavoidable).",
+    "- Sound human and calm — not a brochure, not a press release, not therapy.",
+    "- No institutional marketing of the helpline (do not list free/confidential/24h features).",
+    "- No preachy closings like \"please seek help\" / \"por favor busque ajuda\".",
+    "- No clinical advice, diagnoses, or probing questions about suicide methods.",
+    `- Hard character budget including @mention: ${maxChars}.`,
+  ];
+
   const crisisRules = brazil
     ? [
-        "Mandatory facts for crisis (config language = Brazilian Portuguese):",
-        "- Empathize briefly; no therapy or clinical advice.",
-        "- Mention Brazil, CVV (Centro de Valorização da Vida), phone 188, and https://www.cvv.org.br.",
-        "- Say they do not have to face this alone.",
-        "- Write original wording — do not paste a template.",
+        "Crisis content (config = Brazilian Portuguese):",
+        "- One brief empathy line (you care / they are not alone).",
+        "- Then point to help in Brazil: CVV, phone 188, https://www.cvv.org.br — facts only, no sales pitch.",
+        "- Example shape (rewrite in your own words, do not copy verbatim):",
+        '  "@user Sinto muito por esse momento. Você não precisa passar por isso sozinha — no Brasil o CVV atende no 188 ou em https://www.cvv.org.br."',
       ]
     : [
-        "Mandatory facts for crisis (config language is not Brazilian Portuguese):",
-        "- Empathize briefly; no therapy or clinical advice.",
+        "Crisis content (config language is not Brazilian Portuguese):",
         "- Write in the mandatory response language from config.",
-        "- Direct them to local emergency services or a crisis hotline in their country.",
+        "- One brief empathy line + point to local emergency services or a crisis hotline in their country.",
         "- Do not invent Brazilian numbers or CVV.",
-        "- Write original wording — do not paste a template.",
+        "- Keep it to 2 short sentences after @mention.",
       ];
 
   const hateRules = [
-    "Mandatory facts for hate_violence:",
-    "- State you are a virtual assistant and do not engage with hate, discrimination, violence advocacy, or crime.",
-    "- Informative and firm — no debate, no brand pitch.",
-    "- Write original wording — do not paste a template.",
+    "Hate/violence content:",
+    "- One firm informative sentence: as a virtual assistant you do not engage with hate, discrimination, or advocacy of violence/crime.",
+    "- Optional second short line inviting a respectful comment about the post.",
+    "- No debate, irony, or brand pitch.",
   ];
 
   const retryNote =
     attempt > 1
       ? [
           "",
-          "Previous draft missed mandatory facts. Rewrite completely and include every required fact.",
+          "Previous draft was too long, missing facts, or too brochure-like. Rewrite shorter and include every required fact.",
         ]
       : [];
 
   return [
-    "You write the Instagram safety barrier reply for this comment.",
+    "You write a short Instagram safety barrier reply for this comment.",
     "Understand the comment in any language; reply ONLY in the brand response language from config.",
     "No brand SOUL, product pitch, or playful persona.",
     "",
     buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
     "",
     `Barrier kind: ${kind}`,
+    ...styleRules,
+    "",
     ...(kind === "crisis" ? crisisRules : hateRules),
     ...retryNote,
     "",
     handle
       ? `Start with @${handle} unless already included.`
       : "No author handle — body only.",
-    `Soft character budget: ${maxChars}`,
     "",
     "## Target comment",
     targetCommentLine(context),
@@ -111,7 +130,8 @@ async function completeBarrierDraft(
 }
 
 export async function runBarrierStage(input: BarrierStageInput): Promise<StageResult> {
-  const maxChars = input.maxChars ?? Math.max(280, input.context.persona.maxChars ?? 500);
+  const personaMax = input.maxChars ?? input.context.persona.maxChars ?? 500;
+  const maxChars = barrierCharBudget(input.kind, personaMax);
   let lastReasoning = "";
   let lastLlm: StageResult["llm"];
 
@@ -120,15 +140,17 @@ export async function runBarrierStage(input: BarrierStageInput): Promise<StageRe
     lastReasoning = draft.reasoning;
     lastLlm = draft.llm;
 
+    const withinBudget = draft.text.length <= maxChars + 40;
     if (
       draft.text &&
+      withinBudget &&
       barrierReplyMeetsRequirements(
         input.kind,
         input.context.persona.responseLanguage,
         draft.text,
       )
     ) {
-      const finalText = draft.text.slice(0, maxChars + 80);
+      const finalText = draft.text.slice(0, maxChars + 40);
       return {
         stage: "draft",
         verdict: "pass",
@@ -152,7 +174,7 @@ export async function runBarrierStage(input: BarrierStageInput): Promise<StageRe
     reason: `barrier_incomplete:${input.kind}`,
     reasoning:
       lastReasoning ||
-      "Barrier LLM did not include mandatory facts after retries; refusing canned fallback.",
+      "Barrier LLM did not meet short-form + mandatory facts after retries; refusing canned fallback.",
     structured: {
       replyTier: "none",
       contextSummary: `barrier:${input.kind}:incomplete`,
