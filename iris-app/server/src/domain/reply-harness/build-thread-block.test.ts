@@ -58,18 +58,20 @@ test("buildThreadBlock places brand reply after user comment at the same second"
   assert.ok(userIndex >= 0 && brandIndex > userIndex);
 });
 
-test("buildThreadBlock limits entries for simple tier usage", () => {
-  const entries = Array.from({ length: 8 }, (_, index) => ({
+test("buildThreadBlock keeps the last N entries", () => {
+  const entries = Array.from({ length: 20 }, (_, index) => ({
     author: `u${index}`,
     text: `msg ${index}`,
     isBrandReply: false,
-    at: `2026-08-10T1${index}:00:00.000Z`,
+    at: new Date(Date.UTC(2026, 7, 10, 10, index, 0)).toISOString(),
     depth: 0,
   }));
 
-  const block = buildThreadBlock({ entries }, { maxEntries: 5, brandName: "Iris" });
-  assert.match(block, /msg 7/);
-  assert.doesNotMatch(block, /msg 2/);
+  const block = buildThreadBlock({ entries }, { maxEntries: 16, brandName: "Iris" });
+  assert.match(block, /msg 19/);
+  assert.match(block, /msg 4/);
+  assert.doesNotMatch(block, /msg 3/);
+  assert.doesNotMatch(block, /msg 0/);
 });
 
 test("buildThreadBlock marks target comment for triage without depth markers", () => {

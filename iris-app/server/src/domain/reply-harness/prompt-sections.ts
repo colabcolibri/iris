@@ -9,7 +9,7 @@ import {
 import type { ReplyTier } from "./reply-tier.ts";
 import { buildBrandLine, buildTriageAudienceDirective } from "./prompt-language.ts";
 
-const SIMPLE_THREAD_MAX = 5;
+const THREAD_CONTEXT_MAX = 16;
 const SIMPLE_CAPTION_MAX = 500;
 const LOW_SIGNAL_CAROUSEL_MAX = 280;
 
@@ -26,10 +26,12 @@ export function captionForTier(context: ReplyContext, tier: ReplyTier): string {
   return caption;
 }
 
-export function threadForTier(context: ReplyContext, tier: ReplyTier): string {
+export function threadForTier(context: ReplyContext, _tier: ReplyTier): string {
   return buildThreadBlock(context.thread, {
-    maxEntries: tier === "simple" ? SIMPLE_THREAD_MAX : undefined,
+    maxEntries: THREAD_CONTEXT_MAX,
     brandName: context.persona.brandName,
+    brandUsername: context.brandUsername,
+    targetIgCommentId: context.targetComment.igCommentId,
   });
 }
 
@@ -121,7 +123,7 @@ export function buildTriageContextSection(context: ReplyContext): string {
     "",
     "Thread (chronological — oldest to newest):",
     buildThreadBlock(context.thread, {
-      maxEntries: SIMPLE_THREAD_MAX,
+      maxEntries: THREAD_CONTEXT_MAX,
       brandName: context.persona.brandName,
       brandUsername: context.brandUsername,
       targetIgCommentId: context.targetComment.igCommentId,
