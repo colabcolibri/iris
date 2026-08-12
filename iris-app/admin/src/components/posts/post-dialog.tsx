@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import {
-  commentTextClassName,
-  displayCommentText,
-} from "@/lib/comment-text-display";
+import { toast } from "sonner";
 import { ROUTES } from "@/lib/routes";
-import { ReplyAuditSection } from "@/components/comments/reply-audit-section";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
+import { CommentThread } from "@/components/comments/comment-thread";
 import { StatusBadge } from "@/components/posts/status-badge";
 import { PostMediaSection } from "@/components/posts/post-media-section";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
@@ -30,8 +27,15 @@ import {
   replyStatusPresentation,
   resolveEffectivePostReplyStatus,
 } from "@iris/domain/reply-effective-status";
-import { fetchReplyInspection, replyToComment } from "@/lib/api";
-import type { ReplyInspection, Post, PostReplyModeSetting } from "@/lib/types";
+import { buildCommentThreadGroups } from "@/lib/build-comment-tree";
+import {
+  approveCommentReply,
+  fetchComments,
+  removeCommentDraft,
+  requestCommentAiReply,
+  updateCommentDraft,
+} from "@/lib/api";
+import type { Comment, Post, PostReplyModeSetting } from "@/lib/types";
 
 export type PostDialogMode = "create" | "edit";
 
@@ -123,11 +127,20 @@ export function PostDialog({
   onRetrySchedule,
 }: PostDialogProps) {
   const { replyMode: globalReplyMode } = useAppSettings();
-  const [inspection, setInspection] = useState<ReplyInspection | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [removingDraftId, setRemovingDraftId] = useState<string | null>(null);
+  const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(["content"]);
   const [contentTab, setContentTab] = useState("caption");
+
+  const reloadComments = useCallback(async (postId: string) => {
+    const next = await fetchComments(postId);
+    setComments(next);
+    return next;
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -138,20 +151,125 @@ export function PostDialog({
 
   useEffect(() => {
     if (!open || !post?.id || mode !== "edit") {
-      setInspection(null);
+      setComments([]);
       return;
     }
 
+    let cancelled = false;
     setLoadingComments(true);
-    void fetchReplyInspection(post.id)
-      .then(setInspection)
-      .finally(() => setLoadingComments(false));
-  }, [open, post?.id, mode]);
+    void reloadComments(post.id)
+      .catch((err) => {
+        if (!cancelled) {
+          toast.error(
+            err instanceof Error ? err.message : "Falha ao carregar comentários.",
+          );
+          setComments([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingComments(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, post?.id, mode, reloadComments]);
+
+  const threadGroups = useMemo(
+    () => buildCommentThreadGroups(comments),
+    [comments],
+  );
+
+  const replaceComment = useCallback((updated: Comment) => {
+    setComments((previous) =>
+      previous.map((item) => (item.id === updated.id ? updated : item)),
+    );
+  }, []);
+
+  const handleApproveDraft = useCallback(
+    async (commentId: string, draftText?: string | null) => {
+      setApprovingId(commentId);
+      try {
+        const updated = await approveCommentReply(
+          commentId,
+          draftText ?? undefined,
+        );
+        replaceComment(updated);
+        toast.success("Resposta publicada na Meta.");
+        if (post?.id) {
+          await reloadComments(post.id);
+        }
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao aprovar resposta.",
+        );
+      } finally {
+        setApprovingId(null);
+      }
+    },
+    [post?.id, reloadComments, replaceComment],
+  );
+
+  const handleRemoveDraft = useCallback(
+    async (commentId: string) => {
+      setRemovingDraftId(commentId);
+      try {
+        const updated = await removeCommentDraft(commentId);
+        replaceComment(updated);
+        toast.success("Rascunho removido.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao remover rascunho.",
+        );
+      } finally {
+        setRemovingDraftId(null);
+      }
+    },
+    [replaceComment],
+  );
+
+  const handleSaveDraft = useCallback(
+    async (commentId: string, draftText: string) => {
+      setSavingDraftId(commentId);
+      try {
+        const updated = await updateCommentDraft(commentId, draftText);
+        replaceComment(updated);
+        toast.success("Rascunho salvo.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao salvar rascunho.",
+        );
+        throw err;
+      } finally {
+        setSavingDraftId(null);
+      }
+    },
+    [replaceComment],
+  );
+
+  const handleGenerateDraft = useCallback(
+    async (commentId: string) => {
+      setGeneratingId(commentId);
+      try {
+        const updated = await requestCommentAiReply(commentId, "draft");
+        replaceComment(updated);
+        toast.success("Rascunho gerado.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Falha ao gerar rascunho.",
+        );
+      } finally {
+        setGeneratingId(null);
+      }
+    },
+    [replaceComment],
+  );
 
   if (!mode) return null;
 
   const title = mode === "create" ? "Nova postagem" : "Editar postagem";
-  const comments = inspection?.comments ?? [];
   const status = post?.status;
   const isReadOnly = status === "published" || status === "monitored";
   const isScheduled = status === "scheduled";
@@ -457,115 +575,34 @@ export function PostDialog({
                       </Link>
                     ) : null}
                   </div>
-                  {loadingComments ? (
+                  {loadingComments && comments.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Carregando…</p>
-                  ) : comments.length === 0 ? (
+                  ) : threadGroups.length === 0 ? (
                     <p className="rounded-(--iris-radius-sm) border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
                       Nenhum comentário neste post ainda.
                     </p>
                   ) : (
-                    <div className="space-y-2">
-                      {comments.slice(0, 6).map((comment) => (
-                        <article
-                          key={comment.id}
-                          className="rounded-(--iris-radius-sm) border border-border/60 bg-background p-3 text-sm"
-                        >
-                          <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span className="font-semibold text-foreground">
-                              {comment.author_username ?? "usuário"}
-                            </span>
-                            <span>
-                              {new Date(comment.created_at).toLocaleString(
-                                "pt-BR",
-                              )}
-                            </span>
-                          </div>
-                          <p className={commentTextClassName}>
-                            {displayCommentText(comment.text)}
-                          </p>
-                          {comment.status === "skipped" ||
-                          comment.status === "failed" ||
-                          comment.status === "replied" ? (
-                            <ReplyAuditSection
-                              commentId={comment.id}
-                              className="mt-2"
-                            />
-                          ) : null}
-                          {comment.thread.length > 0 ? (
-                            <details className="mt-2">
-                              <summary className="cursor-pointer text-xs font-semibold text-primary">
-                                Ver conversa ({comment.thread.length})
-                              </summary>
-                              <ul className="mt-2 space-y-2 border-l-2 border-border/60 pl-3 text-xs">
-                                {comment.thread.map((entry, index) => (
-                                  <li
-                                    key={`${comment.id}-${index}`}
-                                    className="wrap-break-word"
-                                    style={{
-                                      marginLeft: `${Math.min(entry.depth, 4) * 10}px`,
-                                    }}
-                                  >
-                                    <span className="font-semibold text-foreground">
-                                      {entry.is_brand_reply
-                                        ? "marca"
-                                        : (entry.author ?? "usuário")}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      {" · "}
-                                      {new Date(entry.at).toLocaleString(
-                                        "pt-BR",
-                                      )}
-                                    </span>
-                                    <p className="text-muted-foreground">
-                                      {entry.text}
-                                    </p>
-                                  </li>
-                                ))}
-                              </ul>
-                            </details>
-                          ) : null}
-                          {comment.status === "pending" ? (
-                            <form
-                              className="mt-3 space-y-2"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                const message = replyDrafts[comment.id]?.trim();
-                                if (!message || !post?.id) return;
-                                void replyToComment(comment.id, message).then(
-                                  () =>
-                                    fetchReplyInspection(post.id).then(
-                                      setInspection,
-                                    ),
-                                );
-                              }}
-                            >
-                              <Textarea
-                                placeholder="Responder…"
-                                value={replyDrafts[comment.id] ?? ""}
-                                onChange={(e) =>
-                                  setReplyDrafts((prev) => ({
-                                    ...prev,
-                                    [comment.id]: e.target.value,
-                                  }))
-                                }
-                                rows={2}
-                                className="resize-none bg-background"
-                              />
-                              <Button type="submit" size="sm" variant="outline">
-                                Responder
-                              </Button>
-                            </form>
-                          ) : null}
-                        </article>
-                      ))}
-                      {comments.length > 6 ? (
-                        <p className="text-xs text-muted-foreground">
-                          +{comments.length - 6} comentário
-                          {comments.length - 6 === 1 ? "" : "s"} — use o hub de
-                          publicações.
-                        </p>
-                      ) : null}
-                    </div>
+                    <CommentThread
+                      groups={threadGroups}
+                      allComments={comments}
+                      brandUsername={metaIgUsername}
+                      approvingId={approvingId}
+                      removingDraftId={removingDraftId}
+                      savingDraftId={savingDraftId}
+                      generatingId={generatingId}
+                      onApproveDraft={(commentId, draftText) =>
+                        void handleApproveDraft(commentId, draftText)
+                      }
+                      onRemoveDraft={(commentId) =>
+                        void handleRemoveDraft(commentId)
+                      }
+                      onSaveDraft={(commentId, draftText) =>
+                        handleSaveDraft(commentId, draftText)
+                      }
+                      onGenerateDraft={(commentId) =>
+                        void handleGenerateDraft(commentId)
+                      }
+                    />
                   )}
                 </section>
               ) : null}
