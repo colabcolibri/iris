@@ -54,6 +54,55 @@ test("iris_prepare_post_asset_upload rejects missing post", async () => {
   await rm(mediaRoot, { recursive: true, force: true });
 });
 
+test("iris_prepare_post_asset_upload rejects sortOrder 0 (1-based only)", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-asset-sort-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+    publicBaseUrl: "http://127.0.0.1:9876",
+    publishUrlSecret: "publish-secret",
+  });
+
+  const post = ctx.posts.create({ caption: "cap", channel: "instagram" });
+
+  const server = createIrisMcpServer(ctx);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test", version: "1.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const listed = await client.listTools();
+  const prepare = listed.tools.find((t) => t.name === "iris_prepare_post_asset_upload");
+  assert.ok(prepare);
+  assert.match(prepare.description ?? "", /1-based/i);
+  const sortSchema = prepare.inputSchema as {
+    properties?: { sortOrder?: { description?: string } };
+  };
+  assert.match(sortSchema.properties?.sortOrder?.description ?? "", /1-based/i);
+
+  const result = await client.callTool({
+    name: "iris_prepare_post_asset_upload",
+    arguments: {
+      postId: post.id,
+      filename: "x.png",
+      sortOrder: 0,
+    },
+  });
+  assert.equal(result.isError, true);
+  const text = JSON.stringify(result.content);
+  assert.match(text, /sortOrder|>0|Too small/i);
+
+  await client.close();
+  await server.close();
+  db.close();
+  await rm(mediaRoot, { recursive: true, force: true });
+});
+
 test("prepare + signed multipart upload ingests asset once", async () => {
   resetUploadJtiRegistryForTests();
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-asset-up-"));

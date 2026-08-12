@@ -51,11 +51,18 @@ export function registerAssetTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_prepare_post_asset_upload",
-    "Prepare a one-shot signed multipart upload for a post image. Returns upload_url and curl_command — put the local file path in place of LOCAL_IMAGE_PATH and run curl. Do not base64-encode image bytes into MCP.",
+    "Prepare a one-shot signed multipart upload for a post image. sortOrder is 1-based carousel order (first slide = 1, never 0). Returns upload_url and curl_command — put the local file path in place of LOCAL_IMAGE_PATH and run curl. Do not base64-encode image bytes into MCP.",
     {
       postId: z.string().min(1),
       filename: z.string().min(1),
-      sortOrder: z.number().int().positive().default(1),
+      sortOrder: z
+        .number()
+        .int()
+        .positive()
+        .default(1)
+        .describe(
+          "1-based carousel position: first image is 1, second is 2, … Never use 0.",
+        ),
     },
     async (args) => {
       const post = ctx.posts.findById(args.postId);
@@ -89,7 +96,7 @@ export function registerAssetTools(server: McpServer, ctx: AppContext): void {
           max_bytes: prepared.maxBytes,
           curl_command: prepared.curlCommand,
           instructions:
-            "Replace LOCAL_IMAGE_PATH with the absolute path to the image file, then run curl_command from the host shell. Bytes must never enter the MCP tool call.",
+            "sortOrder is 1-based (first slide = 1). Replace LOCAL_IMAGE_PATH with the absolute path to the image file, then run curl_command from the host shell. Bytes must never enter the MCP tool call.",
         });
       } catch (error) {
         return toolError(

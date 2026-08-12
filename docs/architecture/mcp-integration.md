@@ -89,6 +89,7 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 Bytes **não** entram no JSON-RPC. Fluxo:
 
 1. Tool `iris_prepare_post_asset_upload` (`postId`, `filename`, `sortOrder`) → `upload_url`, `curl_command`
+   - `sortOrder` é **1-based**: primeiro slide do carrossel = `1` (nunca `0`); segundo = `2`; …
 2. Host: `curl -sf -X POST '{upload_url}' -F 'file=@/caminho/local.png'`
 3. Server grava via `ingestPostAsset` (Sharp → `data/media/`)
 
