@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
+import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
@@ -12,7 +12,11 @@ const DELAY_MIN = 30;
 const DELAY_MAX = 600;
 const DELAY_SUGGESTED = 90;
 
-export function AgentAutoReplyCard() {
+type AgentAutoReplyCardProps = {
+  embedded?: boolean;
+};
+
+export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps) {
   const {
     replyMode,
     replyDelaySeconds,
@@ -77,15 +81,11 @@ export function AgentAutoReplyCard() {
   );
 
   return (
-    <Card className="space-y-4 border-border bg-card p-6 shadow-none">
-      <header className="space-y-1">
-        <h2 className="text-sm font-semibold">Agente de comentários</h2>
-        <p className="text-xs text-muted-foreground">
-          Modo padrão para posts que seguem a configuração global. Posts com
-          modo próprio têm precedência.
-        </p>
-      </header>
-
+    <SettingsCardShell
+      embedded={embedded}
+      title="Agente de comentários"
+      description="Modo padrão para posts que seguem a configuração global. Posts com modo próprio têm precedência."
+    >
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
@@ -111,7 +111,7 @@ export function AgentAutoReplyCard() {
               <Label className="text-sm font-semibold">
                 Tempo antes de responder
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Padrão: imediato. Com fila, o agente aguarda o intervalo
                 (sugestão 60–120s) antes do harness — a fila fica no banco e
                 sobrevive a reinícios.
@@ -172,6 +172,6 @@ export function AgentAutoReplyCard() {
           </div>
         </div>
       )}
-    </Card>
+    </SettingsCardShell>
   );
 }

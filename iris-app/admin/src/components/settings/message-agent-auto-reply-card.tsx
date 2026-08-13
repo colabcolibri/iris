@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
+import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
@@ -12,7 +12,13 @@ const DELAY_MIN = 30;
 const DELAY_MAX = 600;
 const DELAY_SUGGESTED = 90;
 
-export function MessageAgentAutoReplyCard() {
+type MessageAgentAutoReplyCardProps = {
+  embedded?: boolean;
+};
+
+export function MessageAgentAutoReplyCard({
+  embedded = false,
+}: MessageAgentAutoReplyCardProps) {
   const {
     messageReplyMode,
     messageReplyDelaySeconds,
@@ -74,15 +80,11 @@ export function MessageAgentAutoReplyCard() {
   );
 
   return (
-    <Card className="space-y-4 border-border bg-card p-6 shadow-none">
-      <header className="space-y-1">
-        <h2 className="text-sm font-semibold">Agente de mensagens (DM)</h2>
-        <p className="text-xs text-muted-foreground">
-          Modo padrão para conversas que seguem a configuração global. Conversas com
-          modo próprio têm precedência.
-        </p>
-      </header>
-
+    <SettingsCardShell
+      embedded={embedded}
+      title="Agente de mensagens (DM)"
+      description="Modo padrão para conversas que seguem a configuração global. Conversas com modo próprio têm precedência."
+    >
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
@@ -103,7 +105,7 @@ export function MessageAgentAutoReplyCard() {
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="space-y-1">
               <Label className="text-sm font-semibold">Tempo antes de responder</Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Mesma fila persistente usada nos comentários, com settings próprios para DM.
               </p>
             </div>
@@ -159,6 +161,6 @@ export function MessageAgentAutoReplyCard() {
           </div>
         </div>
       )}
-    </Card>
+    </SettingsCardShell>
   );
 }

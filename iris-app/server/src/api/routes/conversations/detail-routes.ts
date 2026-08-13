@@ -13,6 +13,10 @@ import { serializeConversation } from "../../../domain/messages/serialize-conver
 import { serializeConversationSummary } from "./conversation-api.ts";
 import { serializeMessageWithDraft } from "../messages/shared.ts";
 import { syncConversationMessages, syncConversationsFromMeta } from "../../../domain/messages/sync-conversation-messages.ts";
+import { hydrateConversationParticipantIfNeeded } from "../../../domain/messages/hydrate-conversation-participant.ts";
+import { reconcileConversationPendingStatuses } from "../../../domain/messages/reconcile-conversation-pending-statuses.ts";
+import { markConversationReadUpTo } from "../../../domain/messages/mark-conversation-read.ts";
+import { purgeMessageHistory } from "../../../domain/messages/purge-message-history.ts";
 import { routeParam } from "../../route-resources.ts";
 import type { RouteMatch } from "../../route-types.ts";
 
@@ -49,11 +53,21 @@ export const conversationsDetailRouter = createRouter([
       conversations: match.ctx.conversations,
       messages: match.ctx.messages,
       metaConversationsReader: match.ctx.metaConversationsReader,
+      resolveOwnerIgUserId: () => match.ctx.metaConnectionStore.get()?.igUserId ?? null,
+      resolveOwnerUsername: () => match.ctx.metaConnectionStore.get()?.igUsername ?? null,
     });
 
+    const purged = purgeMessageHistory({ messages: match.ctx.messages });
+
     notifyMessagesChanged({});
-    sendJson(match.res, 200, result);
+    sendJson(match.res, 200, { ...result, purged });
   }, { errorOptions: { upstream502: true } }),
+
+  route("POST", "/api/conversations/purge-history", { admin: true }, async (match) => {
+    const purged = purgeMessageHistory({ messages: match.ctx.messages });
+    notifyMessagesChanged({});
+    sendJson(match.res, 200, purged);
+  }),
 
   route(
     "GET",
@@ -66,13 +80,32 @@ export const conversationsDetailRouter = createRouter([
         return;
       }
 
+      reconcileConversationPendingStatuses(conversationId, match.ctx.messages);
+
+      let hydrated = conversation;
+      const readiness = getMetaReadiness(match.ctx);
+      if (readiness.ready) {
+        hydrated = await hydrateConversationParticipantIfNeeded(conversation, {
+          conversations: match.ctx.conversations,
+          metaConversationsReader: match.ctx.metaConversationsReader,
+          ownerIgUserId: match.ctx.metaConnectionStore.get()?.igUserId ?? null,
+          ownerUsername: match.ctx.metaConnectionStore.get()?.igUsername ?? null,
+        });
+      }
+
       const thread = match.ctx.messages.listByConversationId(conversationId);
       const messages = thread.map((message) =>
         serializeMessageWithDraft(message, match.ctx),
       );
 
+      const readAt = markConversationReadUpTo(hydrated, thread);
+      if (readAt) {
+        hydrated =
+          match.ctx.conversations.updateOperatorReadAt(conversationId, readAt) ?? hydrated;
+      }
+
       sendJson(match.res, 200, {
-        conversation: serializeConversationSummary(conversation, match.ctx, thread),
+        conversation: serializeConversationSummary(hydrated, match.ctx, thread),
         messages,
       });
     },
@@ -100,6 +133,8 @@ export const conversationsDetailRouter = createRouter([
         conversations: match.ctx.conversations,
         messages: match.ctx.messages,
         metaConversationsReader: match.ctx.metaConversationsReader,
+        resolveOwnerIgUserId: () => match.ctx.metaConnectionStore.get()?.igUserId ?? null,
+        resolveOwnerUsername: () => match.ctx.metaConnectionStore.get()?.igUsername ?? null,
       });
 
       notifyMessagesChanged({ conversation_id: conversationId });

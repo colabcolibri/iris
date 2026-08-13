@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { McpSetupGuide } from "@/components/settings/mcp-setup-guide";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Input } from "@/components/ui/input";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import {
@@ -13,7 +13,11 @@ import {
   type McpSettingsGenerateResult,
 } from "@/lib/api";
 
-export function McpConnectionCard() {
+type McpConnectionCardProps = {
+  embedded?: boolean;
+};
+
+export function McpConnectionCard({ embedded = false }: McpConnectionCardProps) {
   const { confirm } = useConfirmDialog();
   const [settings, setSettings] = useState<McpSettings | null>(null);
   const [generated, setGenerated] = useState<McpSettingsGenerateResult | null>(
@@ -121,21 +125,17 @@ export function McpConnectionCard() {
   const mcpUrl = generated?.mcp_url ?? settings?.mcp_url ?? "";
 
   return (
-    <Card className="space-y-5 border-border bg-card p-6 shadow-none">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">Conexão MCP</h2>
-        <p className="text-sm text-muted-foreground">
-          Gere um código e copie os campos para Cursor, ChatGPT ou Claude — cada
-          client no formato que aceita.
-        </p>
-      </div>
-
+    <SettingsCardShell
+      embedded={embedded}
+      title="Conexão MCP"
+      description="Gere um código e copie os campos para Cursor, ChatGPT ou Claude — cada client no formato que aceita."
+    >
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
         <>
           {settings?.env_override && (
-            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
               Há um código definido em{" "}
               <code className="font-mono">IRIS_MCP_CONNECTION_CODE</code> no
               servidor. Ele continua válido junto com códigos gerados aqui.
@@ -228,6 +228,6 @@ export function McpConnectionCard() {
           </div>
         </>
       )}
-    </Card>
+    </SettingsCardShell>
   );
 }

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { refreshAllPostInsights } from "@/lib/api";
@@ -16,7 +16,13 @@ function endOfDayIso(dateYmd: string): string {
   return `${dateYmd}T23:59:59.999Z`;
 }
 
-export function InsightsRefreshCard() {
+type InsightsRefreshCardProps = {
+  embedded?: boolean;
+};
+
+export function InsightsRefreshCard({
+  embedded = false,
+}: InsightsRefreshCardProps) {
   const { meta } = useMetaSession();
   const metaReady = Boolean(meta?.connected);
   const [sinceDate, setSinceDate] = useState("");
@@ -73,17 +79,11 @@ export function InsightsRefreshCard() {
   }
 
   return (
-    <Card className="space-y-4 border-border bg-card p-6 shadow-none">
-      <header className="space-y-1">
-        <h2 className="text-sm font-semibold">Insights Instagram em lote</h2>
-        <p className="text-xs text-muted-foreground">
-          Atualiza métricas dos posts já publicados ou monitorados. Opcionalmente
-          filtra pela data de publicação (
-          <span className="font-mono">published_at</span>
-          ).
-        </p>
-      </header>
-
+    <SettingsCardShell
+      embedded={embedded}
+      title="Insights Instagram em lote"
+      description="Atualiza métricas dos posts já publicados ou monitorados. Opcionalmente filtra pela data de publicação (published_at)."
+    >
       {!metaReady ? (
         <p className="text-sm text-muted-foreground">
           Conecte o Instagram para atualizar insights.
@@ -92,10 +92,7 @@ export function InsightsRefreshCard() {
         <div className="max-w-xl space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label
-                htmlFor="insights-since"
-                className="text-xs font-semibold tracking-wide uppercase"
-              >
+              <Label htmlFor="insights-since" className="text-sm font-semibold">
                 Publicado desde
               </Label>
               <Input
@@ -108,10 +105,7 @@ export function InsightsRefreshCard() {
               />
             </div>
             <div className="space-y-2">
-              <Label
-                htmlFor="insights-until"
-                className="text-xs font-semibold tracking-wide uppercase"
-              >
+              <Label htmlFor="insights-until" className="text-sm font-semibold">
                 Publicado até
               </Label>
               <Input
@@ -125,7 +119,7 @@ export function InsightsRefreshCard() {
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">{rangeHint}</p>
+          <p className="text-sm text-muted-foreground">{rangeHint}</p>
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -156,6 +150,6 @@ export function InsightsRefreshCard() {
           </div>
         </div>
       )}
-    </Card>
+    </SettingsCardShell>
   );
 }

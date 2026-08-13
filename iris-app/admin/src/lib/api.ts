@@ -734,10 +734,15 @@ export function updateProduct(
   });
 }
 
-export function deactivateProduct(productId: string) {
+export function deleteProduct(productId: string) {
   return apiFetch<{ ok: boolean }>(`/api/products/${productId}`, {
     method: "DELETE",
   });
+}
+
+/** @deprecated Use deleteProduct — mantido por compatibilidade. */
+export function deactivateProduct(productId: string) {
+  return deleteProduct(productId);
 }
 
 export function fetchAppSettings() {

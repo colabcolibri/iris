@@ -55,6 +55,9 @@ test("message repositories upsert inbound, draft dedupe and schedule queue", () 
     assert.equal(draft.id, draftAgain.id);
     assert.equal(draftAgain.draftText, "olá, tudo bem?");
 
+    assert.equal(replies.clearDraft(first.message.id), true);
+    assert.equal(replies.findLatestDraft(first.message.id), null);
+
     const thread = messages.listByConversationId(conversation.id);
     assert.equal(thread.length, 1);
     assert.equal(messages.countPendingByConversation(conversation.id), 1);

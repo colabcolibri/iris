@@ -14,9 +14,13 @@ export type ParsedMessageEntry = {
   igMessageId: string;
   senderIgUserId: string;
   recipientIgUserId: string;
+  senderUsername: string | null;
+  senderDisplayName: string | null;
   text: string | null;
   igTimestamp: string | null;
   direction: "inbound" | "outbound";
+  attachmentUrl: string | null;
+  attachmentMediaType: "image" | "video" | "file" | null;
 };
 
 export function verifySubscribeToken(
@@ -77,6 +81,52 @@ function readMediaId(value: unknown): string | null {
   }
 
   return null;
+}
+
+function readSenderUsername(sender: Record<string, unknown> | null): string | null {
+  if (!sender) {
+    return null;
+  }
+  return typeof sender.username === "string" ? sender.username : null;
+}
+
+function readSenderDisplayName(sender: Record<string, unknown> | null): string | null {
+  if (!sender) {
+    return null;
+  }
+  return typeof sender.name === "string" ? sender.name : null;
+}
+
+function readMessageAttachment(message: Record<string, unknown>): {
+  attachmentUrl: string | null;
+  attachmentMediaType: "image" | "video" | "file" | null;
+} {
+  const attachments = Array.isArray(message.attachments) ? message.attachments : [];
+  for (const item of attachments) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+    const record = item as Record<string, unknown>;
+    const payload =
+      record.payload && typeof record.payload === "object"
+        ? (record.payload as Record<string, unknown>)
+        : null;
+    const url =
+      (payload && typeof payload.url === "string" ? payload.url : null) ??
+      (typeof record.url === "string" ? record.url : null);
+    if (!url) {
+      continue;
+    }
+    const type = typeof record.type === "string" ? record.type.toLowerCase() : "";
+    if (type.includes("image")) {
+      return { attachmentUrl: url, attachmentMediaType: "image" };
+    }
+    if (type.includes("video")) {
+      return { attachmentUrl: url, attachmentMediaType: "video" };
+    }
+    return { attachmentUrl: url, attachmentMediaType: "file" };
+  }
+  return { attachmentUrl: null, attachmentMediaType: null };
 }
 
 function readCommentTimestamp(record: Record<string, unknown>): string | null {
@@ -237,14 +287,19 @@ function parseMessagingArray(
 
     const direction =
       pageIgUserId && senderIgUserId === pageIgUserId ? "outbound" : "inbound";
+    const attachment = readMessageAttachment(message);
 
     parsed.push({
       igMessageId,
       senderIgUserId,
       recipientIgUserId,
+      senderUsername: readSenderUsername(sender),
+      senderDisplayName: readSenderDisplayName(sender),
       text: typeof message.text === "string" ? message.text : null,
       igTimestamp: readMessageTimestamp(record.timestamp),
       direction,
+      attachmentUrl: attachment.attachmentUrl,
+      attachmentMediaType: attachment.attachmentMediaType,
     });
   }
 
@@ -315,14 +370,21 @@ export function parseMessageEntries(
 
       const direction =
         pageIgUserId && senderIgUserId === pageIgUserId ? "outbound" : "inbound";
+      const attachment = readMessageAttachment(record);
 
       parsed.push({
         igMessageId,
         senderIgUserId,
         recipientIgUserId: pageIgUserId ?? "unknown",
+        senderUsername:
+          sender && typeof sender.username === "string" ? sender.username : null,
+        senderDisplayName:
+          sender && typeof sender.name === "string" ? sender.name : null,
         text: typeof record.text === "string" ? record.text : null,
         igTimestamp: readMessageTimestamp(record.timestamp ?? record.created_time),
         direction,
+        attachmentUrl: attachment.attachmentUrl,
+        attachmentMediaType: attachment.attachmentMediaType,
       });
     }
   }

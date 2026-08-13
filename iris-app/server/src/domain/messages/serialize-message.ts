@@ -7,6 +7,8 @@ export function serializeMessage(message: Message) {
     conversation_id: message.conversationId,
     direction: message.direction,
     text: message.text,
+    attachment_url: message.attachmentUrl,
+    attachment_media_type: message.attachmentMediaType,
     ig_timestamp: message.igTimestamp,
     status: message.status,
     error_message: message.errorMessage,

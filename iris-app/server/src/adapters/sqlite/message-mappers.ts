@@ -7,9 +7,12 @@ type ConversationRow = {
   ig_conversation_id: string;
   participant_ig_user_id: string;
   participant_username: string | null;
+  participant_display_name: string | null;
+  participant_avatar_url: string | null;
   last_message_at: string | null;
   reply_mode: string;
   reply_prompt: string | null;
+  operator_read_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -20,6 +23,8 @@ type MessageRow = {
   conversation_id: string;
   direction: string;
   text: string | null;
+  attachment_url: string | null;
+  attachment_media_type: string | null;
   ig_timestamp: string | null;
   status: string;
   error_message: string | null;
@@ -63,12 +68,24 @@ export function mapConversationRow(row: ConversationRow): Conversation {
     igConversationId: row.ig_conversation_id,
     participantIgUserId: row.participant_ig_user_id,
     participantUsername: row.participant_username,
+    participantDisplayName: row.participant_display_name,
+    participantAvatarUrl: row.participant_avatar_url,
     lastMessageAt: row.last_message_at,
     replyMode: parseReplyMode(row.reply_mode),
     replyPrompt: row.reply_prompt,
+    operatorReadAt: row.operator_read_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function parseAttachmentMediaType(
+  value: string | null,
+): Message["attachmentMediaType"] {
+  if (value === "image" || value === "video" || value === "file") {
+    return value;
+  }
+  return null;
 }
 
 export function mapMessageRow(row: MessageRow): Message {
@@ -78,6 +95,8 @@ export function mapMessageRow(row: MessageRow): Message {
     conversationId: row.conversation_id,
     direction: row.direction as Message["direction"],
     text: row.text,
+    attachmentUrl: row.attachment_url,
+    attachmentMediaType: parseAttachmentMediaType(row.attachment_media_type),
     igTimestamp: row.ig_timestamp,
     status: row.status as Message["status"],
     errorMessage: row.error_message,

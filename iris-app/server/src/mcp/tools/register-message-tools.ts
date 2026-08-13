@@ -19,6 +19,10 @@ export function registerMessageTools(server: McpServer, ctx: AppContext): void {
       const conversations = ctx.conversations.listRecent(limit).map((conversation) => ({
         ...serializeConversation(conversation),
         pending_count: ctx.messages.countPendingByConversation(conversation.id),
+        unread_count: ctx.messages.countUnreadByConversation(
+          conversation.id,
+          conversation.operatorReadAt,
+        ),
       }));
       return jsonToolContent({ conversations });
     },
@@ -44,6 +48,10 @@ export function registerMessageTools(server: McpServer, ctx: AppContext): void {
         conversation: {
           ...serializeConversation(conversation),
           pending_count: ctx.messages.countPendingByConversation(conversation.id),
+        unread_count: ctx.messages.countUnreadByConversation(
+          conversation.id,
+          conversation.operatorReadAt,
+        ),
         },
         messages,
       });

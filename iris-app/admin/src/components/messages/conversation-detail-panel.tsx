@@ -1,11 +1,17 @@
-import { Loader2, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { Loader2, RefreshCw, Settings2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
+import { ParticipantAvatar } from "@/components/messages/participant-avatar";
+import { ConversationSettingsSheet } from "@/components/messages/conversation-settings-sheet";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { MessageThread } from "@/components/messages/message-thread";
+import {
+  formatParticipantHandle,
+  participantDisplayLabel,
+  resolveParticipantForDisplay,
+} from "@/lib/participant-display";
+import { countPendingInboundMessages } from "@/lib/message-pending";
 import {
   isWithinMessagingWindow,
   lastInboundMessage,
@@ -41,11 +47,6 @@ type ConversationDetailPanelProps = {
   onManualReply: (messageId: string, text: string) => void | Promise<void>;
 };
 
-function formatHandle(username: string | null | undefined): string {
-  const value = username?.trim() || "usuário";
-  return value.startsWith("@") ? value : `@${value}`;
-}
-
 export function ConversationDetailPanel({
   conversation,
   messages,
@@ -72,95 +73,103 @@ export function ConversationDetailPanel({
   onGenerateDraft,
   onManualReply,
 }: ConversationDetailPanelProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const lastInbound = lastInboundMessage(messages);
   const windowOpen = isWithinMessagingWindow(
     lastInbound?.ig_timestamp ?? lastInbound?.created_at ?? null,
   );
+  const participant = resolveParticipantForDisplay(
+    conversation.participant_username,
+    conversation.participant_display_name,
+    brandUsername,
+  );
+  const participantLabel = participantDisplayLabel(
+    participant.username,
+    participant.displayName,
+  );
+  const participantHandle = formatParticipantHandle(participant.username);
+  const pendingReplyCount = countPendingInboundMessages(messages);
+  const replyEnabled = canReply && !metaUnsupported;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="shrink-0 space-y-4 border-b border-border/60 p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <h2 className="truncate text-lg font-semibold text-foreground">
-              {formatHandle(conversation.participant_username)}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {conversation.participant_ig_user_id}
+      <div className="shrink-0 border-b border-border/60 px-3 py-2.5 sm:px-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ParticipantAvatar
+            username={participant.username}
+            displayName={participant.displayName}
+            avatarUrl={conversation.participant_avatar_url}
+            className="size-10 shrink-0 sm:size-11"
+          />
+
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="truncate text-base font-semibold text-foreground sm:text-lg">
+                {participantLabel}
+              </h2>
+              {pendingReplyCount > 0 ? (
+                <Badge variant="outline" className="shrink-0 px-1.5 text-xs">
+                  {pendingReplyCount} para responder
+                </Badge>
+              ) : null}
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {participant.username
+                ? participantHandle
+                : conversation.participant_ig_user_id}
             </p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={!metaReady || syncing || metaUnsupported}
-            onClick={onSync}
-          >
-            {syncing ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-            Sincronizar
-          </Button>
-        </div>
 
-        {metaUnsupported ? (
-          <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            Conta Meta sem suporte a conversas via API. Conecte uma conta compatível
-            para sincronizar e responder DMs.
-          </p>
-        ) : null}
-
-        <div
-          className={cn(
-            "rounded-md border px-3 py-2 text-xs",
-            windowOpen
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100"
-              : "border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100",
-          )}
-        >
-          {messagingWindowLabel(
-            lastInbound?.ig_timestamp ?? lastInbound?.created_at ?? null,
-          )}
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Modo de resposta</Label>
-            <ReplyModeSelect
-              variant="post"
-              value={replyMode}
-              disabled={savingReplyMode}
-              onChange={(value) => onReplyModeChange(value as ConversationReplyMode)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Briefing da conversa</Label>
-            <Textarea
-              value={replyPrompt}
-              onChange={(event) => onReplyPromptChange(event.target.value)}
-              rows={3}
-              placeholder="Contexto específico desta conversa…"
-            />
+          <div className="flex shrink-0 items-center gap-1">
+            <span
+              className={cn(
+                "hidden rounded-full px-2 py-0.5 text-xs font-medium sm:inline-flex",
+                windowOpen
+                  ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-100"
+                  : "bg-amber-500/15 text-amber-900 dark:text-amber-100",
+              )}
+              title={messagingWindowLabel(
+                lastInbound?.ig_timestamp ?? lastInbound?.created_at ?? null,
+              )}
+            >
+              {windowOpen ? "Janela aberta" : "Janela fechada"}
+            </span>
             <Button
               type="button"
-              size="sm"
-              variant="outline"
-              disabled={savingBriefing}
-              onClick={onSaveBriefing}
+              size="icon"
+              variant="ghost"
+              className="size-9"
+              aria-label="Configurações da conversa"
+              onClick={() => setSettingsOpen(true)}
             >
-              Salvar briefing
+              <Settings2 className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="size-9"
+              disabled={!metaReady || syncing || metaUnsupported}
+              aria-label="Sincronizar conversa"
+              onClick={onSync}
+            >
+              {syncing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
             </Button>
           </div>
         </div>
 
-        {conversation.pending_count > 0 ? (
-          <Badge variant="secondary">{conversation.pending_count} pendente(s)</Badge>
+        {metaUnsupported ? (
+          <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            Conta Meta sem suporte a conversas via API.
+          </p>
         ) : null}
       </div>
 
-      <PageScrollArea className="flex-1 p-4">
+      <PageScrollArea className="min-h-0 flex-1 overflow-x-hidden p-3 sm:p-4">
         {messages.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nenhuma mensagem nesta conversa. Use sincronizar para importar do Instagram.
@@ -169,7 +178,10 @@ export function ConversationDetailPanel({
           <MessageThread
             messages={messages}
             brandUsername={brandUsername}
-            canReply={canReply && !metaUnsupported}
+            participantUsername={participant.username}
+            participantDisplayName={participant.displayName}
+            participantAvatarUrl={conversation.participant_avatar_url}
+            canReply={replyEnabled}
             approvingId={approvingId}
             removingDraftId={removingDraftId}
             savingDraftId={savingDraftId}
@@ -182,6 +194,18 @@ export function ConversationDetailPanel({
           />
         )}
       </PageScrollArea>
+
+      <ConversationSettingsSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        replyMode={replyMode}
+        replyPrompt={replyPrompt}
+        savingReplyMode={savingReplyMode}
+        savingBriefing={savingBriefing}
+        onReplyModeChange={onReplyModeChange}
+        onReplyPromptChange={onReplyPromptChange}
+        onSaveBriefing={onSaveBriefing}
+      />
     </div>
   );
 }

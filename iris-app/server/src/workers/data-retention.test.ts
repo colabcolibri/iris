@@ -5,7 +5,7 @@ import { runMigrations } from "../adapters/sqlite/migrate.ts";
 import { createAppContext } from "../api/app-context.ts";
 import { runDataRetention } from "./data-retention.ts";
 
-test("runDataRetention deletes old webhook events only", () => {
+test("runDataRetention deletes old webhook events and message history", () => {
   const db = openDatabase(":memory:");
 
   try {
@@ -30,6 +30,8 @@ test("runDataRetention deletes old webhook events only", () => {
 
     assert.equal(result.webhookEventsDeleted, 1);
     assert.equal(ctx.webhookEvents.count(), 0);
+    assert.equal(result.messagesDeleted, 0);
+    assert.equal(result.conversationsDeleted, 0);
   } finally {
     db.close();
   }

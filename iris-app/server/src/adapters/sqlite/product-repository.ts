@@ -39,6 +39,8 @@ export function createSqliteProductRepository(db: DatabaseSync): ProductReposito
     UPDATE products SET active = 0, updated_at = ? WHERE id = ?
   `);
 
+  const removeStmt = db.prepare(`DELETE FROM products WHERE id = ?`);
+
   function nowIso(): string {
     return new Date().toISOString();
   }
@@ -94,6 +96,11 @@ export function createSqliteProductRepository(db: DatabaseSync): ProductReposito
 
     deactivate(id: string) {
       const result = deactivateStmt.run(nowIso(), id);
+      return result.changes > 0;
+    },
+
+    remove(id: string) {
+      const result = removeStmt.run(id);
       return result.changes > 0;
     },
   };

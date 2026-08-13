@@ -63,7 +63,8 @@ async function processMessageReplyCore(
     textPreview: message.text?.slice(0, 200) ?? null,
   });
 
-  let run: AgentRun;
+  let run: AgentRun | null = null;
+  let harnessApproved = false;
 
   try {
     const recorded = await executeAndRecordMessageHarness(
@@ -102,9 +103,17 @@ async function processMessageReplyCore(
     }
 
     const replyText = harnessResult.finalText;
+    harnessApproved = true;
 
     if (effectiveReplyMode === "draft") {
-      ctx.messageReplies.upsertDraft(messageId, replyText, { agentRunId: run.id });
+      ctx.messageReplies.upsertDraft({
+        messageId,
+        draftText: replyText,
+        agentRunId: run.id,
+      });
+      if (message.status === "failed") {
+        ctx.messages.markPending(messageId);
+      }
       notifyMessagesChanged({ conversation_id: conversation.id });
       return true;
     }
@@ -134,10 +143,16 @@ async function processMessageReplyCore(
     const errorMessage =
       error instanceof Error ? error.message.slice(0, 500) : "message reply failed";
 
+    if (harnessApproved && effectiveReplyMode === "draft" && run) {
+      notifyMessagesChanged({ conversation_id: conversation.id });
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
+
+    let failedRun: AgentRun;
     if (error instanceof MessageHarnessExecutionError) {
-      run = error.run;
+      failedRun = error.run;
     } else {
-      run = ctx.agentRuns.create({
+      failedRun = ctx.agentRuns.create({
         trigger: options.trigger,
         inputSummary,
         outputSummary: errorMessage,
@@ -150,7 +165,7 @@ async function processMessageReplyCore(
       messageId,
       sentText: "",
       status: "failed",
-      agentRunId: run.id,
+      agentRunId: failedRun.id,
     });
     if (message.status !== "replied") {
       ctx.messages.markFailed(messageId, errorMessage);

@@ -25,4 +25,5 @@ export type ProductRepository = {
   create(input: CreateProductInput): Product;
   update(id: string, input: UpdateProductInput): Product | null;
   deactivate(id: string): boolean;
+  remove(id: string): boolean;
 };

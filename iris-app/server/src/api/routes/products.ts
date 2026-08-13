@@ -103,7 +103,7 @@ export async function handleProductsRoute(request: RouteRequest): Promise<boolea
 
   if (patchMatch && request.req.method === "DELETE") {
     const id = patchMatch[1]!;
-    const ok = request.ctx.products.deactivate(id);
+    const ok = request.ctx.products.remove(id);
     if (!ok) {
       sendError(request.res, 404, "product not found");
       return true;

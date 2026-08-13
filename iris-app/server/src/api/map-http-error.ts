@@ -4,7 +4,7 @@ import { MetaNotConnectedError } from "../domain/meta/meta-readiness.ts";
 import { PublishNotConfiguredError } from "../domain/posts/publish-post.ts";
 import { AssetIngestError } from "../domain/posts/asset-ingest.ts";
 import { ImageOptimizationError } from "../ports/image-optimizer.ts";
-import { MultipartParseError } from "./multipart.ts";
+import { MetaConversationsRateLimitError } from "../adapters/meta/graph-api-conversations-reader.ts";
 
 export type MapHttpErrorOptions = {
   upstream502?: boolean;
@@ -47,6 +47,11 @@ export function mapHttpError(
 
   if (error instanceof BodyTooLargeError) {
     sendError(res, 413, error.message);
+    return;
+  }
+
+  if (error instanceof MetaConversationsRateLimitError) {
+    sendError(res, 429, error.message);
     return;
   }
 

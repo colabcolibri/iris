@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
+import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppSettings } from "@/contexts/app-settings-context";
@@ -16,7 +16,11 @@ const PRESETS = [
   { label: "10 min", seconds: 600 },
 ] as const;
 
-export function AutoMonitorCard() {
+type AutoMonitorCardProps = {
+  embedded?: boolean;
+};
+
+export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
   const {
     autoMonitorEnabled,
     autoMonitorIntervalSeconds,
@@ -67,18 +71,11 @@ export function AutoMonitorCard() {
   }
 
   return (
-    <Card className="space-y-4 border-border bg-card p-6 shadow-none">
-      <header className="space-y-1">
-        <h2 className="text-sm font-semibold">
-          Auto-monitoramento de publicações
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Descobre mídias novas no Instagram (poll) e cadastra posts
-          monitorados. Também cadastra no primeiro comentário via webhook se a
-          mídia ainda não existir.
-        </p>
-      </header>
-
+    <SettingsCardShell
+      embedded={embedded}
+      title="Auto-monitoramento de publicações"
+      description="Descobre mídias novas no Instagram (poll) e cadastra posts monitorados. Também cadastra no primeiro comentário via webhook se a mídia ainda não existir."
+    >
       {loading ? (
         <p className="text-sm text-muted-foreground">Carregando…</p>
       ) : (
@@ -112,7 +109,7 @@ export function AutoMonitorCard() {
                 <Label className="text-sm font-semibold">
                   Intervalo do poll
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Padrão: 5 minutos. A Meta não avisa post novo por webhook — o
                   Iris consulta a lista recente neste intervalo.
                 </p>
@@ -160,6 +157,6 @@ export function AutoMonitorCard() {
           ) : null}
         </div>
       )}
-    </Card>
+    </SettingsCardShell>
   );
 }

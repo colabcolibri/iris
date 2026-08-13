@@ -4,7 +4,7 @@ import { openDatabase } from "./connection.ts";
 import { runMigrations } from "./migrate.ts";
 import { createSqliteProductRepository } from "./product-repository.ts";
 
-test("product repository creates, updates and deactivates", () => {
+test("product repository creates, updates, deactivates and removes", () => {
   const db = openDatabase(":memory:");
   try {
     runMigrations(db);
@@ -26,6 +26,9 @@ test("product repository creates, updates and deactivates", () => {
     assert.ok(products.deactivate(created.id));
     assert.equal(products.list(true).length, 0);
     assert.equal(products.list(false).length, 1);
+
+    assert.ok(products.remove(created.id));
+    assert.equal(products.list(false).length, 0);
   } finally {
     db.close();
   }

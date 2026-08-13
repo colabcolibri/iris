@@ -11,6 +11,8 @@ export type UpsertInboundMessageInput = {
   text: string | null;
   igTimestamp: string | null;
   participantUsername?: string | null;
+  attachmentUrl?: string | null;
+  attachmentMediaType?: Message["attachmentMediaType"];
 };
 
 export type UpsertOutboundMessageInput = {
@@ -19,6 +21,13 @@ export type UpsertOutboundMessageInput = {
   text: string;
   igTimestamp?: string | null;
   status?: MessageStatus;
+  attachmentUrl?: string | null;
+  attachmentMediaType?: Message["attachmentMediaType"];
+};
+
+export type PurgeMessageHistoryResult = {
+  messagesDeleted: number;
+  conversationsDeleted: number;
 };
 
 export type MessageRepository = {
@@ -34,6 +43,8 @@ export type MessageRepository = {
   scheduleAgentReply(messageId: string, notBeforeIso: string): boolean;
   listPendingForAgentReply(): PendingAgentReplyMessage[];
   countPendingByConversation(conversationId: string): number;
+  countUnreadByConversation(conversationId: string, readAtIso: string | null): number;
+  purgeOlderThan(cutoffIso: string): PurgeMessageHistoryResult;
 };
 
 export type CreateMessageReplyInput = {

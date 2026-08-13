@@ -97,7 +97,7 @@ export function ReplyAuditPanel({
   return (
     <div
       className={cn(
-        "rounded-[var(--iris-radius-lg)] border border-border/60 bg-background/90 p-3",
+        "min-w-0 max-w-full overflow-hidden rounded-md border border-border/50 bg-muted/10 p-2",
         className,
       )}
     >

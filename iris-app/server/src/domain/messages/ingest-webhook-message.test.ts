@@ -18,9 +18,13 @@ test("ingestWebhookMessage creates conversation and inbound message", () => {
         igMessageId: "mid-abc",
         senderIgUserId: "user-1",
         recipientIgUserId: "page-1",
+        senderUsername: "cliente",
+        senderDisplayName: "Cliente",
         text: "tem vaga?",
         igTimestamp: "2026-08-13T11:00:00.000Z",
         direction: "inbound",
+        attachmentUrl: null,
+        attachmentMediaType: null,
       },
       { conversations, messages, pageIgUserId: "page-1" },
     );
@@ -30,6 +34,8 @@ test("ingestWebhookMessage creates conversation and inbound message", () => {
     const thread = messages.listByConversationId(result.conversationId);
     assert.equal(thread.length, 1);
     assert.equal(thread[0]?.text, "tem vaga?");
+    const conversation = conversations.findById(result.conversationId);
+    assert.equal(conversation?.participantUsername, "cliente");
   } finally {
     db.close();
   }

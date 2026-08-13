@@ -13,6 +13,10 @@ export function serializeConversationSummary(
   return {
     ...serializeConversation(conversation),
     pending_count: ctx.messages.countPendingByConversation(conversation.id),
+    unread_count: ctx.messages.countUnreadByConversation(
+      conversation.id,
+      conversation.operatorReadAt,
+    ),
     can_reply: canReplyToConversationMessages(messages),
   };
 }

@@ -7,6 +7,14 @@ import type {
 import type { Conversation, ConversationReplyMode } from "../../domain/messages/conversation.ts";
 import { mapConversationRow } from "./message-mappers.ts";
 
+function isPlaceholderParticipantId(value: string): boolean {
+  return value.startsWith("unknown:");
+}
+
+function isSyntheticConversationId(value: string): boolean {
+  return value.startsWith("ig:") || value.startsWith("unknown:");
+}
+
 export function createSqliteConversationRepository(
   db: DatabaseSync,
 ): ConversationRepository {
@@ -21,16 +29,24 @@ export function createSqliteConversationRepository(
   const insert = db.prepare(`
     INSERT INTO conversations (
       id, ig_conversation_id, participant_ig_user_id, participant_username,
+      participant_display_name, participant_avatar_url,
       last_message_at, reply_mode, reply_prompt, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, 'inherit', NULL, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'inherit', NULL, ?, ?)
   `);
 
   const updateParticipant = db.prepare(`
     UPDATE conversations
-    SET participant_username = COALESCE(?, participant_username),
+    SET participant_ig_user_id = COALESCE(?, participant_ig_user_id),
+        participant_username = COALESCE(?, participant_username),
+        participant_display_name = COALESCE(?, participant_display_name),
+        participant_avatar_url = COALESCE(?, participant_avatar_url),
         last_message_at = COALESCE(?, last_message_at),
         updated_at = ?
     WHERE id = ?
+  `);
+
+  const updateIgConversationId = db.prepare(`
+    UPDATE conversations SET ig_conversation_id = ?, updated_at = ? WHERE id = ?
   `);
 
   const updateLastMessage = db.prepare(`
@@ -43,6 +59,10 @@ export function createSqliteConversationRepository(
 
   const updateReplyPromptStmt = db.prepare(`
     UPDATE conversations SET reply_prompt = ?, updated_at = ? WHERE id = ?
+  `);
+
+  const updateOperatorReadAtStmt = db.prepare(`
+    UPDATE conversations SET operator_read_at = ?, updated_at = ? WHERE id = ?
   `);
 
   const listRecentStmt = db.prepare(`
@@ -72,20 +92,43 @@ export function createSqliteConversationRepository(
     },
 
     upsert(input: UpsertConversationInput) {
-      const existing =
-        selectByIgConversationId.get(input.igConversationId) ??
-        selectByParticipant.get(input.participantIgUserId);
+      const existingByConversation = selectByIgConversationId.get(input.igConversationId) as
+        | { id: string; participant_ig_user_id: string; ig_conversation_id: string }
+        | undefined;
+
+      const existingByParticipant = selectByParticipant.get(input.participantIgUserId) as
+        | { id: string; participant_ig_user_id: string; ig_conversation_id: string }
+        | undefined;
+
+      const existing = existingByConversation ?? existingByParticipant;
 
       const ts = nowIso();
 
       if (existing) {
+        const currentParticipantId = existing.participant_ig_user_id;
+        const nextParticipantId =
+          isPlaceholderParticipantId(currentParticipantId) &&
+          !isPlaceholderParticipantId(input.participantIgUserId)
+            ? input.participantIgUserId
+            : null;
+
+        if (
+          isSyntheticConversationId(existing.ig_conversation_id) &&
+          !isSyntheticConversationId(input.igConversationId)
+        ) {
+          updateIgConversationId.run(input.igConversationId, ts, existing.id);
+        }
+
         updateParticipant.run(
+          nextParticipantId,
           input.participantUsername ?? null,
+          input.participantDisplayName ?? null,
+          input.participantAvatarUrl ?? null,
           input.lastMessageAt ?? null,
           ts,
-          (existing as { id: string }).id,
+          existing.id,
         );
-        const row = selectById.get((existing as { id: string }).id);
+        const row = selectById.get(existing.id);
         return {
           conversation: mapConversationRow(row as never),
           created: false,
@@ -98,6 +141,8 @@ export function createSqliteConversationRepository(
         input.igConversationId,
         input.participantIgUserId,
         input.participantUsername ?? null,
+        input.participantDisplayName ?? null,
+        input.participantAvatarUrl ?? null,
         input.lastMessageAt ?? null,
         ts,
         ts,
@@ -121,6 +166,12 @@ export function createSqliteConversationRepository(
 
     updateReplyPrompt(conversationId: string, replyPrompt: string | null) {
       updateReplyPromptStmt.run(replyPrompt, nowIso(), conversationId);
+      const row = selectById.get(conversationId);
+      return row ? mapConversationRow(row as never) : null;
+    },
+
+    updateOperatorReadAt(conversationId: string, iso: string) {
+      updateOperatorReadAtStmt.run(iso, nowIso(), conversationId);
       const row = selectById.get(conversationId);
       return row ? mapConversationRow(row as never) : null;
     },

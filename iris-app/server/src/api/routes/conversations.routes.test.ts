@@ -102,3 +102,32 @@ test("GET /api/conversations/activity returns pending approval", async () => {
     assert.equal(body.items[0]?.message_id, message.id);
   });
 });
+
+test("DELETE /api/messages/:id/draft removes stored draft", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const { conversation } = ctx.conversations.upsert({
+      igConversationId: "ig:draft-del",
+      participantIgUserId: "draft-del",
+    });
+
+    const { message } = ctx.messages.upsertInbound({
+      igMessageId: "ig-draft-del-msg",
+      conversationId: conversation.id,
+      text: "tem estoque?",
+      igTimestamp: new Date().toISOString(),
+    });
+
+    ctx.messageReplies.upsertDraft({
+      messageId: message.id,
+      draftText: "Sim, temos!",
+    });
+
+    const deleteResponse = await fetch(`${baseUrl}/api/messages/${message.id}/draft`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+    assert.equal(deleteResponse.status, 200);
+    const body = (await deleteResponse.json()) as { draft_text: string | null };
+    assert.equal(body.draft_text, null);
+  });
+});

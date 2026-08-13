@@ -6,9 +6,12 @@ export function serializeConversation(conversation: Conversation) {
     ig_conversation_id: conversation.igConversationId,
     participant_ig_user_id: conversation.participantIgUserId,
     participant_username: conversation.participantUsername,
+    participant_display_name: conversation.participantDisplayName,
+    participant_avatar_url: conversation.participantAvatarUrl,
     last_message_at: conversation.lastMessageAt,
     reply_mode: conversation.replyMode,
     reply_prompt: conversation.replyPrompt,
+    operator_read_at: conversation.operatorReadAt,
     created_at: conversation.createdAt,
     updated_at: conversation.updatedAt,
   };

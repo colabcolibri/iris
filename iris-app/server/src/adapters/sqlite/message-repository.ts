@@ -5,6 +5,7 @@ import type {
   MessageReplyRepository,
   MessageRepository,
   PendingAgentReplyMessage,
+  PurgeMessageHistoryResult,
   UpsertInboundMessageInput,
   UpsertMessageDraftInput,
   UpsertOutboundMessageInput,
@@ -28,16 +29,27 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
 
   const insertInbound = db.prepare(`
     INSERT INTO messages (
-      id, ig_message_id, conversation_id, direction, text, ig_timestamp,
-      status, error_message, agent_reply_not_before, created_at
-    ) VALUES (?, ?, ?, 'inbound', ?, ?, 'pending', NULL, NULL, ?)
+      id, ig_message_id, conversation_id, direction, text, attachment_url,
+      attachment_media_type, ig_timestamp, status, error_message,
+      agent_reply_not_before, created_at
+    ) VALUES (?, ?, ?, 'inbound', ?, ?, ?, ?, 'pending', NULL, NULL, ?)
+  `);
+
+  const updateInbound = db.prepare(`
+    UPDATE messages
+    SET text = COALESCE(?, text),
+        attachment_url = COALESCE(?, attachment_url),
+        attachment_media_type = COALESCE(?, attachment_media_type),
+        ig_timestamp = COALESCE(?, ig_timestamp)
+    WHERE id = ?
   `);
 
   const insertOutbound = db.prepare(`
     INSERT INTO messages (
-      id, ig_message_id, conversation_id, direction, text, ig_timestamp,
-      status, error_message, agent_reply_not_before, created_at
-    ) VALUES (?, ?, ?, 'outbound', ?, ?, ?, NULL, NULL, ?)
+      id, ig_message_id, conversation_id, direction, text, attachment_url,
+      attachment_media_type, ig_timestamp, status, error_message,
+      agent_reply_not_before, created_at
+    ) VALUES (?, ?, ?, 'outbound', ?, ?, ?, ?, ?, NULL, NULL, ?)
   `);
 
   const markRepliedStmt = db.prepare(`
@@ -67,6 +79,58 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
   const countPendingStmt = db.prepare(`
     SELECT COUNT(*) AS c FROM messages
     WHERE conversation_id = ? AND status = 'pending' AND direction = 'inbound'
+  `);
+
+  const countUnreadStmt = db.prepare(`
+    SELECT COUNT(*) AS c FROM messages
+    WHERE conversation_id = ?
+      AND direction = 'inbound'
+      AND datetime(COALESCE(ig_timestamp, created_at)) > datetime(COALESCE(?, '1970-01-01T00:00:00.000Z'))
+  `);
+
+  const clearAgentRunStepsForOldMessages = db.prepare(`
+    UPDATE agent_run_steps
+    SET message_id = NULL
+    WHERE message_id IN (
+      SELECT id FROM messages
+      WHERE datetime(COALESCE(ig_timestamp, created_at)) < datetime(?)
+    )
+  `);
+
+  const clearWebhookMessageLinks = db.prepare(`
+    UPDATE meta_webhook_events
+    SET message_id = NULL
+    WHERE message_id IN (
+      SELECT id FROM messages
+      WHERE datetime(COALESCE(ig_timestamp, created_at)) < datetime(?)
+    )
+  `);
+
+  const deleteRepliesForOldMessages = db.prepare(`
+    DELETE FROM message_replies
+    WHERE message_id IN (
+      SELECT id FROM messages
+      WHERE datetime(COALESCE(ig_timestamp, created_at)) < datetime(?)
+    )
+  `);
+
+  const deleteOldMessages = db.prepare(`
+    DELETE FROM messages
+    WHERE datetime(COALESCE(ig_timestamp, created_at)) < datetime(?)
+  `);
+
+  const clearWebhookConversationLinks = db.prepare(`
+    UPDATE meta_webhook_events
+    SET conversation_id = NULL
+    WHERE conversation_id IN (
+      SELECT id FROM conversations
+      WHERE id NOT IN (SELECT DISTINCT conversation_id FROM messages)
+    )
+  `);
+
+  const deleteOrphanConversations = db.prepare(`
+    DELETE FROM conversations
+    WHERE id NOT IN (SELECT DISTINCT conversation_id FROM messages)
   `);
 
   const listPendingForAgentReplyStmt = db.prepare(`
@@ -113,8 +177,16 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     upsertInbound(input: UpsertInboundMessageInput) {
       const existing = selectByIgMessageId.get(input.igMessageId);
       if (existing) {
+        updateInbound.run(
+          input.text,
+          input.attachmentUrl ?? null,
+          input.attachmentMediaType ?? null,
+          input.igTimestamp,
+          (existing as { id: string }).id,
+        );
+        const row = selectById.get((existing as { id: string }).id);
         return {
-          message: mapMessageRow(existing as never),
+          message: mapMessageRow(row as never),
           created: false,
         };
       }
@@ -126,6 +198,8 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
         input.igMessageId,
         input.conversationId,
         input.text,
+        input.attachmentUrl ?? null,
+        input.attachmentMediaType ?? null,
         input.igTimestamp,
         createdAt,
       );
@@ -139,7 +213,14 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     upsertOutbound(input: UpsertOutboundMessageInput) {
       const existing = selectByIgMessageId.get(input.igMessageId);
       if (existing) {
-        return mapMessageRow(existing as never);
+        updateInbound.run(
+          input.text,
+          input.attachmentUrl ?? null,
+          input.attachmentMediaType ?? null,
+          input.igTimestamp ?? null,
+          (existing as { id: string }).id,
+        );
+        return mapMessageRow(selectById.get((existing as { id: string }).id) as never);
       }
 
       const id = randomUUID();
@@ -149,6 +230,8 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
         input.igMessageId,
         input.conversationId,
         input.text,
+        input.attachmentUrl ?? null,
+        input.attachmentMediaType ?? null,
         input.igTimestamp ?? createdAt,
         input.status ?? "replied",
         createdAt,
@@ -191,6 +274,11 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
       return row?.c ?? 0;
     },
 
+    countUnreadByConversation(conversationId: string, readAtIso: string | null) {
+      const row = countUnreadStmt.get(conversationId, readAtIso) as { c: number };
+      return row?.c ?? 0;
+    },
+
     listPendingForAgentReply() {
       const rows = listPendingForAgentReplyStmt.all() as Array<
         Record<string, unknown> & { conversation_reply_mode: string }
@@ -202,6 +290,23 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
           conversationReplyMode: String(row.conversation_reply_mode),
         } satisfies PendingAgentReplyMessage;
       });
+    },
+
+    purgeOlderThan(cutoffIso: string): PurgeMessageHistoryResult {
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        clearAgentRunStepsForOldMessages.run(cutoffIso);
+        clearWebhookMessageLinks.run(cutoffIso);
+        deleteRepliesForOldMessages.run(cutoffIso);
+        const messagesDeleted = deleteOldMessages.run(cutoffIso).changes;
+        clearWebhookConversationLinks.run();
+        const conversationsDeleted = deleteOrphanConversations.run().changes;
+        db.exec("COMMIT");
+        return { messagesDeleted, conversationsDeleted };
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
     },
   };
 }
@@ -236,6 +341,14 @@ export function createSqliteMessageReplyRepository(
 
   const deleteDrafts = db.prepare(`
     DELETE FROM message_replies WHERE message_id = ? AND status = 'draft'
+  `);
+
+  const deleteFailedReplyArtifacts = db.prepare(`
+    DELETE FROM message_replies
+    WHERE message_id = ?
+      AND status = 'failed'
+      AND COALESCE(sent_text, '') = ''
+      AND COALESCE(draft_text, '') = ''
   `);
 
   const markSentStmt = db.prepare(`
@@ -396,8 +509,9 @@ export function createSqliteMessageReplyRepository(
     },
 
     clearDraft(messageId: string) {
-      const result = deleteDrafts.run(messageId);
-      return result.changes > 0;
+      deleteDrafts.run(messageId);
+      deleteFailedReplyArtifacts.run(messageId);
+      return true;
     },
 
     markSent(messageId: string, sentText: string, sourceIgMessageId: string | null) {

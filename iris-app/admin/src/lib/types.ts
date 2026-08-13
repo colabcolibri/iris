@@ -309,10 +309,13 @@ export type ConversationSummary = {
   ig_conversation_id: string;
   participant_ig_user_id: string;
   participant_username: string | null;
+  participant_display_name: string | null;
+  participant_avatar_url: string | null;
   last_message_at: string | null;
   reply_mode: ConversationReplyMode;
   reply_prompt: string | null;
   pending_count: number;
+  unread_count: number;
   can_reply?: boolean;
   created_at: string;
   updated_at: string;
@@ -324,6 +327,8 @@ export type Message = {
   conversation_id: string;
   direction: "inbound" | "outbound";
   text: string | null;
+  attachment_url?: string | null;
+  attachment_media_type?: "image" | "video" | "file" | null;
   ig_timestamp: string | null;
   status: "pending" | "replied" | "skipped" | "failed";
   error_message: string | null;

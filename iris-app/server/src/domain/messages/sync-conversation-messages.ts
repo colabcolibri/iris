@@ -1,11 +1,24 @@
 import type { ConversationRepository } from "../../ports/conversation-repository.ts";
 import type { MessageRepository } from "../../ports/message-repository.ts";
 import type { MetaConversationsReader } from "../../ports/meta-conversations-reader.ts";
+import { applyRemoteMessages } from "./apply-remote-messages.ts";
+import { enrichParticipantFromRemoteMessages } from "./participant-from-remote.ts";
+import { pickConversationParticipant } from "./remote-message-utils.ts";
+import { isWithinMessageImportWindow } from "./message-sync-window.ts";
+
+export const MESSAGE_SYNC_PAGE_SIZE = 25;
+export const MESSAGE_SYNC_CONVERSATION_MAX_PAGES = 3;
 
 export type SyncConversationMessagesDeps = {
   conversations: ConversationRepository;
   messages: MessageRepository;
   metaConversationsReader: MetaConversationsReader;
+  resolveOwnerIgUserId?: () => string | null;
+  resolveOwnerUsername?: () => string | null;
+};
+
+export type SyncConversationMessagesOptions = {
+  maxPages?: number;
 };
 
 export type SyncConversationMessagesResult = {
@@ -17,91 +30,92 @@ export type SyncConversationMessagesResult = {
 export async function syncConversationMessages(
   localConversationId: string,
   deps: SyncConversationMessagesDeps,
+  options: SyncConversationMessagesOptions = {},
 ): Promise<SyncConversationMessagesResult> {
   const conversation = deps.conversations.findById(localConversationId);
   if (!conversation) {
     throw new Error("conversation not found");
   }
 
-  let imported = 0;
-  let updated = 0;
+  const maxPages = options.maxPages ?? MESSAGE_SYNC_CONVERSATION_MAX_PAGES;
+  const collected = [];
   let after: string | undefined;
-  let lastTimestamp: string | null = conversation.lastMessageAt;
+  let pagesFetched = 0;
+  let reachedHistoryCutoff = false;
 
   do {
     const page = await deps.metaConversationsReader.listMessages(
       conversation.igConversationId,
-      50,
+      MESSAGE_SYNC_PAGE_SIZE,
       after,
     );
+    pagesFetched += 1;
 
     for (const remote of page.messages) {
-      if (remote.direction === "inbound") {
-        const result = deps.messages.upsertInbound({
-          igMessageId: remote.id,
-          conversationId: conversation.id,
-          text: remote.text,
-          igTimestamp: remote.createdTime,
-          participantUsername: remote.fromUsername,
-        });
-        if (result.created) {
-          imported += 1;
-        } else {
-          updated += 1;
-        }
-      } else {
-        const existing = deps.messages.findByIgMessageId(remote.id);
-        if (!existing) {
-          deps.messages.upsertOutbound({
-            igMessageId: remote.id,
-            conversationId: conversation.id,
-            text: remote.text ?? "",
-            igTimestamp: remote.createdTime,
-            status: "replied",
-          });
-          imported += 1;
-        }
+      if (!isWithinMessageImportWindow(remote.createdTime)) {
+        reachedHistoryCutoff = true;
+        continue;
       }
+      collected.push(remote);
+    }
 
-      if (remote.createdTime) {
-        lastTimestamp = remote.createdTime;
-      }
+    if (reachedHistoryCutoff || pagesFetched >= maxPages) {
+      break;
     }
 
     after = page.after ?? undefined;
   } while (after);
 
-  if (lastTimestamp) {
-    deps.conversations.updateLastMessageAt(conversation.id, lastTimestamp);
-  }
-
-  return { conversationId: conversation.id, imported, updated };
+  const result = applyRemoteMessages(conversation.id, collected, deps);
+  return { conversationId: conversation.id, ...result };
 }
 
+/** Import em lote: 1 chamada à Graph API (conversas + preview de mensagens). */
 export async function syncConversationsFromMeta(
   limit: number,
   deps: SyncConversationMessagesDeps,
 ): Promise<{ synced: number }> {
-  const remote = await deps.metaConversationsReader.listConversations(limit);
+  const ownerIgUserId = deps.resolveOwnerIgUserId?.() ?? null;
+  const ownerUsername = deps.resolveOwnerUsername?.() ?? null;
+  const remote = await deps.metaConversationsReader.listConversations(limit, {
+    includeRecentMessages: true,
+  });
   let synced = 0;
 
   for (const row of remote) {
-    const existing = deps.conversations.findByIgConversationId(row.id);
-    if (existing) {
-      if (row.updatedTime) {
-        deps.conversations.updateLastMessageAt(existing.id, row.updatedTime);
-      }
-      await syncConversationMessages(existing.id, deps);
-      synced += 1;
+    if (!isWithinMessageImportWindow(row.updatedTime)) {
       continue;
     }
 
-    const created = deps.conversations.upsert({
+    const picked = pickConversationParticipant(
+      row.participants,
+      ownerIgUserId,
+      ownerUsername,
+    );
+    if (!picked) {
+      continue;
+    }
+
+    const participant = enrichParticipantFromRemoteMessages(
+      picked,
+      row.recentMessages ?? [],
+    );
+
+    const existing =
+      deps.conversations.findByParticipantIgUserId(participant.id) ??
+      deps.conversations.findByIgConversationId(row.id);
+
+    const upserted = deps.conversations.upsert({
       igConversationId: row.id,
-      participantIgUserId: `unknown:${row.id}`,
+      participantIgUserId: participant.id,
+      participantUsername: participant.username,
+      participantDisplayName: participant.name,
+      participantAvatarUrl: participant.profilePicUrl,
       lastMessageAt: row.updatedTime,
     });
-    await syncConversationMessages(created.conversation.id, deps);
+
+    const conversationId = existing?.id ?? upserted.conversation.id;
+    applyRemoteMessages(conversationId, row.recentMessages ?? [], deps);
     synced += 1;
   }
 

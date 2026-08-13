@@ -10,6 +10,7 @@ import { assertCanReplyToConversation } from "../../../domain/messages/assert-ca
 import { routeParam } from "../../route-resources.ts";
 import { requireMessage } from "./message-resources.ts";
 import { MAX_MESSAGE_REPLY_LENGTH, serializeMessageWithDraft } from "./shared.ts";
+import { resolveMessageDraftText } from "../../../domain/messages/resolve-message-draft.ts";
 
 export const messagesReplyRouter = createRouter([
   route(
@@ -57,8 +58,12 @@ export const messagesReplyRouter = createRouter([
         return;
       }
 
-      if (message.status !== "pending" && message.status !== "replied") {
-        sendError(match.res, 422, "only pending or replied messages can update draft");
+      if (
+        message.status !== "pending" &&
+        message.status !== "replied" &&
+        message.status !== "failed"
+      ) {
+        sendError(match.res, 422, "only pending, failed or replied messages can update draft");
         return;
       }
 
@@ -97,9 +102,13 @@ export const messagesReplyRouter = createRouter([
         return;
       }
 
-      if (!match.ctx.messageReplies.clearDraft(messageId)) {
-        sendError(match.res, 404, "no draft to remove");
-        return;
+      match.ctx.messageReplies.clearDraft(messageId);
+
+      const sent = match.ctx.messageReplies.findLatestSentReply(messageId);
+      if (!sent?.sentText) {
+        if (message.status === "failed") {
+          match.ctx.messages.markPending(messageId);
+        }
       }
 
       const updated = match.ctx.messages.findById(messageId);
@@ -125,17 +134,22 @@ export const messagesReplyRouter = createRouter([
         return;
       }
 
-      if (message.status !== "pending" && message.status !== "replied") {
-        sendError(match.res, 422, "only pending or replied messages can be approved");
+      if (
+        message.status !== "pending" &&
+        message.status !== "replied" &&
+        message.status !== "failed"
+      ) {
+        sendError(match.res, 422, "only pending, failed or replied messages can be approved");
         return;
       }
 
       const body = await readJsonBody<{ message?: unknown }>(match.req);
-      const draft = match.ctx.messageReplies.findLatestDraft(messageId);
+      const messageRecord = match.ctx.messages.findById(messageId)!;
+      const resolvedDraft = resolveMessageDraftText(messageRecord, match.ctx);
       const text =
         typeof body.message === "string" && body.message.trim()
           ? body.message.trim()
-          : draft?.draftText?.trim() ?? "";
+          : resolvedDraft ?? "";
 
       if (!text) {
         throw new ValidationError("message or draft is required");

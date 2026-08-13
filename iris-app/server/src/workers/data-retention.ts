@@ -1,4 +1,5 @@
 import type { AppContext } from "../api/app-context.ts";
+import { purgeMessageHistory } from "../domain/messages/purge-message-history.ts";
 
 export type DataRetentionOptions = {
   intervalMs?: number;
@@ -8,6 +9,8 @@ export type DataRetentionOptions = {
 
 export type DataRetentionResult = {
   webhookEventsDeleted: number;
+  messagesDeleted: number;
+  conversationsDeleted: number;
 };
 
 export function runDataRetention(
@@ -17,8 +20,12 @@ export function runDataRetention(
   const days = Math.max(1, retentionDays);
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
+  const messagePurge = purgeMessageHistory({ messages: ctx.messages });
+
   return {
     webhookEventsDeleted: ctx.webhookEvents.deleteOlderThan(cutoff),
+    messagesDeleted: messagePurge.messagesDeleted,
+    conversationsDeleted: messagePurge.conversationsDeleted,
   };
 }
 

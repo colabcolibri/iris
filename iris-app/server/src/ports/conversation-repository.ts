@@ -4,6 +4,8 @@ export type UpsertConversationInput = {
   igConversationId: string;
   participantIgUserId: string;
   participantUsername?: string | null;
+  participantDisplayName?: string | null;
+  participantAvatarUrl?: string | null;
   lastMessageAt?: string | null;
 };
 
@@ -15,5 +17,6 @@ export type ConversationRepository = {
   updateLastMessageAt(conversationId: string, iso: string): void;
   updateReplyMode(conversationId: string, replyMode: ConversationReplyMode): Conversation | null;
   updateReplyPrompt(conversationId: string, replyPrompt: string | null): Conversation | null;
+  updateOperatorReadAt(conversationId: string, iso: string): Conversation | null;
   listRecent(limit: number): Conversation[];
 };

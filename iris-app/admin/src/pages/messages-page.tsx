@@ -31,6 +31,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useMetaSession } from "@/contexts/meta-session-context";
+import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useAppRoutes } from "@/demo/demo-routes";
 import { useDemoMode } from "@/demo/demo-mode-context";
 import {
@@ -52,17 +53,13 @@ import type {
   Message,
   MessageActivityItem,
 } from "@/lib/types";
+import { countPendingInboundMessages } from "@/lib/message-pending";
 import { cn } from "@/lib/utils";
 
 const MESSAGES_FALLBACK_POLL_MS = 60_000;
 const MESSAGES_REALTIME_DEBOUNCE_MS = 750;
 
 type LeftPanelMode = "conversations" | "activity";
-
-function formatHandle(username: string | null | undefined): string {
-  const value = username?.trim() || "usuário";
-  return value.startsWith("@") ? value : `@${value}`;
-}
 
 function messagesHaveChanged(current: Message[], next: Message[]): boolean {
   if (current.length !== next.length) {
@@ -77,7 +74,8 @@ function messagesHaveChanged(current: Message[], next: Message[]): boolean {
       previous.status !== message.status ||
       previous.text !== message.text ||
       previous.draft_text !== message.draft_text ||
-      previous.linked_reply_text !== message.linked_reply_text
+      previous.linked_reply_text !== message.linked_reply_text ||
+      previous.attachment_url !== message.attachment_url
     );
   });
 }
@@ -86,6 +84,7 @@ export function MessagesPage() {
   const routes = useAppRoutes();
   const { isDemoMode } = useDemoMode();
   const { meta } = useMetaSession();
+  const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedConversationId = searchParams.get("conversation_id")?.trim() ?? "";
   const selectedMessageId = searchParams.get("message_id")?.trim() ?? "";
@@ -126,12 +125,15 @@ export function MessagesPage() {
     }
     return conversations.filter((conversation) => {
       const username = conversation.participant_username?.toLowerCase() ?? "";
+      const displayName = conversation.participant_display_name?.toLowerCase() ?? "";
       const userId = conversation.participant_ig_user_id.toLowerCase();
-      return username.includes(query) || userId.includes(query);
+      return (
+        username.includes(query) ||
+        displayName.includes(query) ||
+        userId.includes(query)
+      );
     });
   }, [conversations, searchQuery]);
-
-  const inStage = Boolean(selectedConversationId);
 
   const loadConversations = useCallback(async (options: { silent?: boolean } = {}) => {
     const { silent = false } = options;
@@ -165,15 +167,27 @@ export function MessagesPage() {
       }
       try {
         const payload = await fetchConversationMessages(conversationId);
+        const pendingCount = countPendingInboundMessages(payload.messages);
+        const conversation = {
+          ...payload.conversation,
+          pending_count: pendingCount,
+        };
         setMessages((current) =>
           messagesHaveChanged(current, payload.messages) ? payload.messages : current,
         );
         setMessagesConversationId(conversationId);
-        setReplyMode(payload.conversation.reply_mode ?? "inherit");
-        setReplyPrompt(payload.conversation.reply_prompt ?? "");
+        setReplyMode(conversation.reply_mode ?? "inherit");
+        setReplyPrompt(conversation.reply_prompt ?? "");
         setConversations((current) =>
           current.map((item) =>
-            item.id === conversationId ? { ...item, ...payload.conversation } : item,
+            item.id === conversationId
+              ? {
+                  ...item,
+                  ...conversation,
+                  unread_count: 0,
+                  pending_count: pendingCount,
+                }
+              : item,
           ),
         );
       } catch (err) {
@@ -190,38 +204,6 @@ export function MessagesPage() {
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
-
-  useEffect(() => {
-    if (!meta?.connected || meta.messaging_supported === false) {
-      return;
-    }
-    let cancelled = false;
-    setSyncingInbox(true);
-    void syncConversationsFromMeta()
-      .then(() => {
-        if (!cancelled) {
-          return loadConversations({ silent: true });
-        }
-        return undefined;
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          toast.error(
-            err instanceof Error
-              ? err.message
-              : "Falha ao importar conversas do Instagram.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setSyncingInbox(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [loadConversations, meta?.connected, meta?.messaging_supported]);
 
   useEffect(() => {
     if (!selectedConversationId) {
@@ -386,9 +368,17 @@ export function MessagesPage() {
   }
 
   const replaceMessage = useCallback((updated: Message) => {
-    setMessages((current) =>
-      current.map((item) => (item.id === updated.id ? updated : item)),
-    );
+    setMessages((current) => {
+      const next = current.map((item) => (item.id === updated.id ? updated : item));
+      setConversations((conversations) =>
+        conversations.map((item) =>
+          item.id === updated.conversation_id
+            ? { ...item, pending_count: countPendingInboundMessages(next) }
+            : item,
+        ),
+      );
+      return next;
+    });
   }, []);
 
   async function handleApproveDraft(messageId: string, draftText?: string | null) {
@@ -402,6 +392,7 @@ export function MessagesPage() {
       toast.success("Resposta enviada na Meta.");
       if (selectedConversationId) {
         await loadMessages(selectedConversationId, { silent: true });
+        await loadConversations({ silent: true });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao aprovar.");
@@ -410,18 +401,51 @@ export function MessagesPage() {
     }
   }
 
-  async function handleRemoveDraft(messageId: string) {
-    setRemovingDraftId(messageId);
-    try {
-      const updated = await removeMessageDraft(messageId);
-      replaceMessage(updated);
-      toast.success("Rascunho removido.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao remover rascunho.");
-    } finally {
-      setRemovingDraftId(null);
-    }
-  }
+  const handleRemoveDraft = useCallback(
+    async (messageId: string) => {
+      const message = messages.find((item) => item.id === messageId);
+      const preview = message?.draft_text?.trim()
+        ? message.draft_text.trim().length > 120
+          ? `${message.draft_text.trim().slice(0, 119)}…`
+          : message.draft_text.trim()
+        : null;
+
+      const ok = await confirm({
+        title: "Deletar rascunho?",
+        description: (
+          <>
+            O rascunho será descartado. Nada será enviado na Meta.
+            {preview ? (
+              <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
+                “{preview}”
+              </span>
+            ) : null}
+          </>
+        ),
+        confirmLabel: "Deletar",
+        variant: "destructive",
+      });
+
+      if (!ok) {
+        return;
+      }
+
+      setRemovingDraftId(messageId);
+      try {
+        const updated = await removeMessageDraft(messageId);
+        replaceMessage(updated);
+        toast.success("Rascunho removido.");
+        if (selectedConversationId) {
+          await loadMessages(selectedConversationId, { silent: true });
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Falha ao remover rascunho.");
+      } finally {
+        setRemovingDraftId(null);
+      }
+    },
+    [confirm, loadMessages, messages, replaceMessage, selectedConversationId],
+  );
 
   async function handleSaveDraft(messageId: string, draftText: string) {
     setSavingDraftId(messageId);
@@ -457,104 +481,99 @@ export function MessagesPage() {
       toast.success("Mensagem enviada.");
       if (selectedConversationId) {
         await loadMessages(selectedConversationId, { silent: true });
+        await loadConversations({ silent: true });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao enviar.");
     }
   }
 
-  const listChrome = (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <PageContainer.Header
-          eyebrow="Operação"
-          title={leftPanelMode === "conversations" ? "Mensagens" : "Atividade"}
-          description={
-            leftPanelMode === "conversations"
-              ? "Escolha uma conversa para ver o histórico, responder e configurar o modo de resposta."
-              : "Mensagens recentes em todas as conversas do Instagram."
+  const inStage = Boolean(selectedConversationId);
+
+  const pageHeader = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <PageContainer.Header
+        eyebrow="Operação"
+        title="Mensagens"
+        description="Conversas do Instagram — selecione na lista para ver o histórico e responder."
+      />
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-10 gap-1.5"
+          disabled={
+            syncingInbox || !meta?.connected || meta.messaging_supported === false
           }
-        />
-        {leftPanelMode === "conversations" ? (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="min-h-10 gap-1.5"
-              disabled={
-                syncingInbox ||
-                !meta?.connected ||
-                meta.messaging_supported === false
-              }
-              onClick={() => void handleSyncInbox()}
-            >
-              {syncingInbox ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Download className="size-4" />
-              )}
-              <span className="hidden sm:inline">Importar</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-10 shrink-0"
-              onClick={() => void loadConversations({ silent: true })}
-              disabled={refreshingConversations}
-              aria-label="Recarregar lista"
-            >
-              {refreshingConversations ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <RefreshCw className="size-4" />
-              )}
-            </Button>
-          </div>
-        ) : null}
+          onClick={() => void handleSyncInbox()}
+        >
+          {syncingInbox ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Download className="size-4" />
+          )}
+          <span className="hidden sm:inline">Importar</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-10 shrink-0"
+          onClick={() => void loadConversations({ silent: true })}
+          disabled={refreshingConversations}
+          aria-label="Recarregar lista"
+        >
+          {refreshingConversations ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const listControls = (
+    <div className="space-y-3">
+      <div className="inline-flex w-fit max-w-full gap-1 rounded-full border border-border bg-muted/30 p-1">
+        <button
+          type="button"
+          onClick={() => setLeftPanelMode("conversations")}
+          className={cn(
+            "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm",
+            leftPanelMode === "conversations"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Conversas
+        </button>
+        <button
+          type="button"
+          onClick={() => setLeftPanelMode("activity")}
+          className={cn(
+            "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm",
+            leftPanelMode === "activity"
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Atividade
+        </button>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex w-fit max-w-full gap-1 rounded-full border border-border bg-muted/30 p-1">
-          <button
-            type="button"
-            onClick={() => setLeftPanelMode("conversations")}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
-              leftPanelMode === "conversations"
-                ? "bg-card text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Conversas
-          </button>
-          <button
-            type="button"
-            onClick={() => setLeftPanelMode("activity")}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
-              leftPanelMode === "activity"
-                ? "bg-card text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Atividade
-          </button>
+      {leftPanelMode === "conversations" ? (
+        <div className="relative w-full min-w-0">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Buscar usuário…"
+            className="h-9 pl-10 text-sm focus-visible:ring-primary/40"
+          />
         </div>
-
-        {leftPanelMode === "conversations" ? (
-          <div className="relative w-full min-w-0 sm:max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Buscar usuário ou ID…"
-              className="h-10 pl-10 text-sm focus-visible:ring-primary/40"
-            />
-          </div>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 
@@ -582,6 +601,7 @@ export function MessagesPage() {
       <ConversationInboxList
         conversations={filteredConversations}
         selectedId={selectedConversationId}
+        brandUsername={meta?.igUsername}
         onSelect={(conversationId) => selectConversation(conversationId)}
       />
     );
@@ -621,95 +641,119 @@ export function MessagesPage() {
         </p>
       ) : null}
 
-      {!inStage ? (
-        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">{listChrome}</div>
-          <PageScrollArea className="bg-transparent">{listBody}</PageScrollArea>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-border/60 px-4 py-4 sm:px-6">
+          {pageHeader}
         </div>
-      ) : selectedConversation ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 sm:px-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="min-h-11 gap-2"
-              onClick={clearStage}
-            >
-              <ArrowLeft className="size-4" />
-              Todas as conversas
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="min-h-11 gap-2"
-              onClick={() => setListSheetOpen(true)}
-            >
-              <PanelLeft className="size-4" />
-              Lista
-            </Button>
-            <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-              {formatHandle(selectedConversation.participant_username)}
-            </p>
-          </div>
 
-          <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            {loadingMessages ? (
-              <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Carregando mensagens…
-              </div>
-            ) : (
-              <ConversationDetailPanel
-                conversation={selectedConversation}
-                messages={messages}
-                brandUsername={meta?.igUsername}
-                metaReady={Boolean(meta?.connected)}
-                metaUnsupported={meta?.messaging_supported === false}
-                canReply={selectedConversation.can_reply !== false}
-                syncing={syncing}
-                savingReplyMode={savingReplyMode}
-                savingBriefing={savingBriefing}
-                approvingId={approvingId}
-                removingDraftId={removingDraftId}
-                savingDraftId={savingDraftId}
-                generatingId={generatingId}
-                replyMode={replyMode}
-                replyPrompt={replyPrompt}
-                onSync={() => void handleSync()}
-                onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
-                onReplyPromptChange={setReplyPrompt}
-                onSaveBriefing={() => void handleSaveBriefing()}
-                onApproveDraft={(id, draft) => void handleApproveDraft(id, draft)}
-                onRemoveDraft={(id) => void handleRemoveDraft(id)}
-                onSaveDraft={handleSaveDraft}
-                onGenerateDraft={(id) => void handleGenerateDraft(id)}
-                onManualReply={handleManualReply}
-              />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <aside
+            className={cn(
+              "flex min-h-0 flex-col border-border/60 md:w-[30%] md:min-w-[17.5rem] md:max-w-sm md:shrink-0 md:border-r",
+              inStage ? "hidden md:flex" : "flex w-full flex-1",
             )}
-          </section>
+          >
+            <div className="shrink-0 border-b border-border/60 p-3">{listControls}</div>
+            <PageScrollArea className="min-h-0 flex-1 bg-transparent">
+              {listBody}
+            </PageScrollArea>
+          </aside>
 
-          <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-            <SheetContent
-              side="left"
-              className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
-            >
-              <SheetHeader className="border-b border-border">
-                <SheetTitle className="font-display text-lg font-semibold">
-                  Mensagens
-                </SheetTitle>
-              </SheetHeader>
-              <div className="shrink-0 border-b p-4">{listChrome}</div>
-              <PageScrollArea>{listBody}</PageScrollArea>
-            </SheetContent>
-          </Sheet>
+          <main
+            className={cn(
+              "flex min-h-0 min-w-0 flex-col",
+              inStage ? "flex w-full flex-1 md:w-[70%]" : "hidden md:flex md:flex-1",
+            )}
+          >
+            {inStage ? (
+              <>
+                <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 md:hidden">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="min-h-10 gap-2"
+                    onClick={clearStage}
+                  >
+                    <ArrowLeft className="size-4" />
+                    Voltar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="size-10"
+                    onClick={() => setListSheetOpen(true)}
+                  >
+                    <PanelLeft className="size-4" />
+                  </Button>
+                </div>
+
+                {selectedConversation ? (
+                  loadingMessages ? (
+                    <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      Carregando mensagens…
+                    </div>
+                  ) : (
+                    <ConversationDetailPanel
+                      conversation={selectedConversation}
+                      messages={messages}
+                      brandUsername={meta?.igUsername}
+                      metaReady={Boolean(meta?.connected)}
+                      metaUnsupported={meta?.messaging_supported === false}
+                      canReply={selectedConversation.can_reply !== false}
+                      syncing={syncing}
+                      savingReplyMode={savingReplyMode}
+                      savingBriefing={savingBriefing}
+                      approvingId={approvingId}
+                      removingDraftId={removingDraftId}
+                      savingDraftId={savingDraftId}
+                      generatingId={generatingId}
+                      replyMode={replyMode}
+                      replyPrompt={replyPrompt}
+                      onSync={() => void handleSync()}
+                      onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
+                      onReplyPromptChange={setReplyPrompt}
+                      onSaveBriefing={() => void handleSaveBriefing()}
+                      onApproveDraft={(id, draft) => void handleApproveDraft(id, draft)}
+                      onRemoveDraft={(id) => void handleRemoveDraft(id)}
+                      onSaveDraft={handleSaveDraft}
+                      onGenerateDraft={(id) => void handleGenerateDraft(id)}
+                      onManualReply={handleManualReply}
+                    />
+                  )
+                ) : (
+                  <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+                    Carregando conversa…
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+                <OpsEmptyState title="Selecione uma conversa">
+                  Escolha uma DM na lista ao lado para ver o histórico e responder.
+                </OpsEmptyState>
+              </div>
+            )}
+          </main>
         </div>
-      ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-          Carregando conversa…
-        </div>
-      )}
+      </div>
+
+      <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
+        <SheetContent
+          side="left"
+          className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
+        >
+          <SheetHeader className="border-b border-border">
+            <SheetTitle className="font-display text-lg font-semibold">
+              Conversas
+            </SheetTitle>
+          </SheetHeader>
+          <div className="shrink-0 border-b p-3">{listControls}</div>
+          <PageScrollArea className="flex-1">{listBody}</PageScrollArea>
+        </SheetContent>
+      </Sheet>
     </PageContainer>
   );
 }

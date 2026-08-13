@@ -25,10 +25,16 @@ export function ingestWebhookMessage(
 ): IngestWebhookMessageResult {
   const participantIgUserId =
     entry.direction === "inbound" ? entry.senderIgUserId : entry.recipientIgUserId;
+  const participantUsername =
+    entry.direction === "inbound" ? entry.senderUsername : null;
+  const participantDisplayName =
+    entry.direction === "inbound" ? entry.senderDisplayName : null;
 
   const { conversation, created: conversationCreated } = deps.conversations.upsert({
     igConversationId: buildConversationIgId(participantIgUserId),
     participantIgUserId,
+    participantUsername,
+    participantDisplayName,
     lastMessageAt: entry.igTimestamp,
   });
 
@@ -38,6 +44,8 @@ export function ingestWebhookMessage(
       conversationId: conversation.id,
       text: entry.text ?? "",
       igTimestamp: entry.igTimestamp,
+      attachmentUrl: entry.attachmentUrl,
+      attachmentMediaType: entry.attachmentMediaType ?? undefined,
       status: "replied",
     });
 
@@ -54,9 +62,22 @@ export function ingestWebhookMessage(
     conversationId: conversation.id,
     text: entry.text,
     igTimestamp: entry.igTimestamp,
+    participantUsername,
+    attachmentUrl: entry.attachmentUrl,
+    attachmentMediaType: entry.attachmentMediaType ?? undefined,
   });
 
-  if (entry.igTimestamp) {
+  if (participantUsername || participantDisplayName) {
+    deps.conversations.upsert({
+      igConversationId: conversation.igConversationId,
+      participantIgUserId: conversation.participantIgUserId,
+      participantUsername: participantUsername ?? conversation.participantUsername,
+      participantDisplayName:
+        participantDisplayName ?? conversation.participantDisplayName,
+      participantAvatarUrl: conversation.participantAvatarUrl,
+      lastMessageAt: entry.igTimestamp ?? conversation.lastMessageAt,
+    });
+  } else if (entry.igTimestamp) {
     deps.conversations.updateLastMessageAt(conversation.id, entry.igTimestamp);
   }
 

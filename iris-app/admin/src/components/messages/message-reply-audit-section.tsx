@@ -60,7 +60,7 @@ export function MessageReplyAuditSection({
         active={auditState.open}
         onClick={() => void auditState.toggle()}
       />
-      <ReplyAuditPanel {...auditState} className="mt-3" />
+      <ReplyAuditPanel {...auditState} className="mt-2" />
     </div>
   );
 }

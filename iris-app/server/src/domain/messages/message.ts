@@ -2,12 +2,16 @@ export type MessageDirection = "inbound" | "outbound";
 
 export type MessageStatus = "pending" | "replied" | "skipped" | "failed";
 
+export type MessageAttachmentMediaType = "image" | "video" | "file";
+
 export type Message = {
   id: string;
   igMessageId: string;
   conversationId: string;
   direction: MessageDirection;
   text: string | null;
+  attachmentUrl: string | null;
+  attachmentMediaType: MessageAttachmentMediaType | null;
   igTimestamp: string | null;
   status: MessageStatus;
   errorMessage: string | null;

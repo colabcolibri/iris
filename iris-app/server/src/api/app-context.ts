@@ -237,6 +237,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     metaTokenStore,
     config: {
       resolveIgUserId,
+      resolveOwnerUsername: () => metaConnectionStore.get()?.igUsername ?? null,
       graphApiVersion,
     },
   });

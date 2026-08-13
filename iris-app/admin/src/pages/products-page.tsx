@@ -1,42 +1,118 @@
-import { useEffect, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Loader2, PanelLeft, Plus, Search } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { ProductCreatePanel } from "@/components/products/product-create-panel";
+import { ProductDetailPanel } from "@/components/products/product-detail-panel";
+import {
+  ProductInboxList,
+  ProductInboxNewItem,
+} from "@/components/products/product-inbox-list";
 import { PageContainer } from "@/components/templates/page-container";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import {
+  OpsEmptyState,
+  opsFilterSelectClassName,
+} from "@/components/templates/ops-empty-state";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import {
   createProduct,
-  deactivateProduct,
+  deleteProduct,
   fetchProducts,
   updateProduct,
 } from "@/lib/api";
 import type { Product } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const NEW_PRODUCT_ID = "new";
+
+type ProductFilter = "all" | "active" | "inactive";
 
 export function ProductsPage() {
+  const { confirm } = useConfirmDialog();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get("product_id")?.trim() ?? "";
+
   const [products, setProducts] = useState<Product[]>([]);
+  const [draft, setDraft] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
+  const [filter, setFilter] = useState<ProductFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [listSheetOpen, setListSheetOpen] = useState(false);
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       setProducts(await fetchProducts());
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao carregar produtos.");
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao carregar produtos.",
+      );
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadProducts();
-  }, []);
+  }, [loadProducts]);
+
+  const filteredProducts = useMemo(() => {
+    let items = products;
+    if (filter === "active") {
+      items = items.filter((product) => product.active);
+    } else if (filter === "inactive") {
+      items = items.filter((product) => !product.active);
+    }
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.slug.toLowerCase().includes(query),
+    );
+  }, [filter, products, searchQuery]);
+
+  const selectProduct = useCallback(
+    (productId: string) => {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.set("product_id", productId);
+        return next;
+      });
+      setListSheetOpen(false);
+    },
+    [setSearchParams],
+  );
+
+  const clearStage = useCallback(() => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("product_id");
+      return next;
+    });
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    if (selectedId === NEW_PRODUCT_ID) {
+      setDraft(null);
+      return;
+    }
+    const product = products.find((item) => item.id === selectedId) ?? null;
+    setDraft(product ? { ...product } : null);
+  }, [products, selectedId]);
 
   async function handleCreate() {
     if (!newSlug.trim() || !newName.trim()) {
@@ -52,6 +128,7 @@ export function ProductsPage() {
       setProducts((current) => [...current, created]);
       setNewSlug("");
       setNewName("");
+      selectProduct(created.id);
       toast.success("Produto criado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao criar produto.");
@@ -60,173 +137,225 @@ export function ProductsPage() {
     }
   }
 
-  async function handleSave(product: Product) {
-    setSavingId(product.id);
+  async function handleSave() {
+    if (!draft) return;
+    setSaving(true);
     try {
-      const updated = await updateProduct(product.id, {
-        slug: product.slug,
-        name: product.name,
-        short_description: product.short_description,
-        long_description: product.long_description,
-        active: product.active,
-        sort_order: product.sort_order,
+      const updated = await updateProduct(draft.id, {
+        slug: draft.slug,
+        name: draft.name,
+        short_description: draft.short_description,
+        long_description: draft.long_description,
+        active: draft.active,
+        sort_order: draft.sort_order,
       });
       setProducts((current) =>
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
+      setDraft({ ...updated });
       toast.success("Produto salvo.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao salvar produto.");
     } finally {
-      setSavingId(null);
+      setSaving(false);
     }
   }
 
-  async function handleDeactivate(productId: string) {
-    setSavingId(productId);
+  async function handleDelete() {
+    if (!draft) return;
+    const ok = await confirm({
+      title: "Excluir produto?",
+      description: `O produto "${draft.name}" será removido permanentemente do cadastro. Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
+    setSaving(true);
     try {
-      await deactivateProduct(productId);
-      setProducts((current) =>
-        current.map((item) =>
-          item.id === productId ? { ...item, active: false } : item,
-        ),
-      );
-      toast.success("Produto desativado.");
+      await deleteProduct(draft.id);
+      setProducts((current) => current.filter((item) => item.id !== draft.id));
+      clearStage();
+      toast.success("Produto excluído.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao desativar.");
+      toast.error(err instanceof Error ? err.message : "Falha ao excluir.");
     } finally {
-      setSavingId(null);
+      setSaving(false);
     }
   }
 
-  function updateLocal(productId: string, patch: Partial<Product>) {
-    setProducts((current) =>
-      current.map((item) => (item.id === productId ? { ...item, ...patch } : item)),
+  const inStage = Boolean(selectedId);
+
+  const pageHeader = (
+    <PageContainer.Header
+      eyebrow="Editorial"
+      title="Produtos"
+      description="Cadastro usado pelo message-harness para triagem e contexto em DMs — selecione na lista para editar."
+    />
+  );
+
+  const listControls = (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <select
+          value={filter}
+          onChange={(event) => setFilter(event.target.value as ProductFilter)}
+          className={cn(opsFilterSelectClassName, "min-w-0 flex-1")}
+          aria-label="Filtrar produtos"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Somente ativos</option>
+          <option value="inactive">Somente inativos</option>
+        </select>
+        <Button
+          type="button"
+          size="sm"
+          className="shrink-0 gap-1.5"
+          onClick={() => selectProduct(NEW_PRODUCT_ID)}
+        >
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">Novo</span>
+        </Button>
+      </div>
+      <div className="relative w-full min-w-0">
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Buscar por nome ou slug…"
+          className="h-9 pl-10 text-sm focus-visible:ring-primary/40"
+        />
+      </div>
+    </div>
+  );
+
+  const listBody = loading ? (
+    <OpsEmptyState>Carregando produtos…</OpsEmptyState>
+  ) : (
+    <>
+      <ProductInboxNewItem
+        selected={selectedId === NEW_PRODUCT_ID}
+        onSelect={() => selectProduct(NEW_PRODUCT_ID)}
+      />
+      {filteredProducts.length === 0 ? (
+        <OpsEmptyState title="Nenhum produto">
+          {products.length === 0
+            ? "Crie o primeiro produto para alimentar a triagem em DMs."
+            : "Nenhum produto corresponde ao filtro ou à busca."}
+        </OpsEmptyState>
+      ) : (
+        <ProductInboxList
+          products={filteredProducts}
+          selectedId={selectedId}
+          onSelect={selectProduct}
+        />
+      )}
+    </>
+  );
+
+  const detailBody =
+    selectedId === NEW_PRODUCT_ID ? (
+      <ProductCreatePanel
+        slug={newSlug}
+        name={newName}
+        creating={creating}
+        onSlugChange={setNewSlug}
+        onNameChange={setNewName}
+        onSubmit={() => void handleCreate()}
+      />
+    ) : draft ? (
+      <ProductDetailPanel
+        product={draft}
+        saving={saving}
+        onChange={(patch) => setDraft((current) => (current ? { ...current, ...patch } : current))}
+        onSave={() => void handleSave()}
+        onDelete={() => void handleDelete()}
+      />
+    ) : selectedId ? (
+      <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+        <Loader2 className="mr-2 size-4 animate-spin" />
+        Carregando produto…
+      </div>
+    ) : (
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+        <OpsEmptyState title="Selecione um produto">
+          Escolha um item na lista ao lado para editar ou use Novo para cadastrar.
+        </OpsEmptyState>
+      </div>
     );
-  }
 
   return (
-    <PageContainer>
-      <PageContainer.Content className="space-y-6">
-        <PageContainer.Header
-          eyebrow="Editorial"
-          title="Produtos"
-          description="Cadastro usado pelo message-harness para triagem e contexto em DMs."
-        />
+    <PageContainer variant="fill">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-border/60 px-4 py-4 sm:px-6">
+          {pageHeader}
+        </div>
 
-        <Card className="space-y-4 border-border bg-card p-6 shadow-none">
-          <h2 className="text-sm font-semibold">Novo produto</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="product-slug">Slug</Label>
-              <Input
-                id="product-slug"
-                value={newSlug}
-                onChange={(event) => setNewSlug(event.target.value)}
-                placeholder="plano-premium"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="product-name">Nome</Label>
-              <Input
-                id="product-name"
-                value={newName}
-                onChange={(event) => setNewName(event.target.value)}
-                placeholder="Plano premium"
-              />
-            </div>
-          </div>
-          <Button type="button" disabled={creating} onClick={() => void handleCreate()}>
-            {creating ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Criar produto
-          </Button>
-        </Card>
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <aside
+            className={cn(
+              "flex min-h-0 flex-col border-border/60 md:w-[30%] md:min-w-[17.5rem] md:max-w-sm md:shrink-0 md:border-r",
+              inStage ? "hidden md:flex" : "flex w-full flex-1",
+            )}
+          >
+            <div className="shrink-0 border-b border-border/60 p-3">{listControls}</div>
+            <PageScrollArea className="min-h-0 flex-1 bg-transparent">
+              {listBody}
+            </PageScrollArea>
+          </aside>
 
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        ) : (
-          <div className="grid gap-4">
-            {products.map((product) => (
-              <Card key={product.id} className="space-y-4 border-border bg-card p-6 shadow-none">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">{product.name}</h3>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={product.active}
-                      onChange={(event) =>
-                        updateLocal(product.id, { active: event.target.checked })
-                      }
-                    />
-                    Ativo
-                  </label>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Slug</Label>
-                    <Input
-                      value={product.slug}
-                      onChange={(event) =>
-                        updateLocal(product.id, { slug: event.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Nome</Label>
-                    <Input
-                      value={product.name}
-                      onChange={(event) =>
-                        updateLocal(product.id, { name: event.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Descrição curta (Markdown)</Label>
-                  <Textarea
-                    value={product.short_description}
-                    onChange={(event) =>
-                      updateLocal(product.id, { short_description: event.target.value })
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Descrição longa (Markdown)</Label>
-                  <Textarea
-                    value={product.long_description}
-                    onChange={(event) =>
-                      updateLocal(product.id, { long_description: event.target.value })
-                    }
-                    rows={5}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
+          <main
+            className={cn(
+              "flex min-h-0 min-w-0 flex-col",
+              inStage ? "flex w-full flex-1 md:w-[70%]" : "hidden md:flex md:flex-1",
+            )}
+          >
+            {inStage ? (
+              <>
+                <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 md:hidden">
                   <Button
                     type="button"
                     size="sm"
-                    disabled={savingId === product.id}
-                    onClick={() => void handleSave(product)}
+                    variant="ghost"
+                    className="min-h-10 gap-2"
+                    onClick={clearStage}
                   >
-                    Salvar
+                    <ArrowLeft className="size-4" />
+                    Voltar
                   </Button>
-                  {product.active ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={savingId === product.id}
-                      onClick={() => void handleDeactivate(product.id)}
-                    >
-                      Desativar
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="size-10"
+                    onClick={() => setListSheetOpen(true)}
+                  >
+                    <PanelLeft className="size-4" />
+                  </Button>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </PageContainer.Content>
+                {detailBody}
+              </>
+            ) : (
+              detailBody
+            )}
+          </main>
+        </div>
+      </div>
+
+      <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
+        <SheetContent
+          side="left"
+          className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
+        >
+          <SheetHeader className="border-b border-border">
+            <SheetTitle className="font-display text-lg font-semibold">
+              Produtos
+            </SheetTitle>
+          </SheetHeader>
+          <div className="shrink-0 border-b p-3">{listControls}</div>
+          <PageScrollArea className="flex-1">{listBody}</PageScrollArea>
+        </SheetContent>
+      </Sheet>
     </PageContainer>
   );
 }
