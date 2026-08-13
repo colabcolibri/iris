@@ -313,6 +313,58 @@ test("GET comments posts returns published posts with counts", async () => {
   });
 });
 
+test("GET comments posts prefers instagram preview when meta is connected", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      caption: "Post com preview IG",
+    });
+    ctx.posts.update(post.id, {
+      igMediaId: "media-ig-preview",
+      publishedAt: new Date().toISOString(),
+    });
+    ctx.assets.create({
+      postId: post.id,
+      storagePath: `${post.id}/cover.jpg`,
+      mime: "image/jpeg",
+      sortOrder: 1,
+    });
+    ctx.metaCommentReader = {
+      ...ctx.metaCommentReader,
+      async fetchMediaPreview(igMediaId) {
+        assert.equal(igMediaId, "media-ig-preview");
+        return {
+          permalink: "https://www.instagram.com/p/ig-preview/",
+          mediaType: "IMAGE",
+          slides: [
+            {
+              url: "https://cdn.example/ig-full.jpg",
+              mediaType: "IMAGE",
+              thumbnailUrl: "https://cdn.example/ig-thumb.jpg",
+            },
+          ],
+        };
+      },
+    };
+
+    const response = await fetch(`${baseUrl}/api/comments/posts`, {
+      headers: { Authorization: `Bearer ${ADMIN}` },
+    });
+
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      posts: Array<{
+        preview_url: string | null;
+        preview_filename: string | null;
+      }>;
+    };
+
+    assert.equal(body.posts[0]?.preview_filename, "cover.jpg");
+    assert.equal(body.posts[0]?.preview_url, "https://cdn.example/ig-thumb.jpg");
+  });
+});
+
 test("GET post insights returns metrics for managed post", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {

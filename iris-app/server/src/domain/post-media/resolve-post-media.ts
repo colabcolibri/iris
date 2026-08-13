@@ -124,3 +124,62 @@ export function firstPostMediaUrl(media: ResolvedPostMedia): string | null {
 
   return first.thumbnailUrl ?? first.url;
 }
+
+export type PostInboxPreview = {
+  previewUrl: string | null;
+  previewFilename: string | null;
+  previewMime: string | null;
+};
+
+function localInboxPreview(
+  postId: string,
+  deps: ResolvePostMediaDeps,
+): PostInboxPreview {
+  const firstAsset = deps.assets.listByPostId(postId)[0];
+  const previewFilename = firstAsset
+    ? filenameFromStoragePath(firstAsset.storagePath)
+    : null;
+
+  return {
+    previewUrl: previewFilename
+      ? `/api/posts/${postId}/assets/${encodeURIComponent(previewFilename)}`
+      : null,
+    previewFilename,
+    previewMime: firstAsset?.mime ?? null,
+  };
+}
+
+/**
+ * Thumbnail for the comments inbox grid. When Meta is connected, prefers the live
+ * IG CDN URL so the grid does not depend on local asset files. Falls back to local
+ * assets when Meta is unavailable or the fetch fails.
+ */
+export async function resolvePostInboxPreview(
+  postId: string,
+  igMediaId: string | null | undefined,
+  deps: ResolvePostMediaDeps,
+  options: { preferMeta?: boolean } = {},
+): Promise<PostInboxPreview> {
+  const local = localInboxPreview(postId, deps);
+
+  if (!options.preferMeta || !igMediaId || !deps.metaCommentReader) {
+    return local;
+  }
+
+  try {
+    const remote = await deps.metaCommentReader.fetchMediaPreview(igMediaId);
+    const firstSlide = remote.slides[0];
+    const metaUrl = firstSlide?.thumbnailUrl ?? firstSlide?.url ?? null;
+    if (metaUrl) {
+      return {
+        previewUrl: metaUrl,
+        previewFilename: local.previewFilename,
+        previewMime: local.previewMime,
+      };
+    }
+  } catch {
+    // keep local fallback
+  }
+
+  return local;
+}

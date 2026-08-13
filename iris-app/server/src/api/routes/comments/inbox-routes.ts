@@ -5,10 +5,8 @@ import { buildCommentsInbox, buildLocalCommentsInbox } from "../../../domain/com
 import { listCommentPosts } from "../../../domain/comments/list-comment-posts.ts";
 import { isManagedCommentPost } from "../../../domain/comments/is-managed-comment-post.ts";
 import {
-  firstPostMediaUrl,
-  resolvePostMedia,
+  resolvePostInboxPreview,
 } from "../../../domain/post-media/resolve-post-media.ts";
-import { filenameFromStoragePath } from "../../../domain/posts/publish-url.ts";
 import { getMetaReadiness } from "../../../domain/meta/meta-readiness.ts";
 import { requirePost } from "../../route-resources.ts";
 
@@ -45,24 +43,19 @@ export const commentsInboxRouter = createRouter([
     sendJson(match.res, 200, {
       posts: await Promise.all(
         posts.map(async (post) => {
-          const firstAsset = match.ctx.assets.listByPostId(post.postId)[0];
-          const previewFilename = firstAsset
-            ? filenameFromStoragePath(firstAsset.storagePath)
-            : null;
-          let previewUrl: string | null = previewFilename
-            ? `/api/posts/${post.postId}/assets/${encodeURIComponent(previewFilename)}`
-            : null;
-
-          if (!previewUrl && post.igMediaId && getMetaReadiness(match.ctx).ready) {
-            const media = await resolvePostMedia(post.postId, {
+          const metaReady = getMetaReadiness(match.ctx).ready;
+          const preview = await resolvePostInboxPreview(
+            post.postId,
+            post.igMediaId,
+            {
               posts: match.ctx.posts,
               assets: match.ctx.assets,
               metaCommentReader: match.ctx.metaCommentReader,
               publicBaseUrl: match.ctx.publicBaseUrl,
               publishUrlSecret: match.ctx.publishUrlSecret,
-            });
-            previewUrl = firstPostMediaUrl(media);
-          }
+            },
+            { preferMeta: metaReady },
+          );
 
           let likeCount = post.likeCount;
           if (likeCount == null) {
@@ -97,9 +90,9 @@ export const commentsInboxRouter = createRouter([
             reported_comments_count: post.reportedCommentsCount,
             comments_count: post.commentsCount,
             pending_count: post.pendingCount,
-            preview_filename: previewFilename,
-            preview_mime: firstAsset?.mime ?? null,
-            preview_url: previewUrl,
+            preview_filename: preview.previewFilename,
+            preview_mime: preview.previewMime,
+            preview_url: preview.previewUrl,
           };
         }),
       ),
