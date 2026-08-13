@@ -11,6 +11,8 @@ export const serverErrorsPt = {
   MESSAGING_WINDOW_EXPIRED:
     "A janela de 24h da Meta expirou. Só é possível responder dentro desse prazo após a última mensagem do cliente.",
   META_SEND_FAILED: "A Meta recusou o envio: {message}",
+  META_PERMISSION_DENIED:
+    "Sem permissão para enviar mensagens. Reconecte o Instagram e autorize mensagens ({message}).",
   CONTACT_INVALID: "Preencha todos os campos do formulário corretamente.",
   REQUEST_FAILED: "Falha na requisição ({status}).",
   INTERNAL_ERROR: "Erro interno. Tente novamente.",

@@ -8,6 +8,7 @@ export type ServerErrorsMessages = {
   RATE_LIMITED: string;
   MESSAGING_WINDOW_EXPIRED: string;
   META_SEND_FAILED: string;
+  META_PERMISSION_DENIED: string;
   CONTACT_INVALID: string;
   REQUEST_FAILED: string;
   INTERNAL_ERROR: string;

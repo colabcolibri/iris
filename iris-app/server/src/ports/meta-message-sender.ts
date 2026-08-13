@@ -4,11 +4,19 @@ export type MetaMessageSender = {
 
 export class MetaMessageSendError extends Error {
   readonly code: string;
+  readonly metaCode?: number;
+  readonly metaSubcode?: number;
 
-  constructor(message: string, code: string) {
+  constructor(
+    message: string,
+    code: string,
+    meta?: { metaCode?: number; metaSubcode?: number },
+  ) {
     super(message);
     this.name = "MetaMessageSendError";
     this.code = code;
+    this.metaCode = meta?.metaCode;
+    this.metaSubcode = meta?.metaSubcode;
   }
 }
 

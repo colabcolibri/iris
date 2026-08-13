@@ -11,6 +11,8 @@ export const serverErrorsEn = {
   MESSAGING_WINDOW_EXPIRED:
     "Meta's 24h messaging window expired. You can only reply within that window after the customer's last message.",
   META_SEND_FAILED: "Meta rejected the send: {message}",
+  META_PERMISSION_DENIED:
+    "No permission to send messages. Reconnect Instagram and authorize messaging ({message}).",
   CONTACT_INVALID: "Fill in all form fields correctly.",
   REQUEST_FAILED: "Request failed ({status}).",
   INTERNAL_ERROR: "Internal error. Try again.",

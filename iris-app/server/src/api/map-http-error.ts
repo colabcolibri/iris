@@ -76,8 +76,16 @@ export function mapHttpError(
   if (error instanceof MetaMessageSendError) {
     const status = error.code === "rate_limit" ? 429 : 502;
     const code =
-      error.code === "rate_limit" ? ErrorCodes.RATE_LIMITED : ErrorCodes.META_SEND_FAILED;
-    sendCodedError(res, status, code, { message: error.message });
+      error.code === "rate_limit"
+        ? ErrorCodes.RATE_LIMITED
+        : error.code === "permission_denied"
+          ? ErrorCodes.META_PERMISSION_DENIED
+          : ErrorCodes.META_SEND_FAILED;
+    sendCodedError(res, status, code, {
+      message: error.message,
+      ...(error.metaCode != null ? { meta_code: error.metaCode } : {}),
+      ...(error.metaSubcode != null ? { meta_subcode: error.metaSubcode } : {}),
+    });
     return;
   }
 

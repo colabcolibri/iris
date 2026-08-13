@@ -74,9 +74,16 @@ export function translateApiError(
     (messages as Record<string, string>)[code] ??
     messages.REQUEST_FAILED;
 
+  const detailMessage =
+    typeof params?.message === "string" && params.message.trim()
+      ? params.message.trim()
+      : undefined;
+  const fallbackMessage =
+    legacyMessage && legacyMessage !== code ? legacyMessage : undefined;
+
   const merged: Record<string, string | number> = {
     ...params,
-    message: legacyMessage ?? code,
+    message: detailMessage ?? fallbackMessage ?? code,
   };
 
   return interpolate(template, merged);
@@ -87,6 +94,11 @@ export function getApiErrorMessage(
   locale: AppLocale,
 ): string {
   if (error instanceof ApiRequestError) {
+    const detailMessage =
+      typeof error.details?.message === "string"
+        ? error.details.message
+        : undefined;
+
     return translateApiError(
       error.code,
       locale,
@@ -94,7 +106,7 @@ export function getApiErrorMessage(
         status: String(error.status),
         ...(error.details as Record<string, string | number> | undefined),
       },
-      error.message,
+      detailMessage,
     );
   }
 

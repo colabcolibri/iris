@@ -27,6 +27,7 @@ function mapSendError(json: GraphSendResponse, status: number): Error {
   const subcode = json.error?.error_subcode;
   const code = json.error?.code;
   const lower = message.toLowerCase();
+  const meta = { metaCode: code, metaSubcode: subcode };
 
   if (
     subcode === 2534022 ||
@@ -37,14 +38,14 @@ function mapSendError(json: GraphSendResponse, status: number): Error {
   }
 
   if (code === 10 || code === 200) {
-    return new MetaMessageSendError(message, "permission_denied");
+    return new MetaMessageSendError(message, "permission_denied", meta);
   }
 
   if (lower.includes("rate limit")) {
-    return new MetaMessageSendError(message, "rate_limit");
+    return new MetaMessageSendError(message, "rate_limit", meta);
   }
 
-  return new MetaMessageSendError(message, "send_failed");
+  return new MetaMessageSendError(message, "send_failed", meta);
 }
 
 export function createGraphApiMessageSender(
