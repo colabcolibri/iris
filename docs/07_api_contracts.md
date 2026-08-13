@@ -129,7 +129,7 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_update_product` | `PATCH /api/products/:id` | Atualiza produto (campos parciais) |
 | `iris_delete_product` | `DELETE /api/products/:id` | Remove produto |
 | `iris_list_store_connections` | `GET /api/store-connections` | Lista conexões (sem secrets) |
-| `iris_create_store_connection` | `POST /api/store-connections` | Cria conexão Yampi (`label`, `alias`, `user_token`, `user_secret_key`) |
+| `iris_create_store_connection` | `POST /api/store-connections` | Cria conexão Yampi (`label`, `user_token`, `user_secret_key`; `alias` opcional — resolvido via `auth/me`) |
 | `iris_delete_store_connection` | `DELETE /api/store-connections/:id` | Remove conexão |
 | `iris_test_store_connection` | `POST /api/store-connections/:id/test` | Testa credenciais |
 | `iris_sync_store_catalog` | `POST /api/store-connections/:id/sync` | Sync catálogo (`import_new` opcional) |
@@ -308,8 +308,9 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
-| GET | `/api/store-connections` | admin | Lista conexões (sem secrets) |
-| POST | `/api/store-connections` | admin | Cria conexão Yampi (`provider_type`, `label`, `alias`, `user_token`, `user_secret_key`) |
+| GET | `/api/store-connections` | admin | Lista conexões (sem secrets; inclui `yampi_alias`) |
+| POST | `/api/store-connections/yampi/discover` | admin | Lista lojas da conta via `auth/me` (`user_token`, `user_secret_key`) |
+| POST | `/api/store-connections` | admin | Cria conexão Yampi — valida alias contra `auth/me` + probe catálogo (`alias` opcional se conta tiver 1 loja) |
 | GET | `/api/store-connections/:id` | admin | Detalhe |
 | PATCH | `/api/store-connections/:id` | admin | Atualiza label/settings/credenciais |
 | DELETE | `/api/store-connections/:id` | admin | Remove |

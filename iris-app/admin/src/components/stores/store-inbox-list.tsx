@@ -51,7 +51,9 @@ export function StoreInboxList({
                     {connection.label}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {PROVIDER_LABELS[connection.provider_type]}
+                    {connection.yampi_alias
+                      ? `alias: ${connection.yampi_alias}`
+                      : PROVIDER_LABELS[connection.provider_type]}
                   </p>
                 </div>
                 <Badge

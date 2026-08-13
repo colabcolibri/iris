@@ -20,10 +20,16 @@ export function createYampiStoreProvider(client: YampiClient = createYampiClient
 
     async testConnection(credentials: StoreCredentials): Promise<StoreConnectionTestResult> {
       const yampi = readYampiCredentials(credentials);
-      if (!yampi.alias.trim() || !yampi.userToken.trim() || !yampi.userSecretKey.trim()) {
-        return { ok: false, message: "alias, userToken and userSecretKey are required" };
+      if (!yampi.userToken.trim() || !yampi.userSecretKey.trim()) {
+        return { ok: false, message: "userToken and userSecretKey are required" };
       }
-      return client.testConnection(yampi);
+      const result = await client.testConnection(yampi);
+      return {
+        ok: result.ok,
+        message: result.message,
+        resolved_alias: result.resolved_alias,
+        merchants: result.merchants,
+      };
     },
 
     async listExternalProducts(credentials, options = {}) {

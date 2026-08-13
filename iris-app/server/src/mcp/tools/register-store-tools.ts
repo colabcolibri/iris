@@ -5,6 +5,10 @@ import { ValidationError } from "../../api/json.ts";
 import { resolveProductFields } from "../../domain/products/product-field-resolver.ts";
 import { isProductFieldKey } from "../../domain/products/product-field-keys.ts";
 import { serializeStoreConnection } from "../../domain/stores/serialize-store-connection.ts";
+import {
+  applyResolvedYampiAlias,
+  withYampiAliasInSettings,
+} from "../../domain/stores/yampi-connection-helpers.ts";
 import { jsonToolContent, toolError } from "../tool-response.ts";
 
 function readYampiCreateBody(args: Record<string, unknown>) {
@@ -23,8 +27,8 @@ function readYampiCreateBody(args: Record<string, unknown>) {
         ? args.userSecretKey.trim()
         : "";
 
-  if (!label || !alias || !userToken || !userSecretKey) {
-    throw new ValidationError("label, alias, user_token and user_secret_key are required");
+  if (!label || !userToken || !userSecretKey) {
+    throw new ValidationError("label, user_token and user_secret_key are required");
   }
 
   return {
@@ -34,6 +38,19 @@ function readYampiCreateBody(args: Record<string, unknown>) {
       providerType: "yampi" as const,
       yampi: { alias, userToken, userSecretKey },
     },
+  };
+}
+
+async function resolveYampiForCreate(ctx: AppContext, body: ReturnType<typeof readYampiCreateBody>) {
+  const provider = ctx.storeProviders.get("yampi");
+  const result = await provider.testConnection(body.credentials);
+  if (!result.ok || !result.resolved_alias) {
+    throw new ValidationError(result.message);
+  }
+
+  return {
+    credentials: applyResolvedYampiAlias(body.credentials, result.resolved_alias),
+    settings: withYampiAliasInSettings({}, result.resolved_alias),
   };
 }
 
@@ -53,7 +70,7 @@ export function registerStoreTools(server: McpServer, ctx: AppContext): void {
     "Create a Yampi store connection (v1.19)",
     {
       label: z.string().min(1),
-      alias: z.string().min(1),
+      alias: z.string().optional(),
       user_token: z.string().min(1),
       user_secret_key: z.string().min(1),
       provider_type: z.enum(["yampi"]).optional().default("yampi"),
@@ -64,11 +81,13 @@ export function registerStoreTools(server: McpServer, ctx: AppContext): void {
           return toolError("only yampi is supported in v1.19");
         }
         const body = readYampiCreateBody(args);
+        const resolved = await resolveYampiForCreate(ctx, body);
         const created = ctx.storeConnections.create({
           providerType: body.providerType,
           label: body.label,
-          credentials: body.credentials,
-          settings: {},
+          credentials: resolved.credentials,
+          settings: resolved.settings,
+          status: "active",
         });
         return jsonToolContent({ store_connection: serializeStoreConnection(created) });
       } catch (error) {
@@ -111,12 +130,24 @@ export function registerStoreTools(server: McpServer, ctx: AppContext): void {
 
       try {
         const provider = ctx.storeProviders.get(connection.providerType);
-        const result = await provider.testConnection(credentials);
+      const result = await provider.testConnection(credentials);
+      if (result.ok && result.resolved_alias) {
+        ctx.storeConnections.update(args.store_connection_id, {
+          status: "active",
+          lastError: null,
+          credentials: applyResolvedYampiAlias(credentials, result.resolved_alias),
+          settings: withYampiAliasInSettings(
+            connection.settings,
+            result.resolved_alias,
+          ),
+        });
+      } else {
         ctx.storeConnections.update(args.store_connection_id, {
           status: result.ok ? "active" : "error",
           lastError: result.ok ? null : result.message,
         });
-        return jsonToolContent(result);
+      }
+      return jsonToolContent(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "test failed";
         ctx.storeConnections.update(args.store_connection_id, {

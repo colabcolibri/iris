@@ -37,4 +37,11 @@ export type ExternalProductPage = {
 export type StoreConnectionTestResult = {
   ok: boolean;
   message: string;
+  resolved_alias?: string | null;
+  merchants?: Array<{
+    alias: string;
+    name: string;
+    active: boolean;
+    domain: string | null;
+  }>;
 };

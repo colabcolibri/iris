@@ -22,6 +22,8 @@ import type {
   MetaStatus,
   McpSettings,
   McpSettingsGenerateResult,
+  McpPermissionsSettings,
+  McpPermissionPreset,
   Post,
   Product,
   ProductFieldKey,
@@ -32,6 +34,8 @@ import type {
   StoreConnection,
   StoreConnectionTestResult,
   FieldSource,
+  YampiDiscoverResult,
+  YampiMerchantOption,
   PostInsightsResult,
   UpdatePostBody,
   ReconcileCommentsPreview,
@@ -759,10 +763,21 @@ export function fetchStoreConnections() {
   );
 }
 
+export function discoverYampiMerchants(body: {
+  user_token: string;
+  user_secret_key: string;
+  alias?: string;
+}) {
+  return apiFetch<YampiDiscoverResult>("/api/store-connections/yampi/discover", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export function createStoreConnection(body: {
   provider_type: "yampi";
   label: string;
-  alias: string;
+  alias?: string;
   user_token: string;
   user_secret_key: string;
 }) {
@@ -898,7 +913,7 @@ export function updateAppSettings(body: {
   });
 }
 
-export type { McpSettings, McpSettingsGenerateResult };
+export type { McpSettings, McpSettingsGenerateResult, McpPermissionsSettings, McpPermissionPreset };
 
 export function fetchMcpSettings() {
   return apiFetch<McpSettings>("/api/settings/mcp");
@@ -913,6 +928,22 @@ export function generateMcpConnection() {
 export function revokeMcpConnection() {
   return apiFetch<McpSettings>("/api/settings/mcp", {
     method: "DELETE",
+  });
+}
+
+export function fetchMcpPermissions() {
+  return apiFetch<McpPermissionsSettings>("/api/settings/mcp/permissions");
+}
+
+export function updateMcpPermissions(body: {
+  preset: McpPermissionPreset;
+  domain_overrides?: Partial<
+    Record<string, Partial<{ read: boolean; write: boolean; delete: boolean }>>
+  >;
+}) {
+  return apiFetch<McpPermissionsSettings>("/api/settings/mcp/permissions", {
+    method: "PUT",
+    body: JSON.stringify(body),
   });
 }
 

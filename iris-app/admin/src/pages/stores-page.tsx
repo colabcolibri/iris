@@ -20,6 +20,7 @@ import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import {
   createStoreConnection,
   deleteStoreConnection,
+  discoverYampiMerchants,
   fetchStoreConnections,
   fetchStoreFieldPolicies,
   syncStoreConnection,
@@ -27,7 +28,7 @@ import {
   updateStoreConnection,
   updateStoreFieldPolicies,
 } from "@/lib/api";
-import type { FieldSource, ProductFieldKey, StoreConnection } from "@/lib/types";
+import type { FieldSource, ProductFieldKey, StoreConnection, YampiMerchantOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const NEW_STORE_ID = "__new__";
@@ -52,9 +53,11 @@ export function StoresPage() {
 
   const [newLabel, setNewLabel] = useState("");
   const [newAlias, setNewAlias] = useState("");
+  const [newMerchants, setNewMerchants] = useState<YampiMerchantOption[]>([]);
   const [newUserToken, setNewUserToken] = useState("");
   const [newUserSecretKey, setNewUserSecretKey] = useState("");
   const [creating, setCreating] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
 
   const [draft, setDraft] = useState<StoreConnection | null>(null);
   const [fieldPolicies, setFieldPolicies] = useState<
@@ -114,6 +117,7 @@ export function StoresPage() {
     if (selectedId === NEW_STORE_ID) {
       setDraft(null);
       setFieldPolicies({});
+      setNewMerchants([]);
       return;
     }
 
@@ -130,9 +134,47 @@ export function StoresPage() {
       .catch(() => setFieldPolicies({}));
   }, [connections, selectedId]);
 
+  async function handleDiscover() {
+    if (!newUserToken.trim() || !newUserSecretKey.trim()) {
+      toast.error("Informe User Token e User Secret Key.");
+      return;
+    }
+
+    setDiscovering(true);
+    try {
+      const result = await discoverYampiMerchants({
+        user_token: newUserToken.trim(),
+        user_secret_key: newUserSecretKey.trim(),
+        alias: newAlias.trim() || undefined,
+      });
+      setNewMerchants(result.merchants);
+      if (result.resolved_alias) {
+        setNewAlias(result.resolved_alias);
+      } else if (result.merchants.length === 1) {
+        setNewAlias(result.merchants[0]!.alias);
+      } else if (!newAlias.trim()) {
+        setNewAlias("");
+      }
+      toast.success(
+        result.merchants.length === 0
+          ? "Nenhuma loja encontrada."
+          : `${result.merchants.length} loja(s) encontrada(s).`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao buscar lojas.");
+    } finally {
+      setDiscovering(false);
+    }
+  }
+
   async function handleCreate() {
-    if (!newLabel.trim() || !newAlias.trim() || !newUserToken.trim() || !newUserSecretKey.trim()) {
-      toast.error("Preencha nome, alias e credenciais Yampi.");
+    if (!newLabel.trim() || !newUserToken.trim() || !newUserSecretKey.trim()) {
+      toast.error("Preencha nome e credenciais Yampi.");
+      return;
+    }
+
+    if (newMerchants.length > 1 && !newAlias.trim()) {
+      toast.error("Selecione o alias da loja retornado pela Yampi.");
       return;
     }
 
@@ -141,17 +183,22 @@ export function StoresPage() {
       const created = await createStoreConnection({
         provider_type: "yampi",
         label: newLabel.trim(),
-        alias: newAlias.trim(),
+        alias: newAlias.trim() || undefined,
         user_token: newUserToken.trim(),
         user_secret_key: newUserSecretKey.trim(),
       });
       setConnections((current) => [...current, created]);
       setNewLabel("");
       setNewAlias("");
+      setNewMerchants([]);
       setNewUserToken("");
       setNewUserSecretKey("");
       selectConnection(created.id);
-      toast.success("Loja conectada.");
+      toast.success(
+        created.yampi_alias
+          ? `Loja conectada (alias: ${created.yampi_alias}).`
+          : "Loja conectada.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao conectar loja.");
     } finally {
@@ -316,13 +363,16 @@ export function StoresPage() {
       <StoreCreatePanel
         label={newLabel}
         alias={newAlias}
+        merchants={newMerchants}
         userToken={newUserToken}
         userSecretKey={newUserSecretKey}
         creating={creating}
+        discovering={discovering}
         onLabelChange={setNewLabel}
         onAliasChange={setNewAlias}
         onUserTokenChange={setNewUserToken}
         onUserSecretKeyChange={setNewUserSecretKey}
+        onDiscover={() => void handleDiscover()}
         onSubmit={() => void handleCreate()}
       />
     ) : draft ? (

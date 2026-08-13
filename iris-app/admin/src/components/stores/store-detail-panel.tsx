@@ -48,6 +48,11 @@ export function StoreDetailPanel({
         description={
           <span className="flex flex-wrap items-center gap-2 text-sm">
             <Badge variant="secondary">{PROVIDER_LABELS[connection.provider_type]}</Badge>
+            {connection.yampi_alias ? (
+              <span className="font-mono text-xs text-muted-foreground">
+                alias: {connection.yampi_alias}
+              </span>
+            ) : null}
             <span className="text-muted-foreground">Status: {connection.status}</span>
           </span>
         }

@@ -386,11 +386,24 @@ export type StoreConnection = {
   label: string;
   status: StoreConnectionStatus;
   settings: Record<string, unknown>;
+  yampi_alias: string | null;
   has_credentials: boolean;
   last_sync_at: string | null;
   last_error: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type YampiMerchantOption = {
+  alias: string;
+  name: string;
+  active: boolean;
+  domain: string | null;
+};
+
+export type YampiDiscoverResult = {
+  merchants: YampiMerchantOption[];
+  resolved_alias: string | null;
 };
 
 export type StoreConnectionTestResult = {
@@ -554,6 +567,35 @@ export type McpSettingsGenerateResult = {
   mcp_path: string;
   mcp_url: string;
   updated_at: string;
+};
+
+export type McpPermissionPreset = "full" | "read_only" | "editor" | "custom";
+
+export type McpDomainActionPermissions = {
+  read: boolean;
+  write: boolean;
+  delete: boolean;
+};
+
+export type McpPermissionsDomain = {
+  id: string;
+  label: string;
+  description: string;
+  capabilities: McpDomainActionPermissions;
+  permissions: McpDomainActionPermissions;
+};
+
+export type McpPermissionsSettings = {
+  preset: McpPermissionPreset;
+  domain_overrides: Partial<Record<string, Partial<McpDomainActionPermissions>>> | null;
+  domains: McpPermissionsDomain[];
+  catalog: Array<{
+    id: string;
+    label: string;
+    description: string;
+    capabilities: McpDomainActionPermissions;
+  }>;
+  updated_at: string | null;
 };
 
 export type ReplyInspectionThreadEntry = {

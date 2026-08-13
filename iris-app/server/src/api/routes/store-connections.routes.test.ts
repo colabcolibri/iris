@@ -4,6 +4,43 @@ import { createServer } from "../http-server.ts";
 
 const ADMIN = "store-admin";
 
+function yampiMerchantsResponse(alias = "demo") {
+  return {
+    data: {
+      merchants: {
+        data: [{ alias, name: "Loja demo", active: true, domain: "demo.example" }],
+      },
+    },
+  };
+}
+
+function installYampiFetchMock(alias = "demo") {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input, init) => {
+    const url = String(input);
+    if (!url.includes("api.dooki.com.br")) {
+      return originalFetch(input, init);
+    }
+    if (url.includes("/auth/me")) {
+      return new Response(JSON.stringify(yampiMerchantsResponse(alias)), { status: 200 });
+    }
+    if (url.includes("/catalog/products")) {
+      return new Response(
+        JSON.stringify({
+          data: [{ id: 9, name: "Produto remoto", skus: { data: [] }, texts: { data: {} } }],
+          meta: { pagination: { current_page: 1, per_page: 50, total_pages: 1 } },
+        }),
+        { status: 200 },
+      );
+    }
+    return new Response("not found", { status: 404 });
+  }) as typeof fetch;
+
+  return () => {
+    globalThis.fetch = originalFetch;
+  };
+}
+
 async function withServer(
   run: (baseUrl: string) => Promise<void>,
 ): Promise<void> {
@@ -34,56 +71,72 @@ async function withServer(
 }
 
 test("POST /api/store-connections creates yampi connection without returning secrets", async () => {
-  await withServer(async (baseUrl) => {
-    const response = await fetch(`${baseUrl}/api/store-connections`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${ADMIN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        provider_type: "yampi",
-        label: "Minha loja",
-        alias: "demo",
-        user_token: "secret-token",
-        user_secret_key: "secret-key",
-      }),
-    });
+  const restoreFetch = installYampiFetchMock("demo");
+  try {
+    await withServer(async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/store-connections`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ADMIN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          provider_type: "yampi",
+          label: "Minha loja",
+          alias: "demo",
+          user_token: "secret-token",
+          user_secret_key: "secret-key",
+        }),
+      });
 
-    assert.equal(response.status, 201);
-    const body = (await response.json()) as {
-      label: string;
-      has_credentials: boolean;
-      user_token?: string;
-    };
-    assert.equal(body.label, "Minha loja");
-    assert.equal(body.has_credentials, true);
-    assert.equal(body.user_token, undefined);
-  });
+      assert.equal(response.status, 201);
+      const body = (await response.json()) as {
+        label: string;
+        has_credentials: boolean;
+        yampi_alias: string | null;
+        user_token?: string;
+      };
+      assert.equal(body.label, "Minha loja");
+      assert.equal(body.has_credentials, true);
+      assert.equal(body.yampi_alias, "demo");
+      assert.equal(body.user_token, undefined);
+    });
+  } finally {
+    restoreFetch();
+  }
+});
+
+test("POST /api/store-connections/yampi/discover resolves alias for single merchant", async () => {
+  const restoreFetch = installYampiFetchMock("demo");
+  try {
+    await withServer(async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/store-connections/yampi/discover`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ADMIN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_token: "token",
+          user_secret_key: "secret",
+        }),
+      });
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as {
+        merchants: Array<{ alias: string }>;
+        resolved_alias: string | null;
+      };
+      assert.equal(body.merchants.length, 1);
+      assert.equal(body.resolved_alias, "demo");
+    });
+  } finally {
+    restoreFetch();
+  }
 });
 
 test("POST /api/store-connections/:id/sync imports products when import_new=true", async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (input, init) => {
-    const url = String(input);
-    if (!url.includes("api.dooki.com.br")) {
-      return originalFetch(input, init);
-    }
-    if (url.includes("/auth/me")) {
-      return new Response(JSON.stringify({ data: {} }), { status: 200 });
-    }
-    if (url.includes("/catalog/products")) {
-      return new Response(
-        JSON.stringify({
-          data: [{ id: 9, name: "Produto remoto", skus: { data: [] }, texts: { data: {} } }],
-          meta: { pagination: { current_page: 1, per_page: 50, total_pages: 1 } },
-        }),
-        { status: 200 },
-      );
-    }
-    return new Response("not found", { status: 404 });
-  }) as typeof fetch;
-
+  const restoreFetch = installYampiFetchMock("demo");
   try {
     await withServer(async (baseUrl) => {
       const createResponse = await fetch(`${baseUrl}/api/store-connections`, {
@@ -121,6 +174,6 @@ test("POST /api/store-connections/:id/sync imports products when import_new=true
       assert.equal(productsBody.products.length, 1);
     });
   } finally {
-    globalThis.fetch = originalFetch;
+    restoreFetch();
   }
 });

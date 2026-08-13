@@ -9,12 +9,26 @@ const credentials = {
   userSecretKey: "secret",
 };
 
-test("yampi store provider testConnection uses auth/me", async () => {
-  const calls: Array<{ url: string; init?: RequestInit }> = [];
+const merchantsPayload = {
+  data: {
+    merchants: {
+      data: [{ alias: "demo-store", name: "Demo Store", active: true, domain: "demo.example" }],
+    },
+  },
+};
+
+test("yampi store provider testConnection validates alias against auth/me and probes catalog", async () => {
+  const calls: string[] = [];
   const client = createYampiClient({
-    fetchImpl: (async (url, init) => {
-      calls.push({ url: String(url), init });
-      return new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 });
+    fetchImpl: (async (url) => {
+      calls.push(String(url));
+      if (String(url).includes("/auth/me")) {
+        return new Response(JSON.stringify(merchantsPayload), { status: 200 });
+      }
+      if (String(url).includes("/catalog/products")) {
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      }
+      return new Response("not found", { status: 404 });
     }) as typeof fetch,
   });
 
@@ -25,8 +39,30 @@ test("yampi store provider testConnection uses auth/me", async () => {
   });
 
   assert.equal(result.ok, true);
-  assert.equal(calls[0]?.url, "https://api.dooki.com.br/v2/auth/me");
-  assert.equal((calls[0]?.init?.headers as Record<string, string>)["User-Token"], "token");
+  assert.equal(result.resolved_alias, "demo-store");
+  assert.equal(result.merchants?.length, 1);
+  assert.ok(calls.some((url) => url.includes("/auth/me")));
+  assert.ok(calls.some((url) => url.includes("/demo-store/catalog/products")));
+});
+
+test("yampi store provider testConnection rejects unknown alias", async () => {
+  const client = createYampiClient({
+    fetchImpl: (async (url) => {
+      if (String(url).includes("/auth/me")) {
+        return new Response(JSON.stringify(merchantsPayload), { status: 200 });
+      }
+      return new Response("not found", { status: 404 });
+    }) as typeof fetch,
+  });
+
+  const provider = createYampiStoreProvider(client);
+  const result = await provider.testConnection({
+    providerType: "yampi",
+    yampi: { ...credentials, alias: "outra-loja" },
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.message, /não pertence/i);
 });
 
 test("yampi store provider lists mapped products", async () => {

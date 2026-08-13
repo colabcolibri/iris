@@ -202,9 +202,10 @@ Padrão visual: `docs/09_design_system.md` + `docs/architecture/admin-ui-layout.
 
 Passo a passo para operadores (v1.19 — loja própria, sem OAuth):
 
-1. **Obter credenciais na Yampi** — no painel Yampi, gere **User Token** e **User Secret Key** para a loja. Anote também o **alias** (subdomínio da loja na API `api.dooki.com.br/v2/{alias}/…`). Documentação: [Yampi Auth](https://docs.yampi.com.br/auth/auth).
-2. **Admin → Lojas** (`/stores`) — clique em **Nova conexão** e preencha nome amigável, alias, token e secret (campos password).
-3. **Testar conexão** — botão **Testar conexão** chama `POST /api/store-connections/:id/test` e atualiza status `active` ou `error`.
+1. **Obter credenciais na Yampi** — no painel Yampi, gere **User Token** e **User Secret Key** (`Perfil > Credenciais de API`). Documentação: [Yampi Auth](https://docs.yampi.com.br/auth/auth-user-token).
+2. **Admin → Lojas** (`/stores`) — informe token e secret, clique em **Buscar lojas da conta**. O Iris chama `POST /v2/auth/me` e lê `merchants.data[].alias` retornado pela Yampi.
+3. **Selecionar alias** — com uma loja, o alias é preenchido automaticamente; com várias, escolha no select. O alias também pode ser informado manualmente, mas será validado contra a conta no create/test.
+4. **Testar conexão** — valida credenciais, confere se o alias pertence à conta e faz probe em `GET /v2/{alias}/catalog/products?limit=1`.
 4. **Sincronizar catálogo** — **Sincronizar catálogo** com opção *Importar produtos novos* cria cadastros Iris + vínculos (`product_store_links`) a partir do catálogo remoto.
 5. **Políticas globais** — no painel da conexão, defina por campo se o agente usa texto **Iris**, dados da **Loja** ou **Desativado** (defaults em § Políticas de campo).
 6. **Por produto** — em **Produtos**, seção **Loja virtual**: vincule pelo ID Yampi, override por campo se necessário, e confira o **preview resolvido** antes de salvar.

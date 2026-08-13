@@ -1,4 +1,5 @@
 import type { StoreConnectionRecord } from "../../ports/store-connection-repository.ts";
+import { readYampiAliasFromSettings } from "./yampi-connection-helpers.ts";
 
 export function serializeStoreConnection(connection: StoreConnectionRecord) {
   return {
@@ -7,6 +8,7 @@ export function serializeStoreConnection(connection: StoreConnectionRecord) {
     label: connection.label,
     status: connection.status,
     settings: connection.settings,
+    yampi_alias: readYampiAliasFromSettings(connection.settings),
     has_credentials: connection.hasCredentials,
     last_sync_at: connection.lastSyncAt,
     last_error: connection.lastError,

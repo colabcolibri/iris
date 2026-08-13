@@ -17,7 +17,38 @@ function parseToolJson(result: { content?: unknown; isError?: boolean }) {
   return JSON.parse(String(block.text)) as Record<string, unknown>;
 }
 
+function installYampiFetchMock(alias = "demo") {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input, init) => {
+    const url = String(input);
+    if (!url.includes("api.dooki.com.br")) {
+      return originalFetch(input, init);
+    }
+    if (url.includes("/auth/me")) {
+      return new Response(
+        JSON.stringify({
+          data: {
+            merchants: {
+              data: [{ alias, name: "Loja demo", active: true, domain: "demo.example" }],
+            },
+          },
+        }),
+        { status: 200 },
+      );
+    }
+    if (url.includes("/catalog/products")) {
+      return new Response(JSON.stringify({ data: [] }), { status: 200 });
+    }
+    return new Response("not found", { status: 404 });
+  }) as typeof fetch;
+
+  return () => {
+    globalThis.fetch = originalFetch;
+  };
+}
+
 test("MCP store tools list, create and delete without leaking secrets", async () => {
+  const restoreFetch = installYampiFetchMock("demo");
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-stores-"));
   const db = openDatabase(":memory:");
   runMigrations(db);
@@ -50,6 +81,7 @@ test("MCP store tools list, create and delete without leaking secrets", async ()
     const created = createdPayload.store_connection as Record<string, unknown>;
     assert.equal(created.label, "Loja MCP");
     assert.equal(created.has_credentials, true);
+    assert.equal(created.yampi_alias, "demo");
     assert.equal(created.user_token, undefined);
 
     const listPayload = parseToolJson(
@@ -72,6 +104,7 @@ test("MCP store tools list, create and delete without leaking secrets", async ()
     );
     assert.equal((emptyList.store_connections as unknown[]).length, 0);
   } finally {
+    restoreFetch();
     await client.close();
     await server.close();
     await rm(mediaRoot, { recursive: true, force: true });
