@@ -52,15 +52,10 @@ export function CalendarPostRow({
       <div className="flex min-w-0 shrink-0 items-center gap-1">
         <StatusBadge
           status={post.status}
-          className={compact ? "px-1.5 py-0 text-[10px] leading-4" : undefined}
+          className={compact ? "px-1.5 py-0 text-xs leading-tight" : undefined}
         />
         {time ? (
-          <span
-            className={cn(
-              "shrink-0 text-muted-foreground",
-              compact ? "text-[10px] leading-4" : "text-xs",
-            )}
-          >
+          <span className="shrink-0 text-xs text-muted-foreground">
             {time}
           </span>
         ) : null}
@@ -69,7 +64,7 @@ export function CalendarPostRow({
         className={cn(
           "min-w-0 font-semibold text-foreground",
           compact
-            ? "truncate text-[11px] leading-tight"
+            ? "truncate text-xs leading-tight"
             : "line-clamp-2 text-sm leading-snug",
         )}
       >

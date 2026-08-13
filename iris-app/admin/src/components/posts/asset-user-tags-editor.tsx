@@ -145,7 +145,7 @@ export function AssetUserTagsEditor({
               setActiveIndex(index);
             }}
             className={cn(
-              "absolute z-10 max-w-[45%] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border px-1.5 py-0.5 text-[10px] font-medium shadow-none",
+              "absolute z-10 max-w-[45%] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border px-1.5 py-0.5 text-xs font-medium shadow-none",
               activeIndex === index
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-background/95 text-foreground",

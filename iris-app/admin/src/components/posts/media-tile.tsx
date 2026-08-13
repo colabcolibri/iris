@@ -131,7 +131,7 @@ export function MediaTile({
         </span>
 
         {(item.altText?.trim() || item.userTags.length > 0) && (
-          <span className="absolute bottom-2 left-2 rounded-(--iris-radius-sm) bg-background/90 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-none">
+          <span className="absolute bottom-2 left-2 rounded-(--iris-radius-sm) bg-background/90 px-1.5 py-0.5 text-xs font-medium text-muted-foreground shadow-none">
             {[
               item.altText?.trim() ? "alt" : null,
               item.userTags.length > 0 ? `tag ${item.userTags.length}` : null,
@@ -182,7 +182,7 @@ export function MediaTile({
                 </Button>
               </>
             ) : (
-              <span className="truncate px-1.5 text-[10px] text-muted-foreground">
+              <span className="truncate px-1.5 text-xs text-muted-foreground">
                 Slide {index + 1}
               </span>
             )}

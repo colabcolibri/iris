@@ -201,7 +201,7 @@ export function CalendarView({
                   ))}
 
                   {dayPosts.length > 3 ? (
-                    <span className="shrink-0 truncate px-1 text-[10px] text-muted-foreground">
+                    <span className="shrink-0 truncate px-1 text-xs text-muted-foreground">
                       +{dayPosts.length - 3} mais
                     </span>
                   ) : null}
