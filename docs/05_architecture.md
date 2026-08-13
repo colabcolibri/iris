@@ -151,6 +151,14 @@ Webhook `messaging` → `conversations` + `messages` → SSE `messages-changed` 
 
 Diagramas: `iris-message-reply-flow.md`, `iris-message-harness.md`.
 
+### 7 — Lojas virtuais (v1.19)
+
+Conexão com catálogos externos (Yampi primeiro) via **port/adapter** (`StoreProvider`), sync unidirecional para `product_store_links` e merge de campos em `ProductFieldResolver` → `ResolvedProductView`.
+
+O message-harness DM (`build-prompts.ts`, `message-reply-context-assembler.ts`) consome a view resolvida — só campos com `source` ativo (Iris, loja ou desativado por política global/per-product).
+
+Detalhe: `docs/architecture/ecommerce-stores.md`.
+
 ### 6 — Cliente MCP (ad hoc)
 
 1. Client envia `POST /mcp` com `Authorization: Bearer <IRIS_MCP_CONNECTION_CODE>`
@@ -177,12 +185,18 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | File | Topic |
 | ---- | ----- |
 | `docs/architecture/mcp-integration.md` | MCP — Cursor, ChatGPT, Claude, validate, tools |
+| `docs/architecture/ecommerce-stores.md` | Lojas virtuais — port/adapter, sync, políticas de campo, Yampi |
 | `docs/architecture/image-optimization.md` | Pipeline sharp, limites, env |
 | `docs/architecture/meta-integration.md` | Graph API, webhooks |
 | `docs/architecture/meta-app-review.md` | Checklist revisão app Meta (IGIris) |
 | `docs/architecture/srp-modules.md` | Módulos e dependências |
 | `docs/architecture/admin-ui-layout.md` | Admin React — shell persistente, `PageContainer`, providers |
 | `docs/architecture/admin-demo-mode.md` | Demo público `/demo` — fixtures client-side, isolamento de sessão |
+| `docs/architecture/i18n.md` | i18n PT/EN — domínios, provider admin, erros API, email |
+
+## Internacionalização
+
+Admin React, landing, demo e mensagens user-facing da API seguem o modelo em `docs/architecture/i18n.md`: locales `pt`/`en`, traduções por domínio tipado, erros com código estável traduzidos no client, emails transacionais por locale. Implementação: EPIC-17 / v1.20.
 
 ## Gaps
 

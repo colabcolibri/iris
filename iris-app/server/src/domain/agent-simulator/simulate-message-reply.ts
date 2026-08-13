@@ -3,7 +3,10 @@ import type { AgentRunRepository } from "../../ports/agent-run-repository.ts";
 import type { AgentRunStepRepository } from "../../ports/agent-run-step-repository.ts";
 import type { MessageAgentContentStore } from "../../ports/message-agent-content-store.ts";
 import type { ProductRepository } from "../../ports/product-repository.ts";
+import type { ProductStoreLinkRepository } from "../../ports/product-store-link-repository.ts";
+import type { ProductFieldPolicyRepository } from "../../ports/product-field-policy-repository.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
+import { resolveActiveProductCatalog } from "../products/resolve-active-product-catalog.ts";
 import { ValidationError } from "../../api/json.ts";
 import { executeAndRecordMessageHarness } from "../message-harness/execute-and-record-message-harness.ts";
 import type { MessageHarnessRunResult } from "../message-harness/types.ts";
@@ -36,6 +39,8 @@ export type SimulateMessageReplyDeps = {
   personaStore: ReplyPersonaStore;
   messageAgentContentStore: MessageAgentContentStore;
   products: ProductRepository;
+  productStoreLinks: ProductStoreLinkRepository;
+  productFieldPolicies: ProductFieldPolicyRepository;
   llm: LlmCompleter | null;
   agentRuns: AgentRunRepository;
   agentRunSteps: AgentRunStepRepository;
@@ -186,7 +191,14 @@ function buildSimulatedMessageContext(
       replyPrompt: input.reply_prompt ?? null,
     },
     thread: { entries },
-    products: deps.products.list(true),
+    products: resolveActiveProductCatalog(
+      {
+        products: deps.products,
+        productStoreLinks: deps.productStoreLinks,
+        productFieldPolicies: deps.productFieldPolicies,
+      },
+      true,
+    ),
     brandUsername,
     targetMessage: {
       text: input.target_message.text,

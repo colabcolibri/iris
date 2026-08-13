@@ -49,6 +49,18 @@ Com `reply_delay_seconds = 0`, o agente processa no próximo ciclo do worker (~6
 
 Com `auto_monitor_enabled`, o worker lista mídias recentes no intervalo configurado e cadastra posts `monitored`; o webhook de comentário também auto-cadastra mídia desconhecida.
 
+## Lojas virtuais (Yampi, v1.19)
+
+Credenciais Yampi (**User Token**, **User Secret Key** e **alias**) **não** vêm de variáveis de ambiente — são cadastradas na UI admin em **Lojas** (`/stores`) ou via MCP `iris_create_store_connection`. O server cifra o blob em `store_connections.encrypted_credentials` com `IRIS_TOKEN_ENCRYPTION_KEY` (mesmo vault de tokens Meta/LLM).
+
+| Onde | O que configurar |
+| ---- | ---------------- |
+| UI `/stores` | Formulário Yampi — secrets só no submit; não reexibidos após salvar |
+| MCP | `iris_create_store_connection` — paridade com `POST /api/store-connections` |
+| `.env` | Apenas `IRIS_TOKEN_ENCRYPTION_KEY` (obrigatório em produção) — **não** coloque User Token Yampi no `.env` |
+
+Guia passo a passo: `docs/architecture/ecommerce-stores.md` — § Como conectar Yampi.
+
 ## Agente local (`iris-agent/`)
 
 Pacote **portável** na raiz do repo: `iris-agent/`. Kit Meridian em `.agent/` — **sem Node**.

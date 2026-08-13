@@ -1,5 +1,6 @@
 import type { MessageAgentContent } from "../../ports/message-agent-content-store.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
+import { formatResolvedProductForPrompt } from "../products/product-field-resolver.ts";
 import type { MessageCategory } from "./message-category.ts";
 
 function formatProducts(context: MessageReplyContext): string {
@@ -7,12 +8,7 @@ function formatProducts(context: MessageReplyContext): string {
     return "(nenhum produto cadastrado)";
   }
 
-  return context.products
-    .map(
-      (product) =>
-        `- slug: ${product.slug}\n  nome: ${product.name}\n  resumo: ${product.shortDescription}`,
-    )
-    .join("\n");
+  return context.products.map((product) => formatResolvedProductForPrompt(product)).join("\n");
 }
 
 function formatThread(context: MessageReplyContext): string {

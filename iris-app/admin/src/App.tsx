@@ -15,6 +15,7 @@ import { PersonaPage } from "@/pages/persona-page";
 import { CommentsPage } from "@/pages/comments-page";
 import { MessagesPage } from "@/pages/messages-page";
 import { ProductsPage } from "@/pages/products-page";
+import { StoresPage } from "@/pages/stores-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { WebhooksPage } from "@/pages/webhooks-page";
 import { AgentRunsPage } from "@/pages/agent-runs-page";
@@ -29,6 +30,7 @@ const ADMIN_APP_ROUTES = [
   { path: ROUTES.admin.comments, element: <CommentsPage /> },
   { path: ROUTES.admin.messages, element: <MessagesPage /> },
   { path: ROUTES.admin.products, element: <ProductsPage /> },
+  { path: ROUTES.admin.stores, element: <StoresPage /> },
   { path: ROUTES.admin.webhooks, element: <WebhooksPage /> },
   { path: ROUTES.admin.agentRuns, element: <AgentRunsPage /> },
   { path: ROUTES.admin.agentSimulator, element: <AgentSimulatorPage /> },
@@ -41,6 +43,7 @@ const DEMO_APP_ROUTES = [
   { path: ROUTES.demo.comments, element: <CommentsPage /> },
   { path: ROUTES.demo.messages, element: <MessagesPage /> },
   { path: ROUTES.demo.products, element: <ProductsPage /> },
+  { path: ROUTES.demo.stores, element: <StoresPage /> },
   { path: ROUTES.demo.webhooks, element: <WebhooksPage /> },
   { path: ROUTES.demo.agentRuns, element: <AgentRunsPage /> },
   { path: ROUTES.demo.agentSimulator, element: <AgentSimulatorPage /> },
@@ -54,6 +57,7 @@ const LEGACY_ADMIN_REDIRECTS = [
   ["/comments", ROUTES.admin.comments],
   ["/messages", ROUTES.admin.messages],
   ["/products", ROUTES.admin.products],
+  ["/stores", ROUTES.admin.stores],
   ["/settings", ROUTES.admin.settings],
   ["/persona", ROUTES.admin.persona],
   ["/webhooks", ROUTES.admin.webhooks],

@@ -6,6 +6,7 @@ import { registerInsightsTools } from "./tools/register-insights-tools.ts";
 import { registerSettingsAppTools } from "./tools/register-settings-app-tools.ts";
 import { registerWebhookTools } from "./tools/register-webhook-tools.ts";
 import { registerProductTools } from "./tools/register-product-tools.ts";
+import { registerStoreTools } from "./tools/register-store-tools.ts";
 import { registerSettingsPersonaTools } from "./tools/register-settings-persona-tools.ts";
 import { registerSimulatorTools } from "./tools/register-simulator-tools.ts";
 import type { AppContext } from "../api/app-context.ts";
@@ -26,6 +27,7 @@ export function createIrisMcpServer(ctx: AppContext): McpServer {
   registerWebhookTools(server, ctx);
   registerSettingsPersonaTools(server, ctx);
   registerProductTools(server, ctx);
+  registerStoreTools(server, ctx);
   registerSimulatorTools(server, ctx);
 
   return server;

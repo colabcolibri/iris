@@ -85,6 +85,13 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_create_product` | Cria produto (`slug`, `name`, descrição, preço, link, `active`) |
 | `iris_update_product` | Atualiza produto (campos parciais) |
 | `iris_delete_product` | Remove produto |
+| `iris_list_store_connections` | Lista conexões de loja (sem secrets) |
+| `iris_create_store_connection` | Cria conexão Yampi (User Token) |
+| `iris_delete_store_connection` | Remove conexão |
+| `iris_test_store_connection` | Testa credenciais na plataforma |
+| `iris_sync_store_catalog` | Sync catálogo (`import_new` opcional) |
+| `iris_get_product_field_policies` | Políticas globais/por produto + preview resolvido |
+| `iris_update_product_field_policies` | Atualiza overrides por produto (`inherit` = herda global) |
 | `iris_get_post_insights` | Insights do post (cache 1h; `force`/`refresh`) |
 | `iris_get_post_insights_history` | Snapshots persistidos de insights |
 | `iris_get_account_insights` | Insights da conta IG (`period`, `since`, `until`, `metrics`) |

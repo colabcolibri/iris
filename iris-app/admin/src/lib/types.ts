@@ -365,6 +365,91 @@ export type Product = {
   updated_at: string;
 };
 
+export type StoreProviderType = "yampi" | "shopify" | "woocommerce";
+
+export type StoreConnectionStatus = "active" | "error" | "disconnected";
+
+export type FieldSource = "iris" | "store" | "disabled";
+
+export type ProductFieldKey =
+  | "name"
+  | "short_description"
+  | "long_description"
+  | "price"
+  | "url"
+  | "image_url"
+  | "sku";
+
+export type StoreConnection = {
+  id: string;
+  provider_type: StoreProviderType;
+  label: string;
+  status: StoreConnectionStatus;
+  settings: Record<string, unknown>;
+  has_credentials: boolean;
+  last_sync_at: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StoreConnectionTestResult = {
+  ok: boolean;
+  message: string;
+};
+
+export type StoreCatalogSyncResult = {
+  imported: number;
+  updated: number;
+  skipped: number;
+  errors: Array<{ externalId: string; message: string }>;
+};
+
+export type ExternalProductSnapshot = {
+  externalId: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  price: string | null;
+  url: string | null;
+  imageUrl: string | null;
+  sku: string | null;
+};
+
+export type ProductStoreLink = {
+  id: string;
+  store_connection_id: string;
+  external_product_id: string;
+  external_sku: string | null;
+  snapshot: ExternalProductSnapshot;
+  linked_at?: string;
+  updated_at?: string;
+};
+
+export type ProductFieldPolicy = {
+  field_key: ProductFieldKey;
+  source: FieldSource;
+};
+
+export type ResolvedProductPreview = {
+  productId: string;
+  slug: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  price: string | null;
+  url: string | null;
+  imageUrl: string | null;
+  sku: string | null;
+  fieldSources: Record<ProductFieldKey, FieldSource>;
+};
+
+export type ProductFieldPoliciesResponse = {
+  global_policies: ProductFieldPolicy[];
+  product_policies: ProductFieldPolicy[];
+  resolved_preview: ResolvedProductPreview;
+};
+
 export type ReplyAuditLlm = {
   model: string;
   promptTokens: number | null;

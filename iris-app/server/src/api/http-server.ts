@@ -31,6 +31,8 @@ import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { handleAgentContentSettingsRoute } from "./routes/settings-agent-content.ts";
 import { handleMessageAgentContentSettingsRoute } from "./routes/settings-message-agent-content.ts";
 import { handleProductsRoute } from "./routes/products.ts";
+import { handleStoreConnectionsRoute } from "./routes/store-connections.ts";
+import { handleProductStoreRoute } from "./routes/product-store.ts";
 import { handleConversationsRoute } from "./routes/conversations/index.ts";
 import { handleMessagesRoute } from "./routes/messages/index.ts";
 import { handleAgentRunsRoute } from "./routes/agent-runs.ts";
@@ -317,6 +319,14 @@ async function handleRequest(
     }
 
     if (await handleProductsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleProductStoreRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleStoreConnectionsRoute(routeRequest)) {
       return;
     }
 

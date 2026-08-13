@@ -1,5 +1,5 @@
 import type { ReplyPersona } from "../../ports/reply-persona-store.ts";
-import type { Product } from "../products/product.ts";
+import type { ResolvedProductView } from "../products/resolved-product-view.ts";
 import type { MessageCategory } from "../message-harness/message-category.ts";
 
 export type MessageThreadEntry = {
@@ -17,7 +17,7 @@ export type MessageReplyContext = {
   thread: {
     entries: MessageThreadEntry[];
   };
-  products: Product[];
+  products: ResolvedProductView[];
   brandUsername: string | null;
   targetMessage: {
     text: string | null;

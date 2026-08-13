@@ -76,6 +76,8 @@ export const handleAgentSimulatorRoute = createRouter([
         personaStore: match.ctx.replyPersonaStore,
         messageAgentContentStore: match.ctx.messageAgentContentStore,
         products: match.ctx.products,
+        productStoreLinks: match.ctx.productStoreLinks,
+        productFieldPolicies: match.ctx.productFieldPolicies,
         llm: match.ctx.resolveLlmCompleter(),
         agentRuns: match.ctx.agentRuns,
         agentRunSteps: match.ctx.agentRunSteps,

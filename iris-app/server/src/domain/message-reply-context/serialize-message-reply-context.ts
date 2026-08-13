@@ -31,6 +31,12 @@ export function serializeMessageReplyContext(
       slug: product.slug,
       name: product.name,
       short_description: product.shortDescription,
+      long_description: product.longDescription,
+      price: product.price,
+      url: product.url,
+      image_url: product.imageUrl,
+      sku: product.sku,
+      field_sources: product.fieldSources,
     })),
     persona: {
       response_language: context.persona.responseLanguage,

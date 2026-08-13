@@ -12,6 +12,7 @@ export type AppRouteSet = {
   comments: string;
   messages: string;
   products: string;
+  stores: string;
   webhooks: string;
   agentRuns: string;
   agentSimulator: string;

@@ -1,7 +1,10 @@
 import type { ConversationRepository } from "../../ports/conversation-repository.ts";
 import type { MessageRepository } from "../../ports/message-repository.ts";
+import type { ProductFieldPolicyRepository } from "../../ports/product-field-policy-repository.ts";
+import type { ProductStoreLinkRepository } from "../../ports/product-store-link-repository.ts";
 import type { ProductRepository } from "../../ports/product-repository.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
+import { resolveActiveProductCatalog } from "../products/resolve-active-product-catalog.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { MessageReplyContext, MessageThreadEntry } from "./types.ts";
 
@@ -9,6 +12,8 @@ export type MessageReplyContextAssemblerDeps = {
   conversations: ConversationRepository;
   messages: MessageRepository;
   products: ProductRepository;
+  productStoreLinks: ProductStoreLinkRepository;
+  productFieldPolicies: ProductFieldPolicyRepository;
   personaStore: ReplyPersonaStore;
   resolveBrandUsername?: () => string | null;
 };
@@ -45,7 +50,14 @@ export async function assembleMessageReplyContext(
       replyPrompt: conversation.replyPrompt,
     },
     thread: { entries },
-    products: deps.products.list(true),
+    products: resolveActiveProductCatalog(
+      {
+        products: deps.products,
+        productStoreLinks: deps.productStoreLinks,
+        productFieldPolicies: deps.productFieldPolicies,
+      },
+      true,
+    ),
     brandUsername: deps.resolveBrandUsername?.() ?? null,
     targetMessage: {
       text: message.text,

@@ -73,6 +73,18 @@ import {
   createSqliteMessageReplyRepository,
 } from "../adapters/sqlite/message-repository.ts";
 import { createSqliteProductRepository } from "../adapters/sqlite/product-repository.ts";
+import { createSqliteStoreConnectionRepository } from "../adapters/sqlite/store-connection-repository.ts";
+import { createSqliteProductStoreLinkRepository } from "../adapters/sqlite/product-store-link-repository.ts";
+import { createSqliteProductFieldPolicyRepository } from "../adapters/sqlite/product-field-policy-repository.ts";
+import { createDefaultStoreProviderRegistry } from "../domain/stores/bootstrap-store-providers.ts";
+import {
+  createStoreCatalogSyncService,
+  type StoreCatalogSyncService,
+} from "../domain/stores/store-catalog-sync-service.ts";
+import type { StoreConnectionRepository } from "../ports/store-connection-repository.ts";
+import type { ProductStoreLinkRepository } from "../ports/product-store-link-repository.ts";
+import type { ProductFieldPolicyRepository } from "../ports/product-field-policy-repository.ts";
+import type { StoreProviderRegistry } from "../domain/stores/store-provider-registry.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 import type { MessageReplyContextAssemblerDeps } from "../domain/message-reply-context/message-reply-context-assembler.ts";
 import {
@@ -98,6 +110,11 @@ export type AppContext = {
   messages: MessageRepository;
   messageReplies: MessageReplyRepository;
   products: ProductRepository;
+  storeConnections: StoreConnectionRepository;
+  productStoreLinks: ProductStoreLinkRepository;
+  productFieldPolicies: ProductFieldPolicyRepository;
+  storeProviders: StoreProviderRegistry;
+  storeCatalogSync: StoreCatalogSyncService;
   mediaStorage: MediaStorage;
   imageOptimizer: ImageOptimizer;
   metaTokenStore: MetaTokenStore;
@@ -254,6 +271,18 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const messages = createSqliteMessageRepository(options.db);
   const messageReplies = createSqliteMessageReplyRepository(options.db);
   const products = createSqliteProductRepository(options.db);
+  const storeConnections = createSqliteStoreConnectionRepository(options.db, {
+    encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
+  });
+  const productStoreLinks = createSqliteProductStoreLinkRepository(options.db);
+  const productFieldPolicies = createSqliteProductFieldPolicyRepository(options.db);
+  const storeProviders = createDefaultStoreProviderRegistry();
+  const storeCatalogSync = createStoreCatalogSyncService({
+    storeConnections,
+    productStoreLinks,
+    products,
+    storeProviders,
+  });
 
   const llmSettingsStore = createSqliteLlmSettingsStore(options.db, {
     encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
@@ -303,6 +332,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     conversations,
     messages,
     products,
+    productStoreLinks,
+    productFieldPolicies,
     personaStore: replyPersonaStore,
     resolveBrandUsername: () => metaConnectionStore.get()?.igUsername ?? null,
   };
@@ -322,6 +353,11 @@ export function createAppContext(options: AppContextOptions): AppContext {
     messages,
     messageReplies,
     products,
+    storeConnections,
+    productStoreLinks,
+    productFieldPolicies,
+    storeProviders,
+    storeCatalogSync,
     mediaStorage: createFsMediaStorage(mediaRoot),
     imageOptimizer: createSharpImageOptimizer(),
     metaTokenStore,

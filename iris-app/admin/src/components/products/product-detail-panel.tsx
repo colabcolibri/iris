@@ -1,4 +1,5 @@
 import { Loader2, Trash2 } from "lucide-react";
+import { ProductStoreSection } from "@/components/products/product-store-section";
 import { PagePanel } from "@/components/templates/page-panel";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,8 @@ export function ProductDetailPanel({
               Detalhes completos injetados no contexto do agente em DMs.
             </p>
           </div>
+
+          <ProductStoreSection productId={product.id} />
         </PageScrollArea>
 
         <div className="flex shrink-0 flex-wrap gap-2 border-t border-border/60 p-4 sm:px-6">

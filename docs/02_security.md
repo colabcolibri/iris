@@ -49,6 +49,15 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 - Apenas endpoints documentados em `07_api_contracts` e tools MCP listadas no mesmo doc
 - `agent_runs` audita cada execução de resposta automática
 
+## Lojas virtuais (v1.19)
+
+| Regra | Detalhe |
+| ----- | ------- |
+| Credenciais | User Token / Secret Yampi em `store_connections.encrypted_credentials` — mesma chave `IRIS_TOKEN_ENCRYPTION_KEY` que Meta/LLM |
+| API admin | Secrets nunca retornados após create; resposta expõe apenas `hasCredentials: true` |
+| Logs | Proibido logar headers Yampi ou credenciais decifradas |
+| Escopo | Conectar/sync exige sessão admin; tools MCP de loja (v1.19-S3) seguirão escopo agent |
+
 ## MCP
 
 | Regra | Detalhe |

@@ -225,6 +225,35 @@ async function handleGet(pathname: string, searchParams: URLSearchParams) {
     return { products: state.products };
   }
 
+  if (pathname === "/api/store-connections") {
+    return { store_connections: [] };
+  }
+
+  const productStoreLinksMatch = matchPath(pathname, "/api/products/:id/store-links");
+  if (productStoreLinksMatch) {
+    return { links: [] };
+  }
+
+  const productFieldPoliciesMatch = matchPath(pathname, "/api/products/:id/field-policies");
+  if (productFieldPoliciesMatch) {
+    return {
+      global_policies: [],
+      product_policies: [],
+      resolved_preview: {
+        productId: productFieldPoliciesMatch[0],
+        slug: "",
+        name: "",
+        shortDescription: "",
+        longDescription: "",
+        price: null,
+        url: null,
+        imageUrl: null,
+        sku: null,
+        fieldSources: {},
+      },
+    };
+  }
+
   const messageReplyAuditMatch = matchPath(
     pathname,
     "/api/messages/:id/reply-audit",

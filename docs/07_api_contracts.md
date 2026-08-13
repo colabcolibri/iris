@@ -86,7 +86,7 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 
 **Escopo MCP:** equivalente ao token agent — posts, assets, comentários, mensagens DM (leitura/contexto), insights, webhooks (leitura), catálogo de produtos, persona e conteúdo editorial do agente (comentários e DM). Sem LLM settings nem OAuth Meta.
 
-### MCP tools (38)
+### MCP tools (45)
 
 | Tool | Equivalente REST | Descrição |
 | ---- | ---------------- | --------- |
@@ -128,6 +128,13 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_create_product` | `POST /api/products` | Cria produto (`slug`, `name`, …) |
 | `iris_update_product` | `PATCH /api/products/:id` | Atualiza produto (campos parciais) |
 | `iris_delete_product` | `DELETE /api/products/:id` | Remove produto |
+| `iris_list_store_connections` | `GET /api/store-connections` | Lista conexões (sem secrets) |
+| `iris_create_store_connection` | `POST /api/store-connections` | Cria conexão Yampi (`label`, `alias`, `user_token`, `user_secret_key`) |
+| `iris_delete_store_connection` | `DELETE /api/store-connections/:id` | Remove conexão |
+| `iris_test_store_connection` | `POST /api/store-connections/:id/test` | Testa credenciais |
+| `iris_sync_store_catalog` | `POST /api/store-connections/:id/sync` | Sync catálogo (`import_new` opcional) |
+| `iris_get_product_field_policies` | `GET /api/products/:id/field-policies` | Políticas + preview (`store_connection_id`) |
+| `iris_update_product_field_policies` | `PATCH /api/products/:id/field-policies` | Overrides por produto (`source: inherit` remove override) |
 
 ### MCP post tools — `iris_get_post` / `iris_update_post`
 
@@ -291,6 +298,25 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | POST | `/api/products` | admin | Cria produto |
 | PATCH | `/api/products/:id` | admin | Atualiza |
 | DELETE | `/api/products/:id` | admin | Remove |
+| GET | `/api/products/:id/store-links` | admin | Vínculos com lojas + snapshot |
+| POST | `/api/products/:id/store-links` | admin | Vincula (`store_connection_id`, `external_product_id`) |
+| DELETE | `/api/products/:id/store-links/:linkId` | admin | Remove vínculo |
+| GET | `/api/products/:id/field-policies` | admin | Políticas + preview resolvido (`?store_connection_id=`) |
+| PATCH | `/api/products/:id/field-policies` | admin | Overrides por produto (`store_connection_id`, `policies`) |
+
+## Store connections (v1.19)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/api/store-connections` | admin | Lista conexões (sem secrets) |
+| POST | `/api/store-connections` | admin | Cria conexão Yampi (`provider_type`, `label`, `alias`, `user_token`, `user_secret_key`) |
+| GET | `/api/store-connections/:id` | admin | Detalhe |
+| PATCH | `/api/store-connections/:id` | admin | Atualiza label/settings/credenciais |
+| DELETE | `/api/store-connections/:id` | admin | Remove |
+| POST | `/api/store-connections/:id/test` | admin | Testa credenciais na Yampi |
+| POST | `/api/store-connections/:id/sync` | admin | Sync catálogo (`?import_new=true` opcional) |
+| GET | `/api/store-connections/:id/field-policies` | admin | Políticas globais de campo |
+| PATCH | `/api/store-connections/:id/field-policies` | admin | Atualiza políticas globais (mapa parcial por `field_key`) |
 
 ## Meta (Instagram)
 

@@ -24,6 +24,14 @@ import type {
   McpSettingsGenerateResult,
   Post,
   Product,
+  ProductFieldKey,
+  ProductFieldPoliciesResponse,
+  ProductFieldPolicy,
+  ProductStoreLink,
+  StoreCatalogSyncResult,
+  StoreConnection,
+  StoreConnectionTestResult,
+  FieldSource,
   PostInsightsResult,
   UpdatePostBody,
   ReconcileCommentsPreview,
@@ -743,6 +751,129 @@ export function deleteProduct(productId: string) {
 /** @deprecated Use deleteProduct — mantido por compatibilidade. */
 export function deactivateProduct(productId: string) {
   return deleteProduct(productId);
+}
+
+export function fetchStoreConnections() {
+  return apiFetch<{ store_connections: StoreConnection[] }>("/api/store-connections").then(
+    (payload) => payload.store_connections ?? [],
+  );
+}
+
+export function createStoreConnection(body: {
+  provider_type: "yampi";
+  label: string;
+  alias: string;
+  user_token: string;
+  user_secret_key: string;
+}) {
+  return apiFetch<StoreConnection>("/api/store-connections", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function updateStoreConnection(
+  connectionId: string,
+  body: Partial<{
+    label: string;
+    alias: string;
+    user_token: string;
+    user_secret_key: string;
+    status: StoreConnection["status"];
+    settings: Record<string, unknown>;
+  }>,
+) {
+  return apiFetch<StoreConnection>(`/api/store-connections/${connectionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteStoreConnection(connectionId: string) {
+  return apiFetch<{ ok: boolean }>(`/api/store-connections/${connectionId}`, {
+    method: "DELETE",
+  });
+}
+
+export function testStoreConnection(connectionId: string) {
+  return apiFetch<StoreConnectionTestResult>(
+    `/api/store-connections/${connectionId}/test`,
+    { method: "POST" },
+  );
+}
+
+export function syncStoreConnection(connectionId: string, importNew = false) {
+  const suffix = importNew ? "?import_new=true" : "";
+  return apiFetch<StoreCatalogSyncResult>(
+    `/api/store-connections/${connectionId}/sync${suffix}`,
+    { method: "POST" },
+  );
+}
+
+export function fetchStoreFieldPolicies(connectionId: string) {
+  return apiFetch<{ policies: ProductFieldPolicy[] }>(
+    `/api/store-connections/${connectionId}/field-policies`,
+  ).then((payload) => payload.policies ?? []);
+}
+
+export function updateStoreFieldPolicies(
+  connectionId: string,
+  policies: Partial<Record<ProductFieldKey, { source: FieldSource }>>,
+) {
+  return apiFetch<{ policies: ProductFieldPolicy[] }>(
+    `/api/store-connections/${connectionId}/field-policies`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(policies),
+    },
+  ).then((payload) => payload.policies ?? []);
+}
+
+export function fetchProductStoreLinks(productId: string) {
+  return apiFetch<{ links: ProductStoreLink[] }>(
+    `/api/products/${productId}/store-links`,
+  ).then((payload) => payload.links ?? []);
+}
+
+export function linkProductToStore(
+  productId: string,
+  body: { store_connection_id: string; external_product_id: string },
+) {
+  return apiFetch<ProductStoreLink>(`/api/products/${productId}/store-links`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function unlinkProductFromStore(productId: string, linkId: string) {
+  return apiFetch<{ ok: boolean }>(
+    `/api/products/${productId}/store-links/${linkId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function fetchProductFieldPolicies(productId: string, storeConnectionId: string) {
+  return apiFetch<ProductFieldPoliciesResponse>(
+    `/api/products/${productId}/field-policies?store_connection_id=${encodeURIComponent(storeConnectionId)}`,
+  );
+}
+
+export function updateProductFieldPolicies(
+  productId: string,
+  body: {
+    store_connection_id: string;
+    policies: Partial<
+      Record<ProductFieldKey, { source: FieldSource | "inherit" }>
+    >;
+  },
+) {
+  return apiFetch<{ policies: ProductFieldPolicy[] }>(
+    `/api/products/${productId}/field-policies`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    },
+  ).then((payload) => payload.policies ?? []);
 }
 
 export function fetchAppSettings() {

@@ -138,6 +138,47 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | created_at | TEXT | |
 | updated_at | TEXT | |
 
+### `store_connections` (v1.19)
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| provider_type | TEXT | `yampi`, `shopify`, `woocommerce` |
+| label | TEXT | Nome na UI |
+| status | TEXT | `active`, `error`, `disconnected` |
+| settings_json | TEXT | Defaults de política / flags |
+| encrypted_credentials | TEXT | Blob AES-256-GCM (User Token Yampi, etc.) |
+| last_sync_at | TEXT | ISO |
+| last_error | TEXT | Último erro test/sync |
+| created_at | TEXT | |
+| updated_at | TEXT | |
+
+### `product_store_links` (v1.19)
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| product_id | TEXT FK | → `products` |
+| store_connection_id | TEXT FK | → `store_connections` |
+| external_product_id | TEXT | ID na plataforma |
+| external_sku | TEXT | |
+| provider_snapshot_json | TEXT | Último `ExternalProduct` |
+| linked_at | TEXT | |
+| updated_at | TEXT | |
+
+### `product_field_policies` (v1.19)
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| scope | TEXT | `global` \| `product` |
+| store_connection_id | TEXT FK | |
+| product_id | TEXT FK nullable | NULL quando `global` |
+| field_key | TEXT | `name`, `short_description`, … |
+| source | TEXT | `iris` \| `store` \| `disabled` |
+| created_at | TEXT | |
+| updated_at | TEXT | |
+
 ### `message_agent_content`
 
 Singleton (id=1) — blocos editoriais do message-harness DM.
