@@ -66,7 +66,7 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 | Distinção | Tokens REST e MCP são independentes; revogar um não invalida o outro |
 | Comparação | `timingSafeEqual` via `src/domain/secret-compare.ts` (validate + transport) |
 | Boot guard | Em `NODE_ENV=production`, server não sobe sem código MCP configurado |
-| Escopo | Tools MCP = escopo agent (posts, assets, comments) — sem admin nem Meta |
+| Escopo | Tools MCP = escopo agent (posts, assets, comments) — sem admin nem Meta; **policy configurável** em Preferências → Permissões MCP (preset + domínio × leitura/edição/deleção) |
 | Transporte | `POST /mcp` exige Bearer no header — não expor código em query string em produção |
 | HTTPS | Clientes remotos (ChatGPT, Claude cloud) exigem URL pública HTTPS |
 

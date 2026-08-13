@@ -221,6 +221,7 @@ Os dois mecanismos convivem. Tokens são **distintos**: `IRIS_AGENT_TOKEN` (REST
 - Rotacione com `openssl rand -hex 32` se houver suspeita de vazamento.
 - Revogar MCP não afeta scripts REST (e vice-versa).
 - Produção: apenas HTTPS; código só no header Bearer (não em query string).
+- **Permissões:** Admin → Preferências → **Permissões MCP** — presets (somente leitura, editor, completo) ou matriz por domínio; default = completo (retrocompatível). Policy editável só via sessão admin (`GET`/`PUT /api/settings/mcp/permissions`).
 
 Ver também `docs/02_security.md` — § MCP.
 

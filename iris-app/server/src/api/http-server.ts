@@ -22,6 +22,7 @@ import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
 import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
+import { handleMcpPermissionsSettingsRoute } from "./routes/mcp-permissions-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
 import {
   handleLlmSettingsRoute,
@@ -335,6 +336,10 @@ async function handleRequest(
     }
 
     if (await handleMessagesRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleMcpPermissionsSettingsRoute(routeRequest)) {
       return;
     }
 

@@ -4,6 +4,7 @@ import type {
   AppSettings,
   LlmSettings,
   McpSettings,
+  McpPermissionsSettings,
   MetaStatus,
   WebhookEvent,
   ReplyAudit,
@@ -58,6 +59,42 @@ export const DEMO_MCP_SETTINGS: McpSettings = {
   mcp_url: `${DEMO_MCP_HOST}/mcp`,
   updated_at: "2026-08-08T15:00:00.000Z",
   env_override: false,
+};
+
+export const DEMO_MCP_PERMISSIONS: McpPermissionsSettings = {
+  preset: "full",
+  domain_overrides: null,
+  domains: [
+    {
+      id: "posts",
+      label: "Posts",
+      description: "Publicações editoriais.",
+      capabilities: { read: true, write: true, delete: true },
+      permissions: { read: true, write: true, delete: true },
+    },
+    {
+      id: "comments",
+      label: "Comentários",
+      description: "Comentários e webhooks.",
+      capabilities: { read: true, write: false, delete: false },
+      permissions: { read: true, write: false, delete: false },
+    },
+  ],
+  catalog: [
+    {
+      id: "posts",
+      label: "Posts",
+      description: "Publicações editoriais.",
+      capabilities: { read: true, write: true, delete: true },
+    },
+    {
+      id: "comments",
+      label: "Comentários",
+      description: "Comentários e webhooks.",
+      capabilities: { read: true, write: false, delete: false },
+    },
+  ],
+  updated_at: "2026-08-08T15:00:00.000Z",
 };
 
 export const DEMO_WEBHOOK_EVENTS: WebhookEvent[] = [

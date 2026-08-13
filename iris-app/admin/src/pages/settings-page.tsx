@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
+import { McpPermissionsCard } from "@/components/settings/mcp-permissions-card";
 import { AgentAutoReplyCard } from "@/components/settings/agent-auto-reply-card";
 import { MessageAgentAutoReplyCard } from "@/components/settings/message-agent-auto-reply-card";
 import { AutoMonitorCard } from "@/components/settings/auto-monitor-card";
@@ -126,6 +127,12 @@ const SETTINGS_SECTIONS: PreferencesSection[] = [
     title: "Conexão MCP",
     description: "Cursor, ChatGPT ou Claude.",
     content: <McpConnectionCard embedded />,
+  },
+  {
+    id: "mcp-permissions",
+    title: "Permissões MCP",
+    description: "Leitura, edição e deleção por domínio.",
+    content: <McpPermissionsCard embedded />,
   },
   {
     id: "llm",

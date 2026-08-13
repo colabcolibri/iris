@@ -22,6 +22,7 @@ import {
   DEMO_APP_SETTINGS,
   DEMO_LLM_SETTINGS,
   DEMO_MCP_SETTINGS,
+  DEMO_MCP_PERMISSIONS,
   DEMO_META_STATUS,
   getDemoAgentRunDetails,
   getDemoAgentRuns,
@@ -53,6 +54,7 @@ type DemoState = {
   products: Product[];
   llmSettings: typeof DEMO_LLM_SETTINGS;
   mcpSettings: typeof DEMO_MCP_SETTINGS;
+  mcpPermissions: typeof DEMO_MCP_PERMISSIONS;
   metaStatus: typeof DEMO_META_STATUS;
   webhooks: ReturnType<typeof getDemoWebhookEvents>;
   agentRuns: ReturnType<typeof getDemoAgentRuns>;
@@ -97,6 +99,7 @@ function createInitialState(locale: DemoLocale): DemoState {
     products: clone(DEMO_PRODUCTS),
     llmSettings: clone(DEMO_LLM_SETTINGS),
     mcpSettings: clone(DEMO_MCP_SETTINGS),
+    mcpPermissions: clone(DEMO_MCP_PERMISSIONS),
     metaStatus: clone(DEMO_META_STATUS),
     webhooks: clone(getDemoWebhookEvents(locale)),
     agentRuns: clone(getDemoAgentRuns(locale)),

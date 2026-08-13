@@ -286,6 +286,10 @@ async function handleGet(pathname: string, searchParams: URLSearchParams) {
     return state.mcpSettings;
   }
 
+  if (pathname === "/api/settings/mcp/permissions") {
+    return state.mcpPermissions;
+  }
+
   if (pathname === "/api/settings/webhook-events") {
     return { events: state.webhooks };
   }
@@ -596,6 +600,23 @@ async function handleMutation(
       updated_at: new Date().toISOString(),
     };
     return noopMutation({ ...state.mcpSettings });
+  }
+
+  if (method === "PUT" && pathname === "/api/settings/mcp/permissions") {
+    const body = (init?.body ? JSON.parse(String(init.body)) : {}) as {
+      preset?: string;
+    };
+    state.mcpPermissions = {
+      ...state.mcpPermissions,
+      preset:
+        body.preset === "read_only" ||
+        body.preset === "editor" ||
+        body.preset === "custom"
+          ? body.preset
+          : "full",
+      updated_at: new Date().toISOString(),
+    };
+    return noopMutation({ ...state.mcpPermissions });
   }
 
   if (method === "POST" && pathname === "/api/insights/refresh-all") {

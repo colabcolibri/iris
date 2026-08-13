@@ -21,6 +21,7 @@ import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.
 import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
 import { createSqliteAppSettingsStore } from "../adapters/sqlite/app-settings-repository.ts";
 import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connection-repository.ts";
+import { createSqliteMcpPermissionStore } from "../adapters/sqlite/mcp-permission-repository.ts";
 import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-event-repository.ts";
 import { createSqlitePostInsightsStore } from "../adapters/sqlite/post-insights-store.ts";
 import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
@@ -55,6 +56,7 @@ import type { PostRepository } from "../ports/post-repository.ts";
 import type { ReplyPersonaStore } from "../ports/reply-persona-store.ts";
 import type { AppSettingsStore } from "../ports/app-settings-store.ts";
 import type { McpConnectionStore } from "../ports/mcp-connection-store.ts";
+import type { McpPermissionStore } from "../ports/mcp-permission-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
 import type { AgentContentStore } from "../ports/agent-content-store.ts";
 import type { MessageAgentContentStore } from "../ports/message-agent-content-store.ts";
@@ -103,6 +105,7 @@ export type AppContext = {
   mcp: McpConfig;
   mcpVerifier: McpConnectionVerifier;
   mcpConnectionStore: McpConnectionStore;
+  mcpPermissionStore: McpPermissionStore;
   posts: PostRepository;
   assets: AssetRepository;
   comments: CommentRepository;
@@ -298,6 +301,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const simulatorScenarioStore = createSqliteSimulatorScenarioStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
+  const mcpPermissionStore = createSqliteMcpPermissionStore(options.db);
   const webhookEvents = createSqliteWebhookEventRepository(options.db);
   const postInsightsStore = createSqlitePostInsightsStore(options.db);
   const nodeEnv = process.env.NODE_ENV ?? "development";
@@ -346,6 +350,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     },
     mcpVerifier,
     mcpConnectionStore,
+    mcpPermissionStore,
     posts: replyContextAssembler.posts,
     assets,
     comments: replyContextAssembler.comments,

@@ -11,12 +11,19 @@ import { registerSettingsPersonaTools } from "./tools/register-settings-persona-
 import { registerSimulatorTools } from "./tools/register-simulator-tools.ts";
 import type { AppContext } from "../api/app-context.ts";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  resolveActiveMcpPermissionPolicy,
+  wrapMcpServerWithPermissionPolicy,
+} from "./mcp-permission-guard.ts";
 
 export function createIrisMcpServer(ctx: AppContext): McpServer {
+  const policy = resolveActiveMcpPermissionPolicy(ctx.mcpPermissionStore.get());
   const server = new McpServer({
     name: "iris",
     version: "1.0.0",
   });
+
+  wrapMcpServerWithPermissionPolicy(server, policy);
 
   registerPostTools(server, ctx);
   registerAssetTools(server, ctx);
