@@ -39,6 +39,8 @@ import {
   formatTokenEstimate,
 } from "@/lib/estimate-llm-tokens";
 import { cn } from "@/lib/utils";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 type ThreadRow = SimulateThreadMessage & { id: string };
 
@@ -63,20 +65,17 @@ function applyScenarioToState(scenario: typeof initialScenario) {
   };
 }
 
-type ContentFieldStat = {
-  key: "soul" | "page" | "knowledge" | "restrictions";
-  label: string;
-};
-
-const CONTENT_FIELD_STATS: ContentFieldStat[] = [
-  { key: "soul", label: "SOUL" },
-  { key: "page", label: "Página" },
-  { key: "knowledge", label: "Knowledge" },
-  { key: "restrictions", label: "Restrições" },
-];
+const CONTENT_FIELD_STATS = [
+  { key: "soul", labelKey: "soul" },
+  { key: "page", labelKey: "page" },
+  { key: "knowledge", labelKey: "knowledge" },
+  { key: "restrictions", labelKey: "restrictions" },
+] as const;
 
 export function AgentSimulatorPage() {
   const routes = useAppRoutes();
+  const { locale } = useAppLocale();
+  const t = useDomainMessages("agent").simulator;
   const initialForm = applyScenarioToState(initialScenario);
   const [scenarioId, setScenarioId] = useState(DEFAULT_SIMULATOR_SCENARIO_ID);
   const [channel, setChannel] = useState<"comment" | "dm">("comment");
@@ -95,7 +94,7 @@ export function AgentSimulatorPage() {
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
   const [finalText, setFinalText] = useState<string | null>(null);
   const [contentTokens, setContentTokens] = useState<
-    Record<ContentFieldStat["key"], number>
+    Record<(typeof CONTENT_FIELD_STATS)[number]["key"], number>
   >({
     soul: 0,
     page: 0,
@@ -140,7 +139,11 @@ export function AgentSimulatorPage() {
 
   async function handleRun() {
     if (!targetText.trim()) {
-      toast.error(channel === "dm" ? "Informe a mensagem alvo." : "Informe o comentário alvo.");
+      toast.error(
+        channel === "dm"
+          ? t.toasts.targetMessageRequired
+          : t.toasts.targetCommentRequired,
+      );
       return;
     }
 
@@ -186,7 +189,7 @@ export function AgentSimulatorPage() {
       setAudit(result.audit);
       setFinalText(result.final_text);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha na simulação.");
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.simulateFailed);
     } finally {
       setRunning(false);
     }
@@ -206,9 +209,9 @@ export function AgentSimulatorPage() {
           <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-(--iris-radius-lg) border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-105">
             <PageScrollArea contentClassName="space-y-5 p-4 sm:p-5">
               <PageContainer.Header
-                eyebrow="Lab"
-                title="Simulador"
-                description="Monte a conversa e rode o mesmo harness de produção — sem publicar."
+                eyebrow={t.page.eyebrow}
+                title={t.page.title}
+                description={t.page.description}
               />
 
               <div className="flex flex-wrap gap-1.5">
@@ -224,9 +227,9 @@ export function AgentSimulatorPage() {
                           ? "border-primary/30 bg-primary/5 text-foreground"
                           : "border-border text-muted-foreground",
                       )}
-                      title="Estimativa heurística de tokens"
+                      title={t.page.tokenEstimateTitle}
                     >
-                      {field.label}:{" "}
+                      {t.contentStats[field.labelKey as keyof typeof t.contentStats]}:{" "}
                       {contentLoaded ? formatTokenEstimate(tokens) : "…"}
                     </span>
                   );
@@ -235,12 +238,12 @@ export function AgentSimulatorPage() {
                   to={routes.persona}
                   className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
                 >
-                  Persona
+                  {t.page.personaLink}
                 </Link>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sim-channel">Canal</Label>
+                <Label htmlFor="sim-channel">{t.fields.channel}</Label>
                 <Select
                   value={channel}
                   onValueChange={(value) => {
@@ -251,25 +254,25 @@ export function AgentSimulatorPage() {
                 >
                   <SelectTrigger id="sim-channel" className="w-full bg-card">
                     <SelectValue>
-                      {channel === "dm" ? "DM (mensagens)" : "Comentário"}
+                      {channel === "dm" ? t.fields.channelDm : t.fields.channelComment}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="start">
-                    <SelectItem value="comment">Comentário</SelectItem>
-                    <SelectItem value="dm">DM (mensagens)</SelectItem>
+                    <SelectItem value="comment">{t.fields.channelComment}</SelectItem>
+                    <SelectItem value="dm">{t.fields.channelDm}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sim-scenario">Cenário</Label>
+                <Label htmlFor="sim-scenario">{t.fields.scenario}</Label>
                 <Select value={scenarioId} onValueChange={handleScenarioChange}>
                   <SelectTrigger
                     id="sim-scenario"
                     className="w-full bg-card"
                   >
                     <SelectValue>
-                      {selectedScenario?.label ?? "Cenário"}
+                      {selectedScenario?.label ?? t.fields.scenarioDefault}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="start">
@@ -289,7 +292,7 @@ export function AgentSimulatorPage() {
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <div className="space-y-2">
-                  <Label htmlFor="sim-language">Idioma</Label>
+                  <Label htmlFor="sim-language">{t.fields.language}</Label>
                   <Select
                     value={responseLanguage}
                     onValueChange={(value) => {
@@ -312,7 +315,7 @@ export function AgentSimulatorPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sim-brand">Marca</Label>
+                  <Label htmlFor="sim-brand">{t.fields.brand}</Label>
                   <Input
                     id="sim-brand"
                     value={brandName}
@@ -324,7 +327,7 @@ export function AgentSimulatorPage() {
               {channel === "comment" ? (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="sim-caption">Legenda do post</Label>
+                    <Label htmlFor="sim-caption">{t.fields.caption}</Label>
                     <Textarea
                       id="sim-caption"
                       rows={2}
@@ -334,13 +337,13 @@ export function AgentSimulatorPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="sim-carousel">Resumo do carrossel</Label>
+                    <Label htmlFor="sim-carousel">{t.fields.carouselSummary}</Label>
                     <Textarea
                       id="sim-carousel"
                       rows={2}
                       value={carouselSummary}
                       onChange={(event) => setCarouselSummary(event.target.value)}
-                      placeholder="Texto usado pelo harness em vez das imagens."
+                      placeholder={t.fields.carouselPlaceholder}
                     />
                   </div>
                 </>
@@ -348,7 +351,7 @@ export function AgentSimulatorPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <Label>Thread</Label>
+                  <Label>{t.fields.thread}</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -358,7 +361,7 @@ export function AgentSimulatorPage() {
                     }
                   >
                     <Plus className="mr-1 h-3.5 w-3.5" />
-                    Mensagem
+                    {t.fields.addMessage}
                   </Button>
                 </div>
 
@@ -393,7 +396,7 @@ export function AgentSimulatorPage() {
                                   ),
                                 )
                               }
-                              placeholder="autor"
+                              placeholder={t.fields.authorPlaceholder}
                               className="h-8 text-xs"
                             />
                             <label className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
@@ -414,7 +417,7 @@ export function AgentSimulatorPage() {
                                   )
                                 }
                               />
-                              marca
+                              {t.fields.brandCheckbox}
                             </label>
                             <Button
                               type="button"
@@ -454,12 +457,12 @@ export function AgentSimulatorPage() {
 
               <div className="space-y-2 rounded-(--iris-radius-lg) border border-primary/30 bg-primary/5 p-3">
                 <p className="text-xs font-semibold tracking-wide text-primary uppercase">
-                  Comentário alvo
+                  {t.fields.targetComment}
                 </p>
                 <Input
                   value={targetAuthor}
                   onChange={(event) => setTargetAuthor(event.target.value)}
-                  placeholder="@autor"
+                  placeholder={t.fields.targetAuthorPlaceholder}
                   className="h-8 text-xs"
                 />
                 <Textarea
@@ -480,7 +483,7 @@ export function AgentSimulatorPage() {
                 ) : (
                   <Play className="mr-2 h-4 w-4" />
                 )}
-                Simular resposta
+                {running ? t.fields.running : t.fields.run}
               </Button>
             </PageScrollArea>
           </aside>
@@ -488,13 +491,13 @@ export function AgentSimulatorPage() {
           <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">
               <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                Lab
+                {t.page.resultEyebrow}
               </p>
               <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Resultado
+                {t.page.resultTitle}
               </h2>
               <p className="mt-1 max-w-2xl text-base text-muted-foreground">
-                Resposta proposta e stages do harness no palco.
+                {t.page.resultDescription}
               </p>
             </div>
             <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
@@ -502,17 +505,16 @@ export function AgentSimulatorPage() {
                 {!hasResult && !running ? (
                   <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-(--iris-radius-lg) border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
                     <p className="font-display text-xl font-semibold text-foreground">
-                      Monte a thread e rode o harness
+                      {t.empty.title}
                     </p>
                     <p className="mt-2 max-w-sm text-base text-muted-foreground">
-                      O palco mostra a resposta proposta e cada chamada (modelo,
-                      tokens, verdict) depois da simulação.
+                      {t.empty.body}
                     </p>
                   </div>
                 ) : null}
 
                 {running ? (
-                  <p className="text-base text-muted-foreground">Simulando…</p>
+                  <p className="text-base text-muted-foreground">{t.fields.running}</p>
                 ) : null}
 
                 {audit ? (
@@ -525,7 +527,7 @@ export function AgentSimulatorPage() {
 
                 {audit && !finalText ? (
                   <p className="mt-4 text-base text-muted-foreground">
-                    Nenhuma resposta aprovada nesta simulação.
+                    {t.empty.noApproved}
                   </p>
                 ) : null}
               </div>

@@ -399,7 +399,7 @@ export function PersonaPage() {
 
             <div className="space-y-2">
               <Label htmlFor="dm-knowledge" className="text-sm font-semibold">
-                Base de conhecimento (DM)
+                {t.fields.dmKnowledge}
               </Label>
               <Textarea
                 id="dm-knowledge"
@@ -408,15 +408,12 @@ export function PersonaPage() {
                 onChange={(e) => setDmKnowledge(e.target.value)}
                 className="min-h-24 resize-y"
               />
-              <FieldHint>
-                Fatos, links e políticas nas respostas privadas — inclui produtos
-                ativos quando a triagem detectar intenção de compra.
-              </FieldHint>
+              <FieldHint>{t.fields.dmKnowledgeHint}</FieldHint>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="dm-restrictions" className="text-sm font-semibold">
-                Restrições (DM)
+                {t.fields.dmRestrictions}
               </Label>
               <Textarea
                 id="dm-restrictions"
@@ -433,9 +430,13 @@ export function PersonaPage() {
                 onClick={() => void handleSaveMessageContent()}
                 disabled={savingMessageContent}
               >
-                Salvar conteúdo DM
+                {t.actions.saveDmContent}
               </Button>
-              <UpdatedAt value={messageAgentContent?.updated_at} />
+              <UpdatedAt
+                value={messageAgentContent?.updated_at}
+                template={t.page.updatedAt}
+                locale={bcp47}
+              />
             </div>
           </div>
         ),
@@ -444,7 +445,9 @@ export function PersonaPage() {
     [
       agentContent?.updated_at,
       brandName,
+      bcp47,
       brandPlaceholder,
+      t,
       dmKnowledge,
       dmPage,
       dmRestrictions,
@@ -468,12 +471,12 @@ export function PersonaPage() {
 
   return (
     <PreferencesSplitLayout
-      eyebrow="Respostas automáticas"
-      title="Persona da marca"
-      description="Identidade, limites e conteúdo editorial dos agentes de comentários e DMs."
+      eyebrow={t.page.eyebrow}
+      title={t.page.title}
+      description={t.page.description}
       sections={sections}
       loading={loading}
-      loadingMessage="Carregando persona…"
+      loadingMessage={t.page.loading}
     />
   );
 }

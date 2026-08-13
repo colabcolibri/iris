@@ -30,14 +30,10 @@ import {
 import { downloadWebhookEventsExport, fetchWebhookEvents } from "@/lib/api";
 import type { WebhookEvent, WebhookProcessingStatus } from "@/lib/types";
 import { commentsThreadHref } from "@/lib/comments-href";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABELS: Record<WebhookEvent["processing_status"], string> = {
-  received: "recebido",
-  processed: "processado",
-  ignored: "ignorado",
-  failed: "falhou",
-};
 
 const STATUS_FILTER_OPTIONS: Array<WebhookProcessingStatus | "all"> = [
   "all",
@@ -67,26 +63,35 @@ function truncateId(id: string | null): string {
   return `${id.slice(0, 8)}…`;
 }
 
-function verbLabel(verb: string | null): string | null {
+function verbLabel(
+  verb: string | null,
+  labels: ReturnType<typeof useDomainMessages<"webhooks">>["verb"],
+): string | null {
   if (!verb) {
     return null;
   }
   switch (verb.toLowerCase()) {
     case "add":
-      return "novo";
+      return labels.add;
     case "edited":
     case "edit":
-      return "editado";
+      return labels.edited;
     case "remove":
     case "delete":
-      return "removido";
+      return labels.removed;
     default:
       return verb;
   }
 }
 
-function StatusBadges({ event }: { event: WebhookEvent }) {
-  const verb = verbLabel(event.verb);
+function StatusBadges({
+  event,
+  webhooks,
+}: {
+  event: WebhookEvent;
+  webhooks: ReturnType<typeof useDomainMessages<"webhooks">>;
+}) {
+  const verb = verbLabel(event.verb, webhooks.verb);
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span
@@ -95,7 +100,7 @@ function StatusBadges({ event }: { event: WebhookEvent }) {
           statusClass(event.processing_status),
         )}
       >
-        {STATUS_LABELS[event.processing_status]}
+        {webhooks.status[event.processing_status]}
       </span>
       {verb ? (
         <span className="rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
@@ -104,14 +109,20 @@ function StatusBadges({ event }: { event: WebhookEvent }) {
       ) : null}
       {!event.signature_valid ? (
         <span className="rounded-sm bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">
-          assinatura inválida
+          {webhooks.status.invalidSignature}
         </span>
       ) : null}
     </div>
   );
 }
 
-function PostLink({ event }: { event: WebhookEvent }) {
+function PostLink({
+  event,
+  webhooks,
+}: {
+  event: WebhookEvent;
+  webhooks: ReturnType<typeof useDomainMessages<"webhooks">>;
+}) {
   const href = commentsThreadHref(event.post_id);
   if (href) {
     return (
@@ -123,14 +134,20 @@ function PostLink({ event }: { event: WebhookEvent }) {
   if (event.ig_media_id) {
     return (
       <span className="font-mono text-sm text-muted-foreground">
-        mídia {truncateId(event.ig_media_id)}
+        {webhooks.table.mediaPrefix} {truncateId(event.ig_media_id)}
       </span>
     );
   }
-  return <span className="text-muted-foreground">—</span>;
+  return <span className="text-muted-foreground">{webhooks.table.empty}</span>;
 }
 
-function CommentLink({ event }: { event: WebhookEvent }) {
+function CommentLink({
+  event,
+  webhooks,
+}: {
+  event: WebhookEvent;
+  webhooks: ReturnType<typeof useDomainMessages<"webhooks">>;
+}) {
   const href = commentsThreadHref(event.post_id, event.comment_id);
   if (href && event.comment_id) {
     return (
@@ -142,11 +159,11 @@ function CommentLink({ event }: { event: WebhookEvent }) {
   if (event.ig_comment_id) {
     return (
       <span className="font-mono text-sm text-muted-foreground">
-        ig {truncateId(event.ig_comment_id)}
+        {webhooks.table.igPrefix} {truncateId(event.ig_comment_id)}
       </span>
     );
   }
-  return <span className="text-muted-foreground">—</span>;
+  return <span className="text-muted-foreground">{webhooks.table.empty}</span>;
 }
 
 const EXPORT_LIMIT_OPTIONS = [100, 500, 1000, 5000] as const;
@@ -155,11 +172,15 @@ function EventTable({
   events,
   selectedId,
   onSelect,
+  webhooks,
+  locale,
   compact = false,
 }: {
   events: WebhookEvent[];
   selectedId: string;
   onSelect: (id: string) => void;
+  webhooks: ReturnType<typeof useDomainMessages<"webhooks">>;
+  locale: string;
   compact?: boolean;
 }) {
   return (
@@ -167,18 +188,18 @@ function EventTable({
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <TableHead className={cn(compact ? "px-3" : "sm:px-6")}>
-            Recebido
+            {webhooks.table.received}
           </TableHead>
-          <TableHead>Tipo</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>{webhooks.table.type}</TableHead>
+          <TableHead>{webhooks.table.status}</TableHead>
           {!compact ? (
-            <TableHead className="hidden md:table-cell">Autor / resumo</TableHead>
+            <TableHead className="hidden md:table-cell">{webhooks.table.authorSummary}</TableHead>
           ) : null}
           {!compact ? (
-            <TableHead className="hidden lg:table-cell">Post</TableHead>
+            <TableHead className="hidden lg:table-cell">{webhooks.table.post}</TableHead>
           ) : null}
           {!compact ? (
-            <TableHead className="hidden lg:table-cell">Comentário</TableHead>
+            <TableHead className="hidden lg:table-cell">{webhooks.table.comment}</TableHead>
           ) : null}
         </TableRow>
       </TableHeader>
@@ -196,7 +217,7 @@ function EventTable({
                 compact ? "px-3" : "sm:px-6",
               )}
             >
-              {new Date(event.received_at).toLocaleString("pt-BR")}
+              {new Date(event.received_at).toLocaleString(locale)}
             </TableCell>
             <TableCell>
               <p className="font-semibold text-foreground">
@@ -209,12 +230,12 @@ function EventTable({
               ) : null}
             </TableCell>
             <TableCell>
-              <StatusBadges event={event} />
+              <StatusBadges event={event} webhooks={webhooks} />
             </TableCell>
             {!compact ? (
               <TableCell className="hidden md:table-cell">
                 <p className="font-medium text-foreground">
-                  {event.author_username ? `@${event.author_username}` : "—"}
+                  {event.author_username ? `@${event.author_username}` : webhooks.table.empty}
                 </p>
                 {event.text_preview ? (
                   <p className="mt-1 line-clamp-2 max-w-md text-muted-foreground">
@@ -225,12 +246,12 @@ function EventTable({
             ) : null}
             {!compact ? (
               <TableCell className="hidden lg:table-cell">
-                <PostLink event={event} />
+                <PostLink event={event} webhooks={webhooks} />
               </TableCell>
             ) : null}
             {!compact ? (
               <TableCell className="hidden lg:table-cell">
-                <CommentLink event={event} />
+                <CommentLink event={event} webhooks={webhooks} />
               </TableCell>
             ) : null}
           </TableRow>
@@ -253,6 +274,7 @@ function EventListChrome({
   loading,
   onExport,
   onReload,
+  webhooks,
 }: {
   statusFilter: WebhookProcessingStatus | "all";
   setStatusFilter: (v: WebhookProcessingStatus | "all") => void;
@@ -266,6 +288,7 @@ function EventListChrome({
   loading: boolean;
   onExport: () => void;
   onReload: () => void;
+  webhooks: ReturnType<typeof useDomainMessages<"webhooks">>;
 }) {
   return (
     <div className="space-y-3">
@@ -274,7 +297,7 @@ function EventListChrome({
           className="text-sm text-muted-foreground"
           htmlFor="webhook-status-filter"
         >
-          Status
+          {webhooks.filters.statusLabel}
         </label>
         <select
           id="webhook-status-filter"
@@ -288,7 +311,7 @@ function EventListChrome({
         >
           {STATUS_FILTER_OPTIONS.map((option) => (
             <option key={option} value={option}>
-              {option === "all" ? "todos" : STATUS_LABELS[option]}
+              {option === "all" ? webhooks.filters.all : webhooks.status[option]}
             </option>
           ))}
         </select>
@@ -296,7 +319,7 @@ function EventListChrome({
           className="text-sm text-muted-foreground"
           htmlFor="webhook-field-filter"
         >
-          Tipo
+          {webhooks.filters.typeLabel}
         </label>
         <select
           id="webhook-field-filter"
@@ -306,8 +329,8 @@ function EventListChrome({
             setFieldFilter(event.target.value as "all" | "comments")
           }
         >
-          <option value="all">todos</option>
-          <option value="comments">comentários</option>
+          <option value="all">{webhooks.filters.all}</option>
+          <option value="comments">{webhooks.filters.commentsOnly}</option>
         </select>
         <label className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
           <input
@@ -315,7 +338,7 @@ function EventListChrome({
             checked={invalidOnly}
             onChange={(event) => setInvalidOnly(event.target.checked)}
           />
-          só assinatura inválida
+          {webhooks.filters.invalidSignatureOnly}
         </label>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -323,7 +346,7 @@ function EventListChrome({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"
           htmlFor="webhook-export-limit"
         >
-          Exportar últimos
+          {webhooks.filters.exportLast}
         </label>
         <select
           id="webhook-export-limit"
@@ -348,7 +371,7 @@ function EventListChrome({
           <Download
             className={`mr-1.5 h-3.5 w-3.5 ${exporting ? "animate-pulse" : ""}`}
           />
-          Exportar JSON
+          {webhooks.filters.exportJson}
         </Button>
         <Button
           type="button"
@@ -360,7 +383,7 @@ function EventListChrome({
           <RefreshCw
             className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
           />
-          Atualizar
+          {webhooks.filters.refresh}
         </Button>
       </div>
     </div>
@@ -368,6 +391,8 @@ function EventListChrome({
 }
 
 export function WebhookEventsPanel() {
+  const { locale, bcp47 } = useAppLocale();
+  const webhooks = useDomainMessages("webhooks");
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("event_id")?.trim() ?? "";
   const [events, setEvents] = useState<WebhookEvent[]>([]);
@@ -391,13 +416,11 @@ export function WebhookEventsPanel() {
       });
       setEvents(data);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao carregar webhooks.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || webhooks.toasts.loadFailed);
     } finally {
       setLoading(false);
     }
-  }, [fieldFilter, invalidOnly, statusFilter]);
+  }, [fieldFilter, invalidOnly, locale, statusFilter, webhooks.toasts.loadFailed]);
 
   useEffect(() => {
     void load();
@@ -427,11 +450,9 @@ export function WebhookEventsPanel() {
         field: fieldFilter === "all" ? undefined : fieldFilter,
         signatureValid: invalidOnly ? false : undefined,
       });
-      toast.success(`Exportados os últimos ${exportLimit} webhooks.`);
+      toast.success(interpolate(webhooks.toasts.exported, { count: exportLimit }));
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao exportar webhooks.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || webhooks.toasts.exportFailed);
     } finally {
       setExporting(false);
     }
@@ -451,35 +472,38 @@ export function WebhookEventsPanel() {
       loading={loading}
       onExport={() => void handleExport()}
       onReload={() => void load()}
+      webhooks={webhooks}
     />
   );
 
   const listBody = loading && events.length === 0 ? (
-    <OpsEmptyState>Carregando eventos…</OpsEmptyState>
+    <OpsEmptyState>{webhooks.page.loading}</OpsEmptyState>
   ) : events.length === 0 ? (
-    <OpsEmptyState title="Nenhum webhook">
-      Nenhum evento encontrado com os filtros atuais.
-    </OpsEmptyState>
+    <OpsEmptyState title={webhooks.empty.title}>{webhooks.empty.body}</OpsEmptyState>
   ) : (
     <EventTable
       events={events}
       selectedId={selectedId}
       onSelect={selectEvent}
+      webhooks={webhooks}
+      locale={bcp47}
     />
   );
 
   const sheetListBody =
     loading && events.length === 0 ? (
-      <OpsEmptyState className="mx-3 my-4">Carregando…</OpsEmptyState>
+      <OpsEmptyState className="mx-3 my-4">{webhooks.page.loadingShort}</OpsEmptyState>
     ) : events.length === 0 ? (
-      <OpsEmptyState className="mx-3 my-4" title="Nenhum webhook">
-        Nenhum evento com os filtros atuais.
+      <OpsEmptyState className="mx-3 my-4" title={webhooks.empty.title}>
+        {webhooks.empty.sheetBody}
       </OpsEmptyState>
     ) : (
       <EventTable
         events={events}
         selectedId={selectedId}
         onSelect={selectEvent}
+        webhooks={webhooks}
+        locale={bcp47}
         compact
       />
     );
@@ -504,7 +528,7 @@ export function WebhookEventsPanel() {
           onClick={clearStage}
         >
           <ArrowLeft className="size-4" />
-          Todos os eventos
+          {webhooks.page.backToAll}
         </Button>
         <Button
           type="button"
@@ -514,7 +538,7 @@ export function WebhookEventsPanel() {
           onClick={() => setListSheetOpen(true)}
         >
           <PanelLeft className="size-4" />
-          Lista
+          {webhooks.page.list}
         </Button>
         <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
           {selectedEvent
@@ -526,16 +550,14 @@ export function WebhookEventsPanel() {
       <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
         {!selectedEvent ? (
           <OpsEmptyState>
-            {loading
-              ? "Carregando evento…"
-              : "Evento não encontrado na lista atual (filtros podem estar ocultando)."}
+            {loading ? webhooks.page.loadingEvent : webhooks.page.eventNotFound}
           </OpsEmptyState>
         ) : (
           <div className="w-full space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <StatusBadges event={selectedEvent} />
+              <StatusBadges event={selectedEvent} webhooks={webhooks} />
               <span className="text-sm text-muted-foreground">
-                {new Date(selectedEvent.received_at).toLocaleString("pt-BR")}
+                {new Date(selectedEvent.received_at).toLocaleString(bcp47)}
               </span>
             </div>
 
@@ -564,33 +586,33 @@ export function WebhookEventsPanel() {
             <div className="grid gap-4 rounded-(--iris-radius-lg) border border-border bg-card p-4 shadow-none sm:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Post
+                  {webhooks.detail.post}
                 </p>
                 <div className="mt-1 text-base">
-                  <PostLink event={selectedEvent} />
+                  <PostLink event={selectedEvent} webhooks={webhooks} />
                 </div>
               </div>
               <div>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Comentário
+                  {webhooks.detail.comment}
                 </p>
                 <div className="mt-1 text-base">
-                  <CommentLink event={selectedEvent} />
+                  <CommentLink event={selectedEvent} webhooks={webhooks} />
                 </div>
               </div>
               <div>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Autor
+                  {webhooks.detail.author}
                 </p>
                 <p className="mt-1 text-base text-foreground">
                   {selectedEvent.author_username
                     ? `@${selectedEvent.author_username}`
-                    : "—"}
+                    : webhooks.table.empty}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Entradas
+                  {webhooks.detail.entries}
                 </p>
                 <p className="mt-1 text-base text-foreground">
                   {selectedEvent.entries_count}
@@ -600,16 +622,14 @@ export function WebhookEventsPanel() {
 
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground">
-                Payload
+                {webhooks.detail.payload}
               </h3>
               <PageScrollArea
                 className="mt-2 h-[min(70vh,40rem)] max-h-[min(70vh,40rem)] flex-none rounded-(--iris-radius-lg) border border-border bg-card shadow-none"
                 contentClassName="p-4 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground"
               >
                 {selectedEvent.payload_json}
-                {selectedEvent.payload_truncated
-                  ? "\n… (truncado na listagem — use exportar para o JSON completo)"
-                  : ""}
+                {selectedEvent.payload_truncated ? webhooks.detail.payloadTruncated : ""}
               </PageScrollArea>
             </div>
           </div>
@@ -623,7 +643,7 @@ export function WebhookEventsPanel() {
         >
           <SheetHeader className="border-b border-border">
             <SheetTitle className="font-display text-lg font-semibold">
-              Eventos
+              {webhooks.page.sheetTitle}
             </SheetTitle>
           </SheetHeader>
           <div className="shrink-0 space-y-3 border-b border-border p-4">

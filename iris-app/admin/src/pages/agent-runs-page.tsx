@@ -30,17 +30,12 @@ import {
   fetchReplyPersona,
 } from "@/lib/api";
 import { commentsThreadHref } from "@/lib/comments-href";
+import { interpolate } from "@/i18n/compose";
 import type { AgentRunDetail, AgentRunListItem } from "@/lib/types";
 import { RESPONSE_LANGUAGE_OPTIONS } from "@iris/domain/reply-language/response-languages";
 import { cn } from "@/lib/utils";
-
-const TERMINAL_LABELS: Record<string, string> = {
-  approved: "aprovado",
-  approved_simple: "aprovado (simples)",
-  skipped_triage: "ignorado na triagem",
-  blocked_harmful: "bloqueado (harmful)",
-  rejected_verify: "rejeitado na verificação",
-};
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 function terminalBadgeClass(status: string | null): string {
   switch (status) {
@@ -68,6 +63,8 @@ function formatDuration(ms: number | null): string {
 }
 
 export function AgentRunsPage() {
+  const { locale, bcp47 } = useAppLocale();
+  const t = useDomainMessages("agent").runs;
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("run_id")?.trim() ?? "";
   const [items, setItems] = useState<AgentRunListItem[]>([]);
@@ -89,9 +86,7 @@ export function AgentRunsPage() {
       });
       setItems(data.items);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao carregar execuções.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -117,9 +112,7 @@ export function AgentRunsPage() {
     void fetchAgentRunDetail(selectedId)
       .then(setDetail)
       .catch((err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Falha ao carregar detalhe.",
-        );
+        toast.error(getApiErrorMessage(err, locale) || t.toasts.detailFailed);
         setDetail(null);
       })
       .finally(() => setDetailLoading(false));
@@ -167,8 +160,8 @@ export function AgentRunsPage() {
         value={terminalFilter}
         onChange={(event) => setTerminalFilter(event.target.value)}
       >
-        <option value="">todos os status</option>
-        {Object.entries(TERMINAL_LABELS).map(([value, label]) => (
+        <option value="">{t.filters.allStatuses}</option>
+        {Object.entries(t.terminal).map(([value, label]) => (
           <option key={value} value={value}>
             {label}
           </option>
@@ -179,7 +172,7 @@ export function AgentRunsPage() {
         value={tierFilter}
         onChange={(event) => setTierFilter(event.target.value)}
       >
-        <option value="">todos os tiers</option>
+        <option value="">{t.filters.allTiers}</option>
         <option value="none">none</option>
         <option value="simple">simple</option>
         <option value="full">full</option>
@@ -194,29 +187,27 @@ export function AgentRunsPage() {
         <RefreshCw
           className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
         />
-        Atualizar
+        {t.page.refresh}
       </Button>
     </div>
   );
 
   const listBody =
     loading && items.length === 0 ? (
-      <OpsEmptyState>Carregando execuções…</OpsEmptyState>
+      <OpsEmptyState>{t.page.loading}</OpsEmptyState>
     ) : items.length === 0 ? (
-      <OpsEmptyState title="Nenhuma execução">
-        Nenhuma run encontrada com os filtros atuais.
-      </OpsEmptyState>
+      <OpsEmptyState title={t.empty.title}>{t.empty.body}</OpsEmptyState>
     ) : (
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="sm:px-6">Quando</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Trigger</TableHead>
-            <TableHead className="hidden md:table-cell">Tier</TableHead>
-            <TableHead className="hidden lg:table-cell">Modelo</TableHead>
-            <TableHead className="hidden sm:table-cell">Duração</TableHead>
-            <TableHead className="hidden lg:table-cell">Tokens</TableHead>
+            <TableHead className="sm:px-6">{t.table.when}</TableHead>
+            <TableHead>{t.table.status}</TableHead>
+            <TableHead>{t.table.trigger}</TableHead>
+            <TableHead className="hidden md:table-cell">{t.table.tier}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t.table.model}</TableHead>
+            <TableHead className="hidden sm:table-cell">{t.table.duration}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t.table.tokens}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -228,7 +219,7 @@ export function AgentRunsPage() {
               onClick={() => selectRun(row.id)}
             >
               <TableCell className="whitespace-nowrap text-muted-foreground sm:px-6">
-                {new Date(row.created_at).toLocaleString("pt-BR")}
+                {new Date(row.created_at).toLocaleString(bcp47)}
               </TableCell>
               <TableCell>
                 <span
@@ -237,7 +228,7 @@ export function AgentRunsPage() {
                     terminalBadgeClass(row.terminal_status),
                   )}
                 >
-                  {TERMINAL_LABELS[row.terminal_status ?? ""] ??
+                  {t.terminal[row.terminal_status as keyof typeof t.terminal] ??
                     row.terminal_status ??
                     "—"}
                 </span>
@@ -246,8 +237,8 @@ export function AgentRunsPage() {
                 <p className="font-semibold text-foreground">{row.trigger}</p>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {row.step_count === 1
-                    ? "1 chamada"
-                    : `${row.step_count} chamadas`}
+                    ? t.table.callsOne
+                    : interpolate(t.table.callsMany, { count: row.step_count })}
                 </p>
               </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">
@@ -278,13 +269,13 @@ export function AgentRunsPage() {
             <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
               <div className="shrink-0 space-y-3 px-4 py-4 sm:px-6 md:px-8">
                 <PageContainer.Header
-                  eyebrow="Operação"
-                  title="Execuções do agente"
-                  description="Monitoramento global das runs de auto-resposta — cada execução e suas chamadas."
+                  eyebrow={t.page.eyebrow}
+                  title={t.page.title}
+                  description={t.page.description}
                 />
                 {responseLanguage ? (
                   <p className="text-xs text-muted-foreground">
-                    Idioma na persona:{" "}
+                    {t.page.languageNote}{" "}
                     <span className="font-semibold text-foreground">
                       {languageLabel}
                     </span>
@@ -305,7 +296,7 @@ export function AgentRunsPage() {
                   onClick={clearStage}
                 >
                   <ArrowLeft className="size-4" />
-                  Todas as execuções
+                  {t.page.backToAll}
                 </Button>
                 <Button
                   type="button"
@@ -315,7 +306,7 @@ export function AgentRunsPage() {
                   onClick={() => setListSheetOpen(true)}
                 >
                   <PanelLeft className="size-4" />
-                  Lista
+                  {t.page.list}
                 </Button>
                 <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
                   {selectedListItem?.trigger ??
@@ -327,7 +318,7 @@ export function AgentRunsPage() {
               <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
                 <div className="w-full">
                   {detailLoading ? (
-                    <OpsEmptyState>Carregando detalhe…</OpsEmptyState>
+                    <OpsEmptyState>{t.page.loadingDetail}</OpsEmptyState>
                   ) : detail?.audit ? (
                     <ReplyAuditTimeline
                       audit={detail.audit}
@@ -342,8 +333,8 @@ export function AgentRunsPage() {
                       }}
                     />
                   ) : (
-                    <OpsEmptyState title="Sem auditoria">
-                      Sem dados de auditoria para esta execução.
+                    <OpsEmptyState title={t.detail.noAuditTitle}>
+                      {t.detail.noAuditBody}
                     </OpsEmptyState>
                   )}
                   {threadHref ? (
@@ -352,7 +343,7 @@ export function AgentRunsPage() {
                         to={threadHref}
                         className="font-semibold text-primary hover:underline"
                       >
-                        abrir thread do comentário
+                        {t.page.openThread}
                       </Link>
                     </p>
                   ) : null}
@@ -366,7 +357,7 @@ export function AgentRunsPage() {
                 >
                   <SheetHeader className="border-b border-border">
                     <SheetTitle className="font-display text-lg font-semibold">
-                      Execuções
+                      {t.page.sheetTitle}
                     </SheetTitle>
                   </SheetHeader>
                   <div className="shrink-0 space-y-3 border-b border-border p-4">
