@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -6,11 +7,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  GLOBAL_REPLY_MODE_OPTIONS,
-  POST_REPLY_MODE_OPTIONS,
-  postReplyModeOption,
-  replyModeOption,
-} from "@/lib/reply-mode-options";
+  getGlobalReplyModeOptions,
+  getPostReplyModeOptions,
+} from "@/i18n/domains/labels/helpers";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import type { PostReplyModeSetting, ReplyMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -38,12 +38,17 @@ export type ReplyModeSelectProps =
 
 export function ReplyModeSelect(props: ReplyModeSelectProps) {
   const { disabled, id, className, variant } = props;
-  const options =
-    variant === "global" ? GLOBAL_REPLY_MODE_OPTIONS : POST_REPLY_MODE_OPTIONS;
+  const { locale } = useAppLocale();
+  const postsMessages = useDomainMessages("posts");
+  const options = useMemo(
+    () =>
+      variant === "global"
+        ? getGlobalReplyModeOptions(locale)
+        : getPostReplyModeOptions(locale),
+    [locale, variant],
+  );
   const selected =
-    variant === "global"
-      ? replyModeOption(props.value)
-      : postReplyModeOption(props.value);
+    options.find((option) => option.value === props.value) ?? options[0]!;
   const SelectedIcon = selected.icon;
 
   return (
@@ -67,7 +72,7 @@ export function ReplyModeSelect(props: ReplyModeSelectProps) {
           id={id}
           className="h-10 w-full bg-background pl-10 pr-10 text-left"
         >
-          <SelectValue placeholder="Escolha o modo de resposta">
+          <SelectValue placeholder={postsMessages.replyModeSelect.placeholder}>
             {selected.label}
           </SelectValue>
         </SelectTrigger>

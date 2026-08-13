@@ -1,5 +1,6 @@
+import { getPostStatusLabel } from "@/i18n/domains/labels/helpers";
+import { useAppLocale } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
-import { POST_STATUS_LABELS } from "@/lib/status";
 import type { PostStatus } from "@/lib/types";
 
 const STATUS_META: Record<
@@ -53,8 +54,9 @@ export function StatusBadge({
   size: _size = "sm",
   variant = "badge",
 }: StatusBadgeProps) {
+  const { locale } = useAppLocale();
   const meta = STATUS_META[status];
-  const label = POST_STATUS_LABELS[status];
+  const label = getPostStatusLabel(status, locale);
 
   if (variant === "signal") {
     return (

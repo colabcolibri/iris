@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { useAppSettings } from "@/contexts/app-settings-context";
-import { replyModeOption } from "@/lib/reply-mode-options";
+import { interpolate } from "@/i18n/compose";
+import { getGlobalReplyModeOptions } from "@/i18n/domains/labels/helpers";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import type { ReplyMode } from "@/lib/types";
 
 const DELAY_PRESETS = [
@@ -33,6 +36,9 @@ type MessageAgentAutoReplyCardProps = {
 export function MessageAgentAutoReplyCard({
   embedded = false,
 }: MessageAgentAutoReplyCardProps) {
+  const { locale } = useAppLocale();
+  const settings = useDomainMessages("settings");
+  const t = settings.messageAgent;
   const {
     messageReplyMode,
     messageReplyDelaySeconds,
@@ -58,15 +64,27 @@ export function MessageAgentAutoReplyCard({
     ? minutesFromDelaySeconds(messageReplyDelaySeconds)
     : 0;
 
+  const replyDelayHint =
+    t.replyDelayHint +
+    (delayMinutes > 0
+      ? interpolate(t.replyDelayCadenceDelayed, {
+          delay: delayMinutes,
+          tick: tickMinutes,
+        })
+      : interpolate(t.replyDelayCadenceImmediate, { tick: tickMinutes }));
+
   async function handleChange(next: ReplyMode) {
     setSaving(true);
     try {
       await saveMessageReplyMode(next);
+      const modeLabel =
+        getGlobalReplyModeOptions(locale).find((option) => option.value === next)
+          ?.label ?? next;
       toast.success(
-        `Modo global de DM: ${replyModeOption(next).label.toLowerCase()}.`,
+        interpolate(t.toasts.modeUpdated, { mode: modeLabel.toLowerCase() }),
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -88,33 +106,27 @@ export function MessageAgentAutoReplyCard({
         await saveMessageReplyDelaySeconds(minutes * 60);
         toast.success(
           minutes > 0
-            ? `Fila DM ativa: resposta após ${minutes} min.`
-            : "Resposta imediata no próximo ciclo do agente de DM.",
+            ? interpolate(t.toasts.delayQueued, { minutes })
+            : t.toasts.delayImmediate,
         );
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Falha ao salvar delay.",
-        );
+        toast.error(getApiErrorMessage(err, locale) || t.toasts.delayFailed);
       } finally {
         setSavingDelay(false);
       }
     },
-    [saveMessageReplyDelaySeconds],
+    [locale, saveMessageReplyDelaySeconds, t.toasts],
   );
 
   return (
-    <SettingsCardShell
-      embedded={embedded}
-      title="Agente de mensagens (DM)"
-      description="Modo padrão para conversas que seguem a configuração global. Conversas com modo próprio têm precedência."
-    >
+    <SettingsCardShell embedded={embedded} title={t.title} description={t.description}>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground">{t.loading}</p>
       ) : (
         <div className="max-w-xl space-y-6">
           <div className="space-y-2">
             <Label htmlFor="message-global-reply-mode" className="text-sm font-semibold">
-              Modo global
+              {t.globalModeLabel}
             </Label>
             <ReplyModeSelect
               id="message-global-reply-mode"
@@ -126,32 +138,16 @@ export function MessageAgentAutoReplyCard({
           </div>
 
           <div className="space-y-2 border-t border-border/60 pt-4">
-            <Label className="text-sm font-semibold">Intervalo do worker</Label>
+            <Label className="text-sm font-semibold">{t.workerIntervalLabel}</Label>
             <p className="text-sm text-muted-foreground">
-              Compartilhado com comentários — configurado no card do agente de
-              comentários. Ciclo atual: <strong>{tickMinutes} min</strong>.
+              {interpolate(t.workerIntervalHint, { minutes: tickMinutes })}
             </p>
           </div>
 
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="space-y-1">
-              <Label className="text-sm font-semibold">Tempo antes de responder</Label>
-              <p className="text-sm text-muted-foreground">
-                Mesma fila persistente usada nos comentários, com settings próprios
-                para DM.
-                {delayMinutes > 0 ? (
-                  <>
-                    {" "}
-                    Cadência real: resposta após {delayMinutes} min + até{" "}
-                    {tickMinutes} min até o próximo ciclo.
-                  </>
-                ) : (
-                  <>
-                    {" "}
-                    Cadência real: até {tickMinutes} min até o próximo ciclo.
-                  </>
-                )}
-              </p>
+              <Label className="text-sm font-semibold">{t.replyDelayLabel}</Label>
+              <p className="text-sm text-muted-foreground">{replyDelayHint}</p>
             </div>
 
             <div className="flex flex-wrap gap-4">
@@ -166,7 +162,7 @@ export function MessageAgentAutoReplyCard({
                     void persistDelay(false, delayInput);
                   }}
                 />
-                Resposta imediata
+                {t.delayImmediate}
               </label>
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
@@ -179,7 +175,7 @@ export function MessageAgentAutoReplyCard({
                     void persistDelay(true, delayInput);
                   }}
                 />
-                Fila com delay
+                {t.delayQueued}
               </label>
             </div>
 
@@ -212,7 +208,10 @@ export function MessageAgentAutoReplyCard({
                     htmlFor="message-reply-delay-minutes"
                     className="text-sm font-semibold"
                   >
-                    Minutos de espera ({DELAY_MIN_MINUTES}–{DELAY_MAX_MINUTES})
+                    {interpolate(t.delayMinutesLabel, {
+                      min: DELAY_MIN_MINUTES,
+                      max: DELAY_MAX_MINUTES,
+                    })}
                   </Label>
                   <Input
                     id="message-reply-delay-minutes"

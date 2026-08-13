@@ -66,8 +66,11 @@ import type {
   PostInsightsResult,
   PostReplyModeSetting,
 } from "@/lib/types";
-import { postReplyModeOption } from "@/lib/reply-mode-options";
 import { cn } from "@/lib/utils";
+import { interpolate } from "@/i18n/compose";
+import { getPostReplyModeOptions } from "@/i18n/domains/labels/helpers";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   COMMENTS_CACHE_STALE_MS,
   CommentsPostCache,
@@ -107,6 +110,8 @@ function commentsHaveChanged(current: Comment[], next: Comment[]): boolean {
 }
 
 export function CommentsPage() {
+  const { locale } = useAppLocale();
+  const commentsMsg = useDomainMessages("comments");
   const routes = useAppRoutes();
   const { isDemoMode } = useDemoMode();
   const { meta } = useMetaSession();
@@ -229,7 +234,7 @@ export function CommentsPage() {
         return nextPosts;
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Falha ao carregar postagens.";
+          getApiErrorMessage(err, locale) || commentsMsg.toasts.loadPostsFailed;
         setError(message);
         if (!silent) {
           toast.error(message);
@@ -304,7 +309,7 @@ export function CommentsPage() {
         syncPostCountsFromComments(postId, nextComments);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Falha ao carregar comentários.";
+          getApiErrorMessage(err, locale) || commentsMsg.toasts.loadCommentsFailed;
         setError(message);
         toast.error(message);
       } finally {
@@ -389,7 +394,7 @@ export function CommentsPage() {
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Falha ao carregar insights.";
+          getApiErrorMessage(err, locale) || commentsMsg.toasts.loadInsightsFailed;
         const fallback = {
           ok: false,
           message,
@@ -411,7 +416,7 @@ export function CommentsPage() {
   const handleAddMonitoredPost = useCallback(async () => {
     const value = mediaInput.trim();
     if (!value) {
-      toast.error("Informe o ID Meta ou o link do post.");
+      toast.error(commentsMsg.toasts.mediaIdRequired);
       return;
     }
 
@@ -426,11 +431,9 @@ export function CommentsPage() {
       setSearchParams({ post_id: post.id });
       setAddDialogOpen(false);
       setMediaInput("");
-      toast.success("Publicação adicionada para monitoramento.");
+      toast.success(commentsMsg.toasts.postAdded);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Falha ao adicionar publicação.";
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, locale) || commentsMsg.toasts.addPostFailed);
     } finally {
       setAddingPost(false);
     }
@@ -448,12 +451,10 @@ export function CommentsPage() {
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
         }
-        toast.success("Resposta publicada na Meta.");
+        toast.success(commentsMsg.toasts.replyPublished);
         bumpActivityRefresh();
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Falha ao aprovar resposta.";
-        toast.error(message);
+        toast.error(getApiErrorMessage(err, locale) || commentsMsg.toasts.approveFailed);
       } finally {
         setApprovingId(null);
       }
@@ -468,14 +469,13 @@ export function CommentsPage() {
         ? comment.text.trim().length > 120
           ? `${comment.text.trim().slice(0, 119)}…`
           : comment.text.trim()
-        : "(sem texto)";
+        : commentsMsg.thread.noText;
 
       const ok = await confirm({
-        title: "Gerar rascunho?",
+        title: commentsMsg.confirm.generateDraft.title,
         description: (
           <>
-            A Iris vai analisar este comentário e gerar uma sugestão de
-            resposta. Nada será publicado no Instagram até você aprovar.
+            {commentsMsg.confirm.generateDraft.description}
             {comment ? (
               <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
                 “{preview}”
@@ -483,7 +483,7 @@ export function CommentsPage() {
             ) : null}
           </>
         ),
-        confirmLabel: "Gerar rascunho",
+        confirmLabel: commentsMsg.confirm.generateDraft.confirmLabel,
       });
 
       if (!ok) {
@@ -498,15 +498,13 @@ export function CommentsPage() {
         }
         if (updated.status === "failed" || updated.status === "skipped") {
           toast.error(
-            updated.error_message ?? "A IA não conseguiu gerar o rascunho.",
+            updated.error_message ?? commentsMsg.toasts.aiDraftFailed,
           );
           return;
         }
-        toast.success("Rascunho gerado.");
+        toast.success(commentsMsg.toasts.draftGenerated);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Falha ao gerar rascunho.";
-        toast.error(message);
+        toast.error(getApiErrorMessage(err, locale) || commentsMsg.toasts.generateDraftFailed);
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
         }
@@ -538,14 +536,15 @@ export function CommentsPage() {
           ),
         );
         toast.success(
-          `Modo deste post: ${postReplyModeOption(next).label.toLowerCase()}.`,
+          interpolate(commentsMsg.toasts.replyModeUpdated, {
+            mode:
+              getPostReplyModeOptions(locale)
+                .find((option) => option.value === next)
+                ?.label.toLowerCase() ?? next,
+          }),
         );
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Não foi possível atualizar o modo de resposta.";
-        toast.error(message);
+        toast.error(getApiErrorMessage(err, locale) || commentsMsg.toasts.replyModeFailed);
       } finally {
         setSavingReplyMode(false);
       }
@@ -563,10 +562,10 @@ export function CommentsPage() {
         : null;
 
       const ok = await confirm({
-        title: "Deletar rascunho?",
+        title: commentsMsg.confirm.deleteDraft.title,
         description: (
           <>
-            O rascunho será descartado. Nada será publicado no Instagram.
+            {commentsMsg.confirm.deleteDraft.description}
             {preview ? (
               <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
                 “{preview}”
@@ -574,7 +573,7 @@ export function CommentsPage() {
             ) : null}
           </>
         ),
-        confirmLabel: "Deletar",
+        confirmLabel: commentsMsg.confirm.deleteDraft.confirmLabel,
         variant: "destructive",
       });
 
@@ -588,11 +587,9 @@ export function CommentsPage() {
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
         }
-        toast.success("Rascunho deletado.");
+        toast.success(commentsMsg.toasts.draftDeleted);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Falha ao remover rascunho.";
-        toast.error(message);
+        toast.error(getApiErrorMessage(err, locale) || commentsMsg.toasts.removeDraftFailed);
       } finally {
         setRemovingDraftId(null);
       }
@@ -608,11 +605,9 @@ export function CommentsPage() {
         if (selectedPostId) {
           await loadComments(selectedPostId, { silent: true, force: true });
         }
-        toast.success("Rascunho salvo.");
+        toast.success(commentsMsg.toasts.draftSaved);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Falha ao salvar rascunho.";
-        toast.error(message);
+        toast.error(getApiErrorMessage(err, locale) || commentsMsg.toasts.saveDraftFailed);
         throw err;
       } finally {
         setSavingDraftId(null);
@@ -646,10 +641,10 @@ export function CommentsPage() {
       const syncedAt = Date.now();
       postCacheRef.current.setLastSyncedAt(selectedPostId, syncedAt);
       setLastSyncedAt(syncedAt);
-      toast.success("Publicação sincronizada com o Instagram.");
+      toast.success(commentsMsg.toasts.synced);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Falha ao sincronizar publicação.";
+        getApiErrorMessage(err, locale) || commentsMsg.toasts.syncFailed;
       setError(message);
       toast.error(message);
     } finally {
@@ -677,7 +672,9 @@ export function CommentsPage() {
       syncPostCountsFromComments(selectedPostId, preview.comments);
       if (preview.marked_deleted > 0) {
         toast.info(
-          `${preview.marked_deleted} comentário${preview.marked_deleted === 1 ? "" : "s"} marcado${preview.marked_deleted === 1 ? "" : "s"} como removido${preview.marked_deleted === 1 ? "" : "s"} no Instagram.`,
+          interpolate(commentsMsg.toasts.markedDeleted, {
+            count: preview.marked_deleted,
+          }),
         );
       }
       if (preview.warning) {
@@ -687,8 +684,8 @@ export function CommentsPage() {
       if (preview.linkable_count === 0) {
         toast.info(
           preview.marked_deleted > 0
-            ? "Comentários atualizados com o Instagram. Nada pendente para vincular."
-            : "Nenhum comentário pendente para vincular a respostas já existentes no Instagram.",
+            ? commentsMsg.toasts.reconcileUpdated
+            : commentsMsg.toasts.reconcileNothingPending,
         );
         return;
       }
@@ -698,18 +695,16 @@ export function CommentsPage() {
         : "a marca";
 
       const ok = await confirm({
-        title: "Vincular respostas do Instagram?",
+        title: commentsMsg.confirm.reconcile.title,
         description: (
           <>
-            Sincronizamos com o Instagram agora. Encontramos{" "}
-            <strong>{preview.linkable_count}</strong> comentário
-            {preview.linkable_count === 1 ? "" : "s"} já respondido
-            {preview.linkable_count === 1 ? "" : "s"} por {brandHandle}. O Iris
-            vai vincular cada um à resposta real do thread (texto e ID no IG),
-            sem publicar nada novo.
+            {interpolate(commentsMsg.confirm.reconcile.description, {
+              count: preview.linkable_count,
+              brand: brandHandle,
+            })}
           </>
         ),
-        confirmLabel: "Vincular respostas",
+        confirmLabel: commentsMsg.confirm.reconcile.confirmLabel,
       });
 
       if (!ok) {
@@ -732,18 +727,21 @@ export function CommentsPage() {
       }
       const deletedNote =
         result.marked_deleted > 0
-          ? ` ${result.marked_deleted} removido${result.marked_deleted === 1 ? "" : "s"} no IG.`
+          ? interpolate(commentsMsg.toasts.deletedOnIg, {
+              count: result.marked_deleted,
+            })
           : "";
       toast.success(
         result.linked_count > 0
-          ? `${result.linked_count} comentário${result.linked_count === 1 ? "" : "s"} vinculado${result.linked_count === 1 ? "" : "s"} à resposta existente no Instagram.${deletedNote}`
-          : `Nenhum comentário novo para vincular.${deletedNote}`,
+          ? interpolate(commentsMsg.toasts.linked, {
+              count: result.linked_count,
+              deletedNote,
+            })
+          : interpolate(commentsMsg.toasts.linkedNone, { deletedNote }),
       );
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Falha ao vincular respostas do Instagram.";
+        getApiErrorMessage(err, locale) || commentsMsg.toasts.reconcileFailed;
       setError(message);
       toast.error(message);
     } finally {
@@ -798,7 +796,7 @@ export function CommentsPage() {
 
     const exists = comments.some((comment) => comment.id === selectedCommentId);
     if (!exists) {
-      toast.error("Comentário não encontrado nesta publicação.");
+      toast.error(commentsMsg.toasts.commentNotFound);
       setSearchParams({ post_id: selectedPostId }, { replace: true });
     }
   }, [
@@ -900,12 +898,12 @@ export function CommentsPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <PageContainer.Header
-          eyebrow="Operação"
-          title={leftPanelMode === "posts" ? "Publicações" : "Atividade"}
+          eyebrow={commentsMsg.page.eyebrow}
+          title={leftPanelMode === "posts" ? commentsMsg.page.postsTitle : commentsMsg.page.activityTitle}
           description={
             leftPanelMode === "posts"
-              ? "Escolha uma publicação para ver comentários, resumo e briefing."
-              : "Comentários recentes em todas as publicações monitoradas."
+              ? commentsMsg.page.postsDescription
+              : commentsMsg.page.activityDescription
           }
         />
         {leftPanelMode === "posts" ? (
@@ -919,7 +917,7 @@ export function CommentsPage() {
               disabled={!meta?.connected}
             >
               <Download className="size-4" />
-              <span className="hidden sm:inline">Importar</span>
+              <span className="hidden sm:inline">{commentsMsg.page.import}</span>
             </Button>
             <Button
               type="button"
@@ -930,7 +928,7 @@ export function CommentsPage() {
               disabled={!meta?.connected}
             >
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Adicionar</span>
+              <span className="hidden sm:inline">{commentsMsg.page.add}</span>
             </Button>
             <Button
               type="button"
@@ -939,7 +937,7 @@ export function CommentsPage() {
               className="size-10 shrink-0"
               onClick={() => void loadPosts({ force: true })}
               disabled={refreshingPosts}
-              aria-label="Recarregar lista"
+              aria-label={commentsMsg.page.reloadList}
             >
               {refreshingPosts ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -963,7 +961,7 @@ export function CommentsPage() {
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            Publicações
+            {commentsMsg.page.postsTab}
           </button>
           <button
             type="button"
@@ -975,7 +973,7 @@ export function CommentsPage() {
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            Atividade
+            {commentsMsg.page.activityTab}
           </button>
         </div>
 
@@ -985,7 +983,7 @@ export function CommentsPage() {
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Buscar legenda ou ID…"
+              placeholder={commentsMsg.page.searchPlaceholder}
               className="h-10 pl-10 text-sm focus-visible:ring-primary/40"
             />
           </div>
@@ -1001,18 +999,18 @@ export function CommentsPage() {
         refreshToken={activityRefreshToken}
       />
     ) : loadingPosts ? (
-      <OpsEmptyState>Carregando publicações…</OpsEmptyState>
+      <OpsEmptyState>{commentsMsg.page.loadingPosts}</OpsEmptyState>
     ) : filteredPosts.length === 0 ? (
       <OpsEmptyState
         title={
           posts.length === 0
-            ? "Nenhuma publicação ainda"
-            : "Nada encontrado"
+            ? commentsMsg.empty.noPostsTitle
+            : commentsMsg.empty.noResultsTitle
         }
       >
         {posts.length === 0
-          ? "Importe ou adicione uma publicação para monitorar comentários."
-          : "Tente outra busca por legenda ou ID."}
+          ? commentsMsg.empty.noPostsBody
+          : commentsMsg.empty.noResultsBody}
       </OpsEmptyState>
     ) : (
       <PostInboxList
@@ -1027,14 +1025,18 @@ export function CommentsPage() {
     <PageContainer variant="fill">
       {!meta?.connected && (
         <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
-          Conecte o Instagram em{" "}
+          {interpolate(commentsMsg.banners.connectInstagram, {
+            settingsLink: "",
+          }).split("{settingsLink}")[0]}
           <Link
             to={routes.settings}
             className="text-primary underline-offset-4 hover:underline"
           >
-            configurações
+            {commentsMsg.banners.settingsLink}
           </Link>{" "}
-          para sincronizar comentários e atualizar insights.
+          {interpolate(commentsMsg.banners.connectInstagram, {
+            settingsLink: "",
+          }).split("{settingsLink}")[1]?.trimStart()}
         </div>
       )}
 
@@ -1046,9 +1048,7 @@ export function CommentsPage() {
 
       {!liveConnected && !isDemoMode ? (
         <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
-          Atualização em tempo real indisponível. A lista local será recarregada
-          a cada minuto nesta aba, ou use o botão de sincronizar para buscar
-          comentários no Instagram.
+          {commentsMsg.banners.realtimeUnavailable}
         </p>
       ) : null}
 
@@ -1070,7 +1070,7 @@ export function CommentsPage() {
               onClick={clearStage}
             >
               <ArrowLeft className="size-4" />
-              Todas as publicações
+              {commentsMsg.page.backToAll}
             </Button>
             <Button
               type="button"
@@ -1080,7 +1080,7 @@ export function CommentsPage() {
               onClick={() => setListSheetOpen(true)}
             >
               <PanelLeft className="size-4" />
-              Lista
+              {commentsMsg.page.list}
             </Button>
             <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
               {selectedPost.caption?.trim() ||
@@ -1135,7 +1135,7 @@ export function CommentsPage() {
             >
               <SheetHeader className="border-b border-border">
                 <SheetTitle className="font-display text-lg font-semibold">
-                  Publicações
+                  {commentsMsg.page.sheetTitle}
                 </SheetTitle>
               </SheetHeader>
               <div className="shrink-0 border-b p-4">{listChrome}</div>
@@ -1145,7 +1145,7 @@ export function CommentsPage() {
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-          Carregando publicação…
+          {commentsMsg.page.loadingPost}
         </div>
       )}
 
@@ -1153,19 +1153,20 @@ export function CommentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <Card className="w-full max-w-md space-y-4 p-5">
             <div className="space-y-1">
-              <h2 className="text-lg font-semibold">Adicionar publicação</h2>
+              <h2 className="text-lg font-semibold">{commentsMsg.addDialog.title}</h2>
               <p className="text-sm text-muted-foreground">
-                Cole o link do post no Instagram (ex.: instagram.com/p/…) ou o
-                ID numérico da Meta.
+                {commentsMsg.addDialog.description}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="monitored-media-input">ID ou link</Label>
+              <Label htmlFor="monitored-media-input">
+                {commentsMsg.addDialog.fieldLabel}
+              </Label>
               <Input
                 id="monitored-media-input"
                 value={mediaInput}
                 onChange={(e) => setMediaInput(e.target.value)}
-                placeholder="https://www.instagram.com/p/… ou 17841400000000001"
+                placeholder={commentsMsg.addDialog.fieldPlaceholder}
               />
             </div>
             <div className="flex flex-wrap justify-end gap-2">
@@ -1174,7 +1175,7 @@ export function CommentsPage() {
                 variant="outline"
                 onClick={() => setAddDialogOpen(false)}
               >
-                Cancelar
+                {commentsMsg.addDialog.cancel}
               </Button>
               <Button
                 type="button"
@@ -1184,7 +1185,7 @@ export function CommentsPage() {
                 {addingPost ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : null}
-                Adicionar
+                {addingPost ? commentsMsg.addDialog.adding : commentsMsg.addDialog.submit}
               </Button>
             </div>
           </Card>

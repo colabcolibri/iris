@@ -18,6 +18,8 @@ import {
   dashboardViewHref,
   useAppRoutes,
 } from "@/demo/demo-routes";
+import type { ShellMessages } from "@/i18n/domains/shell/types";
+import { useDomainMessages } from "@/i18n/provider";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -28,26 +30,29 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] =
-  [
-    { id: "calendar", label: "Calendário", icon: CalendarDays },
-    { id: "list", label: "Lista", icon: List },
-    { id: "kanban", label: "Kanban", icon: LayoutGrid },
-  ];
+const VIEW_ITEM_DEFS: {
+  id: AppView;
+  navKey: keyof ShellMessages["nav"];
+  icon: typeof CalendarDays;
+}[] = [
+  { id: "calendar", navKey: "calendar", icon: CalendarDays },
+  { id: "list", navKey: "list", icon: List },
+  { id: "kanban", navKey: "kanban", icon: LayoutGrid },
+];
 
 const MAIN_ROUTE_DEFS = [
-  { key: "comments" as const, label: "Comentários", icon: MessageCircle },
-  { key: "messages" as const, label: "Mensagens", icon: MessagesSquare },
-  { key: "products" as const, label: "Produtos", icon: Package },
-  { key: "stores" as const, label: "Lojas", icon: Store },
-  { key: "webhooks" as const, label: "Webhooks", icon: Webhook },
-  { key: "agentSimulator" as const, label: "Simulador", icon: FlaskConical },
-  { key: "agentRuns" as const, label: "Execuções", icon: Bot },
+  { key: "comments" as const, navKey: "comments" as const, icon: MessageCircle },
+  { key: "messages" as const, navKey: "messages" as const, icon: MessagesSquare },
+  { key: "products" as const, navKey: "products" as const, icon: Package },
+  { key: "stores" as const, navKey: "stores" as const, icon: Store },
+  { key: "webhooks" as const, navKey: "webhooks" as const, icon: Webhook },
+  { key: "agentSimulator" as const, navKey: "simulator" as const, icon: FlaskConical },
+  { key: "agentRuns" as const, navKey: "agentRuns" as const, icon: Bot },
 ];
 
 const FOOTER_ROUTE_DEFS = [
-  { key: "settings" as const, label: "Configurações", icon: Settings },
-  { key: "persona" as const, label: "Persona", icon: Sparkles },
+  { key: "settings" as const, navKey: "settings" as const, icon: Settings },
+  { key: "persona" as const, navKey: "persona" as const, icon: Sparkles },
 ];
 
 const MENU_BUTTON_CLASS =
@@ -68,6 +73,7 @@ export function AppNavigation({
   onNavigate,
   showFooter = true,
 }: AppNavigationProps) {
+  const shell = useDomainMessages("shell");
   const routes = useAppRoutes();
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,14 +90,15 @@ export function AppNavigation({
       <SidebarGroup className="group-data-[collapsible=icon]:p-0">
         <SidebarGroupContent>
           <SidebarMenu>
-            {VIEW_ITEMS.map((item) => {
+            {VIEW_ITEM_DEFS.map((item) => {
               const active = onDashboard && view === item.id;
               const Icon = item.icon;
+              const label = shell.nav[item.navKey];
               return (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     isActive={active}
-                    tooltip={item.label}
+                    tooltip={label}
                     size="default"
                     className={MENU_BUTTON_CLASS}
                     onClick={() => {
@@ -104,7 +111,7 @@ export function AppNavigation({
                     }}
                   >
                     <Icon />
-                    <span className={MENU_LABEL_CLASS}>{item.label}</span>
+                    <span className={MENU_LABEL_CLASS}>{label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
@@ -113,18 +120,19 @@ export function AppNavigation({
             {MAIN_ROUTE_DEFS.map((item) => {
               const to = routes[item.key];
               const Icon = item.icon;
+              const label = shell.nav[item.navKey];
               return (
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton
                     render={<NavLink to={to} />}
                     isActive={location.pathname === to}
-                    tooltip={item.label}
+                    tooltip={label}
                     size="default"
                     className={MENU_BUTTON_CLASS}
                     onClick={handleNavigate}
                   >
                     <Icon />
-                    <span className={MENU_LABEL_CLASS}>{item.label}</span>
+                    <span className={MENU_LABEL_CLASS}>{label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
@@ -142,18 +150,19 @@ export function AppNavigation({
                 {FOOTER_ROUTE_DEFS.map((item) => {
                   const to = routes[item.key];
                   const Icon = item.icon;
+                  const label = shell.nav[item.navKey];
                   return (
                     <SidebarMenuItem key={to}>
                       <SidebarMenuButton
                         render={<NavLink to={to} />}
                         isActive={location.pathname === to}
-                        tooltip={item.label}
+                        tooltip={label}
                         size="default"
                         className={MENU_BUTTON_CLASS}
                         onClick={handleNavigate}
                       >
                         <Icon />
-                        <span className={MENU_LABEL_CLASS}>{item.label}</span>
+                        <span className={MENU_LABEL_CLASS}>{label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

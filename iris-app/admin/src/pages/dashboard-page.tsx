@@ -37,8 +37,13 @@ import {
 } from "@/lib/datetime";
 import type { Post, PostStatus, PostReplyModeSetting } from "@/lib/types";
 import { filterPostsByPipelineDate } from "@iris/domain/posts/pipeline-date-filter";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export function DashboardPage() {
+  const { locale } = useAppLocale();
+  const postsMsg = useDomainMessages("posts");
   const { timezone, replyMode: globalReplyMode } = useAppSettings();
   const { meta } = useMetaSession();
   const { view } = useDashboardView();
@@ -98,9 +103,9 @@ export function DashboardPage() {
 
   useEffect(() => {
     void loadPosts().catch((err) => {
-      if (!handleAuthError(err)) toast.error("Falha ao carregar postagens.");
+      if (!handleAuthError(err)) toast.error(postsMsg.toasts.loadFailed);
     });
-  }, [loadPosts, handleAuthError]);
+  }, [loadPosts, handleAuthError, postsMsg.toasts.loadFailed]);
 
   const kanbanPosts = useMemo(
     () =>
@@ -111,12 +116,12 @@ export function DashboardPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("meta_connected") === "1")
-      toast.success("Instagram conectado com sucesso.");
-    if (params.get("meta_error")) toast.error("Falha ao conectar Instagram.");
+      toast.success(postsMsg.page.meta.connectedSuccess);
+    if (params.get("meta_error")) toast.error(postsMsg.page.meta.connectFailed);
     if (params.has("meta_connected") || params.has("meta_error")) {
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, []);
+  }, [postsMsg.page.meta.connectedSuccess, postsMsg.page.meta.connectFailed]);
 
   useEffect(() => {
     const unsubscribe = subscribeRealtimeEvents({
@@ -215,11 +220,10 @@ export function DashboardPage() {
   async function changeStatus(post: Post, status: PostStatus) {
     if (status === "cancelled") {
       const ok = await confirm({
-        title: "Cancelar postagem?",
-        description:
-          "A postagem sai do fluxo editorial ativo. Você poderá restaurá-la como rascunho depois.",
-        confirmLabel: "Cancelar postagem",
-        confirmPhrase: "cancelar",
+        title: postsMsg.confirm.cancelPost.title,
+        description: postsMsg.confirm.cancelPost.description,
+        confirmLabel: postsMsg.confirm.cancelPost.confirmLabel,
+        confirmPhrase: postsMsg.confirm.cancelPost.confirmPhrase,
         variant: "destructive",
       });
       if (!ok) return;
@@ -235,17 +239,17 @@ export function DashboardPage() {
       }
       const message =
         status === "cancelled"
-          ? "Postagem cancelada."
+          ? postsMsg.toasts.cancelled
           : status === "draft" && post.status === "scheduled"
-            ? "Postagem desagendada."
+            ? postsMsg.toasts.unscheduled
             : status === "draft"
-              ? "Postagem voltou para rascunho."
-              : "Status atualizado.";
+              ? postsMsg.toasts.backToDraft
+              : postsMsg.toasts.statusUpdated;
       toast.success(message);
     } catch (err) {
       if (!handleAuthError(err)) {
         toast.error(
-          err instanceof Error ? err.message : "Falha ao atualizar status.",
+          getApiErrorMessage(err, locale) || postsMsg.toasts.updateStatusFailed,
         );
       }
     }
@@ -256,8 +260,8 @@ export function DashboardPage() {
     beginBusy(
       "revert_to_draft",
       selectedPost.status === "scheduled"
-        ? "Removendo do calendário…"
-        : "Restaurando como rascunho…",
+        ? postsMsg.operations.revertingScheduled
+        : postsMsg.operations.revertingDraft,
     );
     try {
       await updatePost(selectedPost.id, { status: "draft" });
@@ -266,12 +270,12 @@ export function DashboardPage() {
       setSelectedPost(updated);
       toast.success(
         selectedPost.status === "scheduled"
-          ? "Postagem desagendada."
-          : "Postagem restaurada como rascunho.",
+          ? postsMsg.toasts.unscheduled
+          : postsMsg.toasts.restoredDraft,
       );
     } catch (err) {
       if (!handleAuthError(err)) {
-        setError(err instanceof Error ? err.message : "Falha ao atualizar.");
+        setError(getApiErrorMessage(err, locale) || postsMsg.toasts.updateFailed);
       }
     } finally {
       endBusy();
@@ -281,26 +285,31 @@ export function DashboardPage() {
   async function savePost(schedule: boolean) {
     beginBusy(
       schedule ? "schedule" : selectedPost?.status === "scheduled" ? "save_scheduled" : "save_draft",
-      schedule ? "Agendando postagem…" : "Salvando…",
+      schedule ? postsMsg.operations.scheduling : postsMsg.operations.saving,
     );
     try {
       let postId = selectedPost?.id;
 
       if (!postId) {
-        setOperationStatus("Criando postagem…");
+        setOperationStatus(postsMsg.operations.creating);
         const created = await createPost(buildCreatePostBody());
         postId = created.id;
       }
 
       if (files && files.length > 0) {
         setOperationStatus(
-          `Enviando mídias (0/${files.length})…`,
+          interpolate(postsMsg.media.uploading, { current: 0, total: files.length }),
         );
         let sortOrder = (await listAssets(postId)).length + 1;
         let index = 0;
         for (const file of [...files]) {
           index += 1;
-          setOperationStatus(`Enviando mídias (${index}/${files.length})…`);
+          setOperationStatus(
+            interpolate(postsMsg.media.uploading, {
+              current: index,
+              total: files.length,
+            }),
+          );
           await uploadAsset(postId, file, sortOrder);
           sortOrder += 1;
         }
@@ -308,10 +317,10 @@ export function DashboardPage() {
 
       if (schedule) {
         if (!meta?.connected)
-          throw new Error("Conecte Instagram antes de agendar.");
+          throw new Error(postsMsg.errors.connectBeforeSchedule);
         const scheduledIso = toIsoFromDatetimeLocal(scheduledAt, timezone);
-        if (!scheduledIso) throw new Error("Informe data e hora para agendar.");
-        setOperationStatus("Confirmando agendamento…");
+        if (!scheduledIso) throw new Error(postsMsg.errors.scheduleDateRequired);
+        setOperationStatus(postsMsg.operations.confirmingSchedule);
         await updatePost(postId, {
           caption,
           collaborators: parseCollaboratorsInput(collaboratorsText),
@@ -319,7 +328,7 @@ export function DashboardPage() {
           status: "scheduled",
           scheduled_at: scheduledIso,
         });
-        toast.success("Postagem agendada.");
+        toast.success(postsMsg.toasts.scheduled);
       } else {
         const updateBody: Record<string, unknown> = {
           caption,
@@ -330,12 +339,12 @@ export function DashboardPage() {
         if (!scheduledAt.trim() && isDraftSave) {
           updateBody.scheduled_at = null;
         }
-        setOperationStatus("Salvando alterações…");
+        setOperationStatus(postsMsg.operations.savingChanges);
         await updatePost(postId, updateBody);
         toast.success(
           selectedPost?.status === "scheduled"
-            ? "Alterações salvas."
-            : "Rascunho salvo.",
+            ? postsMsg.toasts.changesSaved
+            : postsMsg.toasts.draftSaved,
         );
       }
 
@@ -347,7 +356,7 @@ export function DashboardPage() {
       setDialogMode("edit");
     } catch (err) {
       if (!handleAuthError(err)) {
-        setError(err instanceof Error ? err.message : "Falha ao salvar.");
+        setError(getApiErrorMessage(err, locale) || postsMsg.toasts.saveFailed);
       }
     } finally {
       endBusy();
@@ -357,24 +366,24 @@ export function DashboardPage() {
   async function publishNow() {
     const bypassSchedule = selectedPost?.status === "scheduled";
     const ok = await confirm({
-      title: "Publicar agora no Instagram?",
+      title: postsMsg.confirm.publishNow.title,
       description: bypassSchedule
-        ? "A postagem sai imediatamente, sem aguardar o horário agendado. Isso não pode ser desfeito pelo Iris."
-        : "A postagem será publicada na sua conta do Instagram imediatamente. Isso não pode ser desfeito pelo Iris.",
-      confirmLabel: "Publicar agora",
-      confirmPhrase: "publicar",
+        ? postsMsg.confirm.publishNow.descriptionScheduled
+        : postsMsg.confirm.publishNow.descriptionDraft,
+      confirmLabel: postsMsg.confirm.publishNow.confirmLabel,
+      confirmPhrase: postsMsg.confirm.publishNow.confirmPhrase,
     });
     if (!ok) return;
 
-    beginBusy("publish_now", "Preparando publicação…");
+    beginBusy("publish_now", postsMsg.operations.preparingPublish);
     let postId = selectedPost?.id;
     try {
       if (!meta?.connected) {
-        throw new Error("Conecte Instagram antes de publicar.");
+        throw new Error(postsMsg.errors.connectBeforePublish);
       }
 
       if (!postId) {
-        setOperationStatus("Criando postagem…");
+        setOperationStatus(postsMsg.operations.creating);
         const created = await createPost(buildCreatePostBody());
         postId = created.id;
       }
@@ -384,13 +393,18 @@ export function DashboardPage() {
         let index = 0;
         for (const file of [...files]) {
           index += 1;
-          setOperationStatus(`Enviando mídias (${index}/${files.length})…`);
+          setOperationStatus(
+            interpolate(postsMsg.media.uploading, {
+              current: index,
+              total: files.length,
+            }),
+          );
           await uploadAsset(postId, file, sortOrder);
           sortOrder += 1;
         }
       }
 
-      setOperationStatus("Salvando legenda e configurações…");
+      setOperationStatus(postsMsg.operations.savingCaption);
       await updatePost(postId, {
         caption,
         collaborators: parseCollaboratorsInput(collaboratorsText),
@@ -399,13 +413,15 @@ export function DashboardPage() {
 
       const assets = await listAssets(postId);
       if (assets.length < 1) {
-        throw new Error("Adicione pelo menos uma mídia antes de publicar.");
+        throw new Error(postsMsg.errors.mediaRequired);
       }
 
       setOperationStatus(
         assets.length > 1
-          ? `Publicando carrossel (${assets.length} imagens) no Instagram… A Meta processa cada slide — pode levar um minuto.`
-          : "Publicando no Instagram… A Meta processa a imagem — pode levar alguns segundos.",
+          ? interpolate(postsMsg.operations.publishingCarousel, {
+              count: assets.length,
+            })
+          : postsMsg.operations.publishingSingle,
       );
       const post = await publishPostNow(postId);
       await loadPosts();
@@ -414,11 +430,11 @@ export function DashboardPage() {
       loadEditorialFieldsFromPost(post);
       setDialogMode("edit");
       setFiles(null);
-      toast.success("Postagem publicada no Instagram.");
+      toast.success(postsMsg.toasts.published);
     } catch (err) {
       if (!handleAuthError(err)) {
         const message =
-          err instanceof Error ? err.message : "Falha ao publicar.";
+          getApiErrorMessage(err, locale) || postsMsg.toasts.publishFailed;
         setError(message);
         toast.error(message);
         if (postId) {
@@ -440,25 +456,24 @@ export function DashboardPage() {
 
     if (selectedPost.status === "cancelled") {
       const ok = await confirm({
-        title: "Deletar permanentemente?",
-        description:
-          "A postagem e as mídias saem do banco de dados. Esta ação não pode ser desfeita.",
-        confirmLabel: "Deletar permanentemente",
-        confirmPhrase: "deletar",
+        title: postsMsg.confirm.purgePost.title,
+        description: postsMsg.confirm.purgePost.description,
+        confirmLabel: postsMsg.confirm.purgePost.confirmLabel,
+        confirmPhrase: postsMsg.confirm.purgePost.confirmPhrase,
         variant: "destructive",
       });
       if (!ok) return;
 
-      beginBusy("delete", "Removendo permanentemente…");
+      beginBusy("delete", postsMsg.operations.purging);
       try {
         await purgeCancelledPost(selectedPost.id);
         await loadPosts();
-        toast.success("Postagem removida do banco.");
+        toast.success(postsMsg.toasts.purged);
         closeDialog();
       } catch (err) {
         if (!handleAuthError(err)) {
           setError(
-            err instanceof Error ? err.message : "Falha ao deletar permanentemente.",
+            getApiErrorMessage(err, locale) || postsMsg.toasts.purgeFailed,
           );
         }
       } finally {
@@ -468,24 +483,23 @@ export function DashboardPage() {
     }
 
     const ok = await confirm({
-      title: "Deletar postagem?",
-      description:
-        "A postagem sai do fluxo editorial ativo (status cancelado). Você poderá restaurá-la como rascunho depois.",
-      confirmLabel: "Deletar",
-      confirmPhrase: "deletar",
+      title: postsMsg.confirm.deletePost.title,
+      description: postsMsg.confirm.deletePost.description,
+      confirmLabel: postsMsg.confirm.deletePost.confirmLabel,
+      confirmPhrase: postsMsg.confirm.deletePost.confirmPhrase,
       variant: "destructive",
     });
     if (!ok) return;
 
-    beginBusy("delete", "Cancelando postagem…");
+    beginBusy("delete", postsMsg.operations.deleting);
     try {
       await deletePost(selectedPost.id);
       await loadPosts();
-      toast.success("Postagem deletada.");
+      toast.success(postsMsg.toasts.deleted);
       closeDialog();
     } catch (err) {
       if (!handleAuthError(err)) {
-        setError(err instanceof Error ? err.message : "Falha ao deletar.");
+        setError(getApiErrorMessage(err, locale) || postsMsg.toasts.deleteFailed);
       }
     } finally {
       endBusy();
@@ -509,13 +523,11 @@ export function DashboardPage() {
       if (selectedPost?.id === post.id) {
         closeDialog();
       }
-      toast.success("Postagem removida do banco.");
+      toast.success(postsMsg.toasts.purged);
     } catch (err) {
       if (!handleAuthError(err)) {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : "Falha ao deletar permanentemente.",
+          getApiErrorMessage(err, locale) || postsMsg.toasts.purgeFailed,
         );
       }
     }
@@ -527,10 +539,10 @@ export function DashboardPage() {
         <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 px-8 pt-8 pb-4">
           <div className="min-w-0">
             <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
-              Pipeline editorial
+              {postsMsg.page.kanban.title}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Organize rascunhos, agendamentos e publicações.
+              {postsMsg.page.kanban.description}
             </p>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
@@ -547,7 +559,7 @@ export function DashboardPage() {
               className="h-11 shrink-0 sm:px-6"
             >
               <Plus className="mr-2 size-4" />
-              Nova postagem
+              {postsMsg.page.kanban.newPost}
             </Button>
           </div>
         </header>
@@ -665,15 +677,14 @@ export function DashboardPage() {
                   .then(() => fetchPost(selectedPost.id))
                   .then((post) => {
                     setSelectedPost(post);
-                    toast.success("Postagem voltou para rascunho.");
+                    toast.success(postsMsg.toasts.backToDraft);
                     return loadPosts();
                   })
                   .catch((err) => {
                     if (!handleAuthError(err)) {
                       setError(
-                        err instanceof Error
-                          ? err.message
-                          : "Falha ao atualizar.",
+                        getApiErrorMessage(err, locale) ||
+                          postsMsg.toasts.updateFailed,
                       );
                     }
                   });

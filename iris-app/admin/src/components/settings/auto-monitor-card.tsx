@@ -4,6 +4,9 @@ import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppSettings } from "@/contexts/app-settings-context";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 const INTERVAL_MIN = 60;
 const INTERVAL_MAX = 3600;
@@ -21,6 +24,8 @@ type AutoMonitorCardProps = {
 };
 
 export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
+  const { locale } = useAppLocale();
+  const t = useDomainMessages("settings").autoMonitor;
   const {
     autoMonitorEnabled,
     autoMonitorIntervalSeconds,
@@ -39,13 +44,9 @@ export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
     setSaving(true);
     try {
       await saveAutoMonitorEnabled(next);
-      toast.success(
-        next
-          ? "Auto-monitoramento ligado — publicações novas entram sozinhas."
-          : "Auto-monitoramento desligado — só cadastro manual ou publish Iris.",
-      );
+      toast.success(next ? t.toasts.enabled : t.toasts.disabled);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.failed);
     } finally {
       setSaving(false);
     }
@@ -60,24 +61,22 @@ export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
     try {
       await saveAutoMonitorIntervalSeconds(seconds);
       setIntervalInput(String(seconds));
-      toast.success(`Intervalo do poll: ${Math.round(seconds / 60)} min.`);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao salvar intervalo.",
+      toast.success(
+        interpolate(t.toasts.intervalSaved, {
+          minutes: Math.round(seconds / 60),
+        }),
       );
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.intervalFailed);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <SettingsCardShell
-      embedded={embedded}
-      title="Auto-monitoramento de publicações"
-      description="Descobre mídias novas no Instagram (poll) e cadastra posts monitorados. Também cadastra no primeiro comentário via webhook se a mídia ainda não existir."
-    >
+    <SettingsCardShell embedded={embedded} title={t.title} description={t.description}>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground">{t.loading}</p>
       ) : (
         <div className="max-w-xl space-y-6">
           <div className="flex flex-wrap gap-4">
@@ -89,7 +88,7 @@ export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
                 disabled={saving}
                 onChange={() => void persistEnabled(true)}
               />
-              Ligado
+              {t.onLabel}
             </label>
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
@@ -99,20 +98,15 @@ export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
                 disabled={saving}
                 onChange={() => void persistEnabled(false)}
               />
-              Desligado
+              {t.offLabel}
             </label>
           </div>
 
           {autoMonitorEnabled ? (
             <div className="space-y-3 border-t border-border/60 pt-4">
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">
-                  Intervalo do poll
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Padrão: 5 minutos. A Meta não avisa post novo por webhook — o
-                  Iris consulta a lista recente neste intervalo.
-                </p>
+                <Label className="text-sm font-semibold">{t.pollIntervalLabel}</Label>
+                <p className="text-sm text-muted-foreground">{t.pollIntervalHint}</p>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -134,11 +128,11 @@ export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="auto-monitor-interval"
-                  className="text-sm font-semibold"
-                >
-                  Segundos ({INTERVAL_MIN}–{INTERVAL_MAX})
+                <Label htmlFor="auto-monitor-interval" className="text-sm font-semibold">
+                  {interpolate(t.secondsLabel, {
+                    min: INTERVAL_MIN,
+                    max: INTERVAL_MAX,
+                  })}
                 </Label>
                 <Input
                   id="auto-monitor-interval"

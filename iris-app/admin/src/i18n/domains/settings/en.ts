@@ -66,13 +66,20 @@ export const settingsEn = {
       "Default mode for posts following global settings. Posts with their own mode take precedence.",
     globalModeLabel: "Global mode",
     workerIntervalLabel: "Worker interval",
-    workerIntervalHint: "How often the comment queue processing cycle runs.",
+    workerIntervalHint:
+      "How often the agent checks the queue in the database (comments and DMs share the same cycle). Default: 5 minutes.",
+    workerIntervalHintShort:
+      "How often the comment queue processing cycle runs.",
     replyDelayLabel: "Time before replying",
     replyDelayHint:
-      "Waits before enqueueing the automatic reply (simulates human timing).",
-    delayImmediate: "Immediate",
+      "Default: immediate on the next cycle. With a queue, the agent waits before the harness — the queue persists in the database across restarts.",
+    replyDelayCadenceDelayed:
+      " Actual cadence: reply after {delay} min + up to {tick} min until the next cycle.",
+    replyDelayCadenceImmediate:
+      " Actual cadence: up to {tick} min until the next cycle.",
+    delayImmediate: "Immediate reply",
     delayQueued: "Delayed queue",
-    delayMinutesLabel: "Delay minutes",
+    delayMinutesLabel: "Wait minutes ({min}–{max})",
     loading: "Loading…",
     toasts: {
       modeUpdated: "Global agent mode: {mode}.",
@@ -88,14 +95,20 @@ export const settingsEn = {
     title: "Message agent (DM)",
     description:
       "Default mode for conversations following global settings. Conversations with their own mode take precedence.",
-    globalModeLabel: "Global DM mode",
+    globalModeLabel: "Global mode",
     workerIntervalLabel: "Worker interval",
-    workerIntervalHint: "How often the DM queue processing cycle runs.",
+    workerIntervalHint:
+      "Shared with comments — configured on the comment agent card. Current cycle: {minutes} min.",
     replyDelayLabel: "Time before replying",
-    replyDelayHint: "Waits before enqueueing the automatic reply in the conversation.",
-    delayImmediate: "Immediate",
+    replyDelayHint:
+      "Same persistent queue used for comments, with DM-specific settings.",
+    replyDelayCadenceDelayed:
+      " Actual cadence: reply after {delay} min + up to {tick} min until the next cycle.",
+    replyDelayCadenceImmediate:
+      " Actual cadence: up to {tick} min until the next cycle.",
+    delayImmediate: "Immediate reply",
     delayQueued: "Delayed queue",
-    delayMinutesLabel: "Delay minutes",
+    delayMinutesLabel: "Wait minutes ({min}–{max})",
     loading: "Loading…",
     toasts: {
       modeUpdated: "Global DM mode: {mode}.",
@@ -107,10 +120,23 @@ export const settingsEn = {
   },
   mcp: {
     title: "MCP connection",
-    description: "Connect Iris to Cursor, ChatGPT, or Claude via Model Context Protocol.",
+    description:
+      "Generate a code and copy the fields for Cursor, ChatGPT, or Claude — each client in the format it accepts.",
     loading: "Loading…",
     generate: "Generate code",
     rotate: "Rotate code",
+    revoke: "Revoke",
+    copyUrl: "Copy URL",
+    copyCode: "Copy code",
+    codeOneTimeTitle: "Connection code — copy now (shown once)",
+    statusLabel: "Status:",
+    statusDatabase: "active (generated in UI)",
+    statusEnvironment: "active (environment variable)",
+    statusDevelopment: "active (development)",
+    codeHintPrefix: "Ends with",
+    notConfigured: "No code configured. Generate one to enable MCP clients.",
+    envOverride:
+      "A code is set in {envVar} on the server. It remains valid alongside codes generated here.",
     copyHint: "Copy the fields below now — the code will not be shown again.",
     confirmRotate: {
       title: "Rotate MCP code?",
@@ -118,12 +144,23 @@ export const settingsEn = {
         "The current code will stop working. Update Cursor, ChatGPT, or Claude with the new value.",
       confirmLabel: "Rotate",
     },
+    confirmRevoke: {
+      title: "Revoke MCP code?",
+      description:
+        "Connected clients will fail to authenticate until you generate a new code in the UI.",
+      confirmLabel: "Revoke",
+    },
     toasts: {
       loadFailed: "Failed to load MCP.",
-      generated: "MCP code generated. Copy the fields below now — the code will not be shown again.",
+      generated:
+        "MCP code generated. Copy the fields below now — the code will not be shown again.",
       rotated:
         "Code rotated. Copy the fields below now — the code will not be shown again.",
       generateFailed: "Failed to generate code.",
+      revoked: "MCP code revoked.",
+      revokeFailed: "Failed to revoke.",
+      copied: "{label} copied.",
+      copyFailed: "Could not copy.",
     },
   },
   mcpPermissions: {
@@ -167,38 +204,70 @@ export const settingsEn = {
     },
   },
   llm: {
-    title: "AI provider",
-    description: "Configure API key, base URL, and model used by agents.",
+    title: "AI provider (automatic replies)",
+    description:
+      "API key, URL, and model used by the comment agent. Server .env values serve as fallback.",
+    apiUrlLabel: "API URL",
+    apiUrlPlaceholder: "https://api.openai.com/v1/chat/completions",
     apiKeyLabel: "API key",
+    keyPlaceholderBlank: "••••{hint} — leave blank to keep",
+    keyPlaceholderNew: "sk-…",
+    configuredHint: "Configured — ends with {hint}{source}",
     baseUrlLabel: "Base URL",
     modelLabel: "Model",
-    save: "Save",
+    modelPlaceholder: "gpt-4o-mini",
+    visionLabel: "Model supports vision (analyzes post images)",
+    save: "Save AI provider",
+    saving: "Saving…",
     loading: "Loading…",
+    envOverride:
+      "Environment variables {envVars} are set. Database settings take precedence when configured here.",
     toasts: {
-      saved: "AI settings saved.",
+      saved: "AI configuration saved.",
       failed: "Failed to save.",
-      loadFailed: "Failed to load settings.",
+      loadFailed: "Failed to load LLM.",
     },
   },
   autoMonitor: {
-    title: "Auto-monitoring",
-    description: "Detects new media published directly on Instagram.",
-    enabledLabel: "Enable automatic monitoring",
-    save: "Save",
+    title: "Publication auto-monitoring",
+    description:
+      "Discovers new media on Instagram (poll) and registers monitored posts. Also registers on the first webhook comment if the media does not exist yet.",
+    onLabel: "On",
+    offLabel: "Off",
+    pollIntervalLabel: "Poll interval",
+    pollIntervalHint:
+      "Default: 5 minutes. Meta does not notify new posts via webhook — Iris checks the recent list on this interval.",
+    secondsLabel: "Seconds ({min}–{max})",
+    loading: "Loading…",
     toasts: {
-      saved: "Auto-monitoring updated.",
+      enabled: "Auto-monitoring enabled — new publications are added automatically.",
+      disabled: "Auto-monitoring disabled — manual registration or Iris publish only.",
+      intervalSaved: "Poll interval: {minutes} min.",
+      intervalFailed: "Failed to save interval.",
       failed: "Failed to save.",
     },
   },
   insights: {
-    title: "Batch insights",
-    description: "Refresh engagement metrics for published posts.",
+    title: "Batch Instagram insights",
+    description:
+      "Refresh metrics for published or monitored posts. Optionally filter by publication date (published_at).",
+    publishedSince: "Published since",
+    publishedUntil: "Published until",
+    rangeHintAll:
+      "No dates: refreshes all published/monitored posts with IG media.",
+    rangeHintWindow: "Publication date window (UTC): {parts}.",
+    rangeFrom: "from {date}",
+    rangeUntil: "until {date}",
+    clearDates: "Clear dates",
+    connectInstagram: "Connect Instagram to refresh insights.",
     refresh: "Refresh insights",
     refreshing: "Refreshing…",
-    lastRun: "Last run:",
     toasts: {
-      started: "Insights refresh started.",
-      completed: "Insights updated.",
+      dateRangeInvalid: "Start date cannot be after end date.",
+      completed:
+        "Insights: {refreshed}/{requested} updated{failPart}{skipPart}.",
+      failPart: " · {count} failed",
+      skipPart: " · {count} over limit",
       failed: "Failed to refresh insights.",
     },
   },

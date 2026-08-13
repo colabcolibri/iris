@@ -10,6 +10,7 @@ import {
   formatRelativeTimeAgo,
   useRelativeTimeTick,
 } from "@/lib/format-relative-time";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import type { ConversationSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -21,14 +22,22 @@ type ConversationInboxListProps = {
 };
 
 function LastMessageTime({ value }: { value: string | null }) {
+  const { locale } = useAppLocale();
+  const empty = useDomainMessages("messages").empty;
   useRelativeTimeTick();
+
   if (!value) {
-    return <span className="text-xs text-muted-foreground">sem mensagens</span>;
+    return (
+      <span className="text-xs text-muted-foreground">
+        {empty.noMessages}
+      </span>
+    );
   }
+
   return (
     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
       <Clock3 className="size-3 shrink-0" aria-hidden />
-      {formatRelativeTimeAgo(value) || "agora"}
+      {formatRelativeTimeAgo(value, locale) || empty.now}
     </span>
   );
 }
@@ -73,12 +82,17 @@ export function ConversationInboxList({
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{label}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {label}
+                  </p>
                   {participant.username ? (
-                    <p className="truncate text-xs text-muted-foreground">{handle}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {handle}
+                    </p>
                   ) : null}
                 </div>
-                {(conversation.unread_count ?? conversation.pending_count) > 0 ? (
+                {(conversation.unread_count ?? conversation.pending_count) >
+                0 ? (
                   <Badge className="shrink-0 bg-amber-500 px-1.5 text-xs text-white hover:bg-amber-500/90">
                     {(conversation.unread_count ?? conversation.pending_count) > 9
                       ? "9+"

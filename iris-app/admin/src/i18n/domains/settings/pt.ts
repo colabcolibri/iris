@@ -64,13 +64,20 @@ export const settingsPt = {
       "Modo padrão para posts que seguem a configuração global. Posts com modo próprio têm precedência.",
     globalModeLabel: "Modo global",
     workerIntervalLabel: "Intervalo do worker",
-    workerIntervalHint: "Frequência do ciclo que processa a fila de comentários.",
+    workerIntervalHint:
+      "De quanto em quanto o agente verifica a fila no banco (comentários e DMs compartilham o mesmo ciclo). Padrão: 5 minutos.",
+    workerIntervalHintShort:
+      "Frequência do ciclo que processa a fila de comentários.",
     replyDelayLabel: "Tempo antes de responder",
     replyDelayHint:
-      "Aguarda antes de enfileirar a resposta automática (simula tempo humano).",
-    delayImmediate: "Imediato",
-    delayQueued: "Fila com atraso",
-    delayMinutesLabel: "Minutos de atraso",
+      "Padrão: imediato no próximo ciclo. Com fila, o agente aguarda o intervalo antes do harness — a fila fica no banco e sobrevive a reinícios.",
+    replyDelayCadenceDelayed:
+      " Cadência real: resposta após {delay} min + até {tick} min até o próximo ciclo.",
+    replyDelayCadenceImmediate:
+      " Cadência real: até {tick} min até o próximo ciclo.",
+    delayImmediate: "Resposta imediata",
+    delayQueued: "Fila com delay",
+    delayMinutesLabel: "Minutos de espera ({min}–{max})",
     loading: "Carregando…",
     toasts: {
       modeUpdated: "Modo global do agente: {mode}.",
@@ -86,15 +93,20 @@ export const settingsPt = {
     title: "Agente de mensagens (DM)",
     description:
       "Modo padrão para conversas que seguem a configuração global. Conversas com modo próprio têm precedência.",
-    globalModeLabel: "Modo global de DM",
+    globalModeLabel: "Modo global",
     workerIntervalLabel: "Intervalo do worker",
-    workerIntervalHint: "Frequência do ciclo que processa a fila de DMs.",
+    workerIntervalHint:
+      "Compartilhado com comentários — configurado no card do agente de comentários. Ciclo atual: {minutes} min.",
     replyDelayLabel: "Tempo antes de responder",
     replyDelayHint:
-      "Aguarda antes de enfileirar a resposta automática na conversa.",
-    delayImmediate: "Imediato",
-    delayQueued: "Fila com atraso",
-    delayMinutesLabel: "Minutos de atraso",
+      "Mesma fila persistente usada nos comentários, com settings próprios para DM.",
+    replyDelayCadenceDelayed:
+      " Cadência real: resposta após {delay} min + até {tick} min até o próximo ciclo.",
+    replyDelayCadenceImmediate:
+      " Cadência real: até {tick} min até o próximo ciclo.",
+    delayImmediate: "Resposta imediata",
+    delayQueued: "Fila com delay",
+    delayMinutesLabel: "Minutos de espera ({min}–{max})",
     loading: "Carregando…",
     toasts: {
       modeUpdated: "Modo global de DM: {mode}.",
@@ -106,10 +118,23 @@ export const settingsPt = {
   },
   mcp: {
     title: "Conexão MCP",
-    description: "Integre o Iris com Cursor, ChatGPT ou Claude via Model Context Protocol.",
+    description:
+      "Gere um código e copie os campos para Cursor, ChatGPT ou Claude — cada client no formato que aceita.",
     loading: "Carregando…",
     generate: "Gerar código",
     rotate: "Rotacionar código",
+    revoke: "Revogar",
+    copyUrl: "Copiar URL",
+    copyCode: "Copiar código",
+    codeOneTimeTitle: "Código de conexão — copie agora (exibido uma única vez)",
+    statusLabel: "Status:",
+    statusDatabase: "ativo (gerado na interface)",
+    statusEnvironment: "ativo (variável de ambiente)",
+    statusDevelopment: "ativo (desenvolvimento)",
+    codeHintPrefix: "Termina em",
+    notConfigured: "Nenhum código configurado. Gere um para habilitar clientes MCP.",
+    envOverride:
+      "Há um código definido em {envVar} no servidor. Ele continua válido junto com códigos gerados aqui.",
     copyHint: "Copie os campos abaixo agora — o código não será exibido de novo.",
     confirmRotate: {
       title: "Rotacionar código MCP?",
@@ -117,12 +142,23 @@ export const settingsPt = {
         "O código atual deixará de funcionar. Atualize Cursor, ChatGPT ou Claude com o novo valor.",
       confirmLabel: "Rotacionar",
     },
+    confirmRevoke: {
+      title: "Revogar código MCP?",
+      description:
+        "Clientes conectados deixarão de autenticar até você gerar um novo código na interface.",
+      confirmLabel: "Revogar",
+    },
     toasts: {
       loadFailed: "Falha ao carregar MCP.",
-      generated: "Código MCP gerado. Copie os campos abaixo agora — o código não será exibido de novo.",
+      generated:
+        "Código MCP gerado. Copie os campos abaixo agora — o código não será exibido de novo.",
       rotated:
         "Código rotacionado. Copie os campos abaixo agora — o código não será exibido de novo.",
       generateFailed: "Falha ao gerar código.",
+      revoked: "Código MCP revogado.",
+      revokeFailed: "Falha ao revogar.",
+      copied: "{label} copiado.",
+      copyFailed: "Não foi possível copiar.",
     },
   },
   mcpPermissions: {
@@ -167,38 +203,72 @@ export const settingsPt = {
     },
   },
   llm: {
-    title: "Provedor de IA",
-    description: "Configure API key, URL base e modelo usados pelos agentes.",
+    title: "Provedor de IA (respostas automáticas)",
+    description:
+      "API key, URL e modelo usados pelo agente de comentários. Valores do servidor em .env servem de fallback.",
+    apiUrlLabel: "URL da API",
+    apiUrlPlaceholder: "https://api.openai.com/v1/chat/completions",
     apiKeyLabel: "API key",
+    keyPlaceholderBlank: "••••{hint} — deixe em branco para manter",
+    keyPlaceholderNew: "sk-…",
+    configuredHint: "Configurado — termina em {hint}{source}",
     baseUrlLabel: "URL base",
     modelLabel: "Modelo",
-    save: "Salvar",
+    modelPlaceholder: "gpt-4o-mini",
+    visionLabel: "Modelo suporta visão (analisa imagens do post)",
+    save: "Salvar provedor de IA",
+    saving: "Salvando…",
     loading: "Carregando…",
+    envOverride:
+      "Variáveis {envVars} no ambiente estão definidas. O banco tem prioridade quando configurado aqui.",
     toasts: {
-      saved: "Configurações de IA salvas.",
+      saved: "Configuração de IA salva.",
       failed: "Falha ao salvar.",
-      loadFailed: "Falha ao carregar configurações.",
+      loadFailed: "Falha ao carregar LLM.",
     },
   },
   autoMonitor: {
-    title: "Auto-monitoramento",
-    description: "Detecta mídias novas publicadas diretamente no Instagram.",
-    enabledLabel: "Ativar monitoramento automático",
-    save: "Salvar",
+    title: "Auto-monitoramento de publicações",
+    description:
+      "Descobre mídias novas no Instagram (poll) e cadastra posts monitorados. Também cadastra no primeiro comentário via webhook se a mídia ainda não existir.",
+    onLabel: "Ligado",
+    offLabel: "Desligado",
+    pollIntervalLabel: "Intervalo do poll",
+    pollIntervalHint:
+      "Padrão: 5 minutos. A Meta não avisa post novo por webhook — o Iris consulta a lista recente neste intervalo.",
+    secondsLabel: "Segundos ({min}–{max})",
+    loading: "Carregando…",
     toasts: {
-      saved: "Auto-monitoramento atualizado.",
+      enabled:
+        "Auto-monitoramento ligado — publicações novas entram sozinhas.",
+      disabled:
+        "Auto-monitoramento desligado — só cadastro manual ou publish Iris.",
+      intervalSaved: "Intervalo do poll: {minutes} min.",
+      intervalFailed: "Falha ao salvar intervalo.",
       failed: "Falha ao salvar.",
     },
   },
   insights: {
-    title: "Insights em lote",
-    description: "Atualiza métricas de engajamento dos posts publicados.",
+    title: "Insights Instagram em lote",
+    description:
+      "Atualiza métricas dos posts já publicados ou monitorados. Opcionalmente filtra pela data de publicação (published_at).",
+    publishedSince: "Publicado desde",
+    publishedUntil: "Publicado até",
+    rangeHintAll:
+      "Sem datas: atualiza todos os posts published/monitored com mídia IG.",
+    rangeHintWindow: "Janela por data de publicação (UTC): {parts}.",
+    rangeFrom: "de {date}",
+    rangeUntil: "até {date}",
+    clearDates: "Limpar datas",
+    connectInstagram: "Conecte o Instagram para atualizar insights.",
     refresh: "Atualizar insights",
     refreshing: "Atualizando…",
-    lastRun: "Última execução:",
     toasts: {
-      started: "Atualização de insights iniciada.",
-      completed: "Insights atualizados.",
+      dateRangeInvalid: "A data inicial não pode ser depois da final.",
+      completed:
+        "Insights: {refreshed}/{requested} atualizados{failPart}{skipPart}.",
+      failPart: " · {count} falha(s)",
+      skipPart: " · {count} fora do limite",
       failed: "Falha ao atualizar insights.",
     },
   },

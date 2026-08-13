@@ -24,6 +24,9 @@ import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
 import { UmamiAnalytics } from "@/components/analytics/umami-analytics";
 import { DemoModeProvider } from "@/demo/demo-mode-context";
 import { DemoLocaleProvider } from "@/demo/demo-locale-context";
+import { resetDemoState } from "@/demo/demo-state";
+import { AppI18nProvider } from "@/i18n/provider";
+import type { AppLocale } from "@/i18n/types";
 
 const ADMIN_APP_ROUTES = [
   { path: ROUTES.admin.root, element: <DashboardPage /> },
@@ -66,11 +69,16 @@ const LEGACY_ADMIN_REDIRECTS = [
 ] as const;
 
 export function App() {
+  function handleLocaleChange(_locale: AppLocale) {
+    resetDemoState();
+  }
+
   return (
     <AuthSessionProvider>
       <ConfirmDialogProvider>
         <AppSettingsProvider>
-          <BrowserRouter>
+          <AppI18nProvider onLocaleChange={handleLocaleChange}>
+            <BrowserRouter>
             <UmamiAnalytics />
             <Routes>
               <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
@@ -128,6 +136,7 @@ export function App() {
               <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
             </Routes>
           </BrowserRouter>
+          </AppI18nProvider>
         </AppSettingsProvider>
       </ConfirmDialogProvider>
     </AuthSessionProvider>

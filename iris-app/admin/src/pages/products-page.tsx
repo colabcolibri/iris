@@ -30,6 +30,9 @@ import {
   updateProduct,
 } from "@/lib/api";
 import type { Product } from "@/lib/types";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 
 const NEW_PRODUCT_ID = "new";
@@ -37,6 +40,8 @@ const NEW_PRODUCT_ID = "new";
 type ProductFilter = "all" | "active" | "inactive";
 
 export function ProductsPage() {
+  const { locale } = useAppLocale();
+  const productsMsg = useDomainMessages("products");
   const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("product_id")?.trim() ?? "";
@@ -57,9 +62,7 @@ export function ProductsPage() {
     try {
       setProducts(await fetchProducts());
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao carregar produtos.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || productsMsg.toasts.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -116,7 +119,7 @@ export function ProductsPage() {
 
   async function handleCreate() {
     if (!newSlug.trim() || !newName.trim()) {
-      toast.error("Slug e nome são obrigatórios.");
+      toast.error(productsMsg.toasts.slugNameRequired);
       return;
     }
     setCreating(true);
@@ -129,9 +132,9 @@ export function ProductsPage() {
       setNewSlug("");
       setNewName("");
       selectProduct(created.id);
-      toast.success("Produto criado.");
+      toast.success(productsMsg.toasts.created);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao criar produto.");
+      toast.error(getApiErrorMessage(err, locale) || productsMsg.toasts.createFailed);
     } finally {
       setCreating(false);
     }
@@ -153,9 +156,9 @@ export function ProductsPage() {
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
       setDraft({ ...updated });
-      toast.success("Produto salvo.");
+      toast.success(productsMsg.toasts.saved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar produto.");
+      toast.error(getApiErrorMessage(err, locale) || productsMsg.toasts.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -164,9 +167,11 @@ export function ProductsPage() {
   async function handleDelete() {
     if (!draft) return;
     const ok = await confirm({
-      title: "Excluir produto?",
-      description: `O produto "${draft.name}" será removido permanentemente do cadastro. Esta ação não pode ser desfeita.`,
-      confirmLabel: "Excluir",
+      title: productsMsg.confirm.delete.title,
+      description: interpolate(productsMsg.confirm.delete.description, {
+        name: draft.name,
+      }),
+      confirmLabel: productsMsg.confirm.delete.confirmLabel,
       variant: "destructive",
     });
     if (!ok) return;
@@ -176,9 +181,9 @@ export function ProductsPage() {
       await deleteProduct(draft.id);
       setProducts((current) => current.filter((item) => item.id !== draft.id));
       clearStage();
-      toast.success("Produto excluído.");
+      toast.success(productsMsg.toasts.deleted);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao excluir.");
+      toast.error(getApiErrorMessage(err, locale) || productsMsg.toasts.deleteFailed);
     } finally {
       setSaving(false);
     }
@@ -188,9 +193,9 @@ export function ProductsPage() {
 
   const pageHeader = (
     <PageContainer.Header
-      eyebrow="Editorial"
-      title="Produtos"
-      description="Cadastro usado pelo message-harness para triagem e contexto em DMs — selecione na lista para editar."
+      eyebrow={productsMsg.page.eyebrow}
+      title={productsMsg.page.title}
+      description={productsMsg.page.description}
     />
   );
 
@@ -201,11 +206,11 @@ export function ProductsPage() {
           value={filter}
           onChange={(event) => setFilter(event.target.value as ProductFilter)}
           className={cn(opsFilterSelectClassName, "min-w-0 flex-1")}
-          aria-label="Filtrar produtos"
+          aria-label={productsMsg.page.filterAria}
         >
-          <option value="all">Todos</option>
-          <option value="active">Somente ativos</option>
-          <option value="inactive">Somente inativos</option>
+          <option value="all">{productsMsg.filters.all}</option>
+          <option value="active">{productsMsg.filters.active}</option>
+          <option value="inactive">{productsMsg.filters.inactive}</option>
         </select>
         <Button
           type="button"
@@ -214,7 +219,7 @@ export function ProductsPage() {
           onClick={() => selectProduct(NEW_PRODUCT_ID)}
         >
           <Plus className="size-4" />
-          <span className="hidden sm:inline">Novo</span>
+          <span className="hidden sm:inline">{productsMsg.page.new}</span>
         </Button>
       </div>
       <div className="relative w-full min-w-0">
@@ -222,7 +227,7 @@ export function ProductsPage() {
         <Input
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Buscar por nome ou slug…"
+          placeholder={productsMsg.page.searchPlaceholder}
           className="h-9 pl-10 text-sm focus-visible:ring-primary/40"
         />
       </div>
@@ -230,7 +235,7 @@ export function ProductsPage() {
   );
 
   const listBody = loading ? (
-    <OpsEmptyState>Carregando produtos…</OpsEmptyState>
+    <OpsEmptyState>{productsMsg.page.loading}</OpsEmptyState>
   ) : (
     <>
       <ProductInboxNewItem
@@ -238,10 +243,10 @@ export function ProductsPage() {
         onSelect={() => selectProduct(NEW_PRODUCT_ID)}
       />
       {filteredProducts.length === 0 ? (
-        <OpsEmptyState title="Nenhum produto">
+        <OpsEmptyState title={productsMsg.empty.title}>
           {products.length === 0
-            ? "Crie o primeiro produto para alimentar a triagem em DMs."
-            : "Nenhum produto corresponde ao filtro ou à busca."}
+            ? productsMsg.empty.noProducts
+            : productsMsg.empty.noResults}
         </OpsEmptyState>
       ) : (
         <ProductInboxList
@@ -274,12 +279,12 @@ export function ProductsPage() {
     ) : selectedId ? (
       <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
         <Loader2 className="mr-2 size-4 animate-spin" />
-        Carregando produto…
+        {productsMsg.page.loadingProduct}
       </div>
     ) : (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-        <OpsEmptyState title="Selecione um produto">
-          Escolha um item na lista ao lado para editar ou use Novo para cadastrar.
+        <OpsEmptyState title={productsMsg.page.selectProductTitle}>
+          {productsMsg.page.selectProductBody}
         </OpsEmptyState>
       </div>
     );
@@ -322,7 +327,7 @@ export function ProductsPage() {
                     onClick={clearStage}
                   >
                     <ArrowLeft className="size-4" />
-                    Voltar
+                    {productsMsg.page.back}
                   </Button>
                   <Button
                     type="button"
@@ -351,7 +356,7 @@ export function ProductsPage() {
         >
           <SheetHeader className="border-b border-border">
             <SheetTitle className="font-display text-lg font-semibold">
-              Produtos
+              {productsMsg.page.sheetTitle}
             </SheetTitle>
           </SheetHeader>
           <div className="shrink-0 border-b p-3">{listControls}</div>

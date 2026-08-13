@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock3, Loader2, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import {
   formatRelativeTimeAgo,
   useRelativeTimeTick,
 } from "@/lib/format-relative-time";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 import type { MessageActivityItem, MessageActivityKind } from "@/lib/types";
 
@@ -16,34 +18,27 @@ type MessageActivityPanelProps = {
   refreshToken?: number;
 };
 
-const TABS: Array<{
-  kind: MessageActivityKind;
-  label: string;
-  empty: string;
-}> = [
-  {
-    kind: "pending_approval",
-    label: "Aprovação",
-    empty: "Nenhum rascunho aguardando aprovação.",
-  },
-  {
-    kind: "recent",
-    label: "Recentes",
-    empty: "Nenhuma resposta recente em DM.",
-  },
-];
-
-function formatHandle(username: string | null | undefined): string {
-  const value = username?.trim() || "usuário";
+function formatHandle(
+  username: string | null | undefined,
+  fallback: string,
+): string {
+  const value = username?.trim() || fallback;
   return value.startsWith("@") ? value : `@${value}`;
 }
 
-function ActivityTimestamp({ value }: { value: string }) {
+function ActivityTimestamp({
+  value,
+  nowLabel,
+}: {
+  value: string;
+  nowLabel: string;
+}) {
+  const { locale } = useAppLocale();
   useRelativeTimeTick();
   return (
     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
       <Clock3 className="size-3 shrink-0" aria-hidden />
-      {formatRelativeTimeAgo(value) || "agora"}
+      {formatRelativeTimeAgo(value, locale) || nowLabel}
     </span>
   );
 }
@@ -52,37 +47,63 @@ export function MessageActivityPanel({
   onSelect,
   refreshToken = 0,
 }: MessageActivityPanelProps) {
+  const { locale } = useAppLocale();
+  const activity = useDomainMessages("messages").activity;
   const [activeKind, setActiveKind] =
     useState<MessageActivityKind>("pending_approval");
   const [items, setItems] = useState<MessageActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadActivity = useCallback(async (kind: MessageActivityKind) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const nextItems = await fetchMessageActivity(kind);
-      setItems(nextItems);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar atividade.");
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const tabs = useMemo(
+    () =>
+      [
+        {
+          kind: "pending_approval" as const,
+          label: activity.tabs.pendingApproval.label,
+          empty: activity.tabs.pendingApproval.empty,
+        },
+        {
+          kind: "recent" as const,
+          label: activity.tabs.recent.label,
+          empty: activity.tabs.recent.empty,
+        },
+      ] satisfies Array<{
+        kind: MessageActivityKind;
+        label: string;
+        empty: string;
+      }>,
+    [activity],
+  );
+
+  const loadActivity = useCallback(
+    async (kind: MessageActivityKind) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const nextItems = await fetchMessageActivity(kind);
+        setItems(nextItems);
+      } catch (err) {
+        setError(getApiErrorMessage(err, locale) || activity.loadFailed);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activity.loadFailed, locale],
+  );
 
   useEffect(() => {
     void loadActivity(activeKind);
   }, [activeKind, loadActivity, refreshToken]);
 
-  const activeTab = TABS.find((tab) => tab.kind === activeKind) ?? TABS[0]!;
+  const activeTab = tabs.find((tab) => tab.kind === activeKind) ?? tabs[0]!;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="shrink-0 border-b border-border/60 p-3">
         <div className="grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.kind}
               type="button"
@@ -104,7 +125,7 @@ export function MessageActivityPanel({
         {loading ? (
           <div className="flex items-center justify-center gap-2 px-4 py-10 text-base text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Carregando…
+            {activity.loading}
           </div>
         ) : error ? (
           <div className="space-y-3 px-4 py-6 text-center">
@@ -115,7 +136,7 @@ export function MessageActivityPanel({
               variant="outline"
               onClick={() => void loadActivity(activeKind)}
             >
-              Tentar novamente
+              {activity.retry}
             </Button>
           </div>
         ) : items.length === 0 ? (
@@ -143,7 +164,10 @@ export function MessageActivityPanel({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-foreground">
-                      {formatHandle(item.participant_username)}
+                      {formatHandle(
+                        item.participant_username,
+                        activity.defaultUser,
+                      )}
                     </p>
                     <p className="mt-1 line-clamp-2 text-sm text-foreground/90">
                       {preview}
@@ -155,7 +179,10 @@ export function MessageActivityPanel({
                     </Badge>
                   ) : null}
                 </div>
-                <ActivityTimestamp value={item.occurred_at} />
+                <ActivityTimestamp
+                  value={item.occurred_at}
+                  nowLabel={activity.now}
+                />
               </button>
             );
           })

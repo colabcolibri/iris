@@ -10,6 +10,9 @@ import {
   CalendarPostRow,
 } from "@/components/calendar/calendar-post-row";
 import { Button } from "@/components/ui/button";
+import { interpolate } from "@/i18n/compose";
+import { getPostStatusLabel } from "@/i18n/domains/labels/helpers";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 import {
   WEEKDAYS,
@@ -20,7 +23,6 @@ import {
   sameDay,
 } from "@/lib/date-utils";
 import { sameZonedCalendarDay } from "@/lib/datetime";
-import { POST_STATUS_LABELS } from "@/lib/status";
 import type { Post, PostStatus, ReplyMode } from "@/lib/types";
 
 type CalendarViewProps = {
@@ -55,6 +57,8 @@ export function CalendarView({
   onSelect,
   onCreatePost,
 }: CalendarViewProps) {
+  const { locale } = useAppLocale();
+  const postsMessages = useDomainMessages("posts");
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const cells = calendarCells(year, month);
@@ -72,7 +76,7 @@ export function CalendarView({
       <header className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            Calendário editorial
+            {postsMessages.calendar.eyebrow}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -81,7 +85,7 @@ export function CalendarView({
               size="icon"
               className="rounded-full"
               onClick={() => onCursorChange(addMonths(cursor, -1))}
-              aria-label="Mês anterior"
+              aria-label={postsMessages.calendar.prevMonthAria}
             >
               <ChevronLeft className="size-4" />
             </Button>
@@ -94,7 +98,7 @@ export function CalendarView({
               size="icon"
               className="rounded-full"
               onClick={() => onCursorChange(addMonths(cursor, 1))}
-              aria-label="Próximo mês"
+              aria-label={postsMessages.calendar.nextMonthAria}
             >
               <ChevronRight className="size-4" />
             </Button>
@@ -117,7 +121,7 @@ export function CalendarView({
               ) : (
                 <span className="size-1.5 rounded-full bg-current" />
               )}
-              {POST_STATUS_LABELS[status]}
+              {getPostStatusLabel(status, locale)}
             </span>
           ))}
           <Button
@@ -127,7 +131,7 @@ export function CalendarView({
             className="h-11 sm:px-6"
           >
             <Plus className="mr-2 size-4" />
-            Nova postagem
+            {postsMessages.page.kanban.newPost}
           </Button>
         </div>
       </header>
@@ -202,7 +206,9 @@ export function CalendarView({
 
                   {dayPosts.length > 3 ? (
                     <span className="shrink-0 truncate px-1 text-xs text-muted-foreground">
-                      +{dayPosts.length - 3} mais
+                      {interpolate(postsMessages.calendar.morePosts, {
+                        count: dayPosts.length - 3,
+                      })}
                     </span>
                   ) : null}
                 </div>

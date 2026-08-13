@@ -2,11 +2,15 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { confirmLoginCode, requestLoginCode } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { useAuthSession } from "@/contexts/auth-session-context";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { ROUTES } from "@/lib/routes";
 
 type Step = "email" | "code";
@@ -15,6 +19,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { refresh } = useAuthSession();
+  const { locale } = useAppLocale();
+  const shell = useDomainMessages("shell");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -24,22 +30,18 @@ export function LoginPage() {
   async function sendCode(resend = false) {
     const value = email.trim();
     if (!value) {
-      setFeedback("Informe um email válido.");
+      setFeedback(shell.login.invalidEmail);
       return;
     }
 
     setLoading(true);
     setFeedback("");
     try {
-      await requestLoginCode(value);
+      await requestLoginCode(value, locale);
       setStep("code");
-      if (resend) setFeedback("Código reenviado.");
+      if (resend) setFeedback(shell.login.codeResent);
     } catch (err) {
-      setFeedback(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível enviar o código.",
-      );
+      setFeedback(getApiErrorMessage(err, locale) || shell.login.sendCodeFailed);
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export function LoginPage() {
   async function confirmCode(event: React.FormEvent) {
     event.preventDefault();
     if (!/^\d{6}$/.test(code.trim())) {
-      setFeedback("Digite os 6 dígitos do código.");
+      setFeedback(shell.login.invalidCodeDigits);
       return;
     }
 
@@ -58,7 +60,7 @@ export function LoginPage() {
       await confirmLoginCode(email.trim(), code.trim());
       const ok = await refresh({ silent: true });
       if (!ok) {
-        setFeedback("Sessão não foi criada. Tente novamente.");
+        setFeedback(shell.login.sessionNotCreated);
         return;
       }
       const returnUrl = searchParams.get("returnUrl");
@@ -72,7 +74,7 @@ export function LoginPage() {
       navigate(safeReturn, { replace: true });
     } catch (err) {
       setFeedback(
-        err instanceof Error ? err.message : "Código inválido ou expirado.",
+        getApiErrorMessage(err, locale) || shell.login.invalidOrExpiredCode,
       );
     } finally {
       setLoading(false);
@@ -80,7 +82,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background p-4">
+    <div className="relative flex min-h-svh items-center justify-center bg-background p-4">
+      <div className="absolute right-4 top-4">
+        <LanguageSwitcher />
+      </div>
       <main className="w-full max-w-md">
         <div className="flex flex-col gap-6 rounded-[var(--iris-radius-lg)] border border-border bg-card p-8 shadow-none">
           <div className="flex flex-col items-center gap-4 text-center">
@@ -91,8 +96,8 @@ export function LoginPage() {
               </h1>
               <p className="text-base text-muted-foreground">
                 {step === "email"
-                  ? "Entrar com seu email"
-                  : `Código enviado para ${email}`}
+                  ? shell.login.titleEmail
+                  : interpolate(shell.login.titleCode, { email })}
               </p>
             </div>
           </div>
@@ -107,7 +112,7 @@ export function LoginPage() {
             >
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold">
-                  Email
+                  {shell.login.emailLabel}
                 </Label>
                 <Input
                   id="email"
@@ -125,13 +130,13 @@ export function LoginPage() {
                 ) : (
                   <ArrowRight className="mr-2 size-4" />
                 )}
-                Continuar
+                {shell.login.continue}
               </Button>
             </form>
           ) : (
             <form className="space-y-4" onSubmit={confirmCode}>
               <div className="space-y-2">
-                <Label htmlFor="code">Código de 6 dígitos</Label>
+                <Label htmlFor="code">{shell.login.codeLabel}</Label>
                 <Input
                   id="code"
                   inputMode="numeric"
@@ -145,7 +150,7 @@ export function LoginPage() {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Entrar
+                {shell.login.signIn}
               </Button>
               <div className="flex justify-between text-sm">
                 <button
@@ -153,14 +158,14 @@ export function LoginPage() {
                   className="text-muted-foreground hover:text-foreground"
                   onClick={() => setStep("email")}
                 >
-                  Trocar email
+                  {shell.login.changeEmail}
                 </button>
                 <button
                   type="button"
                   className="text-primary hover:underline"
                   onClick={() => void sendCode(true)}
                 >
-                  Reenviar código
+                  {shell.login.resendCode}
                 </button>
               </div>
             </form>
@@ -177,7 +182,7 @@ export function LoginPage() {
               to={ROUTES.privacy}
               className="hover:text-foreground hover:underline"
             >
-              Política de privacidade
+              {shell.login.privacyLink}
             </Link>
           </p>
         </div>

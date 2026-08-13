@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock3, Loader2, MessageCircle, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { fetchCommentActivity } from "@/lib/api";
 import {
   formatRelativeTimeAgo,
   useRelativeTimeTick,
 } from "@/lib/format-relative-time";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 import type { CommentActivityItem, CommentActivityKind } from "@/lib/types";
 
@@ -16,40 +18,28 @@ type CommentActivityPanelProps = {
   refreshToken?: number;
 };
 
-const TABS: Array<{
-  kind: CommentActivityKind;
-  label: string;
-  empty: string;
-}> = [
-  {
-    kind: "pending_approval",
-    label: "Aprovação",
-    empty: "Nenhum rascunho aguardando aprovação.",
-  },
-  {
-    kind: "recent_public",
-    label: "Público",
-    empty: "Nenhum comentário recente do público.",
-  },
-  {
-    kind: "recent_iris",
-    label: "Iris",
-    empty: "Nenhuma resposta recente publicada pela Iris.",
-  },
-];
-
-function formatHandle(username: string | null | undefined): string {
-  const value = username?.trim() || "usuário";
+function formatHandle(
+  username: string | null | undefined,
+  fallback: string,
+): string {
+  const value = username?.trim() || fallback;
   return value.startsWith("@") ? value : `@${value}`;
 }
 
-function ActivityTimestamp({ value }: { value: string }) {
+function ActivityTimestamp({
+  value,
+  nowLabel,
+}: {
+  value: string;
+  nowLabel: string;
+}) {
+  const { locale } = useAppLocale();
   useRelativeTimeTick();
-  const relative = formatRelativeTimeAgo(value);
+  const relative = formatRelativeTimeAgo(value, locale);
   return (
     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
       <Clock3 className="size-3 shrink-0" aria-hidden />
-      <span>{relative || "agora"}</span>
+      <span>{relative || nowLabel}</span>
     </span>
   );
 }
@@ -58,10 +48,14 @@ function ActivityListItem({
   item,
   kind,
   onSelect,
+  defaultUser,
+  nowLabel,
 }: {
   item: CommentActivityItem;
   kind: CommentActivityKind;
   onSelect: (item: CommentActivityItem) => void;
+  defaultUser: string;
+  nowLabel: string;
 }) {
   const preview =
     kind === "pending_approval"
@@ -79,7 +73,7 @@ function ActivityListItem({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">
-            {formatHandle(item.author_username)}
+            {formatHandle(item.author_username, defaultUser)}
           </p>
           <p className="mt-1 line-clamp-2 text-sm text-foreground/90">
             {preview}
@@ -96,7 +90,7 @@ function ActivityListItem({
         <p className="min-w-0 truncate text-xs text-muted-foreground">
           {item.post_caption_preview || item.ig_media_id || item.post_id}
         </p>
-        <ActivityTimestamp value={item.occurred_at} />
+        <ActivityTimestamp value={item.occurred_at} nowLabel={nowLabel} />
       </div>
     </button>
   );
@@ -106,39 +100,68 @@ export function CommentActivityPanel({
   onSelect,
   refreshToken = 0,
 }: CommentActivityPanelProps) {
+  const { locale } = useAppLocale();
+  const activity = useDomainMessages("comments").activity;
   const [activeKind, setActiveKind] =
     useState<CommentActivityKind>("pending_approval");
   const [items, setItems] = useState<CommentActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadActivity = useCallback(async (kind: CommentActivityKind) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const nextItems = await fetchCommentActivity(kind);
-      setItems(nextItems);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Falha ao carregar atividade.";
-      setError(message);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const tabs = useMemo(
+    () =>
+      [
+        {
+          kind: "pending_approval" as const,
+          label: activity.tabs.pendingApproval.label,
+          empty: activity.tabs.pendingApproval.empty,
+        },
+        {
+          kind: "recent_public" as const,
+          label: activity.tabs.recentPublic.label,
+          empty: activity.tabs.recentPublic.empty,
+        },
+        {
+          kind: "recent_iris" as const,
+          label: activity.tabs.recentIris.label,
+          empty: activity.tabs.recentIris.empty,
+        },
+      ] satisfies Array<{
+        kind: CommentActivityKind;
+        label: string;
+        empty: string;
+      }>,
+    [activity],
+  );
+
+  const loadActivity = useCallback(
+    async (kind: CommentActivityKind) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const nextItems = await fetchCommentActivity(kind);
+        setItems(nextItems);
+      } catch (err) {
+        setError(getApiErrorMessage(err, locale) || activity.loadFailed);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activity.loadFailed, locale],
+  );
 
   useEffect(() => {
     void loadActivity(activeKind);
   }, [activeKind, loadActivity, refreshToken]);
 
-  const activeTab = TABS.find((tab) => tab.kind === activeKind) ?? TABS[0]!;
+  const activeTab = tabs.find((tab) => tab.kind === activeKind) ?? tabs[0]!;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="shrink-0 border-b border-border/60 p-3">
         <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.kind}
               type="button"
@@ -160,7 +183,7 @@ export function CommentActivityPanel({
         {loading ? (
           <div className="flex items-center justify-center gap-2 px-4 py-10 text-base text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Carregando…
+            {activity.loading}
           </div>
         ) : error ? (
           <div className="space-y-3 px-4 py-6 text-center">
@@ -171,7 +194,7 @@ export function CommentActivityPanel({
               variant="outline"
               onClick={() => void loadActivity(activeKind)}
             >
-              Tentar novamente
+              {activity.retry}
             </Button>
           </div>
         ) : items.length === 0 ? (
@@ -190,6 +213,8 @@ export function CommentActivityPanel({
               item={item}
               kind={activeKind}
               onSelect={onSelect}
+              defaultUser={activity.defaultUser}
+              nowLabel={activity.now}
             />
           ))
         )}

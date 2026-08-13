@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SettingsCardShell } from "@/components/templates/settings-card-shell";
 import { Button } from "@/components/ui/button";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   fetchMcpPermissions,
   updateMcpPermissions,
@@ -9,38 +11,13 @@ import {
   type McpPermissionsSettings,
 } from "@/lib/api";
 
-const PRESET_OPTIONS: Array<{
-  id: McpPermissionPreset;
-  label: string;
-  description: string;
-}> = [
-  {
-    id: "read_only",
-    label: "Somente leitura",
-    description: "Listar e consultar — sem criar, editar ou apagar.",
-  },
-  {
-    id: "editor",
-    label: "Editor",
-    description: "Leitura e edição — sem operações destrutivas.",
-  },
-  {
-    id: "full",
-    label: "Completo",
-    description: "Mesmo escopo de hoje — todas as tools permitidas.",
-  },
-  {
-    id: "custom",
-    label: "Personalizado",
-    description: "Ajuste fino por domínio na matriz abaixo.",
-  },
-];
-
 type McpPermissionsCardProps = {
   embedded?: boolean;
 };
 
 export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps) {
+  const { locale } = useAppLocale();
+  const t = useDomainMessages("settings").mcpPermissions;
   const [settings, setSettings] = useState<McpPermissionsSettings | null>(null);
   const [preset, setPreset] = useState<McpPermissionPreset>("full");
   const [domainOverrides, setDomainOverrides] = useState<
@@ -48,6 +25,19 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
   >(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const presetOptions = useMemo(
+    () =>
+      (
+        [
+          ["read_only", t.presets.readOnly],
+          ["editor", t.presets.editor],
+          ["full", t.presets.full],
+          ["custom", t.presets.custom],
+        ] as const
+      ).map(([id, option]) => ({ id, ...option })),
+    [t.presets],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,13 +47,11 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
       setPreset(data.preset);
       setDomainOverrides(data.domain_overrides);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao carregar permissões MCP.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.loadFailed);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale, t.toasts.loadFailed]);
 
   useEffect(() => {
     void load();
@@ -108,9 +96,9 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
       setSettings(saved);
       setPreset(saved.preset);
       setDomainOverrides(saved.domain_overrides);
-      toast.success("Preset MCP aplicado.");
+      toast.success(t.toasts.presetApplied);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -154,9 +142,9 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
       setSettings(saved);
       setPreset(saved.preset);
       setDomainOverrides(saved.domain_overrides);
-      toast.success("Permissões MCP salvas.");
+      toast.success(t.toasts.saved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -165,17 +153,13 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
   const matrixEditable = preset === "custom";
 
   return (
-    <SettingsCardShell
-      embedded={embedded}
-      title="Permissões MCP"
-      description="Controle o que clientes conectados (Cursor, ChatGPT, Claude) podem ler, editar e deletar."
-    >
+    <SettingsCardShell embedded={embedded} title={t.title} description={t.description}>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground">{t.loading}</p>
       ) : (
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
-            {PRESET_OPTIONS.map((option) => {
+            {presetOptions.map((option) => {
               const active = preset === option.id;
               return (
                 <button
@@ -204,10 +188,10 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
             <table className="min-w-full text-sm">
               <thead className="bg-muted/40 text-left">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Domínio</th>
-                  <th className="px-4 py-3 font-semibold">Leitura</th>
-                  <th className="px-4 py-3 font-semibold">Edição</th>
-                  <th className="px-4 py-3 font-semibold">Deleção</th>
+                  <th className="px-4 py-3 font-semibold">{t.matrix.domain}</th>
+                  <th className="px-4 py-3 font-semibold">{t.matrix.read}</th>
+                  <th className="px-4 py-3 font-semibold">{t.matrix.write}</th>
+                  <th className="px-4 py-3 font-semibold">{t.matrix.delete}</th>
                 </tr>
               </thead>
               <tbody>
@@ -225,7 +209,9 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
                       return (
                         <td key={action} className="px-4 py-3 align-top">
                           {!capability ? (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">
+                              {t.matrix.notApplicable}
+                            </span>
                           ) : (
                             <label className="inline-flex items-center gap-2">
                               <input
@@ -254,15 +240,13 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
 
           {preset !== "custom" ? (
             <p className="text-sm text-muted-foreground">
-              A matriz reflete o preset selecionado. Escolha{" "}
-              <span className="font-medium text-foreground">Personalizado</span> para
-              ajustar domínio por domínio.
+              {t.customHint.replace("{custom}", t.customLabel)}
             </p>
           ) : null}
 
           <div className="flex flex-wrap gap-3">
             <Button type="button" onClick={() => void handleSave()} disabled={saving}>
-              Salvar permissões
+              {t.save}
             </Button>
           </div>
         </div>

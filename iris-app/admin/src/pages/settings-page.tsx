@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { TIMEZONE_OPTIONS } from "@iris/domain/timezone";
 import {
@@ -15,9 +15,13 @@ import { AutoMonitorCard } from "@/components/settings/auto-monitor-card";
 import { InsightsRefreshCard } from "@/components/settings/insights-refresh-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
 import { useAppSettings } from "@/contexts/app-settings-context";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { formatInTimeZone } from "@/lib/datetime";
 
 function TimezoneSection() {
+  const { locale } = useAppLocale();
+  const settings = useDomainMessages("settings");
   const { timezone, loading, saveTimezone } = useAppSettings();
   const [draft, setDraft] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,9 +33,11 @@ function TimezoneSection() {
     try {
       await saveTimezone(selected);
       setDraft(null);
-      toast.success("Fuso horário salvo.");
+      toast.success(settings.timezone.toasts.saved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      toast.error(
+        getApiErrorMessage(err, locale) || settings.timezone.toasts.failed,
+      );
     } finally {
       setSaving(false);
     }
@@ -46,14 +52,16 @@ function TimezoneSection() {
   });
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Carregando…</p>;
+    return (
+      <p className="text-sm text-muted-foreground">{settings.page.loading}</p>
+    );
   }
 
   return (
     <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="timezone" className="text-sm font-semibold">
-          Fuso horário editorial
+          {settings.sections.timezone.label}
         </Label>
         <select
           id="timezone"
@@ -68,7 +76,7 @@ function TimezoneSection() {
           ))}
         </select>
         <p className="text-sm text-muted-foreground">
-          Agora neste fuso:{" "}
+          {settings.sections.timezone.preview}{" "}
           <span className="font-semibold text-foreground">{preview}</span>
         </p>
       </div>
@@ -79,11 +87,11 @@ function TimezoneSection() {
           onClick={() => void handleSave()}
           disabled={saving || selected === timezone}
         >
-          Salvar fuso horário
+          {settings.sections.timezone.save}
         </Button>
         {draft && draft !== timezone ? (
           <Button type="button" variant="ghost" onClick={() => setDraft(null)}>
-            Descartar
+            {settings.sections.timezone.cancel}
           </Button>
         ) : null}
       </div>
@@ -91,64 +99,69 @@ function TimezoneSection() {
   );
 }
 
-const SETTINGS_SECTIONS: PreferencesSection[] = [
-  {
-    id: "timezone",
-    title: "Fuso horário editorial",
-    description: "Datas e horários no calendário e agendamentos.",
-    content: <TimezoneSection />,
-  },
-  {
-    id: "auto-monitor",
-    title: "Auto-monitoramento",
-    description: "Poll de mídias novas no Instagram.",
-    content: <AutoMonitorCard embedded />,
-  },
-  {
-    id: "insights",
-    title: "Insights em lote",
-    description: "Atualizar métricas dos posts publicados.",
-    content: <InsightsRefreshCard embedded />,
-  },
-  {
-    id: "comment-agent",
-    title: "Agente de comentários",
-    description: "Modo global e fila de resposta pública.",
-    content: <AgentAutoReplyCard embedded />,
-  },
-  {
-    id: "message-agent",
-    title: "Agente de DMs",
-    description: "Modo global e fila no inbox privado.",
-    content: <MessageAgentAutoReplyCard embedded />,
-  },
-  {
-    id: "mcp",
-    title: "Conexão MCP",
-    description: "Cursor, ChatGPT ou Claude.",
-    content: <McpConnectionCard embedded />,
-  },
-  {
-    id: "mcp-permissions",
-    title: "Permissões MCP",
-    description: "Leitura, edição e deleção por domínio.",
-    content: <McpPermissionsCard embedded />,
-  },
-  {
-    id: "llm",
-    title: "Provedor de IA",
-    description: "API key, URL e modelo dos agentes.",
-    content: <LlmSettingsCard embedded />,
-  },
-];
-
 export function SettingsPage() {
+  const settings = useDomainMessages("settings");
+
+  const sections = useMemo<PreferencesSection[]>(
+    () => [
+      {
+        id: settings.sections.timezone.id,
+        title: settings.sections.timezone.title,
+        description: settings.sections.timezone.description,
+        content: <TimezoneSection />,
+      },
+      {
+        id: settings.sections.autoMonitor.id,
+        title: settings.sections.autoMonitor.title,
+        description: settings.sections.autoMonitor.description,
+        content: <AutoMonitorCard embedded />,
+      },
+      {
+        id: settings.sections.insights.id,
+        title: settings.sections.insights.title,
+        description: settings.sections.insights.description,
+        content: <InsightsRefreshCard embedded />,
+      },
+      {
+        id: settings.sections.commentAgent.id,
+        title: settings.sections.commentAgent.title,
+        description: settings.sections.commentAgent.description,
+        content: <AgentAutoReplyCard embedded />,
+      },
+      {
+        id: settings.sections.messageAgent.id,
+        title: settings.sections.messageAgent.title,
+        description: settings.sections.messageAgent.description,
+        content: <MessageAgentAutoReplyCard embedded />,
+      },
+      {
+        id: settings.sections.mcpConnection.id,
+        title: settings.sections.mcpConnection.title,
+        description: settings.sections.mcpConnection.description,
+        content: <McpConnectionCard embedded />,
+      },
+      {
+        id: settings.sections.mcpPermissions.id,
+        title: settings.sections.mcpPermissions.title,
+        description: settings.sections.mcpPermissions.description,
+        content: <McpPermissionsCard embedded />,
+      },
+      {
+        id: settings.sections.llm.id,
+        title: settings.sections.llm.title,
+        description: settings.sections.llm.description,
+        content: <LlmSettingsCard embedded />,
+      },
+    ],
+    [settings],
+  );
+
   return (
     <PreferencesSplitLayout
-      eyebrow="Preferências"
-      title="Configurações"
-      description="Fuso horário, monitoramento, insights, agentes, MCP e provedor de IA."
-      sections={SETTINGS_SECTIONS}
+      eyebrow={settings.page.eyebrow}
+      title={settings.page.title}
+      description={settings.page.description}
+      sections={sections}
     />
   );
 }

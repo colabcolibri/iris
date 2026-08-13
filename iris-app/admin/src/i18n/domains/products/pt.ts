@@ -11,7 +11,10 @@ export const productsPt = {
     filterAria: "Filtrar produtos",
     searchPlaceholder: "Buscar por nome ou slug…",
     selectProductTitle: "Selecione um produto",
+    selectProductBody:
+      "Escolha um item na lista ao lado para editar ou use Novo para cadastrar.",
     loading: "Carregando produtos…",
+    loadingProduct: "Carregando produto…",
   },
   filters: {
     all: "Todos",

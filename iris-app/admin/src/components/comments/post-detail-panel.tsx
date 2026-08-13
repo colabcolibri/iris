@@ -25,6 +25,7 @@ import {
   formatRelativeTimeAgo,
   useRelativeTimeTick,
 } from "@/lib/format-relative-time";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { formatInsightValue, insightMetricValue } from "@/lib/insights";
 import { cn } from "@/lib/utils";
 import type {
@@ -186,12 +187,14 @@ function LastSyncedLabel({
 }: {
   syncedAt: number | null | undefined;
 }) {
+  const { locale, bcp47 } = useAppLocale();
+  const detail = useDomainMessages("comments").detail;
   useRelativeTimeTick();
   if (!syncedAt) {
     return null;
   }
 
-  const relative = formatRelativeTimeAgo(syncedAt);
+  const relative = formatRelativeTimeAgo(syncedAt, locale);
   if (!relative) {
     return null;
   }
@@ -199,9 +202,9 @@ function LastSyncedLabel({
   return (
     <p
       className="text-xs leading-snug text-muted-foreground"
-      title={new Date(syncedAt).toLocaleString("pt-BR")}
+      title={new Date(syncedAt).toLocaleString(bcp47)}
     >
-      Última sincronização {relative}
+      {detail.lastSyncPrefix} {relative}
     </p>
   );
 }

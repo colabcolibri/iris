@@ -54,8 +54,9 @@ import type {
   MessageActivityItem,
 } from "@/lib/types";
 import { countPendingInboundMessages } from "@/lib/message-pending";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { readStoredAppLocale } from "@/i18n/storage";
 import { cn } from "@/lib/utils";
 
 const MESSAGES_FALLBACK_POLL_MS = 60_000;
@@ -83,6 +84,8 @@ function messagesHaveChanged(current: Message[], next: Message[]): boolean {
 }
 
 export function MessagesPage() {
+  const { locale } = useAppLocale();
+  const messagesMsg = useDomainMessages("messages");
   const routes = useAppRoutes();
   const { isDemoMode } = useDemoMode();
   const { meta } = useMetaSession();
@@ -150,7 +153,7 @@ export function MessagesPage() {
       setConversations(next);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Falha ao carregar conversas.";
+        getApiErrorMessage(err, locale) || messagesMsg.toasts.loadConversationsFailed;
       setError(message);
       if (!silent) {
         toast.error(message);
@@ -194,7 +197,7 @@ export function MessagesPage() {
         );
       } catch (err) {
         if (!silent) {
-          toast.error(err instanceof Error ? err.message : "Falha ao carregar mensagens.");
+          toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.loadMessagesFailed);
         }
       } finally {
         setLoadingMessages(false);
@@ -299,7 +302,7 @@ export function MessagesPage() {
 
   async function handleSyncInbox() {
     if (!meta?.connected || meta.messaging_supported === false) {
-      toast.error("Conecte uma conta Instagram com Page para importar DMs.");
+      toast.error(messagesMsg.toasts.connectForImport);
       return;
     }
     setSyncingInbox(true);
@@ -308,13 +311,11 @@ export function MessagesPage() {
       await loadConversations({ silent: true });
       toast.success(
         result.synced > 0
-          ? `${result.synced} conversa(s) sincronizada(s) do Instagram.`
-          : "Nenhuma conversa nova encontrada no Instagram.",
+          ? interpolate(messagesMsg.toasts.inboxSynced, { count: result.synced })
+          : messagesMsg.toasts.inboxEmpty,
       );
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao importar conversas do Instagram.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.importFailed);
     } finally {
       setSyncingInbox(false);
     }
@@ -328,9 +329,9 @@ export function MessagesPage() {
     try {
       await syncConversationMessages(selectedConversationId);
       await loadMessages(selectedConversationId);
-      toast.success("Conversa sincronizada.");
+      toast.success(messagesMsg.toasts.conversationSynced);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao sincronizar.");
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.syncFailed);
     } finally {
       setSyncing(false);
     }
@@ -344,9 +345,9 @@ export function MessagesPage() {
     try {
       const saved = await updateConversation(selectedConversationId, { reply_mode: mode });
       setReplyMode(saved.reply_mode);
-      toast.success("Modo de resposta atualizado.");
+      toast.success(messagesMsg.toasts.replyModeUpdated);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar modo.");
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.replyModeFailed);
     } finally {
       setSavingReplyMode(false);
     }
@@ -361,9 +362,9 @@ export function MessagesPage() {
       await updateConversation(selectedConversationId, {
         reply_prompt: replyPrompt.trim() || null,
       });
-      toast.success("Briefing salvo.");
+      toast.success(messagesMsg.toasts.briefingSaved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar briefing.");
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.briefingFailed);
     } finally {
       setSavingBriefing(false);
     }
@@ -391,13 +392,13 @@ export function MessagesPage() {
         draftText ?? undefined,
       );
       replaceMessage(updated);
-      toast.success("Resposta enviada na Meta.");
+      toast.success(messagesMsg.toasts.replySent);
       if (selectedConversationId) {
         await loadMessages(selectedConversationId, { silent: true });
         await loadConversations({ silent: true });
       }
     } catch (err) {
-      toast.error(getApiErrorMessage(err, readStoredAppLocale()));
+      toast.error(getApiErrorMessage(err, locale));
     } finally {
       setApprovingId(null);
     }
@@ -413,10 +414,10 @@ export function MessagesPage() {
         : null;
 
       const ok = await confirm({
-        title: "Deletar rascunho?",
+        title: messagesMsg.confirm.deleteDraft.title,
         description: (
           <>
-            O rascunho será descartado. Nada será enviado na Meta.
+            {messagesMsg.confirm.deleteDraft.description}
             {preview ? (
               <span className="mt-2 block rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 text-sm text-foreground">
                 “{preview}”
@@ -424,7 +425,7 @@ export function MessagesPage() {
             ) : null}
           </>
         ),
-        confirmLabel: "Deletar",
+        confirmLabel: messagesMsg.confirm.deleteDraft.confirmLabel,
         variant: "destructive",
       });
 
@@ -436,12 +437,12 @@ export function MessagesPage() {
       try {
         const updated = await removeMessageDraft(messageId);
         replaceMessage(updated);
-        toast.success("Rascunho removido.");
+        toast.success(messagesMsg.toasts.draftRemoved);
         if (selectedConversationId) {
           await loadMessages(selectedConversationId, { silent: true });
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Falha ao remover rascunho.");
+        toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.removeDraftFailed);
       } finally {
         setRemovingDraftId(null);
       }
@@ -454,9 +455,9 @@ export function MessagesPage() {
     try {
       const updated = await updateMessageDraft(messageId, draftText);
       replaceMessage(updated);
-      toast.success("Rascunho salvo.");
+      toast.success(messagesMsg.toasts.draftSaved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar rascunho.");
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.saveDraftFailed);
       throw err;
     } finally {
       setSavingDraftId(null);
@@ -468,9 +469,9 @@ export function MessagesPage() {
     try {
       const updated = await requestMessageAiReply(messageId, "draft");
       replaceMessage(updated);
-      toast.success("Rascunho gerado.");
+      toast.success(messagesMsg.toasts.draftGenerated);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao gerar rascunho.");
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.generateDraftFailed);
     } finally {
       setGeneratingId(null);
     }
@@ -480,13 +481,13 @@ export function MessagesPage() {
     try {
       const updated = await replyToMessage(messageId, text);
       replaceMessage(updated);
-      toast.success("Mensagem enviada.");
+      toast.success(messagesMsg.toasts.messageSent);
       if (selectedConversationId) {
         await loadMessages(selectedConversationId, { silent: true });
         await loadConversations({ silent: true });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao enviar.");
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.sendFailed);
     }
   }
 
@@ -495,9 +496,9 @@ export function MessagesPage() {
   const pageHeader = (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <PageContainer.Header
-        eyebrow="Operação"
-        title="Mensagens"
-        description="Conversas do Instagram — selecione na lista para ver o histórico e responder."
+        eyebrow={messagesMsg.page.eyebrow}
+        title={messagesMsg.page.title}
+        description={messagesMsg.page.description}
       />
       <div className="flex shrink-0 items-center gap-1.5">
         <Button
@@ -515,7 +516,7 @@ export function MessagesPage() {
           ) : (
             <Download className="size-4" />
           )}
-          <span className="hidden sm:inline">Importar</span>
+          <span className="hidden sm:inline">{messagesMsg.page.import}</span>
         </Button>
         <Button
           type="button"
@@ -524,7 +525,7 @@ export function MessagesPage() {
           className="size-10 shrink-0"
           onClick={() => void loadConversations({ silent: true })}
           disabled={refreshingConversations}
-          aria-label="Recarregar lista"
+          aria-label={messagesMsg.page.reloadList}
         >
           {refreshingConversations ? (
             <Loader2 className="size-4 animate-spin" />
@@ -549,7 +550,7 @@ export function MessagesPage() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          Conversas
+          {messagesMsg.page.conversationsTab}
         </button>
         <button
           type="button"
@@ -561,7 +562,7 @@ export function MessagesPage() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          Atividade
+          {messagesMsg.page.activityTab}
         </button>
       </div>
 
@@ -571,7 +572,7 @@ export function MessagesPage() {
           <Input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Buscar usuário…"
+            placeholder={messagesMsg.page.searchPlaceholder}
             className="h-9 pl-10 text-sm focus-visible:ring-primary/40"
           />
         </div>
@@ -586,18 +587,20 @@ export function MessagesPage() {
         refreshToken={activityRefreshToken}
       />
     ) : loadingConversations ? (
-      <OpsEmptyState>Carregando conversas…</OpsEmptyState>
+      <OpsEmptyState>{messagesMsg.page.loadingConversations}</OpsEmptyState>
     ) : filteredConversations.length === 0 ? (
       <OpsEmptyState
         title={
-          conversations.length === 0 ? "Nenhuma conversa ainda" : "Nada encontrado"
+          conversations.length === 0
+            ? messagesMsg.empty.noConversationsTitle
+            : messagesMsg.empty.noResultsTitle
         }
       >
         {conversations.length === 0
           ? meta?.connected
-            ? "Use Importar para puxar DMs do Instagram ou aguarde novas mensagens via webhook."
-            : "Conecte o Instagram em Configurações para importar DMs."
-          : "Tente outra busca por usuário ou ID."}
+            ? messagesMsg.empty.noConversationsConnected
+            : messagesMsg.empty.noConversationsDisconnected
+          : messagesMsg.empty.noResultsBody}
       </OpsEmptyState>
     ) : (
       <ConversationInboxList
@@ -612,21 +615,20 @@ export function MessagesPage() {
     <PageContainer variant="fill">
       {!meta?.connected && (
         <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
-          Conecte o Instagram em{" "}
+          {messagesMsg.banners.connectInstagram.split("{settingsLink}")[0]}
           <Link
             to={routes.settings}
             className="text-primary underline-offset-4 hover:underline"
           >
-            configurações
+            {messagesMsg.banners.settingsLink}
           </Link>{" "}
-          para importar DMs e sincronizar conversas.
+          {messagesMsg.banners.connectInstagram.split("{settingsLink}")[1]?.trimStart()}
         </div>
       )}
 
       {meta?.connected && meta.messaging_supported === false ? (
         <div className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
-          Mensagens diretas exigem uma Page do Facebook vinculada à conta
-          Instagram. Revise a conexão em configurações.
+          {messagesMsg.banners.messagingUnsupported}
         </div>
       ) : null}
 
@@ -638,8 +640,7 @@ export function MessagesPage() {
 
       {!liveConnected && !isDemoMode ? (
         <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
-          Atualização em tempo real indisponível. A lista será recarregada a cada
-          minuto nesta aba, ou use Importar para buscar conversas no Instagram.
+          {messagesMsg.banners.realtimeUnavailable}
         </p>
       ) : null}
 
@@ -678,7 +679,7 @@ export function MessagesPage() {
                     onClick={clearStage}
                   >
                     <ArrowLeft className="size-4" />
-                    Voltar
+                    {messagesMsg.page.back}
                   </Button>
                   <Button
                     type="button"
@@ -695,7 +696,7 @@ export function MessagesPage() {
                   loadingMessages ? (
                     <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
                       <Loader2 className="size-4 animate-spin" />
-                      Carregando mensagens…
+                      {messagesMsg.page.loadingMessages}
                     </div>
                   ) : (
                     <ConversationDetailPanel
@@ -727,14 +728,14 @@ export function MessagesPage() {
                   )
                 ) : (
                   <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-                    Carregando conversa…
+                    {messagesMsg.page.loadingConversation}
                   </div>
                 )}
               </>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-                <OpsEmptyState title="Selecione uma conversa">
-                  Escolha uma DM na lista ao lado para ver o histórico e responder.
+                <OpsEmptyState title={messagesMsg.page.selectConversationTitle}>
+                  {messagesMsg.page.selectConversationBody}
                 </OpsEmptyState>
               </div>
             )}
@@ -749,7 +750,7 @@ export function MessagesPage() {
         >
           <SheetHeader className="border-b border-border">
             <SheetTitle className="font-display text-lg font-semibold">
-              Conversas
+              {messagesMsg.page.sheetTitle}
             </SheetTitle>
           </SheetHeader>
           <div className="shrink-0 border-b p-3">{listControls}</div>

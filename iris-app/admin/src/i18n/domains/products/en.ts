@@ -13,7 +13,10 @@ export const productsEn = {
     filterAria: "Filter products",
     searchPlaceholder: "Search by name or slug…",
     selectProductTitle: "Select a product",
+    selectProductBody:
+      "Choose an item from the list to edit, or use New to create one.",
     loading: "Loading products…",
+    loadingProduct: "Loading product…",
   },
   filters: {
     all: "All",

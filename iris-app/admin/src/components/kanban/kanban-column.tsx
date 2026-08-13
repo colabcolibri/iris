@@ -1,10 +1,7 @@
 import { KanbanCard } from "@/components/kanban/kanban-card";
 import { KanbanColumnShell } from "@/components/templates/kanban-column-shell";
+import { useDomainMessages } from "@/i18n/provider";
 import type { Post, PostStatus, ReplyMode } from "@/lib/types";
-
-const EMPTY_MESSAGES: Partial<Record<PostStatus, string>> = {
-  cancelled: "Solte aqui para cancelar",
-};
 
 type KanbanColumnProps = {
   column: { id: PostStatus; label: string };
@@ -25,6 +22,12 @@ export function KanbanColumn({
   onStatusChange,
   onPurgePost,
 }: KanbanColumnProps) {
+  const postsMessages = useDomainMessages("posts");
+  const emptyMessage =
+    column.id === "cancelled"
+      ? postsMessages.kanbanColumn.dropToCancel
+      : undefined;
+
   return (
     <KanbanColumnShell
       status={column.id}
@@ -32,7 +35,7 @@ export function KanbanColumn({
       count={posts.length}
     >
       {posts.length === 0 ? (
-        <KanbanColumnShell.Empty message={EMPTY_MESSAGES[column.id]} />
+        <KanbanColumnShell.Empty message={emptyMessage} />
       ) : (
         posts.map((post) => (
           <KanbanCard

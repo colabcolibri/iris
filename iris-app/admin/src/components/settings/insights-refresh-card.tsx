@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { refreshAllPostInsights } from "@/lib/api";
 import { useMetaSession } from "@/contexts/meta-session-context";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 function startOfDayIso(dateYmd: string): string {
   return `${dateYmd}T00:00:00.000Z`;
@@ -23,6 +26,8 @@ type InsightsRefreshCardProps = {
 export function InsightsRefreshCard({
   embedded = false,
 }: InsightsRefreshCardProps) {
+  const { locale } = useAppLocale();
+  const t = useDomainMessages("settings").insights;
   const { meta } = useMetaSession();
   const metaReady = Boolean(meta?.connected);
   const [sinceDate, setSinceDate] = useState("");
@@ -31,17 +36,17 @@ export function InsightsRefreshCard({
 
   const rangeHint = useMemo(() => {
     if (!sinceDate && !untilDate) {
-      return "Sem datas: atualiza todos os posts published/monitored com mídia IG.";
+      return t.rangeHintAll;
     }
     const parts: string[] = [];
-    if (sinceDate) parts.push(`de ${sinceDate}`);
-    if (untilDate) parts.push(`até ${untilDate}`);
-    return `Janela por data de publicação (UTC): ${parts.join(" ")}.`;
-  }, [sinceDate, untilDate]);
+    if (sinceDate) parts.push(interpolate(t.rangeFrom, { date: sinceDate }));
+    if (untilDate) parts.push(interpolate(t.rangeUntil, { date: untilDate }));
+    return interpolate(t.rangeHintWindow, { parts: parts.join(" ") });
+  }, [sinceDate, t.rangeFrom, t.rangeHintAll, t.rangeHintWindow, t.rangeUntil, untilDate]);
 
   async function handleRefresh() {
     if (sinceDate && untilDate && sinceDate > untilDate) {
-      toast.error("A data inicial não pode ser depois da final.");
+      toast.error(t.toasts.dateRangeInvalid);
       return;
     }
 
@@ -56,10 +61,16 @@ export function InsightsRefreshCard({
       const failCount = result.failed.length;
       const skipCount = result.skipped.length;
       toast.success(
-        `Insights: ${result.refreshed.length}/${result.requested} atualizados` +
-          (failCount ? ` · ${failCount} falha(s)` : "") +
-          (skipCount ? ` · ${skipCount} fora do limite` : "") +
-          ".",
+        interpolate(t.toasts.completed, {
+          refreshed: result.refreshed.length,
+          requested: result.requested,
+          failPart: failCount
+            ? interpolate(t.toasts.failPart, { count: failCount })
+            : "",
+          skipPart: skipCount
+            ? interpolate(t.toasts.skipPart, { count: skipCount })
+            : "",
+        }),
       );
       if (failCount > 0) {
         toast.message(
@@ -70,30 +81,22 @@ export function InsightsRefreshCard({
         );
       }
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao atualizar insights.",
-      );
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.failed);
     } finally {
       setRunning(false);
     }
   }
 
   return (
-    <SettingsCardShell
-      embedded={embedded}
-      title="Insights Instagram em lote"
-      description="Atualiza métricas dos posts já publicados ou monitorados. Opcionalmente filtra pela data de publicação (published_at)."
-    >
+    <SettingsCardShell embedded={embedded} title={t.title} description={t.description}>
       {!metaReady ? (
-        <p className="text-sm text-muted-foreground">
-          Conecte o Instagram para atualizar insights.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.connectInstagram}</p>
       ) : (
         <div className="max-w-xl space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="insights-since" className="text-sm font-semibold">
-                Publicado desde
+                {t.publishedSince}
               </Label>
               <Input
                 id="insights-since"
@@ -106,7 +109,7 @@ export function InsightsRefreshCard({
             </div>
             <div className="space-y-2">
               <Label htmlFor="insights-until" className="text-sm font-semibold">
-                Publicado até
+                {t.publishedUntil}
               </Label>
               <Input
                 id="insights-until"
@@ -122,17 +125,13 @@ export function InsightsRefreshCard({
           <p className="text-sm text-muted-foreground">{rangeHint}</p>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              onClick={() => void handleRefresh()}
-              disabled={running}
-            >
+            <Button type="button" onClick={() => void handleRefresh()} disabled={running}>
               {running ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (
                 <RefreshCw className="size-4" aria-hidden />
               )}
-              {running ? "Atualizando…" : "Atualizar insights"}
+              {running ? t.refreshing : t.refresh}
             </Button>
             {(sinceDate || untilDate) && (
               <Button
@@ -144,7 +143,7 @@ export function InsightsRefreshCard({
                   setUntilDate("");
                 }}
               >
-                Limpar datas
+                {t.clearDates}
               </Button>
             )}
           </div>

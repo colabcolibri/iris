@@ -1,6 +1,8 @@
 import { Bot, Plus } from "lucide-react";
 import { StatusBadge } from "@/components/posts/status-badge";
 import { Button } from "@/components/ui/button";
+import { getPostStatusLabel } from "@/i18n/domains/labels/helpers";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 import {
   resolveEffectivePostReplyStatusFromPost,
@@ -8,7 +10,6 @@ import {
 } from "@iris/domain/reply-effective-status";
 import { postCalendarDate, truncate } from "@/lib/date-utils";
 import { formatChipTime } from "@/lib/datetime";
-import { POST_STATUS_LABELS } from "@/lib/status";
 import type { Post, ReplyMode } from "@/lib/types";
 
 type CalendarPostRowProps = {
@@ -28,9 +29,12 @@ export function CalendarPostRow({
   onSelect,
   compact = false,
 }: CalendarPostRowProps) {
+  const { locale } = useAppLocale();
+  const postsMessages = useDomainMessages("posts");
   const calendarDate = postCalendarDate(post);
   const time = calendarDate ? formatChipTime(calendarDate, timeZone) : "";
   const label = truncate(post.caption, compact ? 42 : 96);
+  const statusLabel = getPostStatusLabel(post.status, locale);
   const replyStatus = resolveEffectivePostReplyStatusFromPost(
     globalReplyMode,
     post,
@@ -42,7 +46,7 @@ export function CalendarPostRow({
     <button
       type="button"
       onClick={() => onSelect(post)}
-      title={`${POST_STATUS_LABELS[post.status]}${time ? ` · ${time}` : ""} · ${replyCopy.label} — ${post.caption ?? ""}`}
+      title={`${statusLabel}${time ? ` · ${time}` : ""} · ${replyCopy.label} — ${post.caption ?? ""}`}
       className={cn(
         "flex w-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[var(--iris-radius-sm)] border border-border bg-background text-left shadow-none transition-colors hover:border-primary/40",
         compact ? "shrink gap-0.5 px-1.5 py-1" : "gap-1.5 px-3 py-2.5 sm:px-4",
@@ -68,7 +72,7 @@ export function CalendarPostRow({
             : "line-clamp-2 text-sm leading-snug",
         )}
       >
-        {label || "Sem legenda"}
+        {label || postsMessages.calendar.noCaption}
       </span>
       {!compact && ReplyIcon ? (
         <span
@@ -92,17 +96,19 @@ type CalendarMonthEmptyProps = {
 };
 
 export function CalendarMonthEmpty({ onCreatePost }: CalendarMonthEmptyProps) {
+  const postsMessages = useDomainMessages("posts");
+
   return (
     <div className="mb-4 rounded-[var(--iris-radius-lg)] border border-dashed border-border bg-muted/20 px-4 py-6 text-center">
       <p className="font-display text-lg font-semibold text-foreground">
-        Nada neste mês ainda
+        {postsMessages.calendar.emptyMonthTitle}
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
-        Agende ou publique para montar o mural editorial.
+        {postsMessages.calendar.emptyMonthBody}
       </p>
       <Button type="button" className="mt-4" onClick={onCreatePost}>
         <Plus className="mr-2 size-4" />
-        Nova postagem
+        {postsMessages.page.kanban.newPost}
       </Button>
     </div>
   );
