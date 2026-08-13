@@ -2,8 +2,9 @@ import type { AppContext } from "../api/app-context.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
 import type { MetaMessageSender } from "../ports/meta-message-sender.ts";
 import { getAppSettingsOrDefault } from "../adapters/sqlite/app-settings-repository.ts";
-import { resolveCommentResponderIntervalMs } from "../domain/comments/resolve-comment-responder-interval.ts";
+import { resolveAgentReplyTickIntervalMs } from "../domain/settings/resolve-agent-reply-tick-interval.ts";
 import { processMessageReply } from "../domain/messages/process-message-reply.ts";
+import { startSettingsPolledWorker } from "./start-settings-polled-worker.ts";
 
 export type MessageResponderOptions = {
   intervalMs?: number;
@@ -23,20 +24,12 @@ export function startMessageResponder(
     return () => undefined;
   }
 
-  const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
-  const intervalMs =
-    options.intervalMs ??
-    resolveCommentResponderIntervalMs(appSettings.messageReplyDelaySeconds);
-  let running = false;
-
-  const tick = async () => {
-    if (running) {
-      return;
-    }
-
-    running = true;
-
-    try {
+  return startSettingsPolledWorker({
+    intervalMs: options.intervalMs,
+    resolveIntervalMs: () =>
+      resolveAgentReplyTickIntervalMs(getAppSettingsOrDefault(ctx.appSettingsStore)),
+    onTickError: options.onTickError,
+    tick: async () => {
       const pending = ctx.messages.listPendingForAgentReply();
 
       for (const message of pending) {
@@ -46,24 +39,6 @@ export function startMessageResponder(
           metaMessageSender: sender,
         });
       }
-    } catch (error) {
-      options.onTickError?.(error);
-    } finally {
-      running = false;
-    }
-  };
-
-  const timer = setInterval(() => {
-    void tick();
-  }, intervalMs);
-
-  void tick();
-
-  if (typeof timer.unref === "function") {
-    timer.unref();
-  }
-
-  return () => {
-    clearInterval(timer);
-  };
+    },
+  });
 }

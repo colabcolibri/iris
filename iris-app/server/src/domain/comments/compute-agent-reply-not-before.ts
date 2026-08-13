@@ -1,5 +1,7 @@
-export const REPLY_DELAY_MIN_SECONDS = 30;
-export const REPLY_DELAY_MAX_SECONDS = 600;
+/** 1 minuto — delay mínimo quando fila ativa (UI trabalha em minutos). */
+export const REPLY_DELAY_MIN_SECONDS = 60;
+/** 60 minutos. */
+export const REPLY_DELAY_MAX_SECONDS = 3600;
 
 export function isValidReplyDelaySeconds(value: number): boolean {
   if (!Number.isFinite(value)) {

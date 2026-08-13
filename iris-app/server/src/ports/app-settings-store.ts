@@ -5,11 +5,13 @@ export type AppSettings = {
   replyMode: ReplyMode;
   /** Derivado de replyMode para compatibilidade com API legada. */
   autoReplyEnabled: boolean;
-  /** 0 = resposta imediata no próximo tick; 30–600 = fila com delay em segundos. */
+  /** 0 = resposta imediata no próximo tick; 60–3600 = fila com delay (1–60 min em segundos). */
   replyDelaySeconds: number;
   messageReplyMode: ReplyMode;
   messageAutoReplyEnabled: boolean;
   messageReplyDelaySeconds: number;
+  /** Intervalo do worker comment-responder e message-responder (presets 3–20 min). */
+  agentReplyTickIntervalSeconds: number;
   /** Cadastra mídias novas (poll + webhook lazy) como posts monitored. */
   autoMonitorEnabled: boolean;
   /** Intervalo do poll de mídias recentes (segundos). */

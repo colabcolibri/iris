@@ -3,6 +3,10 @@ import type { AppSettings, AppSettingsStore } from "../../ports/app-settings-sto
 import { defaultAppSettings } from "../../domain/settings/app-settings-defaults.ts";
 import { autoReplyEnabledFromReplyMode, isReplyMode } from "../../domain/posts/reply-mode.ts";
 import {
+  AGENT_REPLY_TICK_INTERVAL_DEFAULT_SECONDS,
+  normalizeAgentReplyTickIntervalSeconds,
+} from "../../domain/settings/agent-reply-tick-settings.ts";
+import {
   AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
   normalizeAutoMonitorIntervalSeconds,
 } from "../../domain/settings/auto-monitor-settings.ts";
@@ -17,6 +21,7 @@ type AppSettingsRow = {
   message_auto_reply_enabled: number | null;
   message_reply_mode: string | null;
   message_reply_delay_seconds: number | null;
+  agent_reply_tick_interval_seconds: number | null;
   auto_monitor_enabled: number | null;
   auto_monitor_interval_seconds: number | null;
   updated_at: string;
@@ -38,6 +43,9 @@ function mapRow(row: AppSettingsRow): AppSettings {
   const intervalRaw = Number(
     row.auto_monitor_interval_seconds ?? AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
   );
+  const tickIntervalRaw = Number(
+    row.agent_reply_tick_interval_seconds ?? AGENT_REPLY_TICK_INTERVAL_DEFAULT_SECONDS,
+  );
 
   return {
     timezone: row.timezone,
@@ -47,6 +55,11 @@ function mapRow(row: AppSettingsRow): AppSettings {
     messageReplyMode,
     messageAutoReplyEnabled: autoReplyEnabledFromReplyMode(messageReplyMode),
     messageReplyDelaySeconds: Number(row.message_reply_delay_seconds ?? 0),
+    agentReplyTickIntervalSeconds: normalizeAgentReplyTickIntervalSeconds(
+      Number.isFinite(tickIntervalRaw)
+        ? tickIntervalRaw
+        : AGENT_REPLY_TICK_INTERVAL_DEFAULT_SECONDS,
+    ),
     autoMonitorEnabled: Number(row.auto_monitor_enabled ?? 1) === 1,
     autoMonitorIntervalSeconds: normalizeAutoMonitorIntervalSeconds(
       Number.isFinite(intervalRaw) ? intervalRaw : AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
@@ -65,6 +78,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       message_auto_reply_enabled,
       message_reply_mode,
       message_reply_delay_seconds,
+      agent_reply_tick_interval_seconds,
       auto_monitor_enabled,
       auto_monitor_interval_seconds,
       updated_at
@@ -82,11 +96,12 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       message_auto_reply_enabled,
       message_reply_mode,
       message_reply_delay_seconds,
+      agent_reply_tick_interval_seconds,
       auto_monitor_enabled,
       auto_monitor_interval_seconds,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       timezone = excluded.timezone,
       auto_reply_enabled = excluded.auto_reply_enabled,
@@ -95,6 +110,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       message_auto_reply_enabled = excluded.message_auto_reply_enabled,
       message_reply_mode = excluded.message_reply_mode,
       message_reply_delay_seconds = excluded.message_reply_delay_seconds,
+      agent_reply_tick_interval_seconds = excluded.agent_reply_tick_interval_seconds,
       auto_monitor_enabled = excluded.auto_monitor_enabled,
       auto_monitor_interval_seconds = excluded.auto_monitor_interval_seconds,
       updated_at = excluded.updated_at
@@ -133,6 +149,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
         messageAutoReplyEnabled ? 1 : 0,
         messageReplyMode,
         merged.messageReplyDelaySeconds,
+        normalizeAgentReplyTickIntervalSeconds(merged.agentReplyTickIntervalSeconds),
         merged.autoMonitorEnabled ? 1 : 0,
         normalizeAutoMonitorIntervalSeconds(merged.autoMonitorIntervalSeconds),
         updatedAt,

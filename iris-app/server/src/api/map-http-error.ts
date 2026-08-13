@@ -1,5 +1,6 @@
 import type { ServerResponse } from "node:http";
 import { BodyTooLargeError, sendApiError, sendError, ValidationError } from "./json.ts";
+import { MultipartParseError } from "./multipart.ts";
 import { MetaNotConnectedError } from "../domain/meta/meta-readiness.ts";
 import { PublishNotConfiguredError } from "../domain/posts/publish-post.ts";
 import { AssetIngestError } from "../domain/posts/asset-ingest.ts";

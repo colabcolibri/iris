@@ -2,9 +2,10 @@ import type { AppContext } from "../api/app-context.ts";
 import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
 import { getAppSettingsOrDefault } from "../adapters/sqlite/app-settings-repository.ts";
-import { resolveCommentResponderIntervalMs } from "../domain/comments/resolve-comment-responder-interval.ts";
+import { resolveAgentReplyTickIntervalMs } from "../domain/settings/resolve-agent-reply-tick-interval.ts";
 import { enqueueSchedulablePendingComments } from "../domain/comments/enqueue-schedulable-pending-comments.ts";
 import { processCommentReply } from "../domain/comments/process-comment-reply.ts";
+import { startSettingsPolledWorker } from "./start-settings-polled-worker.ts";
 
 export type CommentResponderOptions = {
   intervalMs?: number;
@@ -24,20 +25,12 @@ export function startCommentResponder(
     return () => undefined;
   }
 
-  const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
-  const intervalMs =
-    options.intervalMs ??
-    resolveCommentResponderIntervalMs(appSettings.replyDelaySeconds);
-  let running = false;
-
-  const tick = async () => {
-    if (running) {
-      return;
-    }
-
-    running = true;
-
-    try {
+  return startSettingsPolledWorker({
+    intervalMs: options.intervalMs,
+    resolveIntervalMs: () =>
+      resolveAgentReplyTickIntervalMs(getAppSettingsOrDefault(ctx.appSettingsStore)),
+    onTickError: options.onTickError,
+    tick: async () => {
       enqueueSchedulablePendingComments(ctx);
 
       const pending = ctx.comments.listPendingForAgentReply();
@@ -49,24 +42,6 @@ export function startCommentResponder(
           metaCommentReplier: replier,
         });
       }
-    } catch (error) {
-      options.onTickError?.(error);
-    } finally {
-      running = false;
-    }
-  };
-
-  const timer = setInterval(() => {
-    void tick();
-  }, intervalMs);
-
-  void tick();
-
-  if (typeof timer.unref === "function") {
-    timer.unref();
-  }
-
-  return () => {
-    clearInterval(timer);
-  };
+    },
+  });
 }

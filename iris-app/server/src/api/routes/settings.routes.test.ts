@@ -139,12 +139,14 @@ test("GET app settings returns default timezone", async () => {
       timezone: string;
       auto_reply_enabled: boolean;
       reply_delay_seconds: number;
+      agent_reply_tick_interval_seconds: number;
       auto_monitor_enabled: boolean;
       auto_monitor_interval_seconds: number;
     };
     assert.equal(body.timezone, "America/Sao_Paulo");
     assert.equal(body.auto_reply_enabled, true);
     assert.equal(body.reply_delay_seconds, 0);
+    assert.equal(body.agent_reply_tick_interval_seconds, 300);
     assert.equal(body.auto_monitor_enabled, true);
     assert.equal(body.auto_monitor_interval_seconds, 300);
   });
@@ -188,11 +190,11 @@ test("PUT app settings persists reply_delay_seconds", async () => {
         Cookie: adminCookie,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ reply_delay_seconds: 90 }),
+      body: JSON.stringify({ reply_delay_seconds: 120 }),
     });
     assert.equal(putResponse.status, 200);
     const body = (await putResponse.json()) as { reply_delay_seconds: number };
-    assert.equal(body.reply_delay_seconds, 90);
+    assert.equal(body.reply_delay_seconds, 120);
 
     const invalid = await fetch(`${baseUrl}/api/settings/app`, {
       method: "PUT",
@@ -200,7 +202,35 @@ test("PUT app settings persists reply_delay_seconds", async () => {
         Cookie: adminCookie,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ reply_delay_seconds: 15 }),
+      body: JSON.stringify({ reply_delay_seconds: 30 }),
+    });
+    assert.equal(invalid.status, 422);
+  });
+});
+
+test("PUT app settings persists agent_reply_tick_interval_seconds", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const putResponse = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ agent_reply_tick_interval_seconds: 600 }),
+    });
+    assert.equal(putResponse.status, 200);
+    const body = (await putResponse.json()) as {
+      agent_reply_tick_interval_seconds: number;
+    };
+    assert.equal(body.agent_reply_tick_interval_seconds, 600);
+
+    const invalid = await fetch(`${baseUrl}/api/settings/app`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ agent_reply_tick_interval_seconds: 240 }),
     });
     assert.equal(invalid.status, 422);
   });

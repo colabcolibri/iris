@@ -41,11 +41,12 @@ Estes valores **não** vêm de `.env` — persistem em `app_settings` via **Conf
 | Campo | Default | Onde na UI |
 | ----- | ------- | ---------- |
 | `reply_mode` | `auto` | Agente de comentários → modo global |
-| `reply_delay_seconds` | `0` | Agente de comentários → **Resposta imediata** ou **Fila com delay** (30–600s) |
+| `reply_delay_seconds` | `0` | Agente de comentários → **Resposta imediata** ou **Fila com delay** (1–60 min, armazenado em segundos) |
+| `agent_reply_tick_interval_seconds` | `300` (5 min) | Agente de comentários → **Intervalo do worker** (presets 3, 5, 10, 15 ou 20 min) — compartilhado com DMs |
 | `auto_monitor_enabled` | `true` | Auto-monitoramento de publicações → Ligado/Desligado |
 | `auto_monitor_interval_seconds` | `300` (5 min) | Auto-monitoramento → intervalo do poll (60–3600s) |
 
-Com `reply_delay_seconds = 0`, o agente processa no próximo ciclo do worker (~60s). Com fila ativa, o worker acelera o poll (~15s) automaticamente — sem variável de ambiente.
+Com `reply_delay_seconds = 0`, o agente processa no próximo ciclo do worker (intervalo configurável, default ~5 min). Com fila ativa, `agent_reply_not_before` define quando o item fica elegível; o worker só consulta a fila no tick — sem poll agressivo de 15s/60s.
 
 Com `auto_monitor_enabled`, o worker lista mídias recentes no intervalo configurado e cadastra posts `monitored`; o webhook de comentário também auto-cadastra mídia desconhecida.
 

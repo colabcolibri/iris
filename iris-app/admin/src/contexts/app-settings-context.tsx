@@ -15,6 +15,7 @@ type AppSettingsContextValue = {
   timezone: string;
   replyMode: ReplyMode;
   replyDelaySeconds: number;
+  agentReplyTickIntervalSeconds: number;
   messageReplyMode: ReplyMode;
   messageReplyDelaySeconds: number;
   autoMonitorEnabled: boolean;
@@ -27,6 +28,7 @@ type AppSettingsContextValue = {
   saveTimezone: (timezone: string) => Promise<void>;
   saveReplyMode: (mode: ReplyMode) => Promise<void>;
   saveReplyDelaySeconds: (seconds: number) => Promise<void>;
+  saveAgentReplyTickIntervalSeconds: (seconds: number) => Promise<void>;
   saveMessageReplyMode: (mode: ReplyMode) => Promise<void>;
   saveMessageReplyDelaySeconds: (seconds: number) => Promise<void>;
   saveAutoMonitorEnabled: (enabled: boolean) => Promise<void>;
@@ -44,6 +46,8 @@ export function AppSettingsProvider({
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
   const [replyMode, setReplyMode] = useState<ReplyMode>("auto");
   const [replyDelaySeconds, setReplyDelaySeconds] = useState(0);
+  const [agentReplyTickIntervalSeconds, setAgentReplyTickIntervalSeconds] =
+    useState(300);
   const [messageReplyMode, setMessageReplyMode] = useState<ReplyMode>("draft");
   const [messageReplyDelaySeconds, setMessageReplyDelaySeconds] = useState(0);
   const [autoMonitorEnabled, setAutoMonitorEnabled] = useState(true);
@@ -58,6 +62,9 @@ export function AppSettingsProvider({
         settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"),
       );
       setReplyDelaySeconds(settings.reply_delay_seconds ?? 0);
+      setAgentReplyTickIntervalSeconds(
+        settings.agent_reply_tick_interval_seconds ?? 300,
+      );
       setMessageReplyMode(
         settings.message_reply_mode ??
           (settings.message_auto_reply_enabled ? "auto" : "draft"),
@@ -132,6 +139,16 @@ export function AppSettingsProvider({
     [applySettings],
   );
 
+  const saveAgentReplyTickIntervalSeconds = useCallback(
+    async (seconds: number) => {
+      const saved = await updateAppSettings({
+        agent_reply_tick_interval_seconds: seconds,
+      });
+      applySettings(saved);
+    },
+    [applySettings],
+  );
+
   const saveMessageReplyMode = useCallback(
     async (mode: ReplyMode) => {
       const saved = await updateAppSettings({ message_reply_mode: mode });
@@ -154,6 +171,7 @@ export function AppSettingsProvider({
         timezone,
         replyMode,
         replyDelaySeconds,
+        agentReplyTickIntervalSeconds,
         messageReplyMode,
         messageReplyDelaySeconds,
         autoMonitorEnabled,
@@ -165,6 +183,7 @@ export function AppSettingsProvider({
         saveTimezone,
         saveReplyMode,
         saveReplyDelaySeconds,
+        saveAgentReplyTickIntervalSeconds,
         saveMessageReplyMode,
         saveMessageReplyDelaySeconds,
         saveAutoMonitorEnabled,

@@ -8,6 +8,10 @@ import {
 } from "../posts/reply-mode.ts";
 import { isValidIanaTimeZone } from "../time/timezone.ts";
 import {
+  isValidAgentReplyTickIntervalSeconds,
+  normalizeAgentReplyTickIntervalSeconds,
+} from "./agent-reply-tick-settings.ts";
+import {
   isValidAutoMonitorIntervalSeconds,
   normalizeAutoMonitorIntervalSeconds,
 } from "./auto-monitor-settings.ts";
@@ -21,6 +25,7 @@ export function serializeAppSettings(settings: AppSettings) {
     message_reply_mode: settings.messageReplyMode,
     message_auto_reply_enabled: settings.messageAutoReplyEnabled,
     message_reply_delay_seconds: settings.messageReplyDelaySeconds,
+    agent_reply_tick_interval_seconds: settings.agentReplyTickIntervalSeconds,
     auto_monitor_enabled: settings.autoMonitorEnabled,
     auto_monitor_interval_seconds: settings.autoMonitorIntervalSeconds,
     updated_at: settings.updatedAt,
@@ -43,6 +48,7 @@ export function normalizeAppSettingsBody(
   const hasMessageAutoReply = "message_auto_reply_enabled" in body;
   const hasMessageReplyMode = "message_reply_mode" in body;
   const hasMessageReplyDelay = "message_reply_delay_seconds" in body;
+  const hasAgentReplyTickInterval = "agent_reply_tick_interval_seconds" in body;
   const hasAutoMonitor = "auto_monitor_enabled" in body;
   const hasAutoMonitorInterval = "auto_monitor_interval_seconds" in body;
 
@@ -54,11 +60,12 @@ export function normalizeAppSettingsBody(
     !hasMessageAutoReply &&
     !hasMessageReplyMode &&
     !hasMessageReplyDelay &&
+    !hasAgentReplyTickInterval &&
     !hasAutoMonitor &&
     !hasAutoMonitorInterval
   ) {
     throw new ValidationError(
-      "at least one of timezone, reply_mode, reply_delay_seconds, auto_reply_enabled, message_reply_mode, message_reply_delay_seconds, message_auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
+      "at least one of timezone, reply_mode, reply_delay_seconds, agent_reply_tick_interval_seconds, auto_reply_enabled, message_reply_mode, message_reply_delay_seconds, message_auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
     );
   }
 
@@ -93,7 +100,7 @@ export function normalizeAppSettingsBody(
     }
     if (!isValidReplyDelaySeconds(body.reply_delay_seconds)) {
       throw new ValidationError(
-        "reply_delay_seconds must be 0 (immediate) or between 30 and 600",
+        "reply_delay_seconds must be 0 (immediate) or between 60 and 3600",
       );
     }
     replyDelaySeconds = Math.round(body.reply_delay_seconds);
@@ -119,10 +126,25 @@ export function normalizeAppSettingsBody(
     }
     if (!isValidReplyDelaySeconds(body.message_reply_delay_seconds)) {
       throw new ValidationError(
-        "message_reply_delay_seconds must be 0 (immediate) or between 30 and 600",
+        "message_reply_delay_seconds must be 0 (immediate) or between 60 and 3600",
       );
     }
     messageReplyDelaySeconds = Math.round(body.message_reply_delay_seconds);
+  }
+
+  let agentReplyTickIntervalSeconds = current.agentReplyTickIntervalSeconds;
+  if (hasAgentReplyTickInterval) {
+    if (typeof body.agent_reply_tick_interval_seconds !== "number") {
+      throw new ValidationError("agent_reply_tick_interval_seconds must be a number");
+    }
+    if (!isValidAgentReplyTickIntervalSeconds(body.agent_reply_tick_interval_seconds)) {
+      throw new ValidationError(
+        "agent_reply_tick_interval_seconds must be one of 180, 300, 600, 900, or 1200",
+      );
+    }
+    agentReplyTickIntervalSeconds = normalizeAgentReplyTickIntervalSeconds(
+      body.agent_reply_tick_interval_seconds,
+    );
   }
 
   let autoMonitorEnabled = current.autoMonitorEnabled;
@@ -156,6 +178,7 @@ export function normalizeAppSettingsBody(
     messageReplyMode,
     messageAutoReplyEnabled: autoReplyEnabledFromReplyMode(messageReplyMode),
     messageReplyDelaySeconds,
+    agentReplyTickIntervalSeconds,
     autoMonitorEnabled,
     autoMonitorIntervalSeconds,
   };

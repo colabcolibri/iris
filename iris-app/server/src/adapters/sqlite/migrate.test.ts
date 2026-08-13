@@ -75,7 +75,7 @@ test("runMigrations is idempotent", () => {
       .prepare("SELECT COUNT(*) AS total FROM schema_migrations")
       .get() as { total: number };
 
-  assert.equal(count.total, 41);
+  assert.equal(count.total, 43);
   } finally {
     db.close();
   }

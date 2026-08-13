@@ -69,6 +69,8 @@ test("MCP app settings tools read defaults", async () => {
     assert.equal(typeof settings.timezone, "string");
     assert.equal(settings.reply_mode, "auto");
     assert.equal(typeof settings.reply_delay_seconds, "number");
+    assert.equal(typeof settings.agent_reply_tick_interval_seconds, "number");
+    assert.equal(settings.agent_reply_tick_interval_seconds, 300);
     assert.equal(typeof settings.auto_reply_enabled, "boolean");
     assert.equal(typeof settings.auto_monitor_enabled, "boolean");
     assert.equal(typeof settings.auto_monitor_interval_seconds, "number");

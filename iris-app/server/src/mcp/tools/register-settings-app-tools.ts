@@ -27,6 +27,7 @@ export function registerSettingsAppTools(server: McpServer, ctx: AppContext): vo
       timezone: z.string().optional(),
       reply_mode: z.enum(["off", "auto", "draft"]).optional(),
       reply_delay_seconds: z.number().optional(),
+      agent_reply_tick_interval_seconds: z.number().optional(),
       auto_reply_enabled: z.boolean().optional(),
       auto_monitor_enabled: z.boolean().optional(),
       auto_monitor_interval_seconds: z.number().optional(),
@@ -41,6 +42,9 @@ export function registerSettingsAppTools(server: McpServer, ctx: AppContext): vo
         if (args.reply_mode !== undefined) body.reply_mode = args.reply_mode;
         if (args.reply_delay_seconds !== undefined) {
           body.reply_delay_seconds = args.reply_delay_seconds;
+        }
+        if (args.agent_reply_tick_interval_seconds !== undefined) {
+          body.agent_reply_tick_interval_seconds = args.agent_reply_tick_interval_seconds;
         }
         if (args.auto_reply_enabled !== undefined) {
           body.auto_reply_enabled = args.auto_reply_enabled;

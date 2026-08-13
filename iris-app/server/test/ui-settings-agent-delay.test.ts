@@ -2,21 +2,38 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-test("agent auto reply card exposes reply delay controls", () => {
+test("agent auto reply card exposes reply delay and tick interval controls", () => {
   const card = readFileSync("../admin/src/components/settings/agent-auto-reply-card.tsx", "utf8");
   assert.match(card, /replyDelaySeconds/);
   assert.match(card, /saveReplyDelaySeconds/);
+  assert.match(card, /agentReplyTickIntervalSeconds/);
+  assert.match(card, /saveAgentReplyTickIntervalSeconds/);
+  assert.match(card, /Intervalo do worker/);
   assert.match(card, /Resposta imediata/);
   assert.match(card, /Fila com delay/);
+  assert.match(card, /Minutos de espera/);
 });
 
-test("app settings context loads reply_delay_seconds", () => {
+test("message agent card shows shared tick interval and delay in minutes", () => {
+  const card = readFileSync(
+    "../admin/src/components/settings/message-agent-auto-reply-card.tsx",
+    "utf8",
+  );
+  assert.match(card, /agentReplyTickIntervalSeconds/);
+  assert.match(card, /Minutos de espera/);
+  assert.match(card, /Compartilhado com comentários/);
+});
+
+test("app settings context loads reply and tick fields", () => {
   const context = readFileSync("../admin/src/contexts/app-settings-context.tsx", "utf8");
   assert.match(context, /reply_delay_seconds/);
+  assert.match(context, /agent_reply_tick_interval_seconds/);
   assert.match(context, /saveReplyDelaySeconds/);
+  assert.match(context, /saveAgentReplyTickIntervalSeconds/);
 });
 
-test("api client supports reply_delay_seconds on app settings", () => {
+test("api client supports agent reply tick on app settings", () => {
   const api = readFileSync("../admin/src/lib/api.ts", "utf8");
   assert.match(api, /reply_delay_seconds/);
+  assert.match(api, /agent_reply_tick_interval_seconds/);
 });

@@ -8,9 +8,23 @@ import { useAppSettings } from "@/contexts/app-settings-context";
 import { replyModeOption } from "@/lib/reply-mode-options";
 import type { ReplyMode } from "@/lib/types";
 
-const DELAY_MIN = 30;
-const DELAY_MAX = 600;
-const DELAY_SUGGESTED = 90;
+const DELAY_PRESETS = [
+  { label: "1 min", minutes: 1 },
+  { label: "2 min", minutes: 2 },
+  { label: "3 min", minutes: 3 },
+  { label: "5 min", minutes: 5 },
+] as const;
+
+const DELAY_MIN_MINUTES = 1;
+const DELAY_MAX_MINUTES = 60;
+const DELAY_SUGGESTED_MINUTES = 2;
+
+function minutesFromDelaySeconds(seconds: number): number {
+  if (seconds <= 0) {
+    return 0;
+  }
+  return Math.max(DELAY_MIN_MINUTES, Math.round(seconds / 60));
+}
 
 type MessageAgentAutoReplyCardProps = {
   embedded?: boolean;
@@ -22,6 +36,7 @@ export function MessageAgentAutoReplyCard({
   const {
     messageReplyMode,
     messageReplyDelaySeconds,
+    agentReplyTickIntervalSeconds,
     loading,
     saveMessageReplyMode,
     saveMessageReplyDelaySeconds,
@@ -29,14 +44,19 @@ export function MessageAgentAutoReplyCard({
   const [saving, setSaving] = useState(false);
   const [savingDelay, setSavingDelay] = useState(false);
   const [delayEnabled, setDelayEnabled] = useState(false);
-  const [delayInput, setDelayInput] = useState(String(DELAY_SUGGESTED));
+  const [delayInput, setDelayInput] = useState(String(DELAY_SUGGESTED_MINUTES));
 
   useEffect(() => {
     setDelayEnabled(messageReplyDelaySeconds > 0);
     if (messageReplyDelaySeconds > 0) {
-      setDelayInput(String(messageReplyDelaySeconds));
+      setDelayInput(String(minutesFromDelaySeconds(messageReplyDelaySeconds)));
     }
   }, [messageReplyDelaySeconds]);
+
+  const tickMinutes = Math.round((agentReplyTickIntervalSeconds || 300) / 60);
+  const delayMinutes = delayEnabled
+    ? minutesFromDelaySeconds(messageReplyDelaySeconds)
+    : 0;
 
   async function handleChange(next: ReplyMode) {
     setSaving(true);
@@ -53,19 +73,22 @@ export function MessageAgentAutoReplyCard({
   }
 
   const persistDelay = useCallback(
-    async (enabled: boolean, rawSeconds: string) => {
+    async (enabled: boolean, rawMinutes: string) => {
       setSavingDelay(true);
       try {
-        const seconds = enabled
+        const minutes = enabled
           ? Math.min(
-              DELAY_MAX,
-              Math.max(DELAY_MIN, Number.parseInt(rawSeconds, 10) || DELAY_SUGGESTED),
+              DELAY_MAX_MINUTES,
+              Math.max(
+                DELAY_MIN_MINUTES,
+                Number.parseInt(rawMinutes, 10) || DELAY_SUGGESTED_MINUTES,
+              ),
             )
           : 0;
-        await saveMessageReplyDelaySeconds(seconds);
+        await saveMessageReplyDelaySeconds(minutes * 60);
         toast.success(
-          seconds > 0
-            ? `Fila DM ativa: resposta após ${seconds}s.`
+          minutes > 0
+            ? `Fila DM ativa: resposta após ${minutes} min.`
             : "Resposta imediata no próximo ciclo do agente de DM.",
         );
       } catch (err) {
@@ -102,11 +125,32 @@ export function MessageAgentAutoReplyCard({
             />
           </div>
 
+          <div className="space-y-2 border-t border-border/60 pt-4">
+            <Label className="text-sm font-semibold">Intervalo do worker</Label>
+            <p className="text-sm text-muted-foreground">
+              Compartilhado com comentários — configurado no card do agente de
+              comentários. Ciclo atual: <strong>{tickMinutes} min</strong>.
+            </p>
+          </div>
+
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="space-y-1">
               <Label className="text-sm font-semibold">Tempo antes de responder</Label>
               <p className="text-sm text-muted-foreground">
-                Mesma fila persistente usada nos comentários, com settings próprios para DM.
+                Mesma fila persistente usada nos comentários, com settings próprios
+                para DM.
+                {delayMinutes > 0 ? (
+                  <>
+                    {" "}
+                    Cadência real: resposta após {delayMinutes} min + até{" "}
+                    {tickMinutes} min até o próximo ciclo.
+                  </>
+                ) : (
+                  <>
+                    {" "}
+                    Cadência real: até {tickMinutes} min até o próximo ciclo.
+                  </>
+                )}
               </p>
             </div>
 
@@ -140,22 +184,49 @@ export function MessageAgentAutoReplyCard({
             </div>
 
             {delayEnabled ? (
-              <div className="space-y-2">
-                <Label htmlFor="message-reply-delay-seconds" className="text-sm font-semibold">
-                  Segundos de espera ({DELAY_MIN}–{DELAY_MAX})
-                </Label>
-                <Input
-                  id="message-reply-delay-seconds"
-                  type="number"
-                  min={DELAY_MIN}
-                  max={DELAY_MAX}
-                  step={15}
-                  value={delayInput}
-                  disabled={savingDelay}
-                  onChange={(event) => setDelayInput(event.target.value)}
-                  onBlur={() => void persistDelay(true, delayInput)}
-                  className="max-w-[10rem]"
-                />
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {DELAY_PRESETS.map((preset) => (
+                    <button
+                      key={preset.minutes}
+                      type="button"
+                      disabled={savingDelay}
+                      onClick={() => {
+                        setDelayInput(String(preset.minutes));
+                        void persistDelay(true, String(preset.minutes));
+                      }}
+                      className={`rounded-md border px-3 py-1.5 text-xs ${
+                        minutesFromDelaySeconds(messageReplyDelaySeconds) ===
+                        preset.minutes
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border bg-background text-foreground"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="message-reply-delay-minutes"
+                    className="text-sm font-semibold"
+                  >
+                    Minutos de espera ({DELAY_MIN_MINUTES}–{DELAY_MAX_MINUTES})
+                  </Label>
+                  <Input
+                    id="message-reply-delay-minutes"
+                    type="number"
+                    min={DELAY_MIN_MINUTES}
+                    max={DELAY_MAX_MINUTES}
+                    step={1}
+                    value={delayInput}
+                    disabled={savingDelay}
+                    onChange={(event) => setDelayInput(event.target.value)}
+                    onBlur={() => void persistDelay(true, delayInput)}
+                    className="max-w-[10rem]"
+                  />
+                </div>
               </div>
             ) : null}
           </div>

@@ -529,6 +529,7 @@ export type AppSettings = {
   reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
   reply_delay_seconds: number;
+  agent_reply_tick_interval_seconds: number;
   message_reply_mode: ReplyMode;
   message_auto_reply_enabled: boolean;
   message_reply_delay_seconds: number;
