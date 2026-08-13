@@ -48,7 +48,7 @@ function policiesToMap(
 }
 
 function buildOverrides(
-  globalPolicies: Partial<Record<ProductFieldKey, FieldSource>>,
+  _globalPolicies: Partial<Record<ProductFieldKey, FieldSource>>,
   productPolicies: Partial<Record<ProductFieldKey, FieldSource>>,
 ): Record<ProductFieldKey, FieldOverride> {
   return Object.fromEntries(

@@ -1,0 +1,77 @@
+import type { ShellMessages } from "@/i18n/domains/shell/types";
+
+export const shellEn = {
+  meta: {
+    tagline: "Creative scheduler",
+    creativeScheduler: "Creative scheduler",
+  },
+  nav: {
+    calendar: "Calendar",
+    list: "List",
+    kanban: "Kanban",
+    comments: "Comments",
+    messages: "Messages",
+    products: "Products",
+    webhooks: "Webhooks",
+    simulator: "Simulator",
+    agentRuns: "Runs",
+    settings: "Settings",
+    persona: "Persona",
+  },
+  languageSwitcher: {
+    label: "Language",
+    pt: "Português",
+    en: "English",
+  },
+  login: {
+    titleEmail: "Sign in with your email",
+    titleCode: "Code sent to {email}",
+    codeSentTo: "Code sent to {email}",
+    emailLabel: "Email",
+    codeLabel: "6-digit code",
+    continue: "Continue",
+    signIn: "Sign in",
+    changeEmail: "Change email",
+    resendCode: "Resend code",
+    privacyLink: "Privacy policy",
+    invalidEmail: "Enter a valid email address.",
+    codeResent: "Code resent.",
+    sendCodeFailed: "Could not send the code.",
+    invalidCodeDigits: "Enter the 6-digit code.",
+    sessionNotCreated: "Session was not created. Try again.",
+    invalidOrExpiredCode: "Invalid or expired code.",
+  },
+  header: {
+    tokenExpiredHint:
+      "Your Instagram session expired. Reconnect to schedule posts.",
+    connectHint: "Connect your Instagram account to schedule and publish posts.",
+    reconnectInstagram: "Reconnect Instagram",
+    connectInstagram: "Connect Instagram",
+    connectShort: "Connect",
+    signOut: "Sign out",
+    instagramConnectedAria: "Instagram account connected",
+    instagramConnected: "Instagram connected",
+    testConnection: "Test connection",
+    switchAccount: "Switch account",
+    disconnect: "Disconnect",
+    confirmSignOutTitle: "Sign out of Iris?",
+    confirmSignOutDescription:
+      "You will need a new email code to sign in again.",
+    confirmSignOutAction: "Sign out",
+    confirmDisconnectTitle: "Disconnect Instagram?",
+    confirmDisconnectDescription:
+      "Iris stops publishing and syncing comments until you connect again.",
+    confirmDisconnectAction: "Disconnect",
+    confirmSwitchTitle: "Switch Instagram account?",
+    confirmSwitchDescription:
+      "You will be redirected to Meta login. The current account stays until the new connection completes.",
+    confirmSwitchAction: "Continue",
+  },
+  common: {
+    cancel: "Cancel",
+    save: "Save",
+    delete: "Delete",
+    loading: "Loading…",
+    close: "Close",
+  },
+} satisfies ShellMessages;

@@ -603,16 +603,14 @@ async function handleMutation(
   }
 
   if (method === "PUT" && pathname === "/api/settings/mcp/permissions") {
-    const body = (init?.body ? JSON.parse(String(init.body)) : {}) as {
-      preset?: string;
-    };
+    const permissionBody = body as { preset?: string };
     state.mcpPermissions = {
       ...state.mcpPermissions,
       preset:
-        body.preset === "read_only" ||
-        body.preset === "editor" ||
-        body.preset === "custom"
-          ? body.preset
+        permissionBody.preset === "read_only" ||
+        permissionBody.preset === "editor" ||
+        permissionBody.preset === "custom"
+          ? permissionBody.preset
           : "full",
       updated_at: new Date().toISOString(),
     };

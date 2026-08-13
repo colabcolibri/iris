@@ -35,7 +35,6 @@ import type {
   StoreConnectionTestResult,
   FieldSource,
   YampiDiscoverResult,
-  YampiMerchantOption,
   PostInsightsResult,
   UpdatePostBody,
   ReconcileCommentsPreview,

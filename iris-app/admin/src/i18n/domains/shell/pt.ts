@@ -1,0 +1,77 @@
+import type { ShellMessages } from "@/i18n/domains/shell/types";
+
+export const shellPt = {
+  meta: {
+    tagline: "Creative scheduler",
+    creativeScheduler: "Creative scheduler",
+  },
+  nav: {
+    calendar: "Calendário",
+    list: "Lista",
+    kanban: "Kanban",
+    comments: "Comentários",
+    messages: "Mensagens",
+    products: "Produtos",
+    webhooks: "Webhooks",
+    simulator: "Simulador",
+    agentRuns: "Execuções",
+    settings: "Configurações",
+    persona: "Persona",
+  },
+  languageSwitcher: {
+    label: "Idioma",
+    pt: "Português",
+    en: "English",
+  },
+  login: {
+    titleEmail: "Entrar com seu email",
+    titleCode: "Código enviado para {email}",
+    codeSentTo: "Código enviado para {email}",
+    emailLabel: "Email",
+    codeLabel: "Código de 6 dígitos",
+    continue: "Continuar",
+    signIn: "Entrar",
+    changeEmail: "Trocar email",
+    resendCode: "Reenviar código",
+    privacyLink: "Política de privacidade",
+    invalidEmail: "Informe um email válido.",
+    codeResent: "Código reenviado.",
+    sendCodeFailed: "Não foi possível enviar o código.",
+    invalidCodeDigits: "Digite os 6 dígitos do código.",
+    sessionNotCreated: "Sessão não foi criada. Tente novamente.",
+    invalidOrExpiredCode: "Código inválido ou expirado.",
+  },
+  header: {
+    tokenExpiredHint:
+      "Sua sessão com o Instagram expirou. Conecte de novo para agendar publicações.",
+    connectHint: "Conecte sua conta do Instagram para agendar e publicar posts.",
+    reconnectInstagram: "Reconectar Instagram",
+    connectInstagram: "Conectar Instagram",
+    connectShort: "Conectar",
+    signOut: "Sair",
+    instagramConnectedAria: "Conta do Instagram conectada",
+    instagramConnected: "Instagram conectado",
+    testConnection: "Testar conexão",
+    switchAccount: "Trocar conta",
+    disconnect: "Desconectar",
+    confirmSignOutTitle: "Sair do Iris?",
+    confirmSignOutDescription:
+      "Você precisará de um novo código por email para entrar novamente.",
+    confirmSignOutAction: "Sair",
+    confirmDisconnectTitle: "Desconectar Instagram?",
+    confirmDisconnectDescription:
+      "O Iris deixa de publicar e sincronizar comentários até você conectar de novo.",
+    confirmDisconnectAction: "Desconectar",
+    confirmSwitchTitle: "Trocar conta do Instagram?",
+    confirmSwitchDescription:
+      "Você será redirecionado ao login da Meta. A conta atual permanece até a nova conexão ser concluída.",
+    confirmSwitchAction: "Continuar",
+  },
+  common: {
+    cancel: "Cancelar",
+    save: "Salvar",
+    delete: "Excluir",
+    loading: "Carregando…",
+    close: "Fechar",
+  },
+} satisfies ShellMessages;

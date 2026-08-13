@@ -42,7 +42,7 @@ function policiesToMap(
 }
 
 export function StoresPage() {
-  const confirm = useConfirmDialog();
+  const { confirm } = useConfirmDialog();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("connection_id")?.trim() ?? "";
   const [connections, setConnections] = useState<StoreConnection[]>([]);
