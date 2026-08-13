@@ -8,9 +8,22 @@ import {
 import { requestManualMessageReply } from "../../../domain/messages/request-manual-message-reply.ts";
 import { assertCanReplyToConversation } from "../../../domain/messages/assert-can-reply-to-conversation.ts";
 import { routeParam } from "../../route-resources.ts";
+import type { RouteMatch } from "../../route-types.ts";
 import { requireMessage } from "./message-resources.ts";
 import { MAX_MESSAGE_REPLY_LENGTH, serializeMessageWithDraft } from "./shared.ts";
 import { resolveMessageDraftText } from "../../../domain/messages/resolve-message-draft.ts";
+import { resolveMessageRecipientForSend } from "../../../domain/messages/resolve-message-recipient.ts";
+
+function messageRecipientDeps(match: RouteMatch) {
+  const connection = match.ctx.metaConnectionStore.get();
+  return {
+    conversations: match.ctx.conversations,
+    messages: match.ctx.messages,
+    metaConversationsReader: match.ctx.metaConversationsReader,
+    ownerIgUserId: connection?.igUserId ?? null,
+    ownerUsername: connection?.igUsername ?? null,
+  };
+}
 
 export const messagesReplyRouter = createRouter([
   route(
@@ -174,9 +187,14 @@ export const messagesReplyRouter = createRouter([
 
       assertCanReplyToConversation(match.ctx.messages, conversation.id);
 
+      const { recipientId } = await resolveMessageRecipientForSend(
+        conversation,
+        messageRecipientDeps(match),
+      );
+
       try {
         const publishResult = await match.ctx.metaMessageSender.sendText(
-          conversation.participantIgUserId,
+          recipientId,
           text,
         );
         if (
@@ -255,9 +273,14 @@ export const messagesReplyRouter = createRouter([
 
       assertCanReplyToConversation(match.ctx.messages, conversation.id);
 
+      const { recipientId } = await resolveMessageRecipientForSend(
+        conversation,
+        messageRecipientDeps(match),
+      );
+
       try {
         const publishResult = await match.ctx.metaMessageSender.sendText(
-          conversation.participantIgUserId,
+          recipientId,
           text,
         );
         match.ctx.messageReplies.createReply({

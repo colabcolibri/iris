@@ -134,8 +134,12 @@ async function handleMetaWebhookPost(
       field: envelope.field,
     });
 
-    const pageIgUserId = ctx.metaConnectionStore.get()?.igUserId ?? null;
-    const messageEntries = parseMessageEntries(payload, pageIgUserId);
+    const connection = ctx.metaConnectionStore.get();
+    const ownerContext = {
+      igUserId: connection?.igUserId ?? null,
+      igUsername: connection?.igUsername ?? null,
+    };
+    const messageEntries = parseMessageEntries(payload, ownerContext);
     const affectedConversations = new Set<string>();
     let messageProcessed = false;
     let linkedConversationId: string | null = null;
@@ -145,7 +149,7 @@ async function handleMetaWebhookPost(
       const result = ingestWebhookMessage(entry, {
         conversations: ctx.conversations,
         messages: ctx.messages,
-        pageIgUserId,
+        pageIgUserId: ownerContext.igUserId,
       });
 
       messageProcessed = true;

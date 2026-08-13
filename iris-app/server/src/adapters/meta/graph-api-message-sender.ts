@@ -22,6 +22,8 @@ type GraphSendResponse = {
   error?: { message?: string; code?: number; error_subcode?: number };
 };
 
+const META_THREAD_OWNER_SUBCODE = 2534037;
+
 function mapSendError(json: GraphSendResponse, status: number): Error {
   const message = json.error?.message ?? `Meta API error (${status})`;
   const subcode = json.error?.error_subcode;
@@ -35,6 +37,10 @@ function mapSendError(json: GraphSendResponse, status: number): Error {
     lower.includes("outside of allowed window")
   ) {
     return new MetaMessageWindowExpiredError(message);
+  }
+
+  if (subcode === META_THREAD_OWNER_SUBCODE) {
+    return new MetaMessageSendError(message, "thread_owner", meta);
   }
 
   if (code === 10 || code === 200) {
@@ -55,6 +61,59 @@ export function createGraphApiMessageSender(
   const version = deps.config.graphApiVersion ?? "v21.0";
   const base = `https://graph.instagram.com/${version}`;
 
+  async function takeThreadControl(
+    igUserId: string,
+    recipientIgUserId: string,
+    token: string,
+  ): Promise<void> {
+    const url = new URL(`${base}/${igUserId}/take_thread_control`);
+    try {
+      const response = await fetchFn(url.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          recipient: { id: recipientIgUserId },
+          metadata: "iris",
+        }),
+      });
+      await response.json();
+    } catch {
+      // best effort — send retry may still succeed
+    }
+  }
+
+  async function postMessage(
+    igUserId: string,
+    recipientIgUserId: string,
+    text: string,
+    token: string,
+  ): Promise<{ publishedIgMessageId: string | null }> {
+    const url = new URL(`${base}/${igUserId}/messages`);
+
+    const response = await fetchFn(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        recipient: { id: recipientIgUserId },
+        message: { text },
+      }),
+    });
+
+    const json = (await response.json()) as GraphSendResponse;
+
+    if (!response.ok || json.error) {
+      throw mapSendError(json, response.status);
+    }
+
+    return { publishedIgMessageId: json.message_id ?? null };
+  }
+
   return {
     async sendText(recipientIgUserId, text) {
       const token = deps.metaTokenStore.getActiveToken();
@@ -67,27 +126,18 @@ export function createGraphApiMessageSender(
         throw new Error("IG user id not configured");
       }
 
-      const url = new URL(`${base}/${igUserId}/messages`);
-
-      const response = await fetchFn(url.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          recipient: { id: recipientIgUserId },
-          message: { text },
-        }),
-      });
-
-      const json = (await response.json()) as GraphSendResponse;
-
-      if (!response.ok || json.error) {
-        throw mapSendError(json, response.status);
+      try {
+        return await postMessage(igUserId, recipientIgUserId, text, token);
+      } catch (error) {
+        if (
+          error instanceof MetaMessageSendError &&
+          error.code === "thread_owner"
+        ) {
+          await takeThreadControl(igUserId, recipientIgUserId, token);
+          return await postMessage(igUserId, recipientIgUserId, text, token);
+        }
+        throw error;
       }
-
-      return { publishedIgMessageId: json.message_id ?? null };
     },
   };
 }

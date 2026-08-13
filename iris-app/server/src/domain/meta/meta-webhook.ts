@@ -1,5 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { normalizeCommentTimestamp } from "../comments/normalize-comment-timestamp.ts";
+import {
+  isMessageFromOwner,
+  type MessageOwnerContext,
+} from "../messages/is-message-from-owner.ts";
+
+export type { MessageOwnerContext };
 
 export type ParsedCommentEntry = {
   igCommentId: string;
@@ -242,7 +248,8 @@ function readMessageTimestamp(value: unknown): string | null {
 
 function parseMessagingArray(
   messaging: unknown[],
-  pageIgUserId: string | null,
+  owner: MessageOwnerContext | null,
+  entryIgUserId: string | null,
 ): ParsedMessageEntry[] {
   const parsed: ParsedMessageEntry[] = [];
 
@@ -285,8 +292,14 @@ function parseMessagingArray(
       continue;
     }
 
-    const direction =
-      pageIgUserId && senderIgUserId === pageIgUserId ? "outbound" : "inbound";
+    const direction = isMessageFromOwner(
+      senderIgUserId,
+      readSenderUsername(sender),
+      owner ?? { igUserId: null, igUsername: null },
+      entryIgUserId ? [entryIgUserId] : [],
+    )
+      ? "outbound"
+      : "inbound";
     const attachment = readMessageAttachment(message);
 
     parsed.push({
@@ -308,7 +321,7 @@ function parseMessagingArray(
 
 export function parseMessageEntries(
   payload: unknown,
-  pageIgUserId: string | null = null,
+  owner: MessageOwnerContext | null = null,
 ): ParsedMessageEntry[] {
   if (!payload || typeof payload !== "object") {
     return [];
@@ -324,12 +337,14 @@ export function parseMessageEntries(
     }
 
     const entryRecord = entry as Record<string, unknown>;
+    const entryIgUserId =
+      typeof entryRecord.id === "string" ? entryRecord.id : null;
     const messaging = Array.isArray(entryRecord.messaging)
       ? entryRecord.messaging
       : [];
 
     if (messaging.length > 0) {
-      parsed.push(...parseMessagingArray(messaging, pageIgUserId));
+      parsed.push(...parseMessagingArray(messaging, owner, entryIgUserId));
       continue;
     }
 
@@ -368,16 +383,23 @@ export function parseMessageEntries(
         continue;
       }
 
-      const direction =
-        pageIgUserId && senderIgUserId === pageIgUserId ? "outbound" : "inbound";
+      const senderUsername =
+        sender && typeof sender.username === "string" ? sender.username : null;
+      const direction = isMessageFromOwner(
+        senderIgUserId,
+        senderUsername,
+        owner ?? { igUserId: null, igUsername: null },
+        entryIgUserId ? [entryIgUserId] : [],
+      )
+        ? "outbound"
+        : "inbound";
       const attachment = readMessageAttachment(record);
 
       parsed.push({
         igMessageId,
         senderIgUserId,
-        recipientIgUserId: pageIgUserId ?? "unknown",
-        senderUsername:
-          sender && typeof sender.username === "string" ? sender.username : null,
+        recipientIgUserId: entryIgUserId ?? owner?.igUserId ?? "unknown",
+        senderUsername,
         senderDisplayName:
           sender && typeof sender.name === "string" ? sender.name : null,
         text: typeof record.text === "string" ? record.text : null,

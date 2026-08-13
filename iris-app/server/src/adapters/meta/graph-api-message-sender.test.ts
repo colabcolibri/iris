@@ -62,3 +62,44 @@ test("graph api message sender maps 24h window error", async () => {
     MetaMessageWindowExpiredError,
   );
 });
+
+test("graph api message sender retries after take_thread_control on thread owner error", async () => {
+  const calls: string[] = [];
+
+  const sender = createGraphApiMessageSender({
+    metaTokenStore: {
+      getActiveToken: () => "token-1",
+      upsertToken: () => {},
+      clear: () => {},
+    },
+    config: {
+      resolveIgUserId: () => "ig-page-1",
+      fetchImpl: async (url) => {
+        calls.push(String(url));
+        if (String(url).includes("take_thread_control")) {
+          return new Response(JSON.stringify({ success: true }), { status: 200 });
+        }
+        if (calls.filter((item) => item.includes("/messages")).length === 1) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message: "The action is invalid since it's not the thread owner.",
+                code: 100,
+                error_subcode: 2534037,
+              },
+            }),
+            { status: 400 },
+          );
+        }
+        return new Response(JSON.stringify({ message_id: "mid-sent-2" }), {
+          status: 200,
+        });
+      },
+    },
+  });
+
+  const result = await sender.sendText("user-42", "tentativa");
+  assert.equal(result.publishedIgMessageId, "mid-sent-2");
+  assert.ok(calls.some((url) => url.includes("take_thread_control")));
+  assert.equal(calls.filter((url) => url.includes("/messages")).length, 2);
+});

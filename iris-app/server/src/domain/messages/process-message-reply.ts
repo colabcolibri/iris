@@ -18,6 +18,7 @@ import {
   shouldScheduleMessageReply,
 } from "./message-reply-mode.ts";
 import { assertCanReplyToConversation } from "./assert-can-reply-to-conversation.ts";
+import { resolveMessageRecipientForSend } from "./resolve-message-recipient.ts";
 
 export type ProcessMessageReplyOptions = {
   trigger: "worker" | "webhook" | "manual";
@@ -124,10 +125,16 @@ async function processMessageReplyCore(
 
     assertCanReplyToConversation(ctx.messages, conversation.id);
 
-    const publishResult = await sender.sendText(
-      conversation.participantIgUserId,
-      replyText,
-    );
+    const connection = ctx.metaConnectionStore.get();
+    const { recipientId } = await resolveMessageRecipientForSend(conversation, {
+      conversations: ctx.conversations,
+      messages: ctx.messages,
+      metaConversationsReader: ctx.metaConversationsReader,
+      ownerIgUserId: connection?.igUserId ?? null,
+      ownerUsername: connection?.igUsername ?? null,
+    });
+
+    const publishResult = await sender.sendText(recipientId, replyText);
 
     ctx.messageReplies.createReply({
       messageId,
