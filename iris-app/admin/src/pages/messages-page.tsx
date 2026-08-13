@@ -1,6 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Loader2, PanelLeft, RefreshCw } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  ArrowLeft,
+  Download,
+  Loader2,
+  PanelLeft,
+  RefreshCw,
+  Search,
+} from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ConversationDetailPanel } from "@/components/messages/conversation-detail-panel";
 import { ConversationInboxList } from "@/components/messages/conversation-inbox-list";
@@ -17,6 +31,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useMetaSession } from "@/contexts/meta-session-context";
+import { useAppRoutes } from "@/demo/demo-routes";
+import { useDemoMode } from "@/demo/demo-mode-context";
 import {
   approveMessageReply,
   fetchConversationMessages,
@@ -43,6 +59,11 @@ const MESSAGES_REALTIME_DEBOUNCE_MS = 750;
 
 type LeftPanelMode = "conversations" | "activity";
 
+function formatHandle(username: string | null | undefined): string {
+  const value = username?.trim() || "usuário";
+  return value.startsWith("@") ? value : `@${value}`;
+}
+
 function messagesHaveChanged(current: Message[], next: Message[]): boolean {
   if (current.length !== next.length) {
     return true;
@@ -62,6 +83,8 @@ function messagesHaveChanged(current: Message[], next: Message[]): boolean {
 }
 
 export function MessagesPage() {
+  const routes = useAppRoutes();
+  const { isDemoMode } = useDemoMode();
   const { meta } = useMetaSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedConversationId = searchParams.get("conversation_id")?.trim() ?? "";
@@ -78,6 +101,8 @@ export function MessagesPage() {
   const [refreshingConversations, setRefreshingConversations] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncingInbox, setSyncingInbox] = useState(false);
+  const [error, setError] = useState("");
+  const [liveConnected, setLiveConnected] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [replyMode, setReplyMode] = useState<ConversationReplyMode>("inherit");
   const [replyPrompt, setReplyPrompt] = useState("");
@@ -115,12 +140,16 @@ export function MessagesPage() {
     } else {
       setRefreshingConversations(true);
     }
+    setError("");
     try {
       const next = await fetchConversations();
       setConversations(next);
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Falha ao carregar conversas.";
+      setError(message);
       if (!silent) {
-        toast.error(err instanceof Error ? err.message : "Falha ao carregar conversas.");
+        toast.error(message);
       }
     } finally {
       setLoadingConversations(false);
@@ -229,34 +258,55 @@ export function MessagesPage() {
 
   useEffect(() => {
     const unsubscribe = subscribeRealtimeEvents({
+      onConnectionChange: setLiveConnected,
       onMessagesChanged: (data) => {
         scheduleRefresh(data.conversation_id);
       },
     });
-    const poll = setInterval(() => {
-      void loadConversations({ silent: true });
-      if (selectedConversationId) {
-        void loadMessages(selectedConversationId, { silent: true });
-      }
-    }, MESSAGES_FALLBACK_POLL_MS);
     return () => {
       unsubscribe();
-      clearInterval(poll);
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
       }
     };
-  }, [loadConversations, loadMessages, scheduleRefresh, selectedConversationId]);
+  }, [scheduleRefresh]);
 
-  function selectConversation(conversationId: string, messageId?: string) {
-    const params = new URLSearchParams();
-    params.set("conversation_id", conversationId);
-    if (messageId) {
-      params.set("message_id", messageId);
+  useEffect(() => {
+    if (!selectedConversationId || liveConnected) {
+      return;
     }
-    setSearchParams(params);
+
+    const poll = () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      void loadConversations({ silent: true });
+      void loadMessages(selectedConversationId, { silent: true });
+    };
+
+    const intervalId = window.setInterval(poll, MESSAGES_FALLBACK_POLL_MS);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [liveConnected, loadConversations, loadMessages, selectedConversationId]);
+
+  const selectConversation = useCallback(
+    (conversationId: string, messageId?: string) => {
+      const params = new URLSearchParams();
+      params.set("conversation_id", conversationId);
+      if (messageId) {
+        params.set("message_id", messageId);
+      }
+      setSearchParams(params);
+      setListSheetOpen(false);
+    },
+    [setSearchParams],
+  );
+
+  const clearStage = useCallback(() => {
+    setSearchParams({});
     setListSheetOpen(false);
-  }
+  }, [setSearchParams]);
 
   function handleActivitySelect(item: MessageActivityItem) {
     selectConversation(item.conversation_id, item.message_id);
@@ -413,189 +463,253 @@ export function MessagesPage() {
     }
   }
 
-  const leftPanel = (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="shrink-0 space-y-3 border-b border-border/60 p-3">
-        <div className="grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
-          {(
-            [
-              ["conversations", "Conversas"],
-              ["activity", "Atividade"],
-            ] as const
-          ).map(([mode, label]) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setLeftPanelMode(mode)}
-              className={cn(
-                "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
-                leftPanelMode === mode
-                  ? "bg-background text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+  const listChrome = (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <PageContainer.Header
+          eyebrow="Operação"
+          title={leftPanelMode === "conversations" ? "Mensagens" : "Atividade"}
+          description={
+            leftPanelMode === "conversations"
+              ? "Escolha uma conversa para ver o histórico, responder e configurar o modo de resposta."
+              : "Mensagens recentes em todas as conversas do Instagram."
+          }
+        />
         {leftPanelMode === "conversations" ? (
-          <Input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Buscar conversa…"
-          />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-10 gap-1.5"
+              disabled={
+                syncingInbox ||
+                !meta?.connected ||
+                meta.messaging_supported === false
+              }
+              onClick={() => void handleSyncInbox()}
+            >
+              {syncingInbox ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+              <span className="hidden sm:inline">Importar</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-10 shrink-0"
+              onClick={() => void loadConversations({ silent: true })}
+              disabled={refreshingConversations}
+              aria-label="Recarregar lista"
+            >
+              {refreshingConversations ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+            </Button>
+          </div>
         ) : null}
       </div>
-      {leftPanelMode === "activity" ? (
-        <MessageActivityPanel
-          onSelect={handleActivitySelect}
-          refreshToken={activityRefreshToken}
-        />
-      ) : loadingConversations ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Carregando…
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex w-fit max-w-full gap-1 rounded-full border border-border bg-muted/30 p-1">
+          <button
+            type="button"
+            onClick={() => setLeftPanelMode("conversations")}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+              leftPanelMode === "conversations"
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Conversas
+          </button>
+          <button
+            type="button"
+            onClick={() => setLeftPanelMode("activity")}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+              leftPanelMode === "activity"
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Atividade
+          </button>
         </div>
-      ) : filteredConversations.length === 0 ? (
-        <OpsEmptyState title="Nenhuma conversa">
-          {meta?.connected
-            ? "Use Importar para puxar DMs do Instagram ou aguarde novas mensagens via webhook."
-            : "Conecte o Instagram em Configurações para importar DMs."}
-        </OpsEmptyState>
-      ) : (
-        <PageScrollArea>
-          <ConversationInboxList
-            conversations={filteredConversations}
-            selectedId={selectedConversationId}
-            onSelect={(conversationId) => selectConversation(conversationId)}
-          />
-        </PageScrollArea>
-      )}
+
+        {leftPanelMode === "conversations" ? (
+          <div className="relative w-full min-w-0 sm:max-w-sm">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Buscar usuário ou ID…"
+              className="h-10 pl-10 text-sm focus-visible:ring-primary/40"
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 
+  const listBody: ReactNode =
+    leftPanelMode === "activity" ? (
+      <MessageActivityPanel
+        onSelect={handleActivitySelect}
+        refreshToken={activityRefreshToken}
+      />
+    ) : loadingConversations ? (
+      <OpsEmptyState>Carregando conversas…</OpsEmptyState>
+    ) : filteredConversations.length === 0 ? (
+      <OpsEmptyState
+        title={
+          conversations.length === 0 ? "Nenhuma conversa ainda" : "Nada encontrado"
+        }
+      >
+        {conversations.length === 0
+          ? meta?.connected
+            ? "Use Importar para puxar DMs do Instagram ou aguarde novas mensagens via webhook."
+            : "Conecte o Instagram em Configurações para importar DMs."
+          : "Tente outra busca por usuário ou ID."}
+      </OpsEmptyState>
+    ) : (
+      <ConversationInboxList
+        conversations={filteredConversations}
+        selectedId={selectedConversationId}
+        onSelect={(conversationId) => selectConversation(conversationId)}
+      />
+    );
+
   return (
     <PageContainer variant="fill">
-      <PageContainer.Content className="flex min-h-0 flex-1 flex-col gap-0 p-0">
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <aside className="hidden w-full max-w-md shrink-0 border-r border-border/60 md:flex md:flex-col">
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-              <h1 className="text-base font-semibold">Mensagens</h1>
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={syncingInbox || !meta?.connected || meta.messaging_supported === false}
-                  onClick={() => void handleSyncInbox()}
-                >
-                  {syncingInbox ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="size-4" />
-                  )}
-                  Importar
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  disabled={refreshingConversations}
-                  onClick={() => void loadConversations({ silent: true })}
-                >
-                  <RefreshCw
-                    className={cn("size-4", refreshingConversations && "animate-spin")}
-                  />
-                </Button>
-              </div>
-            </div>
-            {leftPanel}
-          </aside>
-
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col">
-            {inStage && selectedConversation ? (
-              <>
-                <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 md:hidden">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setListSheetOpen(true)}
-                  >
-                    <PanelLeft className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setSearchParams(new URLSearchParams())}
-                  >
-                    <ArrowLeft className="size-4" />
-                    Voltar
-                  </Button>
-                </div>
-                {loadingMessages ? (
-                  <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
-                    Carregando mensagens…
-                  </div>
-                ) : (
-                  <ConversationDetailPanel
-                    conversation={selectedConversation}
-                    messages={messages}
-                    brandUsername={meta?.igUsername}
-                    metaReady={Boolean(meta?.connected)}
-                    metaUnsupported={meta?.messaging_supported === false}
-                    canReply={selectedConversation?.can_reply !== false}
-                    syncing={syncing}
-                    savingReplyMode={savingReplyMode}
-                    savingBriefing={savingBriefing}
-                    approvingId={approvingId}
-                    removingDraftId={removingDraftId}
-                    savingDraftId={savingDraftId}
-                    generatingId={generatingId}
-                    replyMode={replyMode}
-                    replyPrompt={replyPrompt}
-                    onSync={() => void handleSync()}
-                    onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
-                    onReplyPromptChange={setReplyPrompt}
-                    onSaveBriefing={() => void handleSaveBriefing()}
-                    onApproveDraft={(id, draft) => void handleApproveDraft(id, draft)}
-                    onRemoveDraft={(id) => void handleRemoveDraft(id)}
-                    onSaveDraft={handleSaveDraft}
-                    onGenerateDraft={(id) => void handleGenerateDraft(id)}
-                    onManualReply={handleManualReply}
-                  />
-                )}
-              </>
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-                <OpsEmptyState title="Selecione uma conversa">
-                  Escolha uma DM na lista ou abra um item da atividade.
-                </OpsEmptyState>
-                <Button
-                  type="button"
-                  className="md:hidden"
-                  variant="outline"
-                  onClick={() => setListSheetOpen(true)}
-                >
-                  <PanelLeft className="size-4" />
-                  Abrir lista
-                </Button>
-              </div>
-            )}
-          </main>
+      {!meta?.connected && (
+        <div className="shrink-0 border-b border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:px-6">
+          Conecte o Instagram em{" "}
+          <Link
+            to={routes.settings}
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            configurações
+          </Link>{" "}
+          para importar DMs e sincronizar conversas.
         </div>
+      )}
 
-        <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-          <SheetContent side="left" className="flex w-full max-w-md flex-col p-0">
-            <SheetHeader className="border-b border-border/60 px-4 py-3 text-left">
-              <SheetTitle>Mensagens</SheetTitle>
-            </SheetHeader>
-            {leftPanel}
-          </SheetContent>
-        </Sheet>
-      </PageContainer.Content>
+      {meta?.connected && meta.messaging_supported === false ? (
+        <div className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
+          Mensagens diretas exigem uma Page do Facebook vinculada à conta
+          Instagram. Revise a conexão em configurações.
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive sm:px-6">
+          {error}
+        </p>
+      ) : null}
+
+      {!liveConnected && !isDemoMode ? (
+        <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-900 dark:text-amber-100 sm:px-6">
+          Atualização em tempo real indisponível. A lista será recarregada a cada
+          minuto nesta aba, ou use Importar para buscar conversas no Instagram.
+        </p>
+      ) : null}
+
+      {!inStage ? (
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">{listChrome}</div>
+          <PageScrollArea className="bg-transparent">{listBody}</PageScrollArea>
+        </div>
+      ) : selectedConversation ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 sm:px-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="min-h-11 gap-2"
+              onClick={clearStage}
+            >
+              <ArrowLeft className="size-4" />
+              Todas as conversas
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-11 gap-2"
+              onClick={() => setListSheetOpen(true)}
+            >
+              <PanelLeft className="size-4" />
+              Lista
+            </Button>
+            <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              {formatHandle(selectedConversation.participant_username)}
+            </p>
+          </div>
+
+          <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {loadingMessages ? (
+              <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Carregando mensagens…
+              </div>
+            ) : (
+              <ConversationDetailPanel
+                conversation={selectedConversation}
+                messages={messages}
+                brandUsername={meta?.igUsername}
+                metaReady={Boolean(meta?.connected)}
+                metaUnsupported={meta?.messaging_supported === false}
+                canReply={selectedConversation.can_reply !== false}
+                syncing={syncing}
+                savingReplyMode={savingReplyMode}
+                savingBriefing={savingBriefing}
+                approvingId={approvingId}
+                removingDraftId={removingDraftId}
+                savingDraftId={savingDraftId}
+                generatingId={generatingId}
+                replyMode={replyMode}
+                replyPrompt={replyPrompt}
+                onSync={() => void handleSync()}
+                onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
+                onReplyPromptChange={setReplyPrompt}
+                onSaveBriefing={() => void handleSaveBriefing()}
+                onApproveDraft={(id, draft) => void handleApproveDraft(id, draft)}
+                onRemoveDraft={(id) => void handleRemoveDraft(id)}
+                onSaveDraft={handleSaveDraft}
+                onGenerateDraft={(id) => void handleGenerateDraft(id)}
+                onManualReply={handleManualReply}
+              />
+            )}
+          </section>
+
+          <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
+            <SheetContent
+              side="left"
+              className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
+            >
+              <SheetHeader className="border-b border-border">
+                <SheetTitle className="font-display text-lg font-semibold">
+                  Mensagens
+                </SheetTitle>
+              </SheetHeader>
+              <div className="shrink-0 border-b p-4">{listChrome}</div>
+              <PageScrollArea>{listBody}</PageScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+          Carregando conversa…
+        </div>
+      )}
     </PageContainer>
   );
 }
