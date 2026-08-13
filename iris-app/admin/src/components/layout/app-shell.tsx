@@ -25,8 +25,8 @@ export function AppShell({
       <AppSidebar view={sidebarView} onViewChange={onSidebarViewChange} />
 
       <IrisSidebarInset>
-        {isDemoMode ? <DemoBanner /> : null}
         <AppHeader />
+        {isDemoMode ? <DemoBanner /> : null}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {children}
         </div>
