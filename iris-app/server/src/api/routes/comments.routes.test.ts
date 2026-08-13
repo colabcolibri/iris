@@ -272,6 +272,12 @@ test("GET comments posts returns published posts with counts", async () => {
       replyPrompt: "Briefing de teste",
       silenceKnowledge: true,
     });
+    ctx.assets.create({
+      postId: post.id,
+      storagePath: `${post.id}/cover.jpg`,
+      mime: "image/jpeg",
+      sortOrder: 1,
+    });
     ctx.comments.upsertFromWebhook({
       igCommentId: "ig-post-1",
       postId: post.id,
@@ -289,6 +295,8 @@ test("GET comments posts returns published posts with counts", async () => {
         comments_count: number;
         reply_prompt: string | null;
         silence_knowledge: boolean;
+        preview_url: string | null;
+        preview_filename: string | null;
       }>;
     };
 
@@ -297,6 +305,11 @@ test("GET comments posts returns published posts with counts", async () => {
     assert.equal(body.posts[0]?.comments_count, 1);
     assert.equal(body.posts[0]?.reply_prompt, "Briefing de teste");
     assert.equal(body.posts[0]?.silence_knowledge, true);
+    assert.equal(body.posts[0]?.preview_filename, "cover.jpg");
+    assert.equal(
+      body.posts[0]?.preview_url,
+      `/api/posts/${post.id}/assets/cover.jpg`,
+    );
   });
 });
 

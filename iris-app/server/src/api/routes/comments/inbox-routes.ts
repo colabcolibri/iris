@@ -8,6 +8,7 @@ import {
   firstPostMediaUrl,
   resolvePostMedia,
 } from "../../../domain/post-media/resolve-post-media.ts";
+import { filenameFromStoragePath } from "../../../domain/posts/publish-url.ts";
 import { getMetaReadiness } from "../../../domain/meta/meta-readiness.ts";
 import { requirePost } from "../../route-resources.ts";
 
@@ -45,8 +46,11 @@ export const commentsInboxRouter = createRouter([
       posts: await Promise.all(
         posts.map(async (post) => {
           const firstAsset = match.ctx.assets.listByPostId(post.postId)[0];
-          let previewUrl: string | null = firstAsset
-            ? `/api/posts/${post.postId}/assets/${encodeURIComponent(firstAsset.storagePath)}`
+          const previewFilename = firstAsset
+            ? filenameFromStoragePath(firstAsset.storagePath)
+            : null;
+          let previewUrl: string | null = previewFilename
+            ? `/api/posts/${post.postId}/assets/${encodeURIComponent(previewFilename)}`
             : null;
 
           if (!previewUrl && post.igMediaId && getMetaReadiness(match.ctx).ready) {
@@ -93,7 +97,7 @@ export const commentsInboxRouter = createRouter([
             reported_comments_count: post.reportedCommentsCount,
             comments_count: post.commentsCount,
             pending_count: post.pendingCount,
-            preview_filename: firstAsset?.storagePath ?? null,
+            preview_filename: previewFilename,
             preview_mime: firstAsset?.mime ?? null,
             preview_url: previewUrl,
           };
