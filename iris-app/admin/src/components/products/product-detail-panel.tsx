@@ -23,7 +23,7 @@ export function ProductDetailPanel({
   onDelete,
 }: ProductDetailPanelProps) {
   return (
-    <PagePanel className="min-h-0 flex-1 border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
+    <PagePanel className="flex min-h-0 flex-1 flex-col border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
       <PagePanel.Header
         title={product.name || "Produto sem nome"}
         description={
@@ -41,8 +41,8 @@ export function ProductDetailPanel({
           </label>
         }
       />
-      <PagePanel.Body className="flex min-h-0 flex-col overflow-hidden">
-        <PageScrollArea className="min-h-0 flex-1" contentClassName="space-y-5 p-4 sm:p-6">
+      <PagePanel.Body>
+        <PageScrollArea contentClassName="space-y-5 p-4 sm:p-6">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="product-edit-slug" className="text-sm font-semibold">

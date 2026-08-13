@@ -272,12 +272,12 @@ export function ProductsPage() {
         onDelete={() => void handleDelete()}
       />
     ) : selectedId ? (
-      <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+      <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
         <Loader2 className="mr-2 size-4 animate-spin" />
         Carregando produto…
       </div>
     ) : (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
         <OpsEmptyState title="Selecione um produto">
           Escolha um item na lista ao lado para editar ou use Novo para cadastrar.
         </OpsEmptyState>
@@ -286,30 +286,31 @@ export function ProductsPage() {
 
   return (
     <PageContainer variant="fill">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-border/60 px-4 py-4 sm:px-6">
-          {pageHeader}
-        </div>
+      <PageContainer.Content width="full" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 border-b border-border/60 px-4 py-4 sm:px-6">
+            {pageHeader}
+          </div>
 
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <aside
-            className={cn(
-              "flex min-h-0 flex-col border-border/60 md:w-[30%] md:min-w-[17.5rem] md:max-w-sm md:shrink-0 md:border-r",
-              inStage ? "hidden md:flex" : "flex w-full flex-1",
-            )}
-          >
-            <div className="shrink-0 border-b border-border/60 p-3">{listControls}</div>
-            <PageScrollArea className="min-h-0 flex-1 bg-transparent">
-              {listBody}
-            </PageScrollArea>
-          </aside>
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <aside
+              className={cn(
+                "flex min-h-0 flex-col overflow-hidden border-border/60 md:w-[30%] md:min-w-70 md:max-w-sm md:shrink-0 md:border-r",
+                inStage ? "hidden md:flex" : "flex w-full flex-1",
+              )}
+            >
+              <div className="shrink-0 border-b border-border/60 p-3">{listControls}</div>
+              <PageScrollArea className="min-h-0 flex-1 bg-transparent">
+                {listBody}
+              </PageScrollArea>
+            </aside>
 
-          <main
-            className={cn(
-              "flex min-h-0 min-w-0 flex-col",
-              inStage ? "flex w-full flex-1 md:w-[70%]" : "hidden md:flex md:flex-1",
-            )}
-          >
+            <main
+              className={cn(
+                "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+                inStage ? "w-full md:w-[70%]" : "hidden md:flex",
+              )}
+            >
             {inStage ? (
               <>
                 <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 md:hidden">
@@ -338,14 +339,15 @@ export function ProductsPage() {
             ) : (
               detailBody
             )}
-          </main>
+            </main>
+          </div>
         </div>
-      </div>
+      </PageContainer.Content>
 
       <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
         <SheetContent
           side="left"
-          className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
+          className="flex w-full max-w-md flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
         >
           <SheetHeader className="border-b border-border">
             <SheetTitle className="font-display text-lg font-semibold">
@@ -353,7 +355,7 @@ export function ProductsPage() {
             </SheetTitle>
           </SheetHeader>
           <div className="shrink-0 border-b p-3">{listControls}</div>
-          <PageScrollArea className="flex-1">{listBody}</PageScrollArea>
+          <PageScrollArea className="min-h-0 flex-1">{listBody}</PageScrollArea>
         </SheetContent>
       </Sheet>
     </PageContainer>

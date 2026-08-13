@@ -62,5 +62,9 @@ PagePanel.Body = function PagePanelBody({
   children,
   className,
 }: PagePanelBodyProps) {
-  return <div className={cn("min-h-0 flex-1", className)}>{children}</div>;
+  return (
+    <div className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}>
+      {children}
+    </div>
+  );
 };

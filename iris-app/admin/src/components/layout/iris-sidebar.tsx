@@ -10,32 +10,27 @@ import { cn } from "@/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
 
 const IRIS_SIDEBAR_WIDTH = "17.5rem";
-/** h-14 — fallback do AppHeader quando a medição ainda não rodou */
-const IRIS_HEADER_HEIGHT = "3.5rem";
 
 type IrisSidebarProviderProps = {
   children: ReactNode;
   className?: string;
-  /** Altura medida do stack banner + header (px). */
-  chromeTop?: string;
 };
 
+/** Sidebar em altura total à esquerda; header e páginas ficam no inset à direita. */
 export function IrisSidebarProvider({
   children,
   className,
-  chromeTop = IRIS_HEADER_HEIGHT,
 }: IrisSidebarProviderProps) {
   return (
     <SidebarProvider
       defaultOpen={false}
       className={cn(
-        "flex h-svh flex-col overflow-hidden bg-background",
+        "flex h-svh w-full overflow-hidden bg-background",
         className,
       )}
       style={
         {
           "--sidebar-width": IRIS_SIDEBAR_WIDTH,
-          "--iris-chrome-top": chromeTop,
         } as CSSProperties
       }
     >
@@ -53,10 +48,7 @@ export function IrisSidebar({ children, className }: IrisSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className={cn(
-        "!top-[var(--iris-chrome-top,3.5rem)] bottom-0 !h-auto max-h-none border-sidebar-border bg-sidebar shadow-none",
-        className,
-      )}
+      className={cn("border-sidebar-border bg-sidebar shadow-none", className)}
     >
       <SidebarContent
         className={cn(

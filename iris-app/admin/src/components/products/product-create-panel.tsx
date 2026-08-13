@@ -1,5 +1,6 @@
 import { Loader2, Plus } from "lucide-react";
 import { PagePanel } from "@/components/templates/page-panel";
+import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,13 +23,14 @@ export function ProductCreatePanel({
   onSubmit,
 }: ProductCreatePanelProps) {
   return (
-    <PagePanel className="min-h-0 flex-1 border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
+    <PagePanel className="flex min-h-0 flex-1 flex-col border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
       <PagePanel.Header
         title="Novo produto"
         description="Slug único usado na triagem. Nome e descrições podem ser editados depois."
       />
-      <PagePanel.Body className="p-4 sm:p-6">
-        <div className="mx-auto w-full max-w-2xl space-y-5">
+      <PagePanel.Body>
+        <PageScrollArea contentClassName="p-4 sm:p-6">
+          <div className="mx-auto w-full max-w-2xl space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="product-new-slug" className="text-sm font-semibold">
@@ -69,7 +71,8 @@ export function ProductCreatePanel({
             )}
             Criar produto
           </Button>
-        </div>
+          </div>
+        </PageScrollArea>
       </PagePanel.Body>
     </PagePanel>
   );

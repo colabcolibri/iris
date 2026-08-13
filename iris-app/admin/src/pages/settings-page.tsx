@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { TIMEZONE_OPTIONS } from "@iris/domain/timezone";
-import { PreferencesAccordion } from "@/components/templates/preferences-accordion";
-import { PreferencesPageShell } from "@/components/templates/preferences-page-shell";
+import {
+  PreferencesSplitLayout,
+  type PreferencesSection,
+} from "@/components/templates/preferences-split-layout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
@@ -47,7 +49,7 @@ function TimezoneSection() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5">
+    <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="timezone" className="text-sm font-semibold">
           Fuso horário editorial
@@ -88,68 +90,58 @@ function TimezoneSection() {
   );
 }
 
+const SETTINGS_SECTIONS: PreferencesSection[] = [
+  {
+    id: "timezone",
+    title: "Fuso horário editorial",
+    description: "Datas e horários no calendário e agendamentos.",
+    content: <TimezoneSection />,
+  },
+  {
+    id: "auto-monitor",
+    title: "Auto-monitoramento",
+    description: "Poll de mídias novas no Instagram.",
+    content: <AutoMonitorCard embedded />,
+  },
+  {
+    id: "insights",
+    title: "Insights em lote",
+    description: "Atualizar métricas dos posts publicados.",
+    content: <InsightsRefreshCard embedded />,
+  },
+  {
+    id: "comment-agent",
+    title: "Agente de comentários",
+    description: "Modo global e fila de resposta pública.",
+    content: <AgentAutoReplyCard embedded />,
+  },
+  {
+    id: "message-agent",
+    title: "Agente de DMs",
+    description: "Modo global e fila no inbox privado.",
+    content: <MessageAgentAutoReplyCard embedded />,
+  },
+  {
+    id: "mcp",
+    title: "Conexão MCP",
+    description: "Cursor, ChatGPT ou Claude.",
+    content: <McpConnectionCard embedded />,
+  },
+  {
+    id: "llm",
+    title: "Provedor de IA",
+    description: "API key, URL e modelo dos agentes.",
+    content: <LlmSettingsCard embedded />,
+  },
+];
+
 export function SettingsPage() {
   return (
-    <PreferencesPageShell
+    <PreferencesSplitLayout
       eyebrow="Preferências"
       title="Configurações"
-      description="Fuso horário editorial, monitoramento Instagram, insights em lote, conexão MCP e provedor de IA."
-    >
-      <PreferencesAccordion
-        className="mx-auto w-full max-w-4xl"
-        defaultOpen={["timezone", "auto-monitor"]}
-        sections={[
-          {
-            id: "timezone",
-            title: "Fuso horário editorial",
-            description:
-              "Define como datas e horários aparecem no calendário e nos agendamentos.",
-            content: <TimezoneSection />,
-          },
-          {
-            id: "auto-monitor",
-            title: "Auto-monitoramento de publicações",
-            description:
-              "Descobre mídias novas no Instagram (poll) e cadastra posts monitorados.",
-            content: <AutoMonitorCard embedded />,
-          },
-          {
-            id: "insights",
-            title: "Insights Instagram em lote",
-            description:
-              "Atualiza métricas dos posts publicados ou monitorados.",
-            content: <InsightsRefreshCard embedded />,
-          },
-          {
-            id: "comment-agent",
-            title: "Agente de comentários",
-            description:
-              "Modo padrão e fila de resposta para comentários públicos.",
-            content: <AgentAutoReplyCard embedded />,
-          },
-          {
-            id: "message-agent",
-            title: "Agente de mensagens (DM)",
-            description:
-              "Modo padrão e fila de resposta para conversas privadas.",
-            content: <MessageAgentAutoReplyCard embedded />,
-          },
-          {
-            id: "mcp",
-            title: "Conexão MCP",
-            description:
-              "Integração com Cursor, ChatGPT ou Claude via Model Context Protocol.",
-            content: <McpConnectionCard embedded />,
-          },
-          {
-            id: "llm",
-            title: "Provedor de IA",
-            description:
-              "API key, URL e modelo usados pelos agentes de resposta automática.",
-            content: <LlmSettingsCard embedded />,
-          },
-        ]}
-      />
-    </PreferencesPageShell>
+      description="Fuso horário, monitoramento, insights, agentes, MCP e provedor de IA."
+      sections={SETTINGS_SECTIONS}
+    />
   );
 }

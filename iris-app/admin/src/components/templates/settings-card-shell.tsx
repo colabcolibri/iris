@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type SettingsCardShellProps = {
   title: string;
   description?: string;
-  /** Quando true, omite o Card e o cabeçalho (uso dentro de PreferencesAccordion). */
+  /** Quando true, omite o Card e o cabeçalho (uso dentro de PreferencesSplitLayout). */
   embedded?: boolean;
   className?: string;
   children: ReactNode;
