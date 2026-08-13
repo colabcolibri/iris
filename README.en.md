@@ -125,7 +125,7 @@ Cursor, Claude, or ChatGPT can create and schedule posts. They **do not** publis
 | **REST** (`/api/*`) | `IRIS_AGENT_TOKEN` | Scripts, CI, push from `publications/` |
 | **MCP** (`POST /mcp`) | connection code (UI or `IRIS_MCP_CONNECTION_CODE`) | Chat: create/edit posts, media, calendar, comments |
 
-MCP tools (summary): `iris_list_posts`, `iris_get_post`, `iris_create_post`, `iris_update_post`, `iris_list_post_assets`, `iris_prepare_post_asset_upload`, `iris_delete_post_asset`, `iris_generate_post_carousel_summary`, `iris_list_post_comments`, plus reply-context and insights tools.
+MCP tools (summary): posts, media, comments, DMs (`iris_list_conversations`, `iris_get_message_reply_context`), product catalog (`iris_list_products`, …), agent persona/content, simulator, and insights — full list in `docs/07_api_contracts.md` (38 tools).
 
 Per-client setup: [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md).
 

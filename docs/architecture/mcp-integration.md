@@ -8,7 +8,7 @@ O Iris expõe um **servidor MCP** (Model Context Protocol) para que clientes com
 | --- | ----- |
 | Endpoint de protocolo em `POST /mcp` (Streamable HTTP) | Página HTML em `/mcp` para humanos ou IAs lerem |
 | Auth com `IRIS_MCP_CONNECTION_CODE` (Bearer) | Substituição do `IRIS_AGENT_TOKEN` REST |
-| Tools: posts, upload, comentários | Publish direto no Instagram (continua no worker) |
+| Tools: posts, upload, comentários, DMs, produtos | Publish direto no Instagram (continua no worker) |
 | Complemento ao REST / skill `push-publication` | OAuth 2.1 (v1.6 usa Bearer fixo da config) |
 
 **Padrão web:** clientes MCP descobrem capacidades no handshake (`initialize` → `tools/list`). Não existe URL “de documentação” obrigatória no protocolo. Para **configurar** a conexão, use este arquivo, `docs/08_environments.md` e a skill `mcp-connection` no kit `iris-agent/`.
@@ -74,12 +74,23 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_delete_post_asset` | Remove asset (row + arquivo em `data/media/`) |
 | `iris_generate_post_carousel_summary` | Gera só `carousel_summary` (resumo visual) via vision no server — **não** altera `reply_prompt` |
 | `iris_list_post_comments` | Comentários sincronizados do post |
+| `iris_get_reply_context` | Contexto completo para resposta a comentário (thread, persona, post) |
 | `iris_list_conversations` | Conversas DM recentes (`limit` opcional) |
 | `iris_list_conversation_messages` | Mensagens de uma conversa (com rascunho quando houver) |
 | `iris_get_message_reply_context` | Contexto completo para resposta DM (thread, persona, produtos) |
 | `iris_get_message_agent_content` | Blocos Markdown DM (`dm_soul`, `dm_page`, `dm_knowledge`, `dm_restrictions`) |
 | `iris_update_message_agent_content` | Atualiza blocos DM (campos parciais aceitos) |
+| `iris_list_products` | Catálogo de produtos (`active_only` opcional) — usado na triagem DM |
+| `iris_get_product` | Produto por id |
+| `iris_create_product` | Cria produto (`slug`, `name`, descrição, preço, link, `active`) |
+| `iris_update_product` | Atualiza produto (campos parciais) |
+| `iris_delete_product` | Remove produto |
+| `iris_get_post_insights` | Insights do post (cache 1h; `force`/`refresh`) |
+| `iris_get_post_insights_history` | Snapshots persistidos de insights |
+| `iris_get_account_insights` | Insights da conta IG (`period`, `since`, `until`, `metrics`) |
 | `iris_refresh_all_post_insights` | Refresh em lote; `since`/`until` ISO filtram `published_at` |
+| `iris_refresh_media_insights_page` | Uma página `/me/media` + field expansion |
+| `iris_list_webhooks` | Eventos Meta recentes (leitura) |
 | `iris_get_reply_persona` | Persona de resposta (`brand_name`, `signature_instruction`, `response_language`, `max_chars`) |
 | `iris_update_reply_persona` | Atualiza persona (campos parciais aceitos) |
 | `iris_get_agent_content` | Blocos Markdown (`soul`, `page`, `knowledge`, `restrictions`) |
@@ -101,7 +112,7 @@ Bytes **não** entram no JSON-RPC. Fluxo:
 
 Requisitos: `IRIS_PUBLIC_BASE_URL` + `IRIS_PUBLISH_URL_SECRET`. URL one-shot (~5 min). Clientes sem shell (ex.: ChatGPT connector puro) devem subir pela UI admin.
 
-Escopo equivalente ao token **agent** REST — persona e conteúdo editorial do agente; sem tokens Meta, LLM settings nem rotas admin-only.
+Escopo equivalente ao token **agent** REST — posts, comentários, DMs (leitura/contexto), produtos, persona e conteúdo editorial; sem tokens Meta, LLM settings nem rotas admin-only (ex.: aprovar/enviar reply, OAuth Meta, gerenciar código MCP).
 
 ---
 

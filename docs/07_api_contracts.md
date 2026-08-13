@@ -84,9 +84,9 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 
 **Headers:** `Accept: application/json, text/event-stream` em `POST /mcp`.
 
-**Escopo MCP:** equivalente ao token agent — posts, assets, comentários, insights, webhooks (leitura), persona e conteúdo editorial do agente. Sem LLM settings nem OAuth Meta.
+**Escopo MCP:** equivalente ao token agent — posts, assets, comentários, mensagens DM (leitura/contexto), insights, webhooks (leitura), catálogo de produtos, persona e conteúdo editorial do agente (comentários e DM). Sem LLM settings nem OAuth Meta.
 
-### MCP tools (21)
+### MCP tools (38)
 
 | Tool | Equivalente REST | Descrição |
 | ---- | ---------------- | --------- |
@@ -97,6 +97,7 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_cancel_post` | `DELETE /api/posts/:id` | Soft-delete → `cancelled`. Exige `confirmPhrase: "cancelar"` após o usuário confirmar |
 | `iris_purge_cancelled_post` | `DELETE /api/posts/:id/permanent` | Apaga do banco só se já estiver `cancelled`. Exige `confirmPhrase: "deletar"` após o usuário confirmar |
 | `iris_list_post_assets` | `GET /api/posts/:id/assets` | Metadados + `url` assinada (`/publish/media/…`) |
+| `iris_update_post_asset` | `PATCH /api/posts/:id/assets/:assetId` | Atualiza `altText` e/ou `userTags` (`[{username,x,y}]`) |
 | `iris_prepare_post_asset_upload` | `POST /upload/assets/:sig/:postId` | Prepara URL assinada; host faz `curl -F file=@…` (sem base64) |
 | `iris_delete_post_asset` | `DELETE /api/posts/:id/assets/:assetId` | Remove asset (row + arquivo) |
 | `iris_generate_post_carousel_summary` | `POST /api/posts/:id/generate-carousel-summary` | Vision no server → grava `carousel_summary` |
@@ -122,6 +123,11 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_simulate_reply` | `POST /api/agent/simulate` | Harness sandbox comentários ou DM (`channel=dm`) — não publica na Meta |
 | `iris_get_message_agent_content` | `GET /api/settings/message-agent-content` | Blocos DM |
 | `iris_update_message_agent_content` | `PUT /api/settings/message-agent-content` | Atualiza blocos DM |
+| `iris_list_products` | `GET /api/products` | Catálogo de produtos (`active_only` opcional) |
+| `iris_get_product` | — | Produto por id (MCP usa repositório direto; REST expõe só listagem) |
+| `iris_create_product` | `POST /api/products` | Cria produto (`slug`, `name`, …) |
+| `iris_update_product` | `PATCH /api/products/:id` | Atualiza produto (campos parciais) |
+| `iris_delete_product` | `DELETE /api/products/:id` | Remove produto |
 
 ### MCP post tools — `iris_get_post` / `iris_update_post`
 
