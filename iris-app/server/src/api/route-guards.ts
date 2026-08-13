@@ -2,7 +2,7 @@ import { requireAdmin } from "./auth.ts";
 import { sendError } from "./json.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  sendMetaReadinessError,
 } from "../domain/meta/meta-readiness.ts";
 import type { RouteMatch } from "./route-types.ts";
 
@@ -25,7 +25,7 @@ export function guardAdminOrAgent(match: RouteMatch): boolean {
 export function guardMetaReady(match: RouteMatch): boolean {
   const readiness = getMetaReadiness(match.ctx);
   if (!readiness.ready) {
-    sendError(match.res, 503, metaReadinessMessage(readiness));
+    sendMetaReadinessError(match.res, readiness);
     return false;
   }
   return true;

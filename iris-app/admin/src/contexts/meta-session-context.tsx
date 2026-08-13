@@ -33,11 +33,23 @@ export function MetaSessionProvider({ children }: { children: ReactNode }) {
 
   const handleMetaHealth = useCallback(async () => {
     try {
-      const result = await fetchMetaHealth();
-      if (result.ok) toast.success("Conexão com a Meta OK.");
-      else toast.error(result.message ?? "Falha na conexão.");
-    } catch {
-      toast.error("Falha ao testar conexão.");
+      const result = await fetchMetaHealth({ messaging: true });
+      if (!result.ok) {
+        toast.error(result.message ?? "Falha na conexão.");
+        return;
+      }
+      if (result.messaging && !result.messaging.ok) {
+        toast.error(
+          result.messaging.message ??
+            "Sem permissão para enviar mensagens. Reconecte o Instagram.",
+        );
+        return;
+      }
+      toast.success("Conexão com a Meta OK (incluindo mensagens).");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao testar conexão.",
+      );
     }
   }, []);
 

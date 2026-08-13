@@ -63,6 +63,11 @@ export function recoverOrphanedMessageDraft(
 
 export function resolveMessageDraftText(message: Message, ctx: AppContext): string | null {
   const current = ctx.messages.findById(message.id) ?? message;
+  const sent = ctx.messageReplies.findLatestSentReply(current.id);
+  if (sent?.sentText?.trim()) {
+    return null;
+  }
+
   const stored = ctx.messageReplies.findLatestDraft(current.id);
   if (stored?.draftText?.trim()) {
     return stored.draftText.trim();

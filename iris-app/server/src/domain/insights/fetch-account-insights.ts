@@ -2,7 +2,7 @@ import type { AppContext } from "../../api/app-context.ts";
 import { ValidationError } from "../../api/json.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  MetaNotConnectedError,
 } from "../meta/meta-readiness.ts";
 import { STANDARD_ACCOUNT_INSIGHT_METRICS } from "../meta/media-insight-metrics.ts";
 import type { MediaInsightMetric } from "../../ports/meta-insights-reader.ts";
@@ -51,7 +51,7 @@ export async function fetchAccountInsights(
 ): Promise<AccountInsightsResponse> {
   const readiness = getMetaReadiness(ctx);
   if (!readiness.ready) {
-    throw new ValidationError(metaReadinessMessage(readiness));
+    throw new MetaNotConnectedError(readiness);
   }
 
   const igUserId = ctx.metaConnectionStore.get()?.igUserId;

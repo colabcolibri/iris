@@ -25,6 +25,60 @@ type GraphUserResponse = {
   error?: { message?: string; code?: number; type?: string };
 };
 
+export async function checkMetaMessagingAccess(
+  options: MetaHealthCheckOptions,
+): Promise<MetaHealthResult> {
+  const version = options.graphApiVersion ?? "v21.0";
+  const fetchFn = options.fetchImpl ?? fetch;
+  const url = new URL(
+    `https://graph.instagram.com/${version}/${options.igUserId}/conversations`,
+  );
+  url.searchParams.set("platform", "instagram");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("fields", "id");
+
+  try {
+    const response = await fetchFn(url.toString(), {
+      headers: { Authorization: `Bearer ${options.token}` },
+    });
+    const json = (await response.json()) as GraphUserResponse;
+
+    if (response.ok && Array.isArray((json as { data?: unknown[] }).data)) {
+      return { ok: true, code: "ok" };
+    }
+
+    const errorCode = json.error?.code;
+    if (errorCode === 190) {
+      return {
+        ok: false,
+        code: "token_expired",
+        message: "Token expirado ou inválido.",
+      };
+    }
+
+    if (errorCode === 10 || errorCode === 200) {
+      return {
+        ok: false,
+        code: "permission_denied",
+        message:
+          "Permissão instagram_business_manage_messages ausente. Reconecte o Instagram no admin.",
+      };
+    }
+
+    return {
+      ok: false,
+      code: "unknown",
+      message: json.error?.message ?? "Falha ao verificar acesso a mensagens.",
+    };
+  } catch {
+    return {
+      ok: false,
+      code: "network",
+      message: "Não foi possível contactar a Meta.",
+    };
+  }
+}
+
 export async function checkMetaConnection(
   options: MetaHealthCheckOptions,
 ): Promise<MetaHealthResult> {

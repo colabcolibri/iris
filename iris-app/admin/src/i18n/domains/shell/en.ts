@@ -12,6 +12,7 @@ export const shellEn = {
     comments: "Comments",
     messages: "Messages",
     products: "Products",
+    stores: "Stores",
     webhooks: "Webhooks",
     simulator: "Simulator",
     agentRuns: "Runs",

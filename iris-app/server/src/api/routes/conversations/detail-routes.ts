@@ -3,7 +3,7 @@ import { createRouter, route } from "../../router.ts";
 import { notifyMessagesChanged } from "../../../adapters/sse/event-bus.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  sendMetaReadinessError,
 } from "../../../domain/meta/meta-readiness.ts";
 import {
   isConversationReplyModeSetting,
@@ -42,7 +42,7 @@ export const conversationsDetailRouter = createRouter([
   route("POST", "/api/conversations/sync", { admin: true, metaReady: true }, async (match) => {
     const readiness = getMetaReadiness(match.ctx);
     if (!readiness.ready) {
-      sendError(match.res, 503, metaReadinessMessage(readiness));
+      sendMetaReadinessError(match.res, readiness);
       return;
     }
 
@@ -125,7 +125,7 @@ export const conversationsDetailRouter = createRouter([
 
       const readiness = getMetaReadiness(match.ctx);
       if (!readiness.ready) {
-        sendError(match.res, 503, metaReadinessMessage(readiness));
+        sendMetaReadinessError(match.res, readiness);
         return;
       }
 

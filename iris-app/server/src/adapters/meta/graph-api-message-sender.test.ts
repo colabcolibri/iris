@@ -18,6 +18,8 @@ test("graph api message sender posts recipient payload", async () => {
       fetchImpl: async (url, init) => {
         capturedUrl = String(url);
         capturedBody = String(init?.body ?? "");
+        const headers = new Headers(init?.headers);
+        assert.equal(headers.get("Authorization"), "Bearer token-1");
         return new Response(JSON.stringify({ message_id: "mid-sent-1" }), {
           status: 200,
         });
@@ -27,7 +29,8 @@ test("graph api message sender posts recipient payload", async () => {
 
   const result = await sender.sendText("user-42", "olá!");
   assert.equal(result.publishedIgMessageId, "mid-sent-1");
-  assert.match(capturedUrl, /\/ig-page-1\/messages/);
+  assert.match(capturedUrl, /\/ig-page-1\/messages$/);
+  assert.doesNotMatch(capturedUrl, /access_token=/);
   assert.match(capturedBody, /user-42/);
 });
 

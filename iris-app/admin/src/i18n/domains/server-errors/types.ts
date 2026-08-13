@@ -6,6 +6,8 @@ export type ServerErrorsMessages = {
   META_NO_IG_USER: string;
   PUBLISH_NOT_CONFIGURED: string;
   RATE_LIMITED: string;
+  MESSAGING_WINDOW_EXPIRED: string;
+  META_SEND_FAILED: string;
   CONTACT_INVALID: string;
   REQUEST_FAILED: string;
   INTERNAL_ERROR: string;

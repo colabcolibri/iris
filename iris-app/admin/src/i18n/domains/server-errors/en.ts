@@ -8,6 +8,9 @@ export const serverErrorsEn = {
   META_NO_IG_USER: "Instagram account not configured. Connect in settings.",
   PUBLISH_NOT_CONFIGURED: "Publishing not configured. Check Meta connection.",
   RATE_LIMITED: "Rate limit reached. Try again shortly.",
+  MESSAGING_WINDOW_EXPIRED:
+    "Meta's 24h messaging window expired. You can only reply within that window after the customer's last message.",
+  META_SEND_FAILED: "Meta rejected the send: {message}",
   CONTACT_INVALID: "Fill in all form fields correctly.",
   REQUEST_FAILED: "Request failed ({status}).",
   INTERNAL_ERROR: "Internal error. Try again.",

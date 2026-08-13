@@ -42,7 +42,7 @@ test("evaluateMetaReadiness fails when token expired", () => {
   assert.equal(result.reason, "token_expired");
 });
 
-test("assertMetaReadyForSchedule throws MetaNotConnectedError", () => {
+test("assertMetaReadyForSchedule throws MetaNotConnectedError with code", () => {
   const ctx = {
     metaTokenStore: { getActiveToken: () => null },
     metaConnectionStore: { get: () => null },
@@ -53,5 +53,11 @@ test("assertMetaReadyForSchedule throws MetaNotConnectedError", () => {
     },
   } as unknown as AppContext;
 
-  assert.throws(() => assertMetaReadyForSchedule(ctx), MetaNotConnectedError);
+  assert.throws(() => assertMetaReadyForSchedule(ctx), (error: unknown) => {
+    return (
+      error instanceof MetaNotConnectedError &&
+      error.code === "META_NOT_CONNECTED" &&
+      error.details.reason === "no_token"
+    );
+  });
 });

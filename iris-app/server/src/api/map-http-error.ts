@@ -1,11 +1,21 @@
 import type { ServerResponse } from "node:http";
-import { BodyTooLargeError, sendApiError, sendError, ValidationError } from "./json.ts";
+import {
+  BodyTooLargeError,
+  sendCodedError,
+  sendError,
+  ValidationError,
+} from "./json.ts";
 import { MultipartParseError } from "./multipart.ts";
 import { MetaNotConnectedError } from "../domain/meta/meta-readiness.ts";
 import { PublishNotConfiguredError } from "../domain/posts/publish-post.ts";
 import { AssetIngestError } from "../domain/posts/asset-ingest.ts";
 import { ImageOptimizationError } from "../ports/image-optimizer.ts";
 import { MetaConversationsRateLimitError } from "../adapters/meta/graph-api-conversations-reader.ts";
+import {
+  MetaMessageSendError,
+  MetaMessageWindowExpiredError,
+} from "../ports/meta-message-sender.ts";
+import { ErrorCodes } from "../domain/errors/error-codes.ts";
 
 export type MapHttpErrorOptions = {
   upstream502?: boolean;
@@ -17,12 +27,12 @@ export function mapHttpError(
   options: MapHttpErrorOptions = {},
 ): void {
   if (error instanceof MetaNotConnectedError) {
-    sendApiError(res, 422, error.message, error.code);
+    sendCodedError(res, 422, error.code, error.details);
     return;
   }
 
   if (error instanceof PublishNotConfiguredError) {
-    sendApiError(res, 503, error.message, error.code);
+    sendCodedError(res, 503, error.code);
     return;
   }
 
@@ -42,17 +52,32 @@ export function mapHttpError(
   }
 
   if (error instanceof ValidationError) {
-    sendError(res, 422, error.message);
+    sendCodedError(res, 422, error.code, error.details);
     return;
   }
 
   if (error instanceof BodyTooLargeError) {
-    sendError(res, 413, error.message);
+    sendCodedError(res, 413, error.code);
     return;
   }
 
   if (error instanceof MetaConversationsRateLimitError) {
-    sendError(res, 429, error.message);
+    sendCodedError(res, 429, error.code);
+    return;
+  }
+
+  if (error instanceof MetaMessageWindowExpiredError) {
+    sendCodedError(res, 422, ErrorCodes.MESSAGING_WINDOW_EXPIRED, {
+      message: error.message,
+    });
+    return;
+  }
+
+  if (error instanceof MetaMessageSendError) {
+    const status = error.code === "rate_limit" ? 429 : 502;
+    const code =
+      error.code === "rate_limit" ? ErrorCodes.RATE_LIMITED : ErrorCodes.META_SEND_FAILED;
+    sendCodedError(res, status, code, { message: error.message });
     return;
   }
 

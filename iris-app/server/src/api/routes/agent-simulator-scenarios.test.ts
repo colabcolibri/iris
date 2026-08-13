@@ -168,7 +168,10 @@ test("POST simulate accepts scenario_id and validates missing scenario", async (
       body: JSON.stringify({ scenario_id: "jogo-grok" }),
     });
     assert.equal(noLlm.status, 422);
-    const body = (await noLlm.json()) as { error: string };
-    assert.match(body.error, /LLM is not configured/);
+    const body = (await noLlm.json()) as {
+      error: { code: string; details?: { message?: string } };
+    };
+    assert.equal(body.error.code, "VALIDATION_FAILED");
+    assert.match(body.error.details?.message ?? "", /LLM is not configured/);
   });
 });

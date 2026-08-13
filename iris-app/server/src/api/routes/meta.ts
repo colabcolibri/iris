@@ -3,10 +3,10 @@ import type { AuthContext } from "../auth.ts";
 import { requireAdmin } from "../auth.ts";
 import type { AppContext } from "../app-context.ts";
 import { sendError, sendJson } from "../json.ts";
-import { checkMetaConnection } from "../../adapters/meta/meta-health-check.ts";
+import { checkMetaConnection, checkMetaMessagingAccess } from "../../adapters/meta/meta-health-check.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  sendMetaReadinessError,
 } from "../../domain/meta/meta-readiness.ts";
 
 type RouteRequest = {
@@ -70,6 +70,7 @@ export async function handleMetaRoute(request: RouteRequest): Promise<boolean> {
   if (pathname === "/api/meta/health") {
     const token = ctx.metaTokenStore.getActiveToken();
     const connection = ctx.metaConnectionStore.get();
+    const url = new URL(req.url ?? "/", "http://localhost");
 
     if (!token || !connection?.igUserId) {
       sendJson(res, 200, {
@@ -86,14 +87,26 @@ export async function handleMetaRoute(request: RouteRequest): Promise<boolean> {
       graphApiVersion: ctx.graphApiVersion,
     });
 
-    sendJson(res, 200, result);
+    const messaging =
+      result.ok && url.searchParams.get("messaging") === "1"
+        ? await checkMetaMessagingAccess({
+            igUserId: connection.igUserId,
+            token,
+            graphApiVersion: ctx.graphApiVersion,
+          })
+        : null;
+
+    sendJson(res, 200, {
+      ...result,
+      ...(messaging ? { messaging } : {}),
+    });
     return true;
   }
 
   if (pathname === "/api/meta/media/browse") {
     const readiness = getMetaReadiness(ctx);
     if (!readiness.ready) {
-      sendError(res, 503, metaReadinessMessage(readiness));
+      sendMetaReadinessError(res, readiness);
       return true;
     }
 

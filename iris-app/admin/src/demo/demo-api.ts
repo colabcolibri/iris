@@ -507,6 +507,7 @@ async function handleMutation(
     if (message) {
       message.status = "replied";
       message.linked_reply_text = message.draft_text ?? message.text;
+      message.draft_text = null;
       message.draft_status = null;
     }
     return noopMutation(message ?? { ok: true });

@@ -42,12 +42,26 @@ test("email helpers escape untrusted content", () => {
   );
 });
 
+test("buildAdminLoginEmailContent returns html and text in English", () => {
+  const content = buildAdminLoginEmailContent({
+    code: "482917",
+    ttlMinutes: 10,
+    locale: "en",
+  });
+  assert.equal(content.subject, "Your sign-in code — Iris");
+  assert.match(content.text, /482917/);
+  assert.match(content.html, /482917/);
+  assert.match(content.html, /expires in 10 minutes/);
+  assert.match(content.html, /lang="en-US"/);
+});
+
 test("buildAdminLoginEmailContent returns html and text", () => {
   const content = buildAdminLoginEmailContent({ code: "482917", ttlMinutes: 10 });
   assert.equal(content.subject, "Seu código de acesso — Iris");
   assert.match(content.text, /482917/);
   assert.match(content.html, /482917/);
   assert.match(content.html, /expira em 10 minutos/);
+  assert.match(content.html, /lang="pt-BR"/);
 });
 
 test("buildContactFormEmailContent returns html and text", () => {

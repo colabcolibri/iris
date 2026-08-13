@@ -2,7 +2,7 @@ import type { AppContext } from "../../api/app-context.ts";
 import { ValidationError } from "../../api/json.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  MetaNotConnectedError,
 } from "../meta/meta-readiness.ts";
 import {
   likesFromInsightMetrics,
@@ -31,7 +31,7 @@ export async function refreshMediaInsightsPage(
 ): Promise<RefreshMediaInsightsPageResult> {
   const readiness = getMetaReadiness(ctx);
   if (!readiness.ready) {
-    throw new ValidationError(metaReadinessMessage(readiness));
+    throw new MetaNotConnectedError(readiness);
   }
 
   const page = await ctx.metaInsightsReader.listMediaPageWithInsights({

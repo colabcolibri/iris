@@ -67,11 +67,13 @@ export function createGraphApiMessageSender(
       }
 
       const url = new URL(`${base}/${igUserId}/messages`);
-      url.searchParams.set("access_token", token);
 
       const response = await fetchFn(url.toString(), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           recipient: { id: recipientIgUserId },
           message: { text },

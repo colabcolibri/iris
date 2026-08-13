@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { MetaMessageSendError } from "../../ports/meta-message-sender.ts";
 import { createServer } from "../http-server.ts";
 
 const ADMIN = "conv-admin";
@@ -100,6 +101,60 @@ test("GET /api/conversations/activity returns pending approval", async () => {
     };
     assert.equal(body.items.length, 1);
     assert.equal(body.items[0]?.message_id, message.id);
+  });
+});
+
+test("POST /api/messages/:id/approve-reply returns 502 when Meta send fails", async () => {
+  await withServer(async (baseUrl, ctx) => {
+    const { conversation } = ctx.conversations.upsert({
+      igConversationId: "ig:approve-fail",
+      participantIgUserId: "approve-fail",
+    });
+
+    const { message } = ctx.messages.upsertInbound({
+      igMessageId: "ig-approve-fail-msg",
+      conversationId: conversation.id,
+      text: "oi",
+      igTimestamp: new Date().toISOString(),
+    });
+
+    ctx.messageReplies.upsertDraft({
+      messageId: message.id,
+      draftText: "Resposta sugerida",
+    });
+
+    const originalSender = ctx.metaMessageSender;
+    ctx.metaMessageSender = {
+      sendText: async () => {
+        throw new MetaMessageSendError("Meta API error (500)", "send_failed");
+      },
+    };
+
+    try {
+      const response = await fetch(`${baseUrl}/api/messages/${message.id}/approve-reply`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ADMIN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      assert.equal(response.status, 502);
+      const body = (await response.json()) as { error: { code: string } };
+      assert.equal(body.error.code, "META_SEND_FAILED");
+
+      const messages = await fetch(`${baseUrl}/api/conversations/${conversation.id}/messages`, {
+        headers: { Authorization: `Bearer ${ADMIN}` },
+      });
+      const messagesBody = (await messages.json()) as {
+        messages: Array<{ draft_text: string | null; status: string }>;
+      };
+      const updated = messagesBody.messages.find((item) => item.status === "failed");
+      assert.ok(updated);
+      assert.equal(updated?.draft_text, "Resposta sugerida");
+    } finally {
+      ctx.metaMessageSender = originalSender;
+    }
   });
 });
 

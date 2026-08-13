@@ -3,6 +3,7 @@ import type { AppContext } from "../app-context.ts";
 import {
   BodyTooLargeError,
   readJsonBody,
+  sendCodedError,
   sendError,
   sendJson,
   ValidationError,
@@ -11,10 +12,9 @@ import {
   ContactFormError,
   submitContactForm,
 } from "../../domain/contact/contact-form.ts";
-import {
-  contactIpRateLimiter,
-  formatContactIpRateLimitMessage,
-} from "../../domain/contact/contact-rate-limit.ts";
+import { contactIpRateLimiter } from "../../domain/contact/contact-rate-limit.ts";
+import { ErrorCodes } from "../../domain/errors/error-codes.ts";
+import { parseServerLocale } from "../../i18n/locale.ts";
 import { resolveClientIp } from "../request-client-ip.ts";
 
 export async function handleContactRoute(
@@ -36,7 +36,10 @@ export async function handleContactRoute(
     });
     res.end(
       JSON.stringify({
-        error: formatContactIpRateLimitMessage(rateLimit.retryAfterSeconds),
+        error: {
+          code: ErrorCodes.RATE_LIMITED,
+          details: { retryAfterSeconds: rateLimit.retryAfterSeconds },
+        },
       }),
     );
     return true;
@@ -50,7 +53,12 @@ export async function handleContactRoute(
       message?: unknown;
       pageUrl?: unknown;
       website?: unknown;
+      locale?: unknown;
     }>(req);
+
+    const locale = parseServerLocale(
+      typeof body.locale === "string" ? body.locale : undefined,
+    );
 
     const result = await submitContactForm(
       {
@@ -60,8 +68,9 @@ export async function handleContactRoute(
         message: typeof body.message === "string" ? body.message : "",
         pageUrl: typeof body.pageUrl === "string" ? body.pageUrl : undefined,
         website: typeof body.website === "string" ? body.website : undefined,
+        locale,
       },
-      { emailSender: ctx.emailSender },
+      { emailSender: ctx.emailSender, locale },
     );
 
     sendJson(res, 200, result);
@@ -74,23 +83,26 @@ export async function handleContactRoute(
 
 function handleContactError(res: ServerResponse, error: unknown): void {
   if (error instanceof ContactFormError) {
-    const status =
-      error.code === "email_not_configured"
-        ? 503
-        : error.code === "email_failed"
-          ? 502
-          : 400;
-    sendError(res, status, error.message);
+    if (
+      error.code === "email_not_configured" ||
+      error.code === "email_failed"
+    ) {
+      const status = error.code === "email_not_configured" ? 503 : 502;
+      sendError(res, status, error.message);
+      return;
+    }
+
+    sendCodedError(res, 422, error.apiCode, error.details);
     return;
   }
 
   if (error instanceof ValidationError) {
-    sendError(res, 422, error.message);
+    sendCodedError(res, 422, error.code, error.details);
     return;
   }
 
   if (error instanceof BodyTooLargeError) {
-    sendError(res, 413, error.message);
+    sendCodedError(res, 413, error.code);
     return;
   }
 

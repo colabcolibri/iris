@@ -1,0 +1,120 @@
+import type { MessagesMessages } from "./types";
+
+export const messagesEn = {
+  page: {
+    eyebrow: "Operations",
+    title: "Messages",
+    description:
+      "Instagram conversations — select from the list to view history and reply.",
+    conversationsTab: "Conversations",
+    activityTab: "Activity",
+    searchPlaceholder: "Search user…",
+    import: "Import",
+    reloadList: "Reload list",
+    back: "Back",
+    sheetTitle: "Conversations",
+    selectConversationTitle: "Select a conversation",
+    selectConversationBody:
+      "Choose a DM from the list to view history and reply.",
+    loadingConversations: "Loading conversations…",
+    loadingMessages: "Loading messages…",
+    loadingConversation: "Loading conversation…",
+  },
+  activity: {
+    tabs: {
+      pendingApproval: {
+        label: "Approval",
+        empty: "No drafts awaiting approval.",
+      },
+      recent: {
+        label: "Recent",
+        empty: "No recent DM replies.",
+      },
+    },
+    loading: "Loading…",
+    loadFailed: "Failed to load activity.",
+    retry: "Try again",
+    now: "now",
+    defaultUser: "user",
+  },
+  banners: {
+    connectInstagram:
+      "Connect Instagram in {settingsLink} to import DMs and sync conversations.",
+    settingsLink: "settings",
+    messagingUnsupported:
+      "Direct messages require a Facebook Page linked to the Instagram account. Review the connection in settings.",
+    realtimeUnavailable:
+      "Real-time updates unavailable. The list reloads every minute in this tab, or use Import to fetch conversations from Instagram.",
+  },
+  empty: {
+    noConversationsTitle: "No conversations yet",
+    noResultsTitle: "Nothing found",
+    noConversationsConnected:
+      "Use Import to pull DMs from Instagram or wait for new messages via webhook.",
+    noConversationsDisconnected:
+      "Connect Instagram in Settings to import DMs.",
+    noResultsBody: "Try another user or ID search.",
+    noMessages: "no messages",
+    now: "now",
+  },
+  detail: {
+    sync: "Sync conversation",
+    syncAria: "Sync conversation",
+    settings: "Conversation settings",
+    settingsAria: "Conversation settings",
+    windowOpen: "Window open",
+    windowClosed: "Window closed",
+    pendingBadge: "Pending",
+    cannotReply: "Cannot reply in this conversation.",
+    briefing: "Briefing for this conversation",
+    briefingHint: "Extra context injected into the harness for this DM.",
+    replyMode: "Reply mode",
+    saveBriefing: "Save briefing",
+  },
+  thread: {
+    draftLabel: "Draft",
+    manualReplyLabel: "Manual reply",
+    generateDraft: "Generate draft",
+    generateDraftAi: "Generate draft with AI",
+    reply: "Reply",
+    send: "Send",
+    save: "Save",
+    cancel: "Cancel",
+    deleteDraft: "Delete draft",
+    placeholder: "Your reply…",
+    noText: "(no text)",
+    viewAudit: "View agent decision",
+    brandBadge: "Brand",
+  },
+  confirm: {
+    deleteDraft: {
+      title: "Delete draft?",
+      description: "The draft will be discarded. Nothing will be sent on Meta.",
+      confirmLabel: "Delete",
+    },
+  },
+  toasts: {
+    loadConversationsFailed: "Failed to load conversations.",
+    loadMessagesFailed: "Failed to load messages.",
+    connectForImport: "Connect an Instagram account with a Page to import DMs.",
+    inboxSynced: "{count} conversation(s) synced from Instagram.",
+    inboxEmpty: "No new conversations found on Instagram.",
+    importFailed: "Failed to import conversations from Instagram.",
+    conversationSynced: "Conversation synced.",
+    syncFailed: "Failed to sync.",
+    replyModeUpdated: "Reply mode updated.",
+    replyModeFailed: "Failed to save mode.",
+    briefingSaved: "Briefing saved.",
+    briefingFailed: "Failed to save briefing.",
+    replySent: "Reply sent on Meta.",
+    approveFailed: "Failed to approve.",
+    draftRemoved: "Draft removed.",
+    removeDraftFailed: "Failed to remove draft.",
+    draftSaved: "Draft saved.",
+    saveDraftFailed: "Failed to save draft.",
+    draftGenerated: "Draft generated.",
+    generateDraftFailed: "Failed to generate draft.",
+    messageSent: "Message sent.",
+    sendFailed: "Failed to send.",
+  },
+} satisfies MessagesMessages;

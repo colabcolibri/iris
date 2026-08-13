@@ -12,6 +12,7 @@ export const shellPt = {
     comments: "Comentários",
     messages: "Mensagens",
     products: "Produtos",
+    stores: "Lojas",
     webhooks: "Webhooks",
     simulator: "Simulador",
     agentRuns: "Execuções",

@@ -430,8 +430,10 @@ test("schedule without meta connection returns meta_not_connected", async () => 
       });
 
       assert.equal(scheduleResponse.status, 422);
-      const payload = (await scheduleResponse.json()) as { error: string; code: string };
-      assert.equal(payload.code, "meta_not_connected");
+      const payload = (await scheduleResponse.json()) as {
+        error: { code: string; details?: { reason: string } };
+      };
+      assert.equal(payload.error.code, "META_NOT_CONNECTED");
     },
     { metaAccessToken: "", igUserId: "" },
   );

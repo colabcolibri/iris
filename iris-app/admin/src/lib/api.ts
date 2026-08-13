@@ -47,6 +47,9 @@ import type {
   WebhookEvent,
   WebhookProcessingStatus,
 } from "@/lib/types";
+import type { AppLocale } from "@/i18n/types";
+import { readStoredAppLocale } from "@/i18n/storage";
+import { ApiRequestError, parseApiErrorPayload } from "@/lib/api-error";
 import { notifyUnauthorized } from "@/lib/auth-unauthorized";
 import { getDemoMode, showDemoToast } from "@/demo/demo-mode-context";
 import { getActiveDemoLocale } from "@/demo/demo-state";
@@ -86,10 +89,14 @@ async function apiFetch<T = unknown>(
   }
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string;
-    };
-    throw new Error(payload.error ?? `Request failed (${response.status})`);
+    const payload = await response.json().catch(() => ({}));
+    const parsed = parseApiErrorPayload(payload, response.status);
+    throw new ApiRequestError(
+      parsed.code,
+      response.status,
+      parsed.details,
+      parsed.legacyMessage,
+    );
   }
 
   if (response.status === 204) {
@@ -392,8 +399,14 @@ export function fetchMetaStatus() {
   return apiFetch<MetaStatus>("/api/meta/status");
 }
 
-export function fetchMetaHealth() {
-  return apiFetch<{ ok: boolean; message?: string }>("/api/meta/health");
+export function fetchMetaHealth(options: { messaging?: boolean } = {}) {
+  const suffix = options.messaging ? "?messaging=1" : "";
+  return apiFetch<{
+    ok: boolean;
+    message?: string;
+    code?: string;
+    messaging?: { ok: boolean; message?: string; code?: string };
+  }>(`/api/meta/health${suffix}`);
 }
 
 export function disconnectMeta() {
@@ -417,9 +430,13 @@ export async function fetchAssetBlob(postId: string, filename: string) {
   return response.blob();
 }
 
-export function requestLoginCode(email: string) {
+export function requestLoginCode(email: string, locale?: AppLocale) {
+  const resolvedLocale = locale ?? readStoredAppLocale();
   return apiFetch("/api/auth/request-code", {
     method: "POST",
+    headers: {
+      "X-Iris-Locale": resolvedLocale,
+    },
     body: JSON.stringify({ email }),
   });
 }

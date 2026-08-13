@@ -3,6 +3,7 @@ import type { AppContext } from "../app-context.ts";
 import {
   BodyTooLargeError,
   readJsonBody,
+  sendCodedError,
   sendError,
   sendJson,
   ValidationError,
@@ -17,6 +18,7 @@ import {
   formatAuthIpRateLimitMessage,
   type AuthIpRateLimitAction,
 } from "../../domain/auth/auth-ip-rate-limit.ts";
+import { parseServerLocale } from "../../i18n/locale.ts";
 import { resolveClientIp } from "../request-client-ip.ts";
 import {
   appendSessionCookie,
@@ -49,9 +51,11 @@ export async function handleAuthRoute(
         return true;
       }
 
+      const locale = parseServerLocale(req.headers["x-iris-locale"]?.toString());
       const result = await requestAdminLoginCode(email, {
         challenges: ctx.adminLoginChallenges,
         emailSender: ctx.emailSender,
+        locale,
       });
       sendJson(res, 200, result);
     } catch (error) {
@@ -158,12 +162,12 @@ function handleAuthError(res: ServerResponse, error: unknown): void {
   }
 
   if (error instanceof ValidationError) {
-    sendError(res, 422, error.message);
+    sendCodedError(res, 422, error.code, error.details);
     return;
   }
 
   if (error instanceof BodyTooLargeError) {
-    sendError(res, 413, error.message);
+    sendCodedError(res, 413, error.code);
     return;
   }
 

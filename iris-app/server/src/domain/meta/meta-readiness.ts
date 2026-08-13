@@ -1,4 +1,7 @@
+import type { ServerResponse } from "node:http";
 import type { AppContext } from "../../api/app-context.ts";
+import { sendCodedError } from "../../api/json.ts";
+import { ErrorCodes } from "../errors/error-codes.ts";
 
 export type MetaReadinessReason = "no_token" | "no_ig_user" | "token_expired";
 
@@ -45,15 +48,18 @@ export function getMetaReadiness(ctx: AppContext): MetaReadinessResult {
   });
 }
 
-export class MetaNotConnectedError extends Error {
-  readonly code = "meta_not_connected";
-
-  constructor(message = "Conecte Instagram antes de agendar publicações.") {
-    super(message);
-    this.name = "MetaNotConnectedError";
+export function metaReadinessErrorCode(reason: MetaReadinessReason): string {
+  switch (reason) {
+    case "no_token":
+      return ErrorCodes.META_NOT_CONNECTED;
+    case "no_ig_user":
+      return ErrorCodes.META_NO_IG_USER;
+    case "token_expired":
+      return ErrorCodes.META_TOKEN_EXPIRED;
   }
 }
 
+/** @deprecated Use coded API errors; kept for internal logging and legacy callers. */
 export function metaReadinessMessage(result: MetaReadinessResult): string {
   switch (result.reason) {
     case "no_token":
@@ -67,9 +73,31 @@ export function metaReadinessMessage(result: MetaReadinessResult): string {
   }
 }
 
+export class MetaNotConnectedError extends Error {
+  readonly code: string;
+  readonly details: { reason: MetaReadinessReason };
+
+  constructor(readiness: MetaReadinessResult) {
+    const reason = readiness.reason ?? "no_token";
+    super(reason);
+    this.name = "MetaNotConnectedError";
+    this.code = metaReadinessErrorCode(reason);
+    this.details = { reason };
+  }
+}
+
+export function sendMetaReadinessError(
+  res: ServerResponse,
+  readiness: MetaReadinessResult,
+  status = 503,
+): void {
+  const reason = readiness.reason ?? "no_token";
+  sendCodedError(res, status, metaReadinessErrorCode(reason), { reason });
+}
+
 export function assertMetaReadyForSchedule(ctx: AppContext): void {
   const result = getMetaReadiness(ctx);
   if (!result.ready) {
-    throw new MetaNotConnectedError(metaReadinessMessage(result));
+    throw new MetaNotConnectedError(result);
   }
 }

@@ -53,6 +53,16 @@ function messageBodyText(message: Message): string | null {
   return "(sem texto)";
 }
 
+function shouldShowMessageDraft(message: Message): boolean {
+  if (message.linked_reply_text?.trim()) {
+    return false;
+  }
+  if (message.status === "replied") {
+    return false;
+  }
+  return Boolean(message.draft_text?.trim());
+}
+
 function shouldShowReplyAudit(message: Message): boolean {
   if (message.draft_text) {
     return true;
@@ -156,7 +166,7 @@ function MessageDraftPanel({
     }
   }, [message.draft_text, editing]);
 
-  if (!message.draft_text && !editing) {
+  if (!shouldShowMessageDraft(message) && !editing) {
     return null;
   }
 

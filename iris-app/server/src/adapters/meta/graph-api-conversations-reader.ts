@@ -1,4 +1,5 @@
 import type { MetaTokenStore } from "../../ports/meta-token-store.ts";
+import { ErrorCodes } from "../../domain/errors/error-codes.ts";
 import type {
   MetaConversationsReader,
   RemoteConversationParticipant,
@@ -68,8 +69,10 @@ export class MetaConversationsUnsupportedError extends Error {
 }
 
 export class MetaConversationsRateLimitError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly code = ErrorCodes.RATE_LIMITED;
+
+  constructor() {
+    super(ErrorCodes.RATE_LIMITED);
     this.name = "MetaConversationsRateLimitError";
   }
 }
@@ -87,9 +90,7 @@ function mapMetaListError(json: { error?: { message?: string; code?: number } },
     lower.includes("request limit") ||
     lower.includes("rate limit")
   ) {
-    return new MetaConversationsRateLimitError(
-      "Limite de requisições da Meta atingido. Aguarde alguns minutos e tente importar de novo.",
-    );
+    return new MetaConversationsRateLimitError();
   }
   if (code === 10 || code === 200 || code === 100) {
     return new MetaConversationsUnsupportedError(message);

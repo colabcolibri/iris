@@ -54,6 +54,8 @@ import type {
   MessageActivityItem,
 } from "@/lib/types";
 import { countPendingInboundMessages } from "@/lib/message-pending";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { readStoredAppLocale } from "@/i18n/storage";
 import { cn } from "@/lib/utils";
 
 const MESSAGES_FALLBACK_POLL_MS = 60_000;
@@ -395,7 +397,7 @@ export function MessagesPage() {
         await loadConversations({ silent: true });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao aprovar.");
+      toast.error(getApiErrorMessage(err, readStoredAppLocale()));
     } finally {
       setApprovingId(null);
     }

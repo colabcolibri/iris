@@ -10,6 +10,7 @@ export type ShellMessages = {
     comments: string;
     messages: string;
     products: string;
+    stores: string;
     webhooks: string;
     simulator: string;
     agentRuns: string;

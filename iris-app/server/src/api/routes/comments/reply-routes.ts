@@ -3,7 +3,7 @@ import { createRouter, route } from "../../router.ts";
 import { notifyCommentsChanged } from "../../../adapters/sse/event-bus.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  sendMetaReadinessError,
 } from "../../../domain/meta/meta-readiness.ts";
 import { requestManualCommentReply } from "../../../domain/comments/request-manual-comment-reply.ts";
 import { requireComment, routeParam } from "../../route-resources.ts";
@@ -152,7 +152,7 @@ export const commentsReplyRouter = createRouter([
 
       const readiness = getMetaReadiness(match.ctx);
       if (!readiness.ready) {
-        sendError(match.res, 503, metaReadinessMessage(readiness));
+        sendMetaReadinessError(match.res, readiness);
         return;
       }
 
@@ -223,7 +223,7 @@ export const commentsReplyRouter = createRouter([
 
       const readiness = getMetaReadiness(match.ctx);
       if (!readiness.ready) {
-        sendError(match.res, 503, metaReadinessMessage(readiness));
+        sendMetaReadinessError(match.res, readiness);
         return;
       }
 

@@ -21,6 +21,8 @@ const IRIS = {
 } as const;
 
 export type IrisEmailLayoutInput = {
+  /** HTML `lang` attribute (BCP 47). */
+  lang?: "pt-BR" | "en-US";
   /** Visible title inside the card (optional). */
   heading?: string;
   /** Hidden preview text in inbox list. */
@@ -104,6 +106,7 @@ export function emailQuote(text: string): string {
  * Always pair with a plain-text `text` body for clients that prefer it.
  */
 export function renderIrisEmailHtml(input: IrisEmailLayoutInput): string {
+  const lang = input.lang ?? "pt-BR";
   const preheader = input.preheader?.trim()
     ? escapeHtml(input.preheader.trim())
     : "";
@@ -112,10 +115,12 @@ export function renderIrisEmailHtml(input: IrisEmailLayoutInput): string {
     : "";
   const footerNote =
     input.footerNote?.trim() ||
-    "Iris — respostas a comentários no Instagram com o seu tom.";
+    (lang === "en-US"
+      ? "Iris — Instagram comment replies in your voice."
+      : "Iris — respostas a comentários no Instagram com o seu tom.");
 
   return `<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="${lang}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />

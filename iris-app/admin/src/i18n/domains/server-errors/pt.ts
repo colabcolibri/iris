@@ -8,6 +8,9 @@ export const serverErrorsPt = {
   META_NO_IG_USER: "Conta Instagram não configurada. Conecte nas configurações.",
   PUBLISH_NOT_CONFIGURED: "Publicação não configurada. Verifique a conexão Meta.",
   RATE_LIMITED: "Limite de requisições atingido. Tente novamente em instantes.",
+  MESSAGING_WINDOW_EXPIRED:
+    "A janela de 24h da Meta expirou. Só é possível responder dentro desse prazo após a última mensagem do cliente.",
+  META_SEND_FAILED: "A Meta recusou o envio: {message}",
   CONTACT_INVALID: "Preencha todos os campos do formulário corretamente.",
   REQUEST_FAILED: "Falha na requisição ({status}).",
   INTERNAL_ERROR: "Erro interno. Tente novamente.",

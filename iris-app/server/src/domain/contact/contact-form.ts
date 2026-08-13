@@ -1,4 +1,7 @@
 import type { EmailSender } from "../../ports/email-sender.ts";
+import { ErrorCodes } from "../errors/error-codes.ts";
+import type { ServerAppLocale } from "../../i18n/locale.ts";
+import { getContactEmailMessages } from "../../i18n/email/contact/index.ts";
 import { buildContactFormEmailContent } from "./contact-form-email.ts";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s.]+\.[^@\s]+$/;
@@ -14,6 +17,7 @@ export type ContactFormInput = {
   message: string;
   pageUrl?: string;
   website?: string;
+  locale?: string;
 };
 
 export type ContactFormErrorCode =
@@ -26,17 +30,26 @@ export type ContactFormErrorCode =
 
 export class ContactFormError extends Error {
   readonly code: ContactFormErrorCode;
+  readonly apiCode: string;
+  readonly details?: Record<string, unknown>;
 
-  constructor(code: ContactFormErrorCode, message: string) {
+  constructor(
+    code: ContactFormErrorCode,
+    message: string,
+    details?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = "ContactFormError";
     this.code = code;
+    this.apiCode = ErrorCodes.CONTACT_INVALID;
+    this.details = { field: code.replace(/^invalid_/, ""), ...details };
   }
 }
 
 export type ContactFormDeps = {
   emailSender: EmailSender;
   destinationEmail?: string;
+  locale?: ServerAppLocale;
 };
 
 export function resolveContactDestinationEmail(): string {
@@ -58,16 +71,16 @@ export function validateContactFormInput(raw: ContactFormInput): ContactFormInpu
   const pageUrl = raw.pageUrl?.trim();
 
   if (!name || name.length > MAX_NAME) {
-    throw new ContactFormError("invalid_name", "Nome inválido.");
+    throw new ContactFormError("invalid_name", "invalid_name");
   }
   if (!email || email.length > 254 || !EMAIL_RE.test(email)) {
-    throw new ContactFormError("invalid_email", "Email inválido.");
+    throw new ContactFormError("invalid_email", "invalid_email");
   }
   if (!subject || subject.length > MAX_SUBJECT) {
-    throw new ContactFormError("invalid_subject", "Assunto inválido.");
+    throw new ContactFormError("invalid_subject", "invalid_subject");
   }
   if (!message || message.length < MIN_MESSAGE || message.length > MAX_MESSAGE) {
-    throw new ContactFormError("invalid_message", "Mensagem inválida.");
+    throw new ContactFormError("invalid_message", "invalid_message");
   }
 
   return { name, email, subject, message, pageUrl };
@@ -77,10 +90,13 @@ export async function submitContactForm(
   raw: ContactFormInput,
   deps: ContactFormDeps,
 ): Promise<{ ok: true; message: string }> {
+  const locale = deps.locale ?? "pt";
+  const messages = getContactEmailMessages(locale);
+
   if (isContactHoneypotTriggered(raw.website)) {
     return {
       ok: true,
-      message: "Obrigado — recebemos sua mensagem e responderemos por email.",
+      message: messages.successMessage,
     };
   }
 
@@ -90,11 +106,12 @@ export async function submitContactForm(
   if (!destination.includes("@")) {
     throw new ContactFormError(
       "email_not_configured",
-      "Formulário de contato indisponível no momento.",
+      "email_not_configured",
+      { reason: "email_not_configured" },
     );
   }
 
-  const content = buildContactFormEmailContent(input);
+  const content = buildContactFormEmailContent({ ...input, locale });
   const result = await deps.emailSender.send({
     to: destination,
     subject: content.subject,
@@ -106,12 +123,13 @@ export async function submitContactForm(
   if (!result.ok) {
     throw new ContactFormError(
       "email_failed",
-      "Não foi possível enviar sua mensagem. Tente novamente em instantes.",
+      "email_failed",
+      { reason: "email_failed" },
     );
   }
 
   return {
     ok: true,
-    message: "Obrigado — recebemos sua mensagem e responderemos por email.",
+    message: messages.successMessage,
   };
 }

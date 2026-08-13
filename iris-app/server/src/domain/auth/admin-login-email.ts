@@ -1,3 +1,6 @@
+import type { ServerAppLocale } from "../../i18n/locale.ts";
+import { localeToEmailLang } from "../../i18n/locale.ts";
+import { getLoginEmailMessages } from "../../i18n/email/login/index.ts";
 import {
   emailCodeBlock,
   emailMuted,
@@ -8,25 +11,31 @@ import {
 export function buildAdminLoginEmailContent(input: {
   code: string;
   ttlMinutes: number;
+  locale?: ServerAppLocale;
 }): { subject: string; text: string; html: string } {
-  const subject = "Seu código de acesso — Iris";
+  const locale = input.locale ?? "pt";
+  const messages = getLoginEmailMessages(locale);
+  const lang = localeToEmailLang(locale);
+
+  const subject = messages.subject;
   const text = [
-    "Use o código abaixo para entrar no Iris:",
+    messages.textIntro,
     "",
     input.code,
     "",
-    `O código expira em ${input.ttlMinutes} minutos.`,
-    "Se você não solicitou este email, ignore.",
+    messages.textExpires(input.ttlMinutes),
+    messages.textIgnore,
   ].join("\n");
 
   const html = renderIrisEmailHtml({
-    heading: "Seu código de acesso",
-    preheader: `Código Iris: ${input.code} — expira em ${input.ttlMinutes} minutos`,
+    lang,
+    heading: messages.heading,
+    preheader: messages.preheader(input.code, input.ttlMinutes),
     bodyHtml: [
-      emailParagraphs("Use o código abaixo para entrar no Iris:"),
+      emailParagraphs(messages.intro),
       emailCodeBlock(input.code),
-      emailMuted(`O código expira em ${input.ttlMinutes} minutos.`),
-      emailMuted("Se você não solicitou este email, ignore."),
+      emailMuted(messages.expires(input.ttlMinutes)),
+      emailMuted(messages.ignore),
     ].join(""),
   });
 

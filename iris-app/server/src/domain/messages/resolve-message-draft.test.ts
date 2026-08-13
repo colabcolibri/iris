@@ -75,6 +75,39 @@ test("resolveMessageDraftText recovers harness output when draft row is missing"
   }
 });
 
+test("resolveMessageDraftText hides draft after sent reply exists", () => {
+  const db = openDatabase(":memory:");
+  try {
+    runMigrations(db);
+    const ctx = buildCtx(db);
+    const conversations = createSqliteConversationRepository(db);
+    const { conversation } = conversations.upsert({
+      igConversationId: "ig:3",
+      participantIgUserId: "user-3",
+    });
+    const inbound = ctx.messages.upsertInbound({
+      igMessageId: "mid-3",
+      conversationId: conversation.id,
+      text: "oi",
+      igTimestamp: "2026-08-13T10:00:00.000Z",
+    }).message;
+
+    ctx.messageReplies.upsertDraft({
+      messageId: inbound.id,
+      draftText: "draft antigo",
+    });
+    ctx.messageReplies.createReply({
+      messageId: inbound.id,
+      sentText: "já enviado",
+      status: "sent",
+    });
+
+    assert.equal(resolveMessageDraftText(inbound, ctx), null);
+  } finally {
+    db.close();
+  }
+});
+
 test("resolveMessageDraftText prefers stored draft and skips recovery after clear", () => {
   const db = openDatabase(":memory:");
   try {

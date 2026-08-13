@@ -3,7 +3,7 @@ import { createRouter, route } from "../../router.ts";
 import { notifyMessagesChanged } from "../../../adapters/sse/event-bus.ts";
 import {
   getMetaReadiness,
-  metaReadinessMessage,
+  sendMetaReadinessError,
 } from "../../../domain/meta/meta-readiness.ts";
 import { requestManualMessageReply } from "../../../domain/messages/request-manual-message-reply.ts";
 import { assertCanReplyToConversation } from "../../../domain/messages/assert-can-reply-to-conversation.ts";
@@ -162,7 +162,7 @@ export const messagesReplyRouter = createRouter([
 
       const readiness = getMetaReadiness(match.ctx);
       if (!readiness.ready) {
-        sendError(match.res, 503, metaReadinessMessage(readiness));
+        sendMetaReadinessError(match.res, readiness);
         return;
       }
 
@@ -193,6 +193,7 @@ export const messagesReplyRouter = createRouter([
             sourceIgMessageId: publishResult?.publishedIgMessageId ?? null,
           });
         }
+        match.ctx.messageReplies.clearDraft(messageId);
         const updated = match.ctx.messages.markReplied(messageId);
         notifyMessagesChanged({ conversation_id: message.conversationId });
         sendJson(match.res, 200, serializeMessageWithDraft(updated!, match.ctx));
@@ -203,15 +204,14 @@ export const messagesReplyRouter = createRouter([
           sentText: text,
           status: "failed",
         });
-        const updated =
-          message.status === "replied"
-            ? match.ctx.messages.findById(messageId)
-            : match.ctx.messages.markFailed(messageId, errorMessage);
+        if (message.status !== "replied") {
+          match.ctx.messages.markFailed(messageId, errorMessage);
+        }
         notifyMessagesChanged({ conversation_id: message.conversationId });
-        sendJson(match.res, 200, serializeMessageWithDraft(updated!, match.ctx));
+        throw error;
       }
     },
-    { paramNames: ["messageId"] },
+    { paramNames: ["messageId"], errorOptions: { upstream502: true } },
   ),
 
   route(
@@ -243,7 +243,7 @@ export const messagesReplyRouter = createRouter([
 
       const readiness = getMetaReadiness(match.ctx);
       if (!readiness.ready) {
-        sendError(match.res, 503, metaReadinessMessage(readiness));
+        sendMetaReadinessError(match.res, readiness);
         return;
       }
 
@@ -266,17 +266,18 @@ export const messagesReplyRouter = createRouter([
           status: "sent",
           sourceIgMessageId: publishResult?.publishedIgMessageId ?? null,
         });
+        match.ctx.messageReplies.clearDraft(messageId);
         const updated = match.ctx.messages.markReplied(messageId);
         notifyMessagesChanged({ conversation_id: message.conversationId });
         sendJson(match.res, 200, serializeMessageWithDraft(updated!, match.ctx));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "reply failed";
         match.ctx.messageReplies.createReply({ messageId, sentText: text, status: "failed" });
-        const updated = match.ctx.messages.markFailed(messageId, errorMessage);
+        match.ctx.messages.markFailed(messageId, errorMessage);
         notifyMessagesChanged({ conversation_id: message.conversationId });
-        sendJson(match.res, 200, serializeMessageWithDraft(updated!, match.ctx));
+        throw error;
       }
     },
-    { paramNames: ["messageId"] },
+    { paramNames: ["messageId"], errorOptions: { upstream502: true } },
   ),
 ]);

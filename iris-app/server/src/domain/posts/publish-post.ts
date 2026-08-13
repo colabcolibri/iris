@@ -4,14 +4,15 @@ import { notifyPostsChanged } from "../../adapters/sse/event-bus.ts";
 import type { Post } from "./post.ts";
 import type { MetaPublisher } from "../../ports/meta-publisher.ts";
 import { assertMetaReadyForSchedule } from "../meta/meta-readiness.ts";
+import { ErrorCodes } from "../errors/error-codes.ts";
 
 const PUBLISHABLE_STATUSES = new Set<Post["status"]>(["draft", "scheduled", "failed"]);
 
 export class PublishNotConfiguredError extends Error {
-  readonly code = "publish_not_configured";
+  readonly code = ErrorCodes.PUBLISH_NOT_CONFIGURED;
 
-  constructor(message = "Publicação não configurada. Verifique URL pública e segredo de mídia.") {
-    super(message);
+  constructor() {
+    super(ErrorCodes.PUBLISH_NOT_CONFIGURED);
     this.name = "PublishNotConfiguredError";
   }
 }

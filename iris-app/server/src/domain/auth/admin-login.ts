@@ -1,5 +1,6 @@
 import type { EmailSender } from "../../ports/email-sender.ts";
 import type { AdminLoginChallengeRepository } from "../../adapters/sqlite/admin-login-challenge-repository.ts";
+import type { ServerAppLocale } from "../../i18n/locale.ts";
 import { buildAdminLoginEmailContent } from "./admin-login-email.ts";
 import {
   ADMIN_OTP_MAX_ATTEMPTS,
@@ -37,6 +38,7 @@ export class AdminLoginError extends Error {
 export type AdminLoginDeps = {
   challenges: AdminLoginChallengeRepository;
   emailSender: EmailSender;
+  locale?: ServerAppLocale;
 };
 
 const GENERIC_MESSAGE =
@@ -78,7 +80,11 @@ export async function requestAdminLoginCode(
   const now = new Date();
   const expiresAt = new Date(now.getTime() + resolveOtpTtlMs()).toISOString();
   const ttlMinutes = Math.round(resolveOtpTtlMs() / 60_000);
-  const content = buildAdminLoginEmailContent({ code, ttlMinutes });
+  const content = buildAdminLoginEmailContent({
+    code,
+    ttlMinutes,
+    locale: deps.locale,
+  });
 
   const sendResult = await deps.emailSender.send({
     to: email,

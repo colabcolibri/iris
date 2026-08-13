@@ -1,3 +1,6 @@
+import type { ServerAppLocale } from "../../i18n/locale.ts";
+import { localeToEmailLang } from "../../i18n/locale.ts";
+import { getContactEmailMessages } from "../../i18n/email/contact/index.ts";
 import {
   emailMetaList,
   emailParagraphs,
@@ -11,44 +14,50 @@ export function buildContactFormEmailContent(input: {
   subject: string;
   message: string;
   pageUrl?: string;
+  locale?: ServerAppLocale;
 }): { subject: string; text: string; html: string } {
+  const locale = input.locale ?? "pt";
+  const messages = getContactEmailMessages(locale);
+  const lang = localeToEmailLang(locale);
+
   const lines = [
-    "Nova mensagem pelo formulário de contato do Iris:",
+    messages.textIntro,
     "",
-    `Nome: ${input.name}`,
-    `Email: ${input.email}`,
-    `Assunto: ${input.subject}`,
+    `${messages.labels.name}: ${input.name}`,
+    `${messages.labels.email}: ${input.email}`,
+    `${messages.labels.subject}: ${input.subject}`,
   ];
 
   if (input.pageUrl) {
-    lines.push(`Página: ${input.pageUrl}`);
+    lines.push(`${messages.labels.page}: ${input.pageUrl}`);
   }
 
-  lines.push("", "Mensagem:", "", input.message);
+  lines.push("", messages.textMessageLabel, "", input.message);
 
   const meta = [
-    { label: "Nome", value: input.name },
-    { label: "Email", value: input.email },
-    { label: "Assunto", value: input.subject },
+    { label: messages.labels.name, value: input.name },
+    { label: messages.labels.email, value: input.email },
+    { label: messages.labels.subject, value: input.subject },
   ];
   if (input.pageUrl) {
-    meta.push({ label: "Página", value: input.pageUrl });
+    meta.push({ label: messages.labels.page, value: input.pageUrl });
   }
 
   const html = renderIrisEmailHtml({
-    heading: "Nova mensagem de contato",
+    lang,
+    heading: messages.heading,
     preheader: `${input.name}: ${input.subject}`,
     bodyHtml: [
-      emailParagraphs("Alguém enviou uma mensagem pelo formulário do site Iris."),
+      emailParagraphs(messages.intro),
       emailMetaList(meta),
-      emailParagraphs("Mensagem:"),
+      emailParagraphs(messages.messageLabel),
       emailQuote(input.message),
     ].join(""),
-    footerNote: "Responda este email para falar diretamente com o remetente.",
+    footerNote: messages.footerNote,
   });
 
   return {
-    subject: `[Iris] ${input.subject}`,
+    subject: `${messages.subjectPrefix} ${input.subject}`,
     text: lines.join("\n"),
     html,
   };

@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { ErrorCodes, isErrorCode } from "../domain/errors/error-codes.ts";
 
 export const JSON_BODY_LIMIT = 16 * 1024;
 
@@ -15,6 +16,7 @@ export function sendError(res: ServerResponse, status: number, message: string):
   sendJson(res, status, { error: message });
 }
 
+/** @deprecated Prefer sendCodedError for user-facing API errors. */
 export function sendApiError(
   res: ServerResponse,
   status: number,
@@ -26,6 +28,17 @@ export function sendApiError(
     body.code = code;
   }
   sendJson(res, status, body);
+}
+
+export function sendCodedError(
+  res: ServerResponse,
+  status: number,
+  code: string,
+  details?: Record<string, unknown>,
+): void {
+  sendJson(res, status, {
+    error: details ? { code, details } : { code },
+  });
 }
 
 export async function readRawBody(
@@ -60,6 +73,8 @@ export async function readJsonBody<T extends Record<string, unknown>>(
 }
 
 export class BodyTooLargeError extends Error {
+  readonly code = ErrorCodes.BODY_TOO_LARGE;
+
   constructor() {
     super("Request body too large");
     this.name = "BodyTooLargeError";
@@ -67,8 +82,28 @@ export class BodyTooLargeError extends Error {
 }
 
 export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly code: string;
+  readonly details?: Record<string, unknown>;
+
+  constructor(codeOrMessage: string, details?: Record<string, unknown>) {
+    if (isErrorCode(codeOrMessage)) {
+      super(codeOrMessage);
+      this.code = codeOrMessage;
+      this.details = details;
+    } else {
+      super(codeOrMessage);
+      this.code = ErrorCodes.VALIDATION_FAILED;
+      this.details = details
+        ? { message: codeOrMessage, ...details }
+        : { message: codeOrMessage };
+    }
     this.name = "ValidationError";
   }
+}
+
+export function validationError(
+  code: string,
+  details?: Record<string, unknown>,
+): ValidationError {
+  return new ValidationError(code, details);
 }
