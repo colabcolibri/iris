@@ -104,10 +104,6 @@ export function PipelineDateFilterMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,20rem)] p-2">
-        <DropdownMenuLabel className="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Período
-        </DropdownMenuLabel>
-
         <DropdownMenuRadioGroup
           value={radioValue}
           onValueChange={(value) => {
@@ -115,6 +111,9 @@ export function PipelineDateFilterMenu({
             applyPreset(value as PipelineDatePresetId);
           }}
         >
+          <DropdownMenuLabel className="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Período
+          </DropdownMenuLabel>
           {PRESETS.map((preset) => (
             <DropdownMenuRadioItem
               key={preset.id}
