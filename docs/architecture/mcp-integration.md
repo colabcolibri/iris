@@ -74,6 +74,11 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_delete_post_asset` | Remove asset (row + arquivo em `data/media/`) |
 | `iris_generate_post_carousel_summary` | Gera só `carousel_summary` (resumo visual) via vision no server — **não** altera `reply_prompt` |
 | `iris_list_post_comments` | Comentários sincronizados do post |
+| `iris_list_conversations` | Conversas DM recentes (`limit` opcional) |
+| `iris_list_conversation_messages` | Mensagens de uma conversa (com rascunho quando houver) |
+| `iris_get_message_reply_context` | Contexto completo para resposta DM (thread, persona, produtos) |
+| `iris_get_message_agent_content` | Blocos Markdown DM (`dm_soul`, `dm_page`, `dm_knowledge`, `dm_restrictions`) |
+| `iris_update_message_agent_content` | Atualiza blocos DM (campos parciais aceitos) |
 | `iris_refresh_all_post_insights` | Refresh em lote; `since`/`until` ISO filtram `published_at` |
 | `iris_get_reply_persona` | Persona de resposta (`brand_name`, `signature_instruction`, `response_language`, `max_chars`) |
 | `iris_update_reply_persona` | Atualiza persona (campos parciais aceitos) |

@@ -13,6 +13,8 @@ import { LandingPage } from "@/pages/landing-page";
 import { LoginPage } from "@/pages/login-page";
 import { PersonaPage } from "@/pages/persona-page";
 import { CommentsPage } from "@/pages/comments-page";
+import { MessagesPage } from "@/pages/messages-page";
+import { ProductsPage } from "@/pages/products-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { WebhooksPage } from "@/pages/webhooks-page";
 import { AgentRunsPage } from "@/pages/agent-runs-page";
@@ -25,6 +27,8 @@ import { DemoLocaleProvider } from "@/demo/demo-locale-context";
 const ADMIN_APP_ROUTES = [
   { path: ROUTES.admin.root, element: <DashboardPage /> },
   { path: ROUTES.admin.comments, element: <CommentsPage /> },
+  { path: ROUTES.admin.messages, element: <MessagesPage /> },
+  { path: ROUTES.admin.products, element: <ProductsPage /> },
   { path: ROUTES.admin.webhooks, element: <WebhooksPage /> },
   { path: ROUTES.admin.agentRuns, element: <AgentRunsPage /> },
   { path: ROUTES.admin.agentSimulator, element: <AgentSimulatorPage /> },
@@ -35,6 +39,8 @@ const ADMIN_APP_ROUTES = [
 const DEMO_APP_ROUTES = [
   { path: ROUTES.demo.root, element: <DashboardPage /> },
   { path: ROUTES.demo.comments, element: <CommentsPage /> },
+  { path: ROUTES.demo.messages, element: <MessagesPage /> },
+  { path: ROUTES.demo.products, element: <ProductsPage /> },
   { path: ROUTES.demo.webhooks, element: <WebhooksPage /> },
   { path: ROUTES.demo.agentRuns, element: <AgentRunsPage /> },
   { path: ROUTES.demo.agentSimulator, element: <AgentSimulatorPage /> },
@@ -46,6 +52,8 @@ const LEGACY_ADMIN_REDIRECTS = [
   ["/login", ROUTES.admin.login],
   ["/login.html", ROUTES.admin.login],
   ["/comments", ROUTES.admin.comments],
+  ["/messages", ROUTES.admin.messages],
+  ["/products", ROUTES.admin.products],
   ["/settings", ROUTES.admin.settings],
   ["/persona", ROUTES.admin.persona],
   ["/webhooks", ROUTES.admin.webhooks],

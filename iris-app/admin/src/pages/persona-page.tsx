@@ -15,11 +15,13 @@ import {
 } from "@/components/ui/select";
 import {
   fetchAgentContent,
+  fetchMessageAgentContent,
   fetchReplyPersona,
   updateAgentContent,
+  updateMessageAgentContent,
   updateReplyPersona,
 } from "@/lib/api";
-import type { AgentContent, ReplyPersona } from "@/lib/types";
+import type { AgentContent, MessageAgentContent, ReplyPersona } from "@/lib/types";
 import {
   DEFAULT_RESPONSE_LANGUAGE,
   RESPONSE_LANGUAGE_OPTIONS,
@@ -57,13 +59,24 @@ export function PersonaPage() {
   const [page, setPage] = useState("");
   const [knowledge, setKnowledge] = useState("");
   const [restrictions, setRestrictions] = useState("");
+  const [messageAgentContent, setMessageAgentContent] =
+    useState<MessageAgentContent | null>(null);
+  const [dmSoul, setDmSoul] = useState("");
+  const [dmPage, setDmPage] = useState("");
+  const [dmKnowledge, setDmKnowledge] = useState("");
+  const [dmRestrictions, setDmRestrictions] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingContent, setSavingContent] = useState(false);
+  const [savingMessageContent, setSavingMessageContent] = useState(false);
 
   useEffect(() => {
-    void Promise.all([fetchReplyPersona(), fetchAgentContent()])
-      .then(([personaData, contentData]) => {
+    void Promise.all([
+      fetchReplyPersona(),
+      fetchAgentContent(),
+      fetchMessageAgentContent(),
+    ])
+      .then(([personaData, contentData, messageContentData]) => {
         setPersona(personaData);
         setResponseLanguage(
           personaData.response_language ?? DEFAULT_RESPONSE_LANGUAGE,
@@ -76,6 +89,11 @@ export function PersonaPage() {
         setPage(contentData.page);
         setKnowledge(contentData.knowledge);
         setRestrictions(contentData.restrictions);
+        setMessageAgentContent(messageContentData);
+        setDmSoul(messageContentData.dm_soul);
+        setDmPage(messageContentData.dm_page);
+        setDmKnowledge(messageContentData.dm_knowledge);
+        setDmRestrictions(messageContentData.dm_restrictions);
       })
       .catch(() => toast.error("Falha ao carregar persona."))
       .finally(() => setLoading(false));
@@ -116,6 +134,26 @@ export function PersonaPage() {
       );
     } finally {
       setSavingContent(false);
+    }
+  }
+
+  async function handleSaveMessageContent() {
+    setSavingMessageContent(true);
+    try {
+      const saved = await updateMessageAgentContent({
+        dm_soul: dmSoul,
+        dm_page: dmPage,
+        dm_knowledge: dmKnowledge,
+        dm_restrictions: dmRestrictions,
+      });
+      setMessageAgentContent(saved);
+      toast.success("Conteúdo DM do agente salvo.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao salvar conteúdo DM.",
+      );
+    } finally {
+      setSavingMessageContent(false);
     }
   }
 
@@ -325,6 +363,92 @@ export function PersonaPage() {
                   <span className="self-center text-xs text-muted-foreground">
                     Atualizado:{" "}
                     {new Date(agentContent.updated_at).toLocaleString("pt-BR")}
+                  </span>
+                ) : null}
+              </div>
+            </>
+          )}
+        </Card>
+
+        <Card className="mt-6 space-y-5 border-border bg-card p-6 shadow-none">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Conteúdo do agente (DM)
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Blocos editoriais usados pelo message-harness nas DMs do Instagram.
+              A persona global (idioma, assinatura e limite de caracteres) é
+              compartilhada com comentários — só o conteúdo editorial muda aqui.
+            </p>
+          </div>
+
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="dm-soul">SOUL (DM)</Label>
+                <Textarea
+                  id="dm-soul"
+                  rows={4}
+                  value={dmSoul}
+                  onChange={(e) => setDmSoul(e.target.value)}
+                />
+                <FieldHint>
+                  Tom e personalidade no inbox privado — mais direto que nos
+                  comentários públicos.
+                </FieldHint>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dm-page">Sobre a página (DM)</Label>
+                <Textarea
+                  id="dm-page"
+                  rows={3}
+                  value={dmPage}
+                  onChange={(e) => setDmPage(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dm-knowledge">Base de conhecimento (DM)</Label>
+                <Textarea
+                  id="dm-knowledge"
+                  rows={4}
+                  value={dmKnowledge}
+                  onChange={(e) => setDmKnowledge(e.target.value)}
+                />
+                <FieldHint>
+                  Fatos, links e políticas citados nas respostas privadas —
+                  inclui produtos ativos quando a triagem detectar intenção de
+                  compra.
+                </FieldHint>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dm-restrictions">Restrições (DM)</Label>
+                <Textarea
+                  id="dm-restrictions"
+                  rows={3}
+                  value={dmRestrictions}
+                  onChange={(e) => setDmRestrictions(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  onClick={() => void handleSaveMessageContent()}
+                  disabled={savingMessageContent}
+                >
+                  Salvar conteúdo DM
+                </Button>
+                {messageAgentContent?.updated_at ? (
+                  <span className="self-center text-xs text-muted-foreground">
+                    Atualizado:{" "}
+                    {new Date(messageAgentContent.updated_at).toLocaleString(
+                      "pt-BR",
+                    )}
                   </span>
                 ) : null}
               </div>

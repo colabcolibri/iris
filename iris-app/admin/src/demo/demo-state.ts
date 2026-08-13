@@ -1,4 +1,4 @@
-import type { Asset, Comment, Post } from "@/lib/types";
+import type { Asset, Comment, Message, Post, Product } from "@/lib/types";
 import {
   getDemoAssets,
   getDemoPostInsights,
@@ -8,6 +8,12 @@ import {
   buildDemoComments,
   buildDemoCommentsInbox,
 } from "@/demo/fixtures/build-demo-comments";
+import {
+  DEMO_CONVERSATIONS,
+  DEMO_MESSAGE_AGENT_CONTENT,
+  DEMO_MESSAGES,
+  DEMO_PRODUCTS,
+} from "@/demo/fixtures/messages";
 import {
   getDemoAgentContent,
   getDemoReplyPersona,
@@ -41,6 +47,10 @@ type DemoState = {
   appSettings: typeof DEMO_APP_SETTINGS;
   replyPersona: ReturnType<typeof getDemoReplyPersona>;
   agentContent: ReturnType<typeof getDemoAgentContent>;
+  messageAgentContent: typeof DEMO_MESSAGE_AGENT_CONTENT;
+  conversations: typeof DEMO_CONVERSATIONS;
+  messages: Record<string, Message[]>;
+  products: Product[];
   llmSettings: typeof DEMO_LLM_SETTINGS;
   mcpSettings: typeof DEMO_MCP_SETTINGS;
   metaStatus: typeof DEMO_META_STATUS;
@@ -81,6 +91,10 @@ function createInitialState(locale: DemoLocale): DemoState {
     appSettings: clone(DEMO_APP_SETTINGS),
     replyPersona: clone(getDemoReplyPersona(locale)),
     agentContent: clone(getDemoAgentContent(locale)),
+    messageAgentContent: clone(DEMO_MESSAGE_AGENT_CONTENT),
+    conversations: clone(DEMO_CONVERSATIONS),
+    messages: clone(DEMO_MESSAGES),
+    products: clone(DEMO_PRODUCTS),
     llmSettings: clone(DEMO_LLM_SETTINGS),
     mcpSettings: clone(DEMO_MCP_SETTINGS),
     metaStatus: clone(DEMO_META_STATUS),
@@ -118,4 +132,18 @@ export function findDemoComment(commentId: string): Comment | undefined {
     if (found) return found;
   }
   return undefined;
+}
+
+export function findDemoMessage(messageId: string): Message | undefined {
+  for (const messages of Object.values(getDemoState().messages)) {
+    const found = messages.find((message) => message.id === messageId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+export function findDemoConversation(conversationId: string) {
+  return getDemoState().conversations.find(
+    (conversation) => conversation.id === conversationId,
+  );
 }

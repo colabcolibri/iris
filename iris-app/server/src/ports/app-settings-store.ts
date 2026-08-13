@@ -7,6 +7,9 @@ export type AppSettings = {
   autoReplyEnabled: boolean;
   /** 0 = resposta imediata no próximo tick; 30–600 = fila com delay em segundos. */
   replyDelaySeconds: number;
+  messageReplyMode: ReplyMode;
+  messageAutoReplyEnabled: boolean;
+  messageReplyDelaySeconds: number;
   /** Cadastra mídias novas (poll + webhook lazy) como posts monitored. */
   autoMonitorEnabled: boolean;
   /** Intervalo do poll de mídias recentes (segundos). */

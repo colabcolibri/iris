@@ -29,12 +29,17 @@ import {
 } from "./routes/settings-llm.ts";
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { handleAgentContentSettingsRoute } from "./routes/settings-agent-content.ts";
+import { handleMessageAgentContentSettingsRoute } from "./routes/settings-message-agent-content.ts";
+import { handleProductsRoute } from "./routes/products.ts";
+import { handleConversationsRoute } from "./routes/conversations/index.ts";
+import { handleMessagesRoute } from "./routes/messages/index.ts";
 import { handleAgentRunsRoute } from "./routes/agent-runs.ts";
 import { handleAgentSimulatorRoute } from "./routes/agent-simulator.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
 import { startPublishScheduler } from "../workers/publish-scheduler.ts";
 import { startCommentResponder } from "../workers/comment-responder.ts";
+import { startMessageResponder } from "../workers/message-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
 import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
 import { readAdminSession } from "../domain/auth/auth-session.ts";
@@ -307,6 +312,22 @@ async function handleRequest(
       return;
     }
 
+    if (await handleMessageAgentContentSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleProductsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleConversationsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleMessagesRoute(routeRequest)) {
+      return;
+    }
+
     if (await handleMcpSettingsRoute(routeRequest)) {
       return;
     }
@@ -396,6 +417,12 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
       })
     : () => undefined;
 
+  const stopMessageResponder = options.startScheduler
+    ? startMessageResponder(ctx, {
+        intervalMs: options.replyTickMs,
+      })
+    : () => undefined;
+
   const stopDataRetention = options.startScheduler
     ? startDataRetention(ctx)
     : () => undefined;
@@ -407,6 +434,7 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
   const stopScheduler = () => {
     stopPublishScheduler();
     stopCommentResponder();
+    stopMessageResponder();
     stopDataRetention();
     stopAutoMonitorMedia();
   };

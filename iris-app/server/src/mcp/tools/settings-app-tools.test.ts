@@ -72,7 +72,8 @@ test("MCP app settings tools read defaults", async () => {
     assert.equal(typeof settings.auto_reply_enabled, "boolean");
     assert.equal(typeof settings.auto_monitor_enabled, "boolean");
     assert.equal(typeof settings.auto_monitor_interval_seconds, "number");
-    assert.equal("updated_at" in settings, false);
+    assert.equal(settings.message_reply_mode, "draft");
+    assert.equal(typeof settings.message_reply_delay_seconds, "number");
   } finally {
     await harness.close();
   }

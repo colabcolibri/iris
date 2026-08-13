@@ -51,3 +51,43 @@ test("graph api conversations reader maps permission errors to unsupported", asy
     MetaConversationsUnsupportedError,
   );
 });
+
+test("graph api conversations reader lists messages in a conversation", async () => {
+  const fetchImpl = async (input: string | URL | Request) => {
+    const url = new URL(typeof input === "string" ? input : input.toString());
+    assert.match(url.pathname, /\/conv-1\/messages$/);
+
+    return new Response(
+      JSON.stringify({
+        data: [
+          {
+            id: "mid-1",
+            message: "oi",
+            created_time: "2026-08-13T10:00:00+0000",
+            from: { id: "user-1", username: "cliente" },
+          },
+          {
+            id: "mid-2",
+            message: "olá",
+            created_time: "2026-08-13T10:01:00+0000",
+            from: { id: "ig-1", username: "marca" },
+          },
+        ],
+      }),
+      { status: 200 },
+    );
+  };
+
+  const reader = createGraphApiConversationsReader({
+    metaTokenStore: { getActiveToken: () => "token" },
+    config: {
+      resolveIgUserId: () => "ig-1",
+      fetchImpl: fetchImpl as typeof fetch,
+    },
+  });
+
+  const page = await reader.listMessages("conv-1", 10);
+  assert.equal(page.messages.length, 2);
+  assert.equal(page.messages[0]?.direction, "inbound");
+  assert.equal(page.messages[1]?.direction, "outbound");
+});

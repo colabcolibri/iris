@@ -11,6 +11,7 @@ type AgentRunStepRow = {
   id: string;
   agent_run_id: string;
   comment_id: string | null;
+  message_id: string | null;
   stage: string;
   verdict: string;
   reason: string | null;
@@ -43,6 +44,7 @@ function mapRow(row: AgentRunStepRow): AgentRunStep {
     id: row.id,
     agentRunId: row.agent_run_id,
     commentId: row.comment_id,
+    messageId: row.message_id,
     stage: row.stage as HarnessStageName,
     verdict: row.verdict as HarnessVerdict,
     reason: row.reason,
@@ -59,6 +61,7 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
       id,
       agent_run_id,
       comment_id,
+      message_id,
       stage,
       verdict,
       reason,
@@ -70,12 +73,18 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
       total_tokens,
       latency_ms,
       created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const listByComment = db.prepare(`
     SELECT * FROM agent_run_steps
     WHERE comment_id = ?
+    ORDER BY created_at ASC, rowid ASC
+  `);
+
+  const listByMessage = db.prepare(`
+    SELECT * FROM agent_run_steps
+    WHERE message_id = ?
     ORDER BY created_at ASC, rowid ASC
   `);
 
@@ -88,6 +97,13 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
   const latestRun = db.prepare(`
     SELECT agent_run_id FROM agent_run_steps
     WHERE comment_id = ?
+    ORDER BY created_at DESC, rowid DESC
+    LIMIT 1
+  `);
+
+  const latestRunByMessage = db.prepare(`
+    SELECT agent_run_id FROM agent_run_steps
+    WHERE message_id = ?
     ORDER BY created_at DESC, rowid DESC
     LIMIT 1
   `);
@@ -105,6 +121,7 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
           id,
           step.agentRunId,
           step.commentId ?? null,
+          step.messageId ?? null,
           step.stage,
           step.verdict,
           step.reason ?? null,
@@ -121,6 +138,7 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
           id,
           agentRunId: step.agentRunId,
           commentId: step.commentId ?? null,
+          messageId: step.messageId ?? null,
           stage: step.stage,
           verdict: step.verdict,
           reason: step.reason ?? null,
@@ -139,6 +157,11 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
       return rows.map(mapRow);
     },
 
+    listByMessageId(messageId) {
+      const rows = listByMessage.all(messageId) as AgentRunStepRow[];
+      return rows.map(mapRow);
+    },
+
     listByAgentRunId(agentRunId) {
       const rows = listByRun.all(agentRunId) as AgentRunStepRow[];
       return rows.map(mapRow);
@@ -146,6 +169,11 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
 
     findLatestRunIdByCommentId(commentId) {
       const row = latestRun.get(commentId) as { agent_run_id: string } | undefined;
+      return row?.agent_run_id ?? null;
+    },
+
+    findLatestRunIdByMessageId(messageId) {
+      const row = latestRunByMessage.get(messageId) as { agent_run_id: string } | undefined;
       return row?.agent_run_id ?? null;
     },
   };

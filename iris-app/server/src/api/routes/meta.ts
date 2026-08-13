@@ -60,6 +60,7 @@ export async function handleMetaRoute(request: RouteRequest): Promise<boolean> {
       igUsername: connection?.igUsername ?? null,
       igUserId: connection?.igUserId ?? null,
       pageName: connection?.pageName ?? null,
+      messaging_supported: Boolean(connection?.pageId),
       tokenExpiresAt,
       tokenExpired,
     });

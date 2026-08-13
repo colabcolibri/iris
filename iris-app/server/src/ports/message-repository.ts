@@ -1,0 +1,68 @@
+import type { Message, MessageDirection, MessageReply, MessageStatus } from "../../domain/messages/message.ts";
+import type { MessageActivityRow, MessageActivityKind } from "../../domain/messages/list-message-activity.ts";
+
+export type PendingAgentReplyMessage = Message & {
+  conversationReplyMode: string;
+};
+
+export type UpsertInboundMessageInput = {
+  igMessageId: string;
+  conversationId: string;
+  text: string | null;
+  igTimestamp: string | null;
+  participantUsername?: string | null;
+};
+
+export type UpsertOutboundMessageInput = {
+  igMessageId: string;
+  conversationId: string;
+  text: string;
+  igTimestamp?: string | null;
+  status?: MessageStatus;
+};
+
+export type MessageRepository = {
+  findById(id: string): Message | null;
+  findByIgMessageId(igMessageId: string): Message | null;
+  listByConversationId(conversationId: string): Message[];
+  upsertInbound(input: UpsertInboundMessageInput): { message: Message; created: boolean };
+  upsertOutbound(input: UpsertOutboundMessageInput): Message;
+  markReplied(messageId: string): Message | null;
+  markSkipped(messageId: string, reason?: string | null): Message | null;
+  markFailed(messageId: string, errorMessage: string): Message | null;
+  markPending(messageId: string): Message | null;
+  scheduleAgentReply(messageId: string, notBeforeIso: string): boolean;
+  listPendingForAgentReply(): PendingAgentReplyMessage[];
+  countPendingByConversation(conversationId: string): number;
+};
+
+export type CreateMessageReplyInput = {
+  messageId: string;
+  draftText?: string | null;
+  sentText?: string | null;
+  status: MessageReply["status"];
+  agentRunId?: string | null;
+  sourceIgMessageId?: string | null;
+};
+
+export type UpsertMessageDraftInput = {
+  messageId: string;
+  draftText: string;
+  agentRunId?: string | null;
+};
+
+export type MessageReplyRepository = {
+  findLatestDraft(messageId: string): MessageReply | null;
+  findLatestSentReply(messageId: string): MessageReply | null;
+  upsertDraft(input: UpsertMessageDraftInput): MessageReply;
+  createReply(input: CreateMessageReplyInput): MessageReply;
+  promoteDraftToSent(
+    messageId: string,
+    sentText: string,
+    sourceIgMessageId: string | null,
+  ): boolean;
+  clearDraft(messageId: string): boolean;
+  markSent(messageId: string, sentText: string, sourceIgMessageId: string | null): boolean;
+  hasReplyRecord(messageId: string): boolean;
+  listActivityRows(kind: MessageActivityKind, limit: number): MessageActivityRow[];
+};

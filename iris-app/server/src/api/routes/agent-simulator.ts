@@ -6,6 +6,10 @@ import {
   simulateReply,
 } from "../../domain/agent-simulator/simulate-reply.ts";
 import {
+  resolveSimulateMessageReplyInput,
+  simulateMessageReply,
+} from "../../domain/agent-simulator/simulate-message-reply.ts";
+import {
   mergeScenarioUpdate,
   normalizeSimulatorScenarioInput,
   serializeSimulatorScenario,
@@ -63,6 +67,23 @@ export const handleAgentSimulatorRoute = createRouter([
 
   route("POST", "/api/agent/simulate", { admin: true }, async (match) => {
     const body = await readJsonBody<Record<string, unknown>>(match.req);
+    const channel =
+      body.channel === "dm" || body.channel === "message" ? "dm" : "comment";
+
+    if (channel === "dm") {
+      const input = resolveSimulateMessageReplyInput(body);
+      const result = await simulateMessageReply(input, {
+        personaStore: match.ctx.replyPersonaStore,
+        messageAgentContentStore: match.ctx.messageAgentContentStore,
+        products: match.ctx.products,
+        llm: match.ctx.resolveLlmCompleter(),
+        agentRuns: match.ctx.agentRuns,
+        agentRunSteps: match.ctx.agentRunSteps,
+      });
+      sendJson(match.res, 200, result);
+      return;
+    }
+
     const input = resolveSimulateReplyInput(body, {
       scenarioStore: match.ctx.simulatorScenarioStore,
     });

@@ -18,6 +18,9 @@ export function serializeAppSettings(settings: AppSettings) {
     reply_mode: settings.replyMode,
     auto_reply_enabled: settings.autoReplyEnabled,
     reply_delay_seconds: settings.replyDelaySeconds,
+    message_reply_mode: settings.messageReplyMode,
+    message_auto_reply_enabled: settings.messageAutoReplyEnabled,
+    message_reply_delay_seconds: settings.messageReplyDelaySeconds,
     auto_monitor_enabled: settings.autoMonitorEnabled,
     auto_monitor_interval_seconds: settings.autoMonitorIntervalSeconds,
     updated_at: settings.updatedAt,
@@ -37,6 +40,9 @@ export function normalizeAppSettingsBody(
   const hasAutoReply = "auto_reply_enabled" in body;
   const hasReplyMode = "reply_mode" in body;
   const hasReplyDelay = "reply_delay_seconds" in body;
+  const hasMessageAutoReply = "message_auto_reply_enabled" in body;
+  const hasMessageReplyMode = "message_reply_mode" in body;
+  const hasMessageReplyDelay = "message_reply_delay_seconds" in body;
   const hasAutoMonitor = "auto_monitor_enabled" in body;
   const hasAutoMonitorInterval = "auto_monitor_interval_seconds" in body;
 
@@ -45,11 +51,14 @@ export function normalizeAppSettingsBody(
     !hasAutoReply &&
     !hasReplyMode &&
     !hasReplyDelay &&
+    !hasMessageAutoReply &&
+    !hasMessageReplyMode &&
+    !hasMessageReplyDelay &&
     !hasAutoMonitor &&
     !hasAutoMonitorInterval
   ) {
     throw new ValidationError(
-      "at least one of timezone, reply_mode, reply_delay_seconds, auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
+      "at least one of timezone, reply_mode, reply_delay_seconds, auto_reply_enabled, message_reply_mode, message_reply_delay_seconds, message_auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
     );
   }
 
@@ -90,6 +99,32 @@ export function normalizeAppSettingsBody(
     replyDelaySeconds = Math.round(body.reply_delay_seconds);
   }
 
+  let messageReplyMode = current.messageReplyMode;
+  if (hasMessageReplyMode) {
+    if (typeof body.message_reply_mode !== "string" || !isReplyMode(body.message_reply_mode)) {
+      throw new ValidationError("message_reply_mode must be off, auto, or draft");
+    }
+    messageReplyMode = body.message_reply_mode;
+  } else if (hasMessageAutoReply) {
+    if (typeof body.message_auto_reply_enabled !== "boolean") {
+      throw new ValidationError("message_auto_reply_enabled must be a boolean");
+    }
+    messageReplyMode = replyModeFromAutoReplyEnabled(body.message_auto_reply_enabled);
+  }
+
+  let messageReplyDelaySeconds = current.messageReplyDelaySeconds;
+  if (hasMessageReplyDelay) {
+    if (typeof body.message_reply_delay_seconds !== "number") {
+      throw new ValidationError("message_reply_delay_seconds must be a number");
+    }
+    if (!isValidReplyDelaySeconds(body.message_reply_delay_seconds)) {
+      throw new ValidationError(
+        "message_reply_delay_seconds must be 0 (immediate) or between 30 and 600",
+      );
+    }
+    messageReplyDelaySeconds = Math.round(body.message_reply_delay_seconds);
+  }
+
   let autoMonitorEnabled = current.autoMonitorEnabled;
   if (hasAutoMonitor) {
     if (typeof body.auto_monitor_enabled !== "boolean") {
@@ -118,6 +153,9 @@ export function normalizeAppSettingsBody(
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
     replyDelaySeconds,
+    messageReplyMode,
+    messageAutoReplyEnabled: autoReplyEnabledFromReplyMode(messageReplyMode),
+    messageReplyDelaySeconds,
     autoMonitorEnabled,
     autoMonitorIntervalSeconds,
   };

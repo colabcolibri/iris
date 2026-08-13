@@ -15,15 +15,20 @@ type AppSettingsContextValue = {
   timezone: string;
   replyMode: ReplyMode;
   replyDelaySeconds: number;
+  messageReplyMode: ReplyMode;
+  messageReplyDelaySeconds: number;
   autoMonitorEnabled: boolean;
   autoMonitorIntervalSeconds: number;
   /** Compatibilidade com API legada. */
   autoReplyEnabled: boolean;
+  messageAutoReplyEnabled: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
   saveTimezone: (timezone: string) => Promise<void>;
   saveReplyMode: (mode: ReplyMode) => Promise<void>;
   saveReplyDelaySeconds: (seconds: number) => Promise<void>;
+  saveMessageReplyMode: (mode: ReplyMode) => Promise<void>;
+  saveMessageReplyDelaySeconds: (seconds: number) => Promise<void>;
   saveAutoMonitorEnabled: (enabled: boolean) => Promise<void>;
   saveAutoMonitorIntervalSeconds: (seconds: number) => Promise<void>;
 };
@@ -39,6 +44,8 @@ export function AppSettingsProvider({
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
   const [replyMode, setReplyMode] = useState<ReplyMode>("auto");
   const [replyDelaySeconds, setReplyDelaySeconds] = useState(0);
+  const [messageReplyMode, setMessageReplyMode] = useState<ReplyMode>("draft");
+  const [messageReplyDelaySeconds, setMessageReplyDelaySeconds] = useState(0);
   const [autoMonitorEnabled, setAutoMonitorEnabled] = useState(true);
   const [autoMonitorIntervalSeconds, setAutoMonitorIntervalSeconds] =
     useState(300);
@@ -51,6 +58,11 @@ export function AppSettingsProvider({
         settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"),
       );
       setReplyDelaySeconds(settings.reply_delay_seconds ?? 0);
+      setMessageReplyMode(
+        settings.message_reply_mode ??
+          (settings.message_auto_reply_enabled ? "auto" : "draft"),
+      );
+      setMessageReplyDelaySeconds(settings.message_reply_delay_seconds ?? 0);
       setAutoMonitorEnabled(settings.auto_monitor_enabled ?? true);
       setAutoMonitorIntervalSeconds(
         settings.auto_monitor_interval_seconds ?? 300,
@@ -120,20 +132,41 @@ export function AppSettingsProvider({
     [applySettings],
   );
 
+  const saveMessageReplyMode = useCallback(
+    async (mode: ReplyMode) => {
+      const saved = await updateAppSettings({ message_reply_mode: mode });
+      applySettings(saved);
+    },
+    [applySettings],
+  );
+
+  const saveMessageReplyDelaySeconds = useCallback(
+    async (seconds: number) => {
+      const saved = await updateAppSettings({ message_reply_delay_seconds: seconds });
+      applySettings(saved);
+    },
+    [applySettings],
+  );
+
   return (
     <AppSettingsContext.Provider
       value={{
         timezone,
         replyMode,
         replyDelaySeconds,
+        messageReplyMode,
+        messageReplyDelaySeconds,
         autoMonitorEnabled,
         autoMonitorIntervalSeconds,
         autoReplyEnabled: replyMode !== "off",
+        messageAutoReplyEnabled: messageReplyMode !== "off",
         loading,
         refresh,
         saveTimezone,
         saveReplyMode,
         saveReplyDelaySeconds,
+        saveMessageReplyMode,
+        saveMessageReplyDelaySeconds,
         saveAutoMonitorEnabled,
         saveAutoMonitorIntervalSeconds,
       }}

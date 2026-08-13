@@ -9,6 +9,7 @@ export type AgentRunStep = {
   id: string;
   agentRunId: string;
   commentId: string | null;
+  messageId: string | null;
   stage: HarnessStageName;
   verdict: HarnessVerdict;
   reason: string | null;
@@ -21,6 +22,7 @@ export type AgentRunStep = {
 export type CreateAgentRunStepInput = {
   agentRunId: string;
   commentId?: string | null;
+  messageId?: string | null;
   stage: HarnessStageName;
   verdict: HarnessVerdict;
   reason?: string | null;
@@ -32,6 +34,8 @@ export type CreateAgentRunStepInput = {
 export type AgentRunStepRepository = {
   appendBatch(steps: CreateAgentRunStepInput[]): AgentRunStep[];
   listByCommentId(commentId: string): AgentRunStep[];
+  listByMessageId(messageId: string): AgentRunStep[];
   listByAgentRunId(agentRunId: string): AgentRunStep[];
   findLatestRunIdByCommentId(commentId: string): string | null;
+  findLatestRunIdByMessageId(messageId: string): string | null;
 };

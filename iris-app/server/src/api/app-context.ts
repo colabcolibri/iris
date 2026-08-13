@@ -15,6 +15,7 @@ import { createGraphApiCommentReplier } from "../adapters/meta/graph-api-comment
 import { createGraphApiCommentReader } from "../adapters/meta/graph-api-comment-reader.ts";
 import { createGraphApiInsightsReader } from "../adapters/meta/graph-api-insights-reader.ts";
 import { createGraphApiConversationsReader } from "../adapters/meta/graph-api-conversations-reader.ts";
+import { createGraphApiMessageSender } from "../adapters/meta/graph-api-message-sender.ts";
 import { createSqliteAgentRunRepository } from "../adapters/sqlite/agent-run-repository.ts";
 import { createEmailSenderFromEnv } from "../adapters/email/create-email-sender.ts";
 import { createSqliteReplyPersonaStore } from "../adapters/sqlite/reply-persona-repository.ts";
@@ -24,6 +25,7 @@ import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-e
 import { createSqlitePostInsightsStore } from "../adapters/sqlite/post-insights-store.ts";
 import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
 import { createSqliteAgentContentStore } from "../adapters/sqlite/agent-content-repository.ts";
+import { createSqliteMessageAgentContentStore } from "../adapters/sqlite/message-agent-content-repository.ts";
 import { createSqliteAgentRunStepRepository } from "../adapters/sqlite/agent-run-step-repository.ts";
 import { createEnvImageContextProvider } from "../adapters/llm/image-context-provider.ts";
 import {
@@ -45,6 +47,7 @@ import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { MetaCommentReader } from "../ports/meta-comment-reader.ts";
 import type { MetaConnectionStore } from "../ports/meta-connection-store.ts";
 import type { MetaConversationsReader } from "../ports/meta-conversations-reader.ts";
+import type { MetaMessageSender } from "../ports/meta-message-sender.ts";
 import type { MetaInsightsReader } from "../ports/meta-insights-reader.ts";
 import type { MetaPublisher } from "../ports/meta-publisher.ts";
 import type { MetaTokenStore } from "../ports/meta-token-store.ts";
@@ -54,13 +57,24 @@ import type { AppSettingsStore } from "../ports/app-settings-store.ts";
 import type { McpConnectionStore } from "../ports/mcp-connection-store.ts";
 import type { ImageContextProvider } from "../ports/image-context-provider.ts";
 import type { AgentContentStore } from "../ports/agent-content-store.ts";
+import type { MessageAgentContentStore } from "../ports/message-agent-content-store.ts";
 import type { AgentRunStepRepository } from "../ports/agent-run-step-repository.ts";
 import type { LlmSettingsStore } from "../ports/llm-settings-store.ts";
 import type { WebhookEventRepository } from "../ports/webhook-event-repository.ts";
 import type { PostInsightsStore } from "../ports/post-insights-store.ts";
 import type { SimulatorScenarioStore } from "../ports/simulator-scenario-store.ts";
+import type { ConversationRepository } from "../ports/conversation-repository.ts";
+import type { MessageReplyRepository, MessageRepository } from "../ports/message-repository.ts";
+import type { ProductRepository } from "../ports/product-repository.ts";
 import { createSqliteSimulatorScenarioStore } from "../adapters/sqlite/simulator-scenario-repository.ts";
+import { createSqliteConversationRepository } from "../adapters/sqlite/conversation-repository.ts";
+import {
+  createSqliteMessageRepository,
+  createSqliteMessageReplyRepository,
+} from "../adapters/sqlite/message-repository.ts";
+import { createSqliteProductRepository } from "../adapters/sqlite/product-repository.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
+import type { MessageReplyContextAssemblerDeps } from "../domain/message-reply-context/message-reply-context-assembler.ts";
 import {
   loadMcpConnectionCodeFromEnv,
   type McpConfig,
@@ -80,6 +94,10 @@ export type AppContext = {
   posts: PostRepository;
   assets: AssetRepository;
   comments: CommentRepository;
+  conversations: ConversationRepository;
+  messages: MessageRepository;
+  messageReplies: MessageReplyRepository;
+  products: ProductRepository;
   mediaStorage: MediaStorage;
   imageOptimizer: ImageOptimizer;
   metaTokenStore: MetaTokenStore;
@@ -89,6 +107,7 @@ export type AppContext = {
   metaCommentReader: MetaCommentReader;
   metaInsightsReader: MetaInsightsReader;
   metaConversationsReader: MetaConversationsReader;
+  metaMessageSender: MetaMessageSender;
   agentRuns: AgentRunRepository;
   llmCompleter: LlmCompleter | null;
   llmSettingsStore: LlmSettingsStore;
@@ -105,11 +124,13 @@ export type AppContext = {
   adminLoginChallenges: AdminLoginChallengeRepository;
   replyPersonaStore: ReplyPersonaStore;
   agentContentStore: AgentContentStore;
+  messageAgentContentStore: MessageAgentContentStore;
   agentRunSteps: AgentRunStepRepository;
   appSettingsStore: AppSettingsStore;
   simulatorScenarioStore: SimulatorScenarioStore;
   imageContextProvider: ImageContextProvider;
   replyContextAssembler: ReplyContextAssemblerDeps;
+  messageReplyContextAssembler: MessageReplyContextAssemblerDeps;
 };
 
 export type AppContextOptions = {
@@ -220,6 +241,19 @@ export function createAppContext(options: AppContextOptions): AppContext {
     },
   });
 
+  const metaMessageSender = createGraphApiMessageSender({
+    metaTokenStore,
+    config: {
+      resolveIgUserId,
+      graphApiVersion,
+    },
+  });
+
+  const conversations = createSqliteConversationRepository(options.db);
+  const messages = createSqliteMessageRepository(options.db);
+  const messageReplies = createSqliteMessageReplyRepository(options.db);
+  const products = createSqliteProductRepository(options.db);
+
   const llmSettingsStore = createSqliteLlmSettingsStore(options.db, {
     encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
   });
@@ -229,6 +263,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);
   const replyPersonaStore = createSqliteReplyPersonaStore(options.db);
   const agentContentStore = createSqliteAgentContentStore(options.db);
+  const messageAgentContentStore = createSqliteMessageAgentContentStore(options.db);
   const agentRunSteps = createSqliteAgentRunStepRepository(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
   const simulatorScenarioStore = createSqliteSimulatorScenarioStore(options.db);
@@ -263,6 +298,14 @@ export function createAppContext(options: AppContextOptions): AppContext {
     resolveBrandUsername: () => metaConnectionStore.get()?.igUsername ?? null,
   };
 
+  const messageReplyContextAssembler: MessageReplyContextAssemblerDeps = {
+    conversations,
+    messages,
+    products,
+    personaStore: replyPersonaStore,
+    resolveBrandUsername: () => metaConnectionStore.get()?.igUsername ?? null,
+  };
+
   return {
     db: options.db,
     auth,
@@ -274,6 +317,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
     posts: replyContextAssembler.posts,
     assets,
     comments: replyContextAssembler.comments,
+    conversations,
+    messages,
+    messageReplies,
+    products,
     mediaStorage: createFsMediaStorage(mediaRoot),
     imageOptimizer: createSharpImageOptimizer(),
     metaTokenStore,
@@ -283,6 +330,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
     metaCommentReader,
     metaInsightsReader,
     metaConversationsReader,
+    metaMessageSender,
     agentRuns: createSqliteAgentRunRepository(options.db),
     llmCompleter,
     llmSettingsStore,
@@ -299,10 +347,12 @@ export function createAppContext(options: AppContextOptions): AppContext {
     adminLoginChallenges,
     replyPersonaStore,
     agentContentStore,
+    messageAgentContentStore,
     agentRunSteps,
     appSettingsStore,
     simulatorScenarioStore,
     imageContextProvider,
     replyContextAssembler,
+    messageReplyContextAssembler,
   };
 }

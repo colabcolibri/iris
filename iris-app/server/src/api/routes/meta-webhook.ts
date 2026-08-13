@@ -3,21 +3,28 @@ import type { AppContext } from "../app-context.ts";
 import { BodyTooLargeError, readRawBody, sendError } from "../json.ts";
 import {
   parseCommentEntries,
+  parseMessageEntries,
   readWebhookEnvelope,
   verifyHubSignature,
   verifySubscribeToken,
 } from "../../domain/meta/meta-webhook.ts";
-import { notifyCommentsChanged } from "../../adapters/sse/event-bus.ts";
+import { notifyCommentsChanged, notifyMessagesChanged } from "../../adapters/sse/event-bus.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { enqueueCommentReply } from "../../domain/comments/enqueue-comment-reply.ts";
+import { enqueueMessageReply } from "../../domain/messages/enqueue-message-reply.ts";
 import {
   resolveEffectiveReplyMode,
   shouldScheduleCommentReply,
 } from "../../domain/posts/reply-mode.ts";
+import {
+  resolveEffectiveMessageReplyMode,
+  shouldScheduleMessageReply,
+} from "../../domain/messages/message-reply-mode.ts";
 import { isBrandAuthor } from "../../domain/comments/is-brand-author.ts";
 
 import { truncateWebhookPayload } from "../../domain/meta/meta-webhook-payload.ts";
 import { ensureMonitoredPost } from "../../domain/comments/ensure-monitored-post.ts";
+import { ingestWebhookMessage } from "../../domain/messages/ingest-webhook-message.ts";
 
 export function handleMetaWebhookRoute(
   req: IncomingMessage,
@@ -127,6 +134,41 @@ async function handleMetaWebhookPost(
       field: envelope.field,
     });
 
+    const pageIgUserId = ctx.metaConnectionStore.get()?.igUserId ?? null;
+    const messageEntries = parseMessageEntries(payload, pageIgUserId);
+    const affectedConversations = new Set<string>();
+    let messageProcessed = false;
+    let linkedConversationId: string | null = null;
+    let linkedMessageId: string | null = null;
+
+    for (const entry of messageEntries) {
+      const result = ingestWebhookMessage(entry, {
+        conversations: ctx.conversations,
+        messages: ctx.messages,
+        pageIgUserId,
+      });
+
+      messageProcessed = true;
+      linkedConversationId = result.conversationId;
+      linkedMessageId = result.messageId;
+      affectedConversations.add(result.conversationId);
+
+      if (result.created && !result.skipped) {
+        const conversation = ctx.conversations.findById(result.conversationId);
+        if (conversation) {
+          const appSettings = getAppSettingsOrDefault(ctx.appSettingsStore);
+          const effectiveReplyMode = resolveEffectiveMessageReplyMode(
+            appSettings.messageReplyMode,
+            conversation.replyMode,
+          );
+
+          if (shouldScheduleMessageReply(effectiveReplyMode) && ctx.resolveLlmCompleter()) {
+            enqueueMessageReply(ctx, result.messageId);
+          }
+        }
+      }
+    }
+
     const entries = parseCommentEntries(payload);
     const affectedPosts = new Set<string>();
     const brandUsername = ctx.metaConnectionStore.get()?.igUsername ?? null;
@@ -195,14 +237,27 @@ async function handleMetaWebhookPost(
       }
     }
 
+    const commentProcessed = processed;
+    const anyProcessed = commentProcessed || messageProcessed;
+
     ctx.webhookEvents.update(event.id, {
-      processingStatus: processed ? "processed" : entries.length > 0 ? "ignored" : "received",
+      processingStatus: anyProcessed
+        ? "processed"
+        : entries.length > 0 || messageEntries.length > 0
+          ? "ignored"
+          : "received",
       commentId: linkedCommentId,
       postId: linkedPostId,
+      conversationId: linkedConversationId,
+      messageId: linkedMessageId,
     });
 
     for (const postId of affectedPosts) {
       notifyCommentsChanged({ post_id: postId });
+    }
+
+    for (const conversationId of affectedConversations) {
+      notifyMessagesChanged({ conversation_id: conversationId });
     }
 
     res.writeHead(200, { "Content-Type": "text/plain" });

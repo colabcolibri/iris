@@ -10,6 +10,8 @@ export const demoPath = (segment = "") =>
 export type AppRouteSet = {
   root: string;
   comments: string;
+  messages: string;
+  products: string;
   webhooks: string;
   agentRuns: string;
   agentSimulator: string;

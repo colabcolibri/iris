@@ -15,6 +15,8 @@ export type UpdateWebhookEventInput = {
   field?: string | null;
   commentId?: string | null;
   postId?: string | null;
+  conversationId?: string | null;
+  messageId?: string | null;
   errorMessage?: string | null;
 };
 
@@ -28,6 +30,8 @@ export type WebhookEventRecord = {
   processingStatus: WebhookProcessingStatus;
   commentId: string | null;
   postId: string | null;
+  conversationId: string | null;
+  messageId: string | null;
   errorMessage: string | null;
 };
 

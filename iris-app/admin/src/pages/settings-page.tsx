@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { AgentAutoReplyCard } from "@/components/settings/agent-auto-reply-card";
+import { MessageAgentAutoReplyCard } from "@/components/settings/message-agent-auto-reply-card";
 import { AutoMonitorCard } from "@/components/settings/auto-monitor-card";
 import { InsightsRefreshCard } from "@/components/settings/insights-refresh-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
@@ -109,6 +110,8 @@ export function SettingsPage() {
         <InsightsRefreshCard />
 
         <AgentAutoReplyCard />
+
+        <MessageAgentAutoReplyCard />
 
         <McpConnectionCard />
 

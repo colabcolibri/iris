@@ -11,12 +11,19 @@ import type {
   CommentActivityKind,
   CommentPostSummary,
   CommentsInbox,
+  ConversationReplyMode,
+  ConversationSummary,
   ImportMonitoredPostsBatchResult,
   LlmSettings,
+  Message,
+  MessageActivityItem,
+  MessageActivityKind,
+  MessageAgentContent,
   MetaStatus,
   McpSettings,
   McpSettingsGenerateResult,
   Post,
+  Product,
   PostInsightsResult,
   UpdatePostBody,
   ReconcileCommentsPreview,
@@ -416,6 +423,7 @@ export function confirmLoginCode(email: string, code: string) {
 export function subscribeRealtimeEvents(handlers: {
   onPostsChanged?: (data: unknown) => void;
   onCommentsChanged?: (data: { post_id?: string }) => void;
+  onMessagesChanged?: (data: { conversation_id?: string }) => void;
   onConnectionChange?: (connected: boolean) => void;
 }) {
   if (getDemoMode()) {
@@ -468,6 +476,16 @@ export function subscribeRealtimeEvents(handlers: {
       try {
         handlers.onCommentsChanged?.(
           JSON.parse(event.data) as { post_id?: string },
+        );
+      } catch {
+        // ignore malformed frames
+      }
+    });
+
+    source.addEventListener("messages-changed", (event) => {
+      try {
+        handlers.onMessagesChanged?.(
+          JSON.parse(event.data) as { conversation_id?: string },
         );
       } catch {
         // ignore malformed frames
@@ -557,6 +575,171 @@ export async function fetchReplyAudit(
   return response.json() as Promise<ReplyAudit>;
 }
 
+export function fetchConversations(limit = 50) {
+  return apiFetch<{ conversations: ConversationSummary[] }>(
+    `/api/conversations?limit=${limit}`,
+  ).then((payload) => payload.conversations ?? []);
+}
+
+export function fetchConversationMessages(conversationId: string) {
+  return apiFetch<{ conversation: ConversationSummary; messages: Message[] }>(
+    `/api/conversations/${conversationId}/messages`,
+  );
+}
+
+export function syncConversationMessages(conversationId: string) {
+  return apiFetch<{ conversationId: string; imported: number; updated: number }>(
+    `/api/conversations/${conversationId}/sync`,
+    { method: "POST" },
+  );
+}
+
+export function syncConversationsFromMeta(limit = 25) {
+  return apiFetch<{ synced: number }>(`/api/conversations/sync?limit=${limit}`, {
+    method: "POST",
+  });
+}
+
+export function updateConversation(
+  conversationId: string,
+  body: { reply_mode?: ConversationReplyMode; reply_prompt?: string | null },
+) {
+  return apiFetch<ConversationSummary>(`/api/conversations/${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export function fetchMessageActivity(kind: MessageActivityKind, limit = 20) {
+  return apiFetch<{ kind: MessageActivityKind; items: MessageActivityItem[] }>(
+    `/api/conversations/activity?kind=${encodeURIComponent(kind)}&limit=${limit}`,
+  ).then((payload) => payload.items ?? []);
+}
+
+export function approveMessageReply(messageId: string, message?: string) {
+  return apiFetch<Message>(`/api/messages/${messageId}/approve-reply`, {
+    method: "POST",
+    body: JSON.stringify(message ? { message } : {}),
+  });
+}
+
+export function requestMessageAiReply(messageId: string, mode: "auto" | "draft") {
+  return apiFetch<Message>(`/api/messages/${messageId}/ai-reply`, {
+    method: "POST",
+    body: JSON.stringify({ mode }),
+  });
+}
+
+export function removeMessageDraft(messageId: string) {
+  return apiFetch<Message>(`/api/messages/${messageId}/draft`, {
+    method: "DELETE",
+  });
+}
+
+export function updateMessageDraft(messageId: string, message: string) {
+  return apiFetch<Message>(`/api/messages/${messageId}/draft`, {
+    method: "PATCH",
+    body: JSON.stringify({ message }),
+  });
+}
+
+export function replyToMessage(messageId: string, message: string) {
+  return apiFetch<Message>(`/api/messages/${messageId}/reply`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
+
+export async function fetchMessageReplyAudit(
+  messageId: string,
+): Promise<ReplyAudit | null> {
+  if (getDemoMode()) {
+    return demoApiFetch<ReplyAudit | null>(`/api/messages/${messageId}/reply-audit`);
+  }
+
+  const response = await fetch(`/api/messages/${messageId}/reply-audit`, {
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    notifyUnauthorized();
+    throw new UnauthorizedError();
+  }
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    throw new Error(payload.error ?? `Request failed (${response.status})`);
+  }
+
+  return response.json() as Promise<ReplyAudit>;
+}
+
+export function fetchMessageAgentContent() {
+  return apiFetch<MessageAgentContent>("/api/settings/message-agent-content");
+}
+
+export function updateMessageAgentContent(body: {
+  dm_soul: string;
+  dm_page: string;
+  dm_knowledge: string;
+  dm_restrictions: string;
+}) {
+  return apiFetch<MessageAgentContent>("/api/settings/message-agent-content", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export function fetchProducts(activeOnly = false) {
+  const suffix = activeOnly ? "?active=true" : "";
+  return apiFetch<{ products: Product[] }>(`/api/products${suffix}`).then(
+    (payload) => payload.products ?? [],
+  );
+}
+
+export function createProduct(body: {
+  slug: string;
+  name: string;
+  short_description?: string;
+  long_description?: string;
+  active?: boolean;
+  sort_order?: number;
+}) {
+  return apiFetch<Product>("/api/products", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function updateProduct(
+  productId: string,
+  body: Partial<{
+    slug: string;
+    name: string;
+    short_description: string;
+    long_description: string;
+    active: boolean;
+    sort_order: number;
+  }>,
+) {
+  return apiFetch<Product>(`/api/products/${productId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export function deactivateProduct(productId: string) {
+  return apiFetch<{ ok: boolean }>(`/api/products/${productId}`, {
+    method: "DELETE",
+  });
+}
+
 export function fetchAppSettings() {
   return apiFetch<AppSettings>("/api/settings/app");
 }
@@ -566,6 +749,9 @@ export function updateAppSettings(body: {
   reply_mode?: ReplyMode;
   auto_reply_enabled?: boolean;
   reply_delay_seconds?: number;
+  message_reply_mode?: ReplyMode;
+  message_auto_reply_enabled?: boolean;
+  message_reply_delay_seconds?: number;
   auto_monitor_enabled?: boolean;
   auto_monitor_interval_seconds?: number;
 }) {
@@ -775,13 +961,17 @@ export type SimulateReplyResult = {
 };
 
 export function simulateAgentReply(body: {
+  channel?: "comment" | "dm";
   caption?: string | null;
   carousel_summary?: string | null;
   response_language?: string;
   brand_name?: string | null;
   max_chars?: number;
   thread?: SimulateThreadMessage[];
-  target_comment: { author: string; text: string };
+  target_comment?: { author: string; text: string };
+  target_message?: { author: string; text: string };
+  participant_username?: string | null;
+  reply_prompt?: string | null;
 }) {
   return apiFetch<SimulateReplyResult>("/api/agent/simulate", {
     method: "POST",

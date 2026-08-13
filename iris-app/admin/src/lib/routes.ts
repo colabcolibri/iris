@@ -9,6 +9,8 @@ export const ROUTES = {
   demo: {
     root: "/demo",
     comments: "/demo/comments",
+    messages: "/demo/messages",
+    products: "/demo/products",
     webhooks: "/demo/webhooks",
     agentRuns: "/demo/agent-runs",
     agentSimulator: "/demo/agent-simulator",
@@ -19,6 +21,8 @@ export const ROUTES = {
     root: ADMIN_BASE,
     login: adminPath("login"),
     comments: adminPath("comments"),
+    messages: adminPath("messages"),
+    products: adminPath("products"),
     webhooks: adminPath("webhooks"),
     agentRuns: adminPath("agent-runs"),
     agentSimulator: adminPath("agent-simulator"),

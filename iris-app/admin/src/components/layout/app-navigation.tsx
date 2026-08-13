@@ -5,6 +5,8 @@ import {
   LayoutGrid,
   List,
   MessageCircle,
+  MessagesSquare,
+  Package,
   Settings,
   Sparkles,
   Webhook,
@@ -34,6 +36,8 @@ const VIEW_ITEMS: { id: AppView; label: string; icon: typeof CalendarDays }[] =
 
 const MAIN_ROUTE_DEFS = [
   { key: "comments" as const, label: "Comentários", icon: MessageCircle },
+  { key: "messages" as const, label: "Mensagens", icon: MessagesSquare },
+  { key: "products" as const, label: "Produtos", icon: Package },
   { key: "webhooks" as const, label: "Webhooks", icon: Webhook },
   { key: "agentSimulator" as const, label: "Simulador", icon: FlaskConical },
   { key: "agentRuns" as const, label: "Execuções", icon: Bot },

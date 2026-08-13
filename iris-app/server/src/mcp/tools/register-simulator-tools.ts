@@ -7,6 +7,10 @@ import {
   simulateReply,
 } from "../../domain/agent-simulator/simulate-reply.ts";
 import {
+  resolveSimulateMessageReplyInput,
+  simulateMessageReply,
+} from "../../domain/agent-simulator/simulate-message-reply.ts";
+import {
   normalizeSimulatorScenarioInput,
   serializeSimulatorScenario,
   serializeSimulatorScenarioListItem,
@@ -90,9 +94,34 @@ export function registerSimulatorTools(server: McpServer, ctx: AppContext): void
           text: z.string(),
         })
         .optional(),
+      channel: z.enum(["comment", "dm"]).optional(),
+      participant_username: z.string().optional(),
+      reply_prompt: z.string().nullable().optional(),
+      target_message: z
+        .object({
+          author: z.string(),
+          text: z.string(),
+        })
+        .optional(),
     },
     async (args) => {
       try {
+        const body = buildSimulateBody(args);
+        const channel = body.channel === "dm" ? "dm" : "comment";
+
+        if (channel === "dm") {
+          const input = resolveSimulateMessageReplyInput(body);
+          const result = await simulateMessageReply(input, {
+            personaStore: ctx.replyPersonaStore,
+            messageAgentContentStore: ctx.messageAgentContentStore,
+            products: ctx.products,
+            llm: ctx.resolveLlmCompleter(),
+            agentRuns: ctx.agentRuns,
+            agentRunSteps: ctx.agentRunSteps,
+          });
+          return jsonToolContent(result);
+        }
+
         const input = resolveSimulateReplyInput(buildSimulateBody(args), {
           scenarioStore: ctx.simulatorScenarioStore,
         });

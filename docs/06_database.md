@@ -82,6 +82,74 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | status | TEXT | `draft`, `sent`, `failed` |
 | agent_run_id | TEXT FK | |
 
+### `conversations`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| ig_conversation_id | TEXT UNIQUE | ID Meta ou `ig:{participant_ig_user_id}` até sync |
+| participant_ig_user_id | TEXT UNIQUE | IGSID do contato |
+| participant_username | TEXT | Nullable |
+| last_message_at | TEXT ISO | Nullable |
+| reply_mode | TEXT | `inherit`, `off`, `auto`, `draft` |
+| reply_prompt | TEXT | Briefing opcional por conversa |
+| created_at | TEXT | |
+| updated_at | TEXT | |
+
+### `messages`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| ig_message_id | TEXT UNIQUE | |
+| conversation_id | TEXT FK | → `conversations` |
+| direction | TEXT | `inbound`, `outbound` |
+| text | TEXT | |
+| ig_timestamp | TEXT ISO | Nullable |
+| status | TEXT | `pending`, `replied`, `skipped`, `failed` |
+| error_message | TEXT | Nullable |
+| agent_reply_not_before | TEXT ISO | Fila DM — paridade com `comments` |
+| created_at | TEXT | |
+
+### `message_replies`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| message_id | TEXT FK | → `messages` |
+| draft_text | TEXT | |
+| sent_text | TEXT | |
+| status | TEXT | `draft`, `sent`, `failed` |
+| agent_run_id | TEXT FK | Nullable |
+| source_ig_message_id | TEXT | ID da mensagem publicada na Meta |
+| created_at | TEXT | |
+
+### `products`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | |
+| slug | TEXT UNIQUE | kebab-case — usado na triagem `product_inquiry` |
+| name | TEXT | |
+| short_description | TEXT | Resumo para prompt |
+| long_description | TEXT | Markdown |
+| active | INTEGER | 1 = ativo |
+| sort_order | INTEGER | Ordem na UI e no harness |
+| created_at | TEXT | |
+| updated_at | TEXT | |
+
+### `message_agent_content`
+
+Singleton (id=1) — blocos editoriais do message-harness DM.
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| dm_soul | TEXT | |
+| dm_page | TEXT | |
+| dm_knowledge | TEXT | |
+| dm_restrictions | TEXT | |
+| updated_at | TEXT | |
+
 ### `agent_runs`
 
 | Column | Type | Notes |
@@ -99,8 +167,9 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | ------ | ---- | ----- |
 | id | TEXT PK | UUID |
 | agent_run_id | TEXT FK | → `agent_runs` |
-| comment_id | TEXT FK | → `comments` |
-| stage | TEXT | `triage`, `draft`, `verify` |
+| comment_id | TEXT FK | → `comments` (nullable) |
+| message_id | TEXT FK | → `messages` (nullable) |
+| stage | TEXT | `triage`, `draft`, `verify`, `message_triage`, `message_draft`, `message_verify` |
 | verdict | TEXT | `pass`, `fail`, `skip` |
 | reason | TEXT | Resumo curto para badge |
 | reasoning | TEXT | Texto livre do LLM |

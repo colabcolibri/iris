@@ -1,0 +1,19 @@
+import type { Conversation, ConversationReplyMode } from "../../domain/messages/conversation.ts";
+
+export type UpsertConversationInput = {
+  igConversationId: string;
+  participantIgUserId: string;
+  participantUsername?: string | null;
+  lastMessageAt?: string | null;
+};
+
+export type ConversationRepository = {
+  findById(id: string): Conversation | null;
+  findByIgConversationId(igConversationId: string): Conversation | null;
+  findByParticipantIgUserId(participantIgUserId: string): Conversation | null;
+  upsert(input: UpsertConversationInput): { conversation: Conversation; created: boolean };
+  updateLastMessageAt(conversationId: string, iso: string): void;
+  updateReplyMode(conversationId: string, replyMode: ConversationReplyMode): Conversation | null;
+  updateReplyPrompt(conversationId: string, replyPrompt: string | null): Conversation | null;
+  listRecent(limit: number): Conversation[];
+};

@@ -1,0 +1,248 @@
+import type {
+  ConversationSummary,
+  Message,
+  MessageActivityItem,
+  MessageAgentContent,
+  Product,
+  ReplyAudit,
+} from "@/lib/types";
+import { DEMO_BRAND_NAME, DEMO_STORE_URL } from "@/demo/demo-brand";
+
+export const DEMO_MESSAGE_AGENT_CONTENT: MessageAgentContent = {
+  dm_soul: `Você responde DMs do ${DEMO_BRAND_NAME} no Instagram com tom acolhedor e objetivo — como uma amiga da marca no inbox privado.`,
+  dm_page: `Perfil comercial @estudio.nomade — moda casual, loja em ${DEMO_STORE_URL}. DMs costumam ser sobre estoque, pedido, medidas e styling.`,
+  dm_knowledge: `Loja: ${DEMO_STORE_URL}. Prazo Sul 5–8 dias úteis. Primeira troca grátis em 7 dias. Guia de medidas no destaque "Medidas".`,
+  dm_restrictions: `Não inventar cupom ou prazo exato. Não pedir dados sensíveis no comentário público — em DM pode pedir e-mail ou número do pedido.`,
+  updated_at: "2026-08-12T10:00:00.000Z",
+};
+
+export const DEMO_CONVERSATIONS: ConversationSummary[] = [
+  {
+    id: "demo-conv-1",
+    ig_conversation_id: "t_demo_conv_1",
+    participant_ig_user_id: "1789000111",
+    participant_username: "lucas.menstyle",
+    last_message_at: "2026-08-12T14:20:00.000Z",
+    reply_mode: "inherit",
+    reply_prompt: null,
+    pending_count: 1,
+    created_at: "2026-08-11T09:00:00.000Z",
+    updated_at: "2026-08-12T14:20:00.000Z",
+    can_reply: true,
+  },
+  {
+    id: "demo-conv-2",
+    ig_conversation_id: "t_demo_conv_2",
+    participant_ig_user_id: "1789000222",
+    participant_username: "fernanda.shop",
+    last_message_at: "2026-08-11T18:45:00.000Z",
+    reply_mode: "draft",
+    reply_prompt: "Priorizar política de troca e link da área do cliente.",
+    pending_count: 0,
+    created_at: "2026-08-10T12:00:00.000Z",
+    updated_at: "2026-08-11T18:45:00.000Z",
+    can_reply: true,
+  },
+  {
+    id: "demo-conv-3",
+    ig_conversation_id: "t_demo_conv_3",
+    participant_ig_user_id: "1789000333",
+    participant_username: "ana.capsule",
+    last_message_at: "2026-08-12T11:05:00.000Z",
+    reply_mode: "inherit",
+    reply_prompt: null,
+    pending_count: 0,
+    created_at: "2026-08-09T08:00:00.000Z",
+    updated_at: "2026-08-12T11:05:00.000Z",
+    can_reply: true,
+  },
+  {
+    id: "demo-conv-4",
+    ig_conversation_id: "t_demo_conv_4",
+    participant_ig_user_id: "1789000444",
+    participant_username: "bia.moda",
+    last_message_at: "2026-08-09T09:00:00.000Z",
+    reply_mode: "inherit",
+    reply_prompt: null,
+    pending_count: 1,
+    created_at: "2026-08-08T15:00:00.000Z",
+    updated_at: "2026-08-09T09:00:00.000Z",
+    can_reply: false,
+  },
+];
+
+export const DEMO_MESSAGES: Record<string, Message[]> = {
+  "demo-conv-1": [
+    {
+      id: "demo-msg-1",
+      ig_message_id: "m_in_1",
+      conversation_id: "demo-conv-1",
+      direction: "inbound",
+      text: "Oi! O vestido linho P ainda tem?",
+      ig_timestamp: "2026-08-12T14:18:00.000Z",
+      status: "pending",
+      error_message: null,
+      agent_reply_not_before: null,
+      created_at: "2026-08-12T14:18:00.000Z",
+      draft_text:
+        "Oi! Temos sim o vestido linho P disponível agora 💛 Posso te mandar o link direto?",
+      draft_status: "draft",
+    },
+    {
+      id: "demo-msg-0",
+      ig_message_id: "m_out_0",
+      conversation_id: "demo-conv-1",
+      direction: "outbound",
+      text: "Olá! Como posso ajudar?",
+      ig_timestamp: "2026-08-12T14:10:00.000Z",
+      status: "replied",
+      error_message: null,
+      agent_reply_not_before: null,
+      created_at: "2026-08-12T14:10:00.000Z",
+      linked_reply_text: "Olá! Como posso ajudar?",
+      linked_reply_ig_message_id: "m_out_0",
+    },
+  ],
+  "demo-conv-2": [
+    {
+      id: "demo-msg-2",
+      ig_message_id: "m_in_2",
+      conversation_id: "demo-conv-2",
+      direction: "inbound",
+      text: "Vocês fazem troca se não servir?",
+      ig_timestamp: "2026-08-11T18:40:00.000Z",
+      status: "replied",
+      error_message: null,
+      agent_reply_not_before: null,
+      created_at: "2026-08-11T18:40:00.000Z",
+      linked_reply_text:
+        "Fazemos sim! A primeira troca é grátis em até 7 dias — é só abrir o pedido na área do cliente.",
+      linked_reply_ig_message_id: "m_out_2",
+    },
+  ],
+  "demo-conv-3": [
+    {
+      id: "demo-msg-3",
+      ig_message_id: "m_in_3",
+      conversation_id: "demo-conv-3",
+      direction: "inbound",
+      text: "Amei a bolsa Nômade! Vocês entregam no RJ?",
+      ig_timestamp: "2026-08-12T11:05:00.000Z",
+      status: "replied",
+      error_message: null,
+      agent_reply_not_before: null,
+      created_at: "2026-08-12T11:05:00.000Z",
+      linked_reply_text: "Que bom que curtiu! Entregamos sim no RJ em 8–12 dias úteis 💛",
+      linked_reply_ig_message_id: "m_out_3",
+    },
+  ],
+  "demo-conv-4": [
+    {
+      id: "demo-msg-4",
+      ig_message_id: "m_in_4",
+      conversation_id: "demo-conv-4",
+      direction: "inbound",
+      text: "Qual o prazo de envio?",
+      ig_timestamp: "2026-08-08T20:00:00.000Z",
+      status: "pending",
+      error_message: null,
+      agent_reply_not_before: null,
+      created_at: "2026-08-08T20:00:00.000Z",
+    },
+  ],
+};
+
+export const DEMO_PRODUCTS: Product[] = [
+  {
+    id: "demo-product-1",
+    slug: "vestido-linho-areia",
+    name: "Vestido linho areia",
+    short_description: "Vestido solto em linho, paleta areia.",
+    long_description: "Peça cápsula verão, tamanhos PP ao G.",
+    active: true,
+    sort_order: 1,
+    created_at: "2026-08-01T10:00:00.000Z",
+    updated_at: "2026-08-10T08:00:00.000Z",
+  },
+  {
+    id: "demo-product-2",
+    slug: "bolsa-nomade",
+    name: "Bolsa Nômade",
+    short_description: "Bolsa grande de algodão cru.",
+    long_description: "Cabe notebook 13\", fecho magnético.",
+    active: true,
+    sort_order: 2,
+    created_at: "2026-08-01T10:00:00.000Z",
+    updated_at: "2026-08-10T08:00:00.000Z",
+  },
+];
+
+export function buildDemoMessageActivity(): MessageActivityItem[] {
+  return [
+    {
+      message_id: "demo-msg-1",
+      conversation_id: "demo-conv-1",
+      participant_username: "lucas.menstyle",
+      text_preview: "Oi! O vestido linho P ainda tem?",
+      occurred_at: "2026-08-12T14:18:00.000Z",
+      conversation_pending_count: 1,
+      draft_text_preview:
+        "Oi! Temos sim o vestido linho P disponível agora 💛 Posso te mandar o link direto?",
+      sent_text_preview: null,
+    },
+  ];
+}
+
+export const DEMO_MESSAGE_REPLY_AUDIT: ReplyAudit = {
+  agent_run_id: "demo-msg-run-1",
+  flow_id: "message-reply",
+  trigger: "message_webhook",
+  terminal_status: "approved",
+  reply_tier: "full",
+  output_summary: "Confirma estoque P e oferece link da loja.",
+  steps: [
+    {
+      stage: "message_triage",
+      verdict: "pass",
+      reason: null,
+      reasoning: "Pergunta de produto e estoque.",
+      structured: { messageCategory: "product_inquiry", product_slug: "vestido-linho-areia" },
+      created_at: "2026-08-12T14:19:00.000Z",
+      llm: {
+        model: "gpt-4.1-mini",
+        promptTokens: 380,
+        completionTokens: 22,
+        totalTokens: 402,
+        latencyMs: 720,
+      },
+    },
+    {
+      stage: "message_draft",
+      verdict: "pass",
+      reason: null,
+      reasoning: "Rascunho alinhado à persona DM.",
+      created_at: "2026-08-12T14:19:02.000Z",
+      llm: {
+        model: "gpt-4.1-mini",
+        promptTokens: 920,
+        completionTokens: 48,
+        totalTokens: 968,
+        latencyMs: 1180,
+      },
+    },
+    {
+      stage: "message_verify",
+      verdict: "pass",
+      reason: null,
+      reasoning: "Sem promessa de prazo exato; dentro do limite.",
+      created_at: "2026-08-12T14:19:04.000Z",
+      llm: {
+        model: "gpt-4.1-mini",
+        promptTokens: 280,
+        completionTokens: 10,
+        totalTokens: 290,
+        latencyMs: 480,
+      },
+    },
+  ],
+};

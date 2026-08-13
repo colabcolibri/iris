@@ -1,5 +1,6 @@
 import { registerAssetTools } from "./tools/register-asset-tools.ts";
 import { registerCommentTools } from "./tools/register-comment-tools.ts";
+import { registerMessageTools } from "./tools/register-message-tools.ts";
 import { registerPostTools } from "./tools/register-post-tools.ts";
 import { registerInsightsTools } from "./tools/register-insights-tools.ts";
 import { registerSettingsAppTools } from "./tools/register-settings-app-tools.ts";
@@ -18,6 +19,7 @@ export function createIrisMcpServer(ctx: AppContext): McpServer {
   registerPostTools(server, ctx);
   registerAssetTools(server, ctx);
   registerCommentTools(server, ctx);
+  registerMessageTools(server, ctx);
   registerInsightsTools(server, ctx);
   registerSettingsAppTools(server, ctx);
   registerWebhookTools(server, ctx);

@@ -22,6 +22,7 @@ export const DEMO_META_STATUS: MetaStatus = {
   connected: true,
   igUsername: DEMO_IG_HANDLE,
   tokenExpired: false,
+  messaging_supported: true,
 };
 
 export const DEMO_APP_SETTINGS: AppSettings = {
@@ -29,6 +30,9 @@ export const DEMO_APP_SETTINGS: AppSettings = {
   reply_mode: "draft",
   auto_reply_enabled: true,
   reply_delay_seconds: 120,
+  message_reply_mode: "draft",
+  message_auto_reply_enabled: true,
+  message_reply_delay_seconds: 60,
   auto_monitor_enabled: true,
   auto_monitor_interval_seconds: 300,
   updated_at: "2026-08-12T10:00:00.000Z",

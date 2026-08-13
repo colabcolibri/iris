@@ -30,6 +30,9 @@ export function registerSettingsAppTools(server: McpServer, ctx: AppContext): vo
       auto_reply_enabled: z.boolean().optional(),
       auto_monitor_enabled: z.boolean().optional(),
       auto_monitor_interval_seconds: z.number().optional(),
+      message_reply_mode: z.enum(["off", "auto", "draft"]).optional(),
+      message_reply_delay_seconds: z.number().optional(),
+      message_auto_reply_enabled: z.boolean().optional(),
     },
     async (args) => {
       try {
@@ -47,6 +50,15 @@ export function registerSettingsAppTools(server: McpServer, ctx: AppContext): vo
         }
         if (args.auto_monitor_interval_seconds !== undefined) {
           body.auto_monitor_interval_seconds = args.auto_monitor_interval_seconds;
+        }
+        if (args.message_reply_mode !== undefined) {
+          body.message_reply_mode = args.message_reply_mode;
+        }
+        if (args.message_reply_delay_seconds !== undefined) {
+          body.message_reply_delay_seconds = args.message_reply_delay_seconds;
+        }
+        if (args.message_auto_reply_enabled !== undefined) {
+          body.message_auto_reply_enabled = args.message_auto_reply_enabled;
         }
 
         const current = ctx.appSettingsStore.get() ?? defaultAppSettings();

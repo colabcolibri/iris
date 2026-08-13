@@ -101,6 +101,9 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_delete_post_asset` | `DELETE /api/posts/:id/assets/:assetId` | Remove asset (row + arquivo) |
 | `iris_generate_post_carousel_summary` | `POST /api/posts/:id/generate-carousel-summary` | Vision no server → grava `carousel_summary` |
 | `iris_list_post_comments` | `GET /api/posts/:id/comments` | Comentários sincronizados |
+| `iris_list_conversations` | `GET /api/conversations` | Conversas DM recentes |
+| `iris_list_conversation_messages` | `GET /api/conversations/:id/messages` | Mensagens da conversa |
+| `iris_get_message_reply_context` | `GET /api/messages/:id/reply-context` | Envelope completo para resposta DM |
 | `iris_get_reply_context` | `GET /api/comments/:id/reply-context` | Envelope completo para resposta |
 | `iris_get_post_insights` | `GET /api/posts/:id/insights` | Insights com cache 1h (`force`/`refresh`) |
 | `iris_get_post_insights_history` | `GET /api/posts/:id/insights/history` | Snapshots persistidos |
@@ -116,7 +119,9 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 | `iris_update_app_settings` | `PUT /api/settings/app` | Atualização parcial com mesmas validações REST |
 | `iris_list_simulator_scenarios` | `GET /api/agent/simulator-scenarios` | Lista cenários persistidos (resumo — sem thread completa) |
 | `iris_create_simulator_scenario` | `POST /api/agent/simulator-scenarios` | Cria cenário com mesmas validações REST admin |
-| `iris_simulate_reply` | `POST /api/agent/simulate` | Executa harness sandbox (`scenario_id` ou inline; opcional `response_language`) — não publica na Meta |
+| `iris_simulate_reply` | `POST /api/agent/simulate` | Harness sandbox comentários ou DM (`channel=dm`) — não publica na Meta |
+| `iris_get_message_agent_content` | `GET /api/settings/message-agent-content` | Blocos DM |
+| `iris_update_message_agent_content` | `PUT /api/settings/message-agent-content` | Atualiza blocos DM |
 
 ### MCP post tools — `iris_get_post` / `iris_update_post`
 
@@ -255,13 +260,39 @@ Além de `limit`, `delay_ms`, `force`: `since` / `until` (ISO) filtram posts ger
 
 Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_replies`) têm no máximo 1 draft por comentário.
 
+## Conversations e messages (DM)
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/api/conversations` | admin | Lista conversas recentes (`limit`; inclui `pending_count`, `can_reply`) |
+| GET | `/api/conversations/:id/messages` | admin | Thread + metadados da conversa |
+| POST | `/api/conversations/:id/sync` | admin + Meta | Importa mensagens da Graph API |
+| PATCH | `/api/conversations/:id` | admin | `reply_mode`, `reply_prompt` |
+| GET | `/api/conversations/activity` | admin | Fila transversal (`kind=pending_approval` \| `recent`) |
+| GET | `/api/messages/:id/reply-context` | admin, agent | Contexto completo para resposta DM |
+| GET | `/api/messages/:id/reply-audit` | admin | Trilha do message-harness |
+| POST | `/api/messages/:id/ai-reply` | admin | Dispara harness (`mode`: `auto` \| `draft`) |
+| PATCH | `/api/messages/:id/draft` | admin | Salva rascunho |
+| DELETE | `/api/messages/:id/draft` | admin | Remove rascunho |
+| POST | `/api/messages/:id/approve-reply` | admin | Envia rascunho na Meta (exige `can_reply`) |
+| POST | `/api/messages/:id/reply` | admin | Resposta manual imediata |
+
+## Products
+
+| Method | Path | Auth | Description |
+| ------ | ---- | ---- | ----------- |
+| GET | `/api/products` | admin | Lista (`active=1` opcional) |
+| POST | `/api/products` | admin | Cria produto |
+| PATCH | `/api/products/:id` | admin | Atualiza |
+| DELETE | `/api/products/:id` | admin | Remove |
+
 ## Meta (Instagram)
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
 | GET | `/auth/meta` | admin session | Redirect OAuth Meta |
 | GET | `/auth/meta/callback` | signed `state` | Callback OAuth |
-| GET | `/api/meta/status` | admin | Status da conexão |
+| GET | `/api/meta/status` | admin | Status da conexão (`messaging_supported` quando Page vinculada) |
 | GET | `/api/meta/health` | admin | Probe Graph API |
 | GET | `/api/meta/media/browse` | admin | Lista mídia IG (`limit`, `after`) |
 | POST | `/api/meta/disconnect` | admin | Remove token + conexão |
@@ -276,7 +307,7 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | POST | `/api/agent/simulator-scenarios` | admin | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
 | PUT | `/api/agent/simulator-scenarios/:id` | admin | Atualiza cenário (campos parciais permitidos) |
 | DELETE | `/api/agent/simulator-scenarios/:id` | admin | Remove cenário |
-| POST | `/api/agent/simulate` | admin | Simula resposta (sandbox, sem publicar). Aceita `scenario_id` opcional para carregar cenário persistido; body inline continua válido e sobrescreve campos do cenário. |
+| POST | `/api/agent/simulate` | admin | Simula resposta comentário ou DM (`channel=comment` \| `dm`). Sandbox — não publica na Meta. |
 
 ## Settings
 
@@ -286,7 +317,9 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | PUT | `/api/settings/reply-persona` | admin | Atualiza persona |
 | GET | `/api/settings/agent-content` | admin | Blocos Markdown (`soul`, `page`, `knowledge`, `restrictions`) |
 | PUT | `/api/settings/agent-content` | admin | Atualiza blocos |
-| GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `reply_delay_seconds`, `auto_reply_enabled`, `auto_monitor_enabled`, `auto_monitor_interval_seconds`) |
+| GET | `/api/settings/message-agent-content` | admin | Blocos DM (`dm_soul`, `dm_page`, `dm_knowledge`, `dm_restrictions`) |
+| PUT | `/api/settings/message-agent-content` | admin | Atualiza blocos DM |
+| GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `message_reply_mode`, delays, auto-monitor) |
 | PUT | `/api/settings/app` | admin | Atualiza app settings (parcial; mesmas validações) |
 | GET | `/api/settings/llm` | admin | Status LLM (`configured`, `model`, `key_hint`, …) |
 | PUT | `/api/settings/llm` | admin | Configura LLM |
@@ -300,7 +333,7 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
-| GET | `/api/events` | admin | `posts-changed`, `comments-changed` (SSE) |
+| GET | `/api/events` | admin | `posts-changed`, `comments-changed`, `messages-changed` (SSE) |
 
 ## Webhooks (Meta)
 

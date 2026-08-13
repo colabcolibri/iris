@@ -1,0 +1,168 @@
+import { readJsonBody, sendError, sendJson, ValidationError } from "../../json.ts";
+import { createRouter, route } from "../../router.ts";
+import { notifyMessagesChanged } from "../../../adapters/sse/event-bus.ts";
+import {
+  getMetaReadiness,
+  metaReadinessMessage,
+} from "../../../domain/meta/meta-readiness.ts";
+import {
+  isConversationReplyModeSetting,
+} from "../../../domain/messages/message-reply-mode.ts";
+import type { ConversationReplyMode } from "../../../domain/messages/conversation.ts";
+import { serializeConversation } from "../../../domain/messages/serialize-conversation.ts";
+import { serializeConversationSummary } from "./conversation-api.ts";
+import { serializeMessageWithDraft } from "../messages/shared.ts";
+import { syncConversationMessages, syncConversationsFromMeta } from "../../../domain/messages/sync-conversation-messages.ts";
+import { routeParam } from "../../route-resources.ts";
+import type { RouteMatch } from "../../route-types.ts";
+
+function requireConversation(match: RouteMatch, id: string) {
+  const conversation = match.ctx.conversations.findById(id);
+  if (!conversation) {
+    sendError(match.res, 404, "conversation not found");
+    return null;
+  }
+  return conversation;
+}
+
+export const conversationsDetailRouter = createRouter([
+  route("GET", "/api/conversations", { admin: true }, async (match) => {
+    const limitRaw = Number(match.searchParams.get("limit") ?? "50");
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+    const conversations = match.ctx.conversations.listRecent(limit).map((conversation) =>
+      serializeConversationSummary(conversation, match.ctx),
+    );
+    sendJson(match.res, 200, { conversations });
+  }),
+
+  route("POST", "/api/conversations/sync", { admin: true, metaReady: true }, async (match) => {
+    const readiness = getMetaReadiness(match.ctx);
+    if (!readiness.ready) {
+      sendError(match.res, 503, metaReadinessMessage(readiness));
+      return;
+    }
+
+    const limitRaw = Number(match.searchParams.get("limit") ?? "25");
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 25) : 25;
+
+    const result = await syncConversationsFromMeta(limit, {
+      conversations: match.ctx.conversations,
+      messages: match.ctx.messages,
+      metaConversationsReader: match.ctx.metaConversationsReader,
+    });
+
+    notifyMessagesChanged({});
+    sendJson(match.res, 200, result);
+  }, { errorOptions: { upstream502: true } }),
+
+  route(
+    "GET",
+    /^\/api\/conversations\/([^/]+)\/messages$/,
+    { admin: true },
+    async (match) => {
+      const conversationId = routeParam(match, "conversationId");
+      const conversation = requireConversation(match, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const thread = match.ctx.messages.listByConversationId(conversationId);
+      const messages = thread.map((message) =>
+        serializeMessageWithDraft(message, match.ctx),
+      );
+
+      sendJson(match.res, 200, {
+        conversation: serializeConversationSummary(conversation, match.ctx, thread),
+        messages,
+      });
+    },
+    { paramNames: ["conversationId"] },
+  ),
+
+  route(
+    "POST",
+    /^\/api\/conversations\/([^/]+)\/sync$/,
+    { admin: true, metaReady: true },
+    async (match) => {
+      const conversationId = routeParam(match, "conversationId");
+      const conversation = requireConversation(match, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const readiness = getMetaReadiness(match.ctx);
+      if (!readiness.ready) {
+        sendError(match.res, 503, metaReadinessMessage(readiness));
+        return;
+      }
+
+      const result = await syncConversationMessages(conversationId, {
+        conversations: match.ctx.conversations,
+        messages: match.ctx.messages,
+        metaConversationsReader: match.ctx.metaConversationsReader,
+      });
+
+      notifyMessagesChanged({ conversation_id: conversationId });
+      sendJson(match.res, 200, result);
+    },
+    { paramNames: ["conversationId"], errorOptions: { upstream502: true } },
+  ),
+
+  route(
+    "PATCH",
+    /^\/api\/conversations\/([^/]+)$/,
+    { admin: true },
+    async (match) => {
+      const conversationId = routeParam(match, "conversationId");
+      const conversation = requireConversation(match, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const body = await readJsonBody<Record<string, unknown>>(match.req);
+      const hasReplyMode = "reply_mode" in body;
+      const hasReplyPrompt = "reply_prompt" in body;
+
+      if (!hasReplyMode && !hasReplyPrompt) {
+        throw new ValidationError("at least one of reply_mode or reply_prompt is required");
+      }
+
+      let updated = conversation;
+
+      if (hasReplyMode) {
+        if (
+          typeof body.reply_mode !== "string" ||
+          !isConversationReplyModeSetting(body.reply_mode)
+        ) {
+          throw new ValidationError("reply_mode must be inherit, off, auto, or draft");
+        }
+        const next = match.ctx.conversations.updateReplyMode(
+          conversationId,
+          body.reply_mode as ConversationReplyMode,
+        );
+        if (next) {
+          updated = next;
+        }
+      }
+
+      if (hasReplyPrompt) {
+        const replyPrompt =
+          body.reply_prompt === null
+            ? null
+            : typeof body.reply_prompt === "string"
+              ? body.reply_prompt
+              : undefined;
+        if (replyPrompt === undefined) {
+          throw new ValidationError("reply_prompt must be a string or null");
+        }
+        const next = match.ctx.conversations.updateReplyPrompt(conversationId, replyPrompt);
+        if (next) {
+          updated = next;
+        }
+      }
+
+      sendJson(match.res, 200, serializeConversation(updated));
+    },
+    { paramNames: ["conversationId"] },
+  ),
+]);

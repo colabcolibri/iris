@@ -241,6 +241,21 @@ export function ReplyAuditTimeline({
                 </details>
               ) : null}
 
+              {step.stage === "message_triage" && step.structured ? (
+                <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                  {typeof step.structured.messageCategory === "string" ? (
+                    <span className="rounded-full border border-border bg-muted/30 px-2.5 py-0.5 font-medium text-foreground">
+                      categoria: {step.structured.messageCategory}
+                    </span>
+                  ) : null}
+                  {typeof step.structured.product_slug === "string" ? (
+                    <span className="rounded-full border border-border bg-muted/30 px-2.5 py-0.5 font-medium text-foreground">
+                      produto: {step.structured.product_slug}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+
               {step.structured ? (
                 <details className="mt-2">
                   <summary className="cursor-pointer text-sm font-semibold text-primary">

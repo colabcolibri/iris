@@ -8,6 +8,12 @@ import {
   serializeAgentContent,
 } from "../../domain/settings/agent-content.ts";
 import {
+  getMessageAgentContentPayload,
+  normalizeMessageAgentContentBody,
+  serializeMessageAgentContent,
+} from "../../domain/settings/message-agent-content.ts";
+import { getMessageAgentContentOrDefault } from "../../domain/settings/message-agent-content-defaults.ts";
+import {
   getReplyPersonaPayload,
   mergePartialPersonaBody,
   normalizePersonaBody,
@@ -74,6 +80,39 @@ export function registerSettingsPersonaTools(server: McpServer, ctx: AppContext)
         const input = normalizeAgentContentBody(args);
         const saved = ctx.agentContentStore.upsert(input);
         return jsonToolContent(serializeAgentContent(saved));
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          return toolError(error.message);
+        }
+        return toolError(error instanceof Error ? error.message : "update failed");
+      }
+    },
+  );
+
+  server.tool(
+    "iris_get_message_agent_content",
+    "Get DM agent editorial Markdown blocks (dm_soul, dm_page, dm_knowledge, dm_restrictions)",
+    {},
+    async () => {
+      return jsonToolContent(getMessageAgentContentPayload(ctx.messageAgentContentStore));
+    },
+  );
+
+  server.tool(
+    "iris_update_message_agent_content",
+    "Update DM agent editorial Markdown blocks (partial fields accepted)",
+    {
+      dm_soul: z.string().optional(),
+      dm_page: z.string().optional(),
+      dm_knowledge: z.string().optional(),
+      dm_restrictions: z.string().optional(),
+    },
+    async (args) => {
+      try {
+        const current = getMessageAgentContentOrDefault(ctx.messageAgentContentStore);
+        const input = normalizeMessageAgentContentBody(args, current);
+        const saved = ctx.messageAgentContentStore.upsert(input);
+        return jsonToolContent(serializeMessageAgentContent(saved));
       } catch (error) {
         if (error instanceof ValidationError) {
           return toolError(error.message);

@@ -1,11 +1,13 @@
 import type { ReplyAuditStep } from "@/lib/types";
 
-export const REPLY_AUDIT_STAGE_LABELS: Record<ReplyAuditStep["stage"], string> =
-  {
-    triage: "Triagem",
-    draft: "Rascunho",
-    verify: "Verificação",
-  };
+export const REPLY_AUDIT_STAGE_LABELS: Record<string, string> = {
+  triage: "Triagem",
+  draft: "Rascunho",
+  verify: "Verificação",
+  message_triage: "Triagem DM",
+  message_draft: "Rascunho DM",
+  message_verify: "Verificação DM",
+};
 
 export const REPLY_AUDIT_VERDICT_LABELS: Record<
   ReplyAuditStep["verdict"],
@@ -19,13 +21,16 @@ export const REPLY_AUDIT_VERDICT_LABELS: Record<
 type AuditBadgeTone = "pass" | "fail-triage" | "fail-verify" | "draft";
 
 export function replyAuditStepTone(step: ReplyAuditStep): AuditBadgeTone {
-  if (step.stage === "draft" && step.verdict === "pass") {
+  if (
+    (step.stage === "draft" || step.stage === "message_draft") &&
+    step.verdict === "pass"
+  ) {
     return "draft";
   }
   if (step.verdict === "pass") {
     return "pass";
   }
-  if (step.stage === "verify") {
+  if (step.stage === "verify" || step.stage === "message_verify") {
     return "fail-verify";
   }
   return "fail-triage";

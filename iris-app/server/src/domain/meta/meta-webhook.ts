@@ -10,6 +10,15 @@ export type ParsedCommentEntry = {
   igTimestamp: string | null;
 };
 
+export type ParsedMessageEntry = {
+  igMessageId: string;
+  senderIgUserId: string;
+  recipientIgUserId: string;
+  text: string | null;
+  igTimestamp: string | null;
+  direction: "inbound" | "outbound";
+};
+
 export function verifySubscribeToken(
   provided: string | null,
   expected: string,
@@ -162,6 +171,158 @@ export function parseCommentEntries(payload: unknown): ParsedCommentEntry[] {
         authorUsername:
           from && typeof from.username === "string" ? from.username : null,
         igTimestamp: readCommentTimestamp(record),
+      });
+    }
+  }
+
+  return parsed;
+}
+
+function readMessageTimestamp(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return normalizeCommentTimestamp(new Date(value).toISOString());
+  }
+
+  if (typeof value === "string") {
+    return normalizeCommentTimestamp(value);
+  }
+
+  return null;
+}
+
+function parseMessagingArray(
+  messaging: unknown[],
+  pageIgUserId: string | null,
+): ParsedMessageEntry[] {
+  const parsed: ParsedMessageEntry[] = [];
+
+  for (const item of messaging) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const record = item as Record<string, unknown>;
+    const message =
+      record.message && typeof record.message === "object"
+        ? (record.message as Record<string, unknown>)
+        : null;
+
+    if (!message) {
+      continue;
+    }
+
+    const igMessageId =
+      typeof message.mid === "string"
+        ? message.mid
+        : typeof message.id === "string"
+          ? message.id
+          : null;
+
+    const sender =
+      record.sender && typeof record.sender === "object"
+        ? (record.sender as Record<string, unknown>)
+        : null;
+    const recipient =
+      record.recipient && typeof record.recipient === "object"
+        ? (record.recipient as Record<string, unknown>)
+        : null;
+
+    const senderIgUserId = sender && typeof sender.id === "string" ? sender.id : null;
+    const recipientIgUserId =
+      recipient && typeof recipient.id === "string" ? recipient.id : null;
+
+    if (!igMessageId || !senderIgUserId || !recipientIgUserId) {
+      continue;
+    }
+
+    const direction =
+      pageIgUserId && senderIgUserId === pageIgUserId ? "outbound" : "inbound";
+
+    parsed.push({
+      igMessageId,
+      senderIgUserId,
+      recipientIgUserId,
+      text: typeof message.text === "string" ? message.text : null,
+      igTimestamp: readMessageTimestamp(record.timestamp),
+      direction,
+    });
+  }
+
+  return parsed;
+}
+
+export function parseMessageEntries(
+  payload: unknown,
+  pageIgUserId: string | null = null,
+): ParsedMessageEntry[] {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const root = payload as Record<string, unknown>;
+  const entries = Array.isArray(root.entry) ? root.entry : [];
+  const parsed: ParsedMessageEntry[] = [];
+
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+
+    const entryRecord = entry as Record<string, unknown>;
+    const messaging = Array.isArray(entryRecord.messaging)
+      ? entryRecord.messaging
+      : [];
+
+    if (messaging.length > 0) {
+      parsed.push(...parseMessagingArray(messaging, pageIgUserId));
+      continue;
+    }
+
+    const changes = Array.isArray(entryRecord.changes) ? entryRecord.changes : [];
+
+    for (const change of changes) {
+      if (!change || typeof change !== "object") {
+        continue;
+      }
+
+      const field = (change as { field?: unknown }).field;
+      if (field !== "messages") {
+        continue;
+      }
+
+      const value = (change as { value?: unknown }).value;
+      if (!value || typeof value !== "object") {
+        continue;
+      }
+
+      const record = value as Record<string, unknown>;
+      const igMessageId =
+        typeof record.id === "string"
+          ? record.id
+          : typeof record.message_id === "string"
+            ? record.message_id
+            : null;
+
+      const sender =
+        record.from && typeof record.from === "object"
+          ? (record.from as Record<string, unknown>)
+          : null;
+      const senderIgUserId = sender && typeof sender.id === "string" ? sender.id : null;
+
+      if (!igMessageId || !senderIgUserId) {
+        continue;
+      }
+
+      const direction =
+        pageIgUserId && senderIgUserId === pageIgUserId ? "outbound" : "inbound";
+
+      parsed.push({
+        igMessageId,
+        senderIgUserId,
+        recipientIgUserId: pageIgUserId ?? "unknown",
+        text: typeof record.text === "string" ? record.text : null,
+        igTimestamp: readMessageTimestamp(record.timestamp ?? record.created_time),
+        direction,
       });
     }
   }

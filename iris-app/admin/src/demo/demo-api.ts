@@ -1,11 +1,14 @@
 import { showDemoToast } from "@/demo/demo-mode-context";
 import {
   findDemoComment,
+  findDemoConversation,
+  findDemoMessage,
   findDemoPost,
   getDemoCommentPosts,
   getDemoCommentsInbox,
   getDemoState,
 } from "@/demo/demo-state";
+import { buildDemoMessageActivity, DEMO_MESSAGE_REPLY_AUDIT } from "@/demo/fixtures/messages";
 import { demoSimulateWithDelay } from "@/demo/fixtures/simulator";
 import type { SimulateRequestBody } from "@/demo/fixtures/simulator";
 import { demoAssetImageUrl } from "@/demo/demo-images";
@@ -179,6 +182,71 @@ async function handleGet(pathname: string, searchParams: URLSearchParams) {
 
   if (pathname === "/api/settings/agent-content") {
     return state.agentContent;
+  }
+
+  if (pathname === "/api/settings/message-agent-content") {
+    return state.messageAgentContent;
+  }
+
+  if (pathname === "/api/conversations") {
+    return { conversations: state.conversations };
+  }
+
+  const conversationMessagesMatch = matchPath(
+    pathname,
+    "/api/conversations/:id/messages",
+  );
+  if (conversationMessagesMatch) {
+    const conversation = findDemoConversation(conversationMessagesMatch[0]!);
+    if (!conversation) throw new Error("Conversa não encontrada (demo)");
+    return {
+      conversation,
+      messages: state.messages[conversation.id] ?? [],
+    };
+  }
+
+  if (pathname === "/api/conversations/activity") {
+    const kind = searchParams.get("kind") ?? "pending_approval";
+    const items = buildDemoMessageActivity();
+    return {
+      kind,
+      items: kind === "pending_approval" ? items : items.slice(0, 1),
+    };
+  }
+
+  const conversationPatchMatch = matchPath(pathname, "/api/conversations/:id");
+  if (conversationPatchMatch && !pathname.endsWith("/messages") && !pathname.endsWith("/sync")) {
+    const conversation = findDemoConversation(conversationPatchMatch[0]!);
+    if (!conversation) throw new Error("Conversa não encontrada (demo)");
+    return conversation;
+  }
+
+  if (pathname === "/api/products") {
+    return { products: state.products };
+  }
+
+  const messageReplyAuditMatch = matchPath(
+    pathname,
+    "/api/messages/:id/reply-audit",
+  );
+  if (messageReplyAuditMatch) {
+    return DEMO_MESSAGE_REPLY_AUDIT;
+  }
+
+  const messageReplyContextMatch = matchPath(
+    pathname,
+    "/api/messages/:id/reply-context",
+  );
+  if (messageReplyContextMatch) {
+    const message = findDemoMessage(messageReplyContextMatch[0]!);
+    const conversation = message
+      ? findDemoConversation(message.conversation_id)
+      : undefined;
+    return {
+      message,
+      conversation,
+      products: state.products.filter((product) => product.active),
+    };
   }
 
   if (pathname === "/api/settings/llm") {
@@ -364,6 +432,121 @@ async function handleMutation(
       updated_at: new Date().toISOString(),
     };
     return noopMutation({ ...state.agentContent });
+  }
+
+  if (method === "PUT" && pathname === "/api/settings/message-agent-content") {
+    state.messageAgentContent = {
+      ...state.messageAgentContent,
+      ...(body as Partial<typeof state.messageAgentContent>),
+      updated_at: new Date().toISOString(),
+    };
+    return noopMutation({ ...state.messageAgentContent });
+  }
+
+  const conversationSyncMatch = matchPath(
+    pathname,
+    "/api/conversations/:id/sync",
+  );
+  if (conversationSyncMatch && method === "POST") {
+    return noopMutation({
+      conversation: findDemoConversation(conversationSyncMatch[0]!),
+      synced: (state.messages[conversationSyncMatch[0]!] ?? []).length,
+    });
+  }
+
+  if (method === "POST" && pathname === "/api/conversations/sync") {
+    return noopMutation({ synced: state.conversations.length });
+  }
+
+  const conversationPatchMatch = matchPath(pathname, "/api/conversations/:id");
+  if (conversationPatchMatch && method === "PATCH") {
+    const conversation = findDemoConversation(conversationPatchMatch[0]!);
+    if (conversation) {
+      Object.assign(conversation, body);
+      conversation.updated_at = new Date().toISOString();
+    }
+    return noopMutation(conversation ?? { ok: true });
+  }
+
+  const messageApproveMatch = matchPath(pathname, "/api/messages/:id/approve-reply");
+  if (messageApproveMatch && method === "POST") {
+    const message = findDemoMessage(messageApproveMatch[0]!);
+    if (message) {
+      message.status = "replied";
+      message.linked_reply_text = message.draft_text ?? message.text;
+      message.draft_status = null;
+    }
+    return noopMutation(message ?? { ok: true });
+  }
+
+  const messageAiMatch = matchPath(pathname, "/api/messages/:id/ai-reply");
+  if (messageAiMatch && method === "POST") {
+    const message = findDemoMessage(messageAiMatch[0]!);
+    if (message) {
+      message.draft_text =
+        "Rascunho DM gerado na demonstração — revise antes de enviar.";
+      message.draft_status = "draft";
+      message.status = "pending";
+    }
+    return noopMutation(message ?? { ok: true });
+  }
+
+  const messageDraftMatch = matchPath(pathname, "/api/messages/:id/draft");
+  if (messageDraftMatch) {
+    const message = findDemoMessage(messageDraftMatch[0]!);
+    if (message) {
+      if (method === "DELETE") {
+        message.draft_text = null;
+        message.draft_status = null;
+      } else if (method === "PATCH") {
+        message.draft_text = String(body.draft_text ?? "");
+        message.draft_status = "draft";
+      }
+    }
+    return noopMutation(message ?? { ok: true });
+  }
+
+  const messageReplyMatch = matchPath(pathname, "/api/messages/:id/reply");
+  if (messageReplyMatch && method === "POST") {
+    const message = findDemoMessage(messageReplyMatch[0]!);
+    if (message) {
+      message.status = "replied";
+      message.linked_reply_text = String(body.text ?? message.draft_text ?? "");
+      message.draft_text = null;
+      message.draft_status = null;
+    }
+    return noopMutation(message ?? { ok: true });
+  }
+
+  if (method === "POST" && pathname === "/api/products") {
+    const product = {
+      id: `demo-product-${Date.now()}`,
+      slug: String(body.slug ?? "novo-produto"),
+      name: String(body.name ?? "Novo produto"),
+      short_description: String(body.short_description ?? ""),
+      long_description: String(body.long_description ?? ""),
+      active: body.active !== false,
+      sort_order: Number(body.sort_order ?? state.products.length + 1),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    state.products.push(product);
+    return noopMutation(product);
+  }
+
+  const productMatch = matchPath(pathname, "/api/products/:id");
+  if (productMatch) {
+    const product = state.products.find((item) => item.id === productMatch[0]);
+    if (!product) throw new Error("Produto não encontrado (demo)");
+    if (method === "PATCH") {
+      Object.assign(product, body);
+      product.updated_at = new Date().toISOString();
+      return noopMutation(product);
+    }
+    if (method === "DELETE") {
+      state.products = state.products.filter((item) => item.id !== product.id);
+      return noopMutation({ ok: true });
+    }
   }
 
   if (method === "POST" && pathname === "/api/settings/mcp") {

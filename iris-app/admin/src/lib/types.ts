@@ -275,6 +275,7 @@ export type MetaStatus = {
   connected: boolean;
   tokenExpired?: boolean;
   igUsername?: string | null;
+  messaging_supported?: boolean;
 };
 
 export type ReplyPersona = {
@@ -293,6 +294,72 @@ export type AgentContent = {
   updated_at: string | null;
 };
 
+export type MessageAgentContent = {
+  dm_soul: string;
+  dm_page: string;
+  dm_knowledge: string;
+  dm_restrictions: string;
+  updated_at: string | null;
+};
+
+export type ConversationReplyMode = "inherit" | ReplyMode;
+
+export type ConversationSummary = {
+  id: string;
+  ig_conversation_id: string;
+  participant_ig_user_id: string;
+  participant_username: string | null;
+  last_message_at: string | null;
+  reply_mode: ConversationReplyMode;
+  reply_prompt: string | null;
+  pending_count: number;
+  can_reply?: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Message = {
+  id: string;
+  ig_message_id: string;
+  conversation_id: string;
+  direction: "inbound" | "outbound";
+  text: string | null;
+  ig_timestamp: string | null;
+  status: "pending" | "replied" | "skipped" | "failed";
+  error_message: string | null;
+  agent_reply_not_before: string | null;
+  created_at: string;
+  draft_text?: string | null;
+  draft_status?: string | null;
+  linked_reply_text?: string | null;
+  linked_reply_ig_message_id?: string | null;
+};
+
+export type MessageActivityKind = "pending_approval" | "recent";
+
+export type MessageActivityItem = {
+  message_id: string;
+  conversation_id: string;
+  participant_username: string | null;
+  text_preview: string;
+  occurred_at: string;
+  conversation_pending_count: number;
+  draft_text_preview: string | null;
+  sent_text_preview: string | null;
+};
+
+export type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string;
+  long_description: string;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ReplyAuditLlm = {
   model: string;
   promptTokens: number | null;
@@ -302,7 +369,13 @@ export type ReplyAuditLlm = {
 };
 
 export type ReplyAuditStep = {
-  stage: "triage" | "draft" | "verify";
+  stage:
+    | "triage"
+    | "draft"
+    | "verify"
+    | "message_triage"
+    | "message_draft"
+    | "message_verify";
   verdict: "pass" | "fail" | "skip";
   reason: string | null;
   reasoning: string | null;
@@ -320,7 +393,8 @@ export type ReplyAudit = {
     | "blocked_harmful"
     | "rejected_verify"
     | "approved"
-    | "approved_simple";
+    | "approved_simple"
+    | string;
   reply_tier?: "none" | "simple" | "full" | null;
   output_summary: string | null;
   steps: ReplyAuditStep[];
@@ -365,6 +439,9 @@ export type AppSettings = {
   reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
   reply_delay_seconds: number;
+  message_reply_mode: ReplyMode;
+  message_auto_reply_enabled: boolean;
+  message_reply_delay_seconds: number;
   auto_monitor_enabled: boolean;
   auto_monitor_interval_seconds: number;
   updated_at: string;

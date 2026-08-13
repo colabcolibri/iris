@@ -143,7 +143,15 @@ Webhook → `comments` → SSE → UI; worker auto-reply se habilitado.
 
 Diagramas: ver § Architecture diagrams (`iris-reply-agent-*`).
 
-### 5 — Cliente MCP (ad hoc)
+### 5 — Mensagens Instagram (DM)
+
+Webhook `messaging` → `conversations` + `messages` → SSE `messages-changed` → UI `/messages`; worker `message-responder` se `message_reply_mode` habilitado.
+
+**Message harness (v1.18):** pipeline separado (`message_triage` → `message_draft` → `message_verify`) com `message_agent_content` e catálogo `products`. Regras Meta: janela 24h (`can_reply`) e Page vinculada (`messaging_supported`).
+
+Diagramas: `iris-message-reply-flow.md`, `iris-message-harness.md`.
+
+### 6 — Cliente MCP (ad hoc)
 
 1. Client envia `POST /mcp` com `Authorization: Bearer <IRIS_MCP_CONNECTION_CODE>`
 2. Handshake MCP → `tools/list` expõe operações editoriais
@@ -160,6 +168,8 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | `architecture/diagrams/iris-reply-agent-flow.md` | flow | Sequência webhook/worker/simulador → gates → harness v2 → draft/Meta → audit UI |
 | `architecture/diagrams/iris-reply-agent-runtime.md` | runtime | Módulos, carousel_summary, response_language, output_json, simulador e SQLite |
 | `architecture/diagrams/iris-reply-agent-harness.md` | flow | Estados terminais: replyTier, blocked_harmful, barrier_reply, light/full verify |
+| `architecture/diagrams/iris-message-reply-flow.md` | flow | Webhook/worker DM → message-harness → draft/Meta → audit |
+| `architecture/diagrams/iris-message-harness.md` | flow | Estágios message_triage / draft / verify e categorias |
 | `architecture/diagrams/iris-admin-demo-mode.md` | runtime | Landing → `/demo` isolado, `demoApiFetch`, fixtures PT/EN, sem API real |
 
 ## Architecture detail files

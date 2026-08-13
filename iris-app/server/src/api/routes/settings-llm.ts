@@ -96,6 +96,8 @@ function serializeWebhookEvent(
     processing_status: event.processingStatus,
     comment_id: event.commentId,
     post_id: event.postId,
+    conversation_id: event.conversationId,
+    message_id: event.messageId,
     error_message: event.errorMessage,
     payload_json: payloadJson,
     payload_truncated: options.truncatePayload && event.payloadJson.length > 2048,

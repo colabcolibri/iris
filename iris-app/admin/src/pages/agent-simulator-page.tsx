@@ -79,6 +79,7 @@ export function AgentSimulatorPage() {
   const routes = useAppRoutes();
   const initialForm = applyScenarioToState(initialScenario);
   const [scenarioId, setScenarioId] = useState(DEFAULT_SIMULATOR_SCENARIO_ID);
+  const [channel, setChannel] = useState<"comment" | "dm">("comment");
   const [caption, setCaption] = useState(initialForm.caption);
   const [carouselSummary, setCarouselSummary] = useState(
     initialForm.carouselSummary,
@@ -139,7 +140,7 @@ export function AgentSimulatorPage() {
 
   async function handleRun() {
     if (!targetText.trim()) {
-      toast.error("Informe o comentário alvo.");
+      toast.error(channel === "dm" ? "Informe a mensagem alvo." : "Informe o comentário alvo.");
       return;
     }
 
@@ -148,23 +149,40 @@ export function AgentSimulatorPage() {
     setFinalText(null);
 
     try {
-      const result = await simulateAgentReply({
-        caption,
-        carousel_summary: carouselSummary.trim() || null,
-        response_language: responseLanguage,
-        brand_name: brandName.trim() || null,
-        thread: thread
-          .filter((row) => row.text.trim())
-          .map((row) => ({
-            author: row.author,
-            text: row.text,
-            is_brand_reply: row.is_brand_reply,
-          })),
-        target_comment: {
-          author: targetAuthor.trim() || "user",
-          text: targetText,
-        },
-      });
+      const threadPayload = thread
+        .filter((row) => row.text.trim())
+        .map((row) => ({
+          author: row.author,
+          text: row.text,
+          is_brand_reply: row.is_brand_reply,
+        }));
+
+      const result = await simulateAgentReply(
+        channel === "dm"
+          ? {
+              channel: "dm",
+              response_language: responseLanguage,
+              brand_name: brandName.trim() || null,
+              thread: threadPayload,
+              participant_username: targetAuthor.trim() || "user",
+              target_message: {
+                author: targetAuthor.trim() || "user",
+                text: targetText,
+              },
+            }
+          : {
+              channel: "comment",
+              caption,
+              carousel_summary: carouselSummary.trim() || null,
+              response_language: responseLanguage,
+              brand_name: brandName.trim() || null,
+              thread: threadPayload,
+              target_comment: {
+                author: targetAuthor.trim() || "user",
+                text: targetText,
+              },
+            },
+      );
       setAudit(result.audit);
       setFinalText(result.final_text);
     } catch (err) {
@@ -219,6 +237,28 @@ export function AgentSimulatorPage() {
                 >
                   Persona
                 </Link>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sim-channel">Canal</Label>
+                <Select
+                  value={channel}
+                  onValueChange={(value) => {
+                    if (value === "comment" || value === "dm") {
+                      setChannel(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="sim-channel" className="w-full bg-card">
+                    <SelectValue>
+                      {channel === "dm" ? "DM (mensagens)" : "Comentário"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    <SelectItem value="comment">Comentário</SelectItem>
+                    <SelectItem value="dm">DM (mensagens)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -281,26 +321,30 @@ export function AgentSimulatorPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="sim-caption">Legenda do post</Label>
-                <Textarea
-                  id="sim-caption"
-                  rows={2}
-                  value={caption}
-                  onChange={(event) => setCaption(event.target.value)}
-                />
-              </div>
+              {channel === "comment" ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="sim-caption">Legenda do post</Label>
+                    <Textarea
+                      id="sim-caption"
+                      rows={2}
+                      value={caption}
+                      onChange={(event) => setCaption(event.target.value)}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="sim-carousel">Resumo do carrossel</Label>
-                <Textarea
-                  id="sim-carousel"
-                  rows={2}
-                  value={carouselSummary}
-                  onChange={(event) => setCarouselSummary(event.target.value)}
-                  placeholder="Texto usado pelo harness em vez das imagens."
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sim-carousel">Resumo do carrossel</Label>
+                    <Textarea
+                      id="sim-carousel"
+                      rows={2}
+                      value={carouselSummary}
+                      onChange={(event) => setCarouselSummary(event.target.value)}
+                      placeholder="Texto usado pelo harness em vez das imagens."
+                    />
+                  </div>
+                </>
+              ) : null}
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">

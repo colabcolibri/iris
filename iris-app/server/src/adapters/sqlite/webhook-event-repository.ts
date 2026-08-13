@@ -19,6 +19,8 @@ function mapRow(row: {
   processing_status: string;
   comment_id: string | null;
   post_id: string | null;
+  conversation_id: string | null;
+  message_id: string | null;
   error_message: string | null;
 }): WebhookEventRecord {
   return {
@@ -31,6 +33,8 @@ function mapRow(row: {
     processingStatus: row.processing_status as WebhookProcessingStatus,
     commentId: row.comment_id,
     postId: row.post_id,
+    conversationId: row.conversation_id,
+    messageId: row.message_id,
     errorMessage: row.error_message,
   };
 }
@@ -52,6 +56,8 @@ export function createSqliteWebhookEventRepository(
         field = COALESCE(?, field),
         comment_id = COALESCE(?, comment_id),
         post_id = COALESCE(?, post_id),
+        conversation_id = COALESCE(?, conversation_id),
+        message_id = COALESCE(?, message_id),
         error_message = COALESCE(?, error_message)
     WHERE id = ?
   `);
@@ -126,6 +132,8 @@ export function createSqliteWebhookEventRepository(
         input.field ?? null,
         input.commentId ?? null,
         input.postId ?? null,
+        input.conversationId ?? null,
+        input.messageId ?? null,
         input.errorMessage ?? null,
         id,
       );
