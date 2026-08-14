@@ -3,8 +3,6 @@ import type { ReplyMode } from "@/lib/types";
 
 export type DemoUiMessages = {
   banner: string;
-  /** Aviso quando EN está ativo: UI em PT, conteúdo demo em EN. */
-  contentDisclaimer: string | null;
   demoToast: string;
   exportNotAvailable: string;
   languageLabel: string;
@@ -19,7 +17,6 @@ const MESSAGES: Record<DemoLocale, DemoUiMessages> = {
   pt: {
     banner:
       "Modo demonstração — explore o Iris com dados fictícios, sem cadastro.",
-    contentDisclaimer: null,
     demoToast: "Modo demonstração — esta ação não é salva.",
     exportNotAvailable: "Exportação disponível apenas no admin real.",
     languageLabel: "Idioma",
@@ -36,8 +33,6 @@ const MESSAGES: Record<DemoLocale, DemoUiMessages> = {
   en: {
     banner:
       "Demo mode — explore Iris with sample data, no sign-up required.",
-    contentDisclaimer:
-      "The admin interface is still in Portuguese. Posts, comments, and persona content are in English so you can see how Iris works with another language.",
     demoToast: "Demo mode — this action is not saved.",
     exportNotAvailable: "Export is only available in the real admin.",
     languageLabel: "Language",

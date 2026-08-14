@@ -39,22 +39,12 @@ export function DemoBanner() {
   const { m } = useDemoLocale();
 
   return (
-    <>
-      <div
-        role="status"
-        className="flex h-10 w-full shrink-0 items-center justify-center border-b border-amber-500/30 bg-amber-500/15 px-4 text-center text-sm font-medium text-amber-950"
-      >
-        {m.banner}
-      </div>
-      {m.contentDisclaimer ? (
-        <div
-          role="note"
-          className="flex w-full shrink-0 items-center justify-center border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-xs leading-snug text-amber-950/90 sm:text-sm"
-        >
-          {m.contentDisclaimer}
-        </div>
-      ) : null}
-    </>
+    <div
+      role="status"
+      className="flex h-10 w-full shrink-0 items-center justify-center border-b border-amber-500/30 bg-amber-500/15 px-4 text-center text-sm font-medium text-amber-950"
+    >
+      {m.banner}
+    </div>
   );
 }
 
