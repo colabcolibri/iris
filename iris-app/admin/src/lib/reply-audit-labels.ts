@@ -53,3 +53,36 @@ export function shouldSuggestAgentContentEdit(
   const normalized = reason.toLowerCase();
   return normalized.includes("restriction") || normalized.includes("guardrail");
 }
+
+export function replyAuditTerminalBadgeClass(status: string | null): string {
+  switch (status) {
+    case "approved":
+    case "approved_simple":
+      return "border-emerald-500/35 bg-emerald-500/12 text-emerald-800 dark:text-emerald-200";
+    case "blocked_harmful":
+    case "rejected_verify":
+    case "draft_failed":
+      return "border-destructive/40 bg-destructive/10 text-destructive";
+    case "budget_exceeded":
+      return "border-amber-500/40 bg-amber-500/12 text-amber-950 dark:text-amber-100";
+    case "skipped_triage":
+      return "border-border bg-muted/40 text-muted-foreground";
+    default:
+      return "border-amber-500/40 bg-amber-500/12 text-amber-950 dark:text-amber-100";
+  }
+}
+
+export function replyAuditTimelineDotClass(
+  tone: "pass" | "fail-triage" | "fail-verify" | "draft",
+): string {
+  switch (tone) {
+    case "pass":
+      return "border-emerald-500 bg-emerald-500";
+    case "draft":
+      return "border-sky-500 bg-sky-500";
+    case "fail-verify":
+      return "border-destructive bg-destructive";
+    default:
+      return "border-amber-500 bg-amber-500";
+  }
+}

@@ -88,6 +88,7 @@ export const messagesEn = {
     save: "Save",
     cancel: "Cancel",
     deleteDraft: "Delete draft",
+    aiDraftBadge: "AI draft",
     placeholder: "Your reply…",
     noText: "(no text)",
     replyingTo: "Replying to",

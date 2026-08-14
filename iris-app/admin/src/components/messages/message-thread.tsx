@@ -55,6 +55,10 @@ function messageBodyText(message: Message): string | null {
   return "(sem texto)";
 }
 
+function hasAiDraft(message: Message): boolean {
+  return Boolean(message.draft_text?.trim());
+}
+
 function shouldShowMessageDraft(message: Message): boolean {
   return Boolean(message.draft_text?.trim());
 }
@@ -76,6 +80,7 @@ function MessageBubble({
   authorLabel,
   authorHandle,
   showPendingBadge,
+  showAiDraftBadge,
   quotedPreview,
 }: {
   message: Message;
@@ -83,6 +88,7 @@ function MessageBubble({
   authorLabel: string;
   authorHandle: string;
   showPendingBadge: boolean;
+  showAiDraftBadge?: boolean;
   quotedPreview?: string | null;
 }) {
   const { locale } = useAppLocale();
@@ -96,13 +102,24 @@ function MessageBubble({
         "min-w-0 flex-1 overflow-hidden rounded-[var(--iris-radius-lg)] px-3 py-2 text-base",
         outbound
           ? "bg-primary/15 text-foreground"
-          : "border border-border/60 bg-muted/30 text-foreground",
+          : showAiDraftBadge
+            ? "border border-primary/35 bg-primary/5 text-foreground"
+            : "border border-border/60 bg-muted/30 text-foreground",
       )}
     >
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
           <span className="text-sm font-semibold text-foreground">{authorLabel}</span>
           <span className="text-xs text-muted-foreground">{authorHandle}</span>
+          {showAiDraftBadge ? (
+            <Badge
+              variant="outline"
+              className="gap-1 border-primary/35 text-xs text-primary"
+            >
+              <Sparkles className="size-3" aria-hidden />
+              {thread.aiDraftBadge}
+            </Badge>
+          ) : null}
           {showPendingBadge ? (
             <Badge variant="secondary" className="text-xs">
               pendente
@@ -304,33 +321,39 @@ function MessageSideActions({
   message,
   canReply,
   generatingId,
+  removingDraftId,
   showAudit,
   auditActive,
   onAuditToggle,
   onReplyToMessage,
   onGenerateDraft,
+  onRemoveDraft,
   auditTriggerLabel,
 }: {
   message: Message;
   canReply: boolean;
   generatingId: string | null;
+  removingDraftId: string | null;
   showAudit: boolean;
   auditActive: boolean;
   onAuditToggle: () => void;
   onReplyToMessage: (message: Message) => void;
   onGenerateDraft: MessageThreadProps["onGenerateDraft"];
+  onRemoveDraft: MessageThreadProps["onRemoveDraft"];
   auditTriggerLabel: string;
 }) {
   const thread = useDomainMessages("messages").thread;
-  const showDraftActions =
+  const aiDraft = hasAiDraft(message);
+  const showGenerateDraft =
     message.direction === "inbound" &&
     canReply &&
-    !message.draft_text &&
+    !aiDraft &&
     message.status !== "skipped";
+  const showDeleteDraft = message.direction === "inbound" && aiDraft;
   const showReplyButton = message.direction === "inbound" && canReply;
-  const pinSideActionsVisible = showAudit && Boolean(message.draft_text?.trim());
+  const pinSideActionsVisible = aiDraft;
 
-  if (!showDraftActions && !showReplyButton && !showAudit) {
+  if (!showGenerateDraft && !showDeleteDraft && !showReplyButton && !showAudit) {
     return null;
   }
 
@@ -343,7 +366,7 @@ function MessageSideActions({
           : "opacity-100 sm:opacity-0 sm:transition-opacity group-hover/message:opacity-100 group-focus-within/message:opacity-100",
       )}
     >
-      {showDraftActions ? (
+      {showGenerateDraft ? (
         <button
           type="button"
           className={cn(iconActionClass, "text-primary/80 hover:bg-primary/10 hover:text-primary")}
@@ -356,6 +379,25 @@ function MessageSideActions({
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <Sparkles className="size-3.5" />
+          )}
+        </button>
+      ) : null}
+      {showDeleteDraft ? (
+        <button
+          type="button"
+          className={cn(
+            iconActionClass,
+            "text-destructive/80 hover:bg-destructive/10 hover:text-destructive",
+          )}
+          aria-label={thread.deleteDraft}
+          title={thread.deleteDraft}
+          disabled={removingDraftId === message.id}
+          onClick={() => onRemoveDraft(message.id)}
+        >
+          {removingDraftId === message.id ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="size-3.5" />
           )}
         </button>
       ) : null}
@@ -436,11 +478,13 @@ function InboundMessageContent({
           message={message}
           canReply={canReply}
           generatingId={generatingId}
+          removingDraftId={removingDraftId}
           showAudit={showAudit}
           auditActive={auditState.open}
           onAuditToggle={() => void auditState.toggle()}
           onReplyToMessage={onReplyToMessage}
           onGenerateDraft={onGenerateDraft}
+          onRemoveDraft={onRemoveDraft}
           auditTriggerLabel={auditState.triggerLabel}
         />
       </div>
@@ -509,7 +553,8 @@ export function MessageThread({
           ? formatParticipantHandle(brandUsername, "marca")
           : formatParticipantHandle(participant.username);
         const showPendingBadge =
-          !outbound && message.status === "pending" && !message.draft_text;
+          !outbound && message.status === "pending" && !hasAiDraft(message);
+        const showAiDraftBadge = !outbound && hasAiDraft(message);
         const quotedSource = resolveQuotedMessageByIgId(
           message.reply_to_ig_message_id,
           messages,
@@ -566,6 +611,7 @@ export function MessageThread({
                     authorLabel={authorLabel}
                     authorHandle={authorHandle}
                     showPendingBadge={showPendingBadge}
+                    showAiDraftBadge={showAiDraftBadge}
                   />
                 </InboundMessageContent>
               ) : (

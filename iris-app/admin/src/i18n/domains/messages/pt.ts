@@ -88,6 +88,7 @@ export const messagesPt = {
     save: "Salvar",
     cancel: "Cancelar",
     deleteDraft: "Deletar rascunho",
+    aiDraftBadge: "Rascunho IA",
     placeholder: "Sua resposta…",
     noText: "(sem texto)",
     replyingTo: "Respondendo a",
