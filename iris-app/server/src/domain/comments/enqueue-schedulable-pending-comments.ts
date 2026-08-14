@@ -43,7 +43,11 @@ export function enqueueSchedulablePendingComments(
       continue;
     }
 
-    for (const comment of ctx.comments.listByPostId(post.id)) {
+    for (const comment of ctx.comments.listByPostId(post.id).sort((left, right) => {
+      const leftAt = left.igTimestamp ?? left.createdAt;
+      const rightAt = right.igTimestamp ?? right.createdAt;
+      return leftAt.localeCompare(rightAt);
+    })) {
       if (comment.status !== "pending" || comment.deletedAt) {
         continue;
       }

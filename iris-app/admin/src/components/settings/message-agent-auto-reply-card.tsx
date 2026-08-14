@@ -11,22 +11,22 @@ import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
 import type { ReplyMode } from "@/lib/types";
 
-const DELAY_PRESETS = [
-  { label: "1 min", minutes: 1 },
-  { label: "2 min", minutes: 2 },
-  { label: "3 min", minutes: 3 },
-  { label: "5 min", minutes: 5 },
+const DEBOUNCE_PRESETS = [
+  { label: "30s", seconds: 30 },
+  { label: "1 min", seconds: 60 },
+  { label: "2 min", seconds: 120 },
+  { label: "3 min", seconds: 180 },
 ] as const;
 
-const DELAY_MIN_MINUTES = 1;
-const DELAY_MAX_MINUTES = 60;
-const DELAY_SUGGESTED_MINUTES = 2;
+const DEBOUNCE_MIN_SECONDS = 30;
+const DEBOUNCE_MAX_SECONDS = 180;
+const DEBOUNCE_DEFAULT_SECONDS = 30;
 
-function minutesFromDelaySeconds(seconds: number): number {
-  if (seconds <= 0) {
-    return 0;
+function formatDebounceLabel(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds}s`;
   }
-  return Math.max(DELAY_MIN_MINUTES, Math.round(seconds / 60));
+  return `${Math.round(seconds / 60)} min`;
 }
 
 type MessageAgentAutoReplyCardProps = {
@@ -48,30 +48,21 @@ export function MessageAgentAutoReplyCard({
     saveMessageReplyDelaySeconds,
   } = useAppSettings();
   const [saving, setSaving] = useState(false);
-  const [savingDelay, setSavingDelay] = useState(false);
-  const [delayEnabled, setDelayEnabled] = useState(false);
-  const [delayInput, setDelayInput] = useState(String(DELAY_SUGGESTED_MINUTES));
+  const [savingDebounce, setSavingDebounce] = useState(false);
+  const [debounceInput, setDebounceInput] = useState(String(DEBOUNCE_DEFAULT_SECONDS));
 
   useEffect(() => {
-    setDelayEnabled(messageReplyDelaySeconds > 0);
-    if (messageReplyDelaySeconds > 0) {
-      setDelayInput(String(minutesFromDelaySeconds(messageReplyDelaySeconds)));
-    }
+    setDebounceInput(String(messageReplyDelaySeconds || DEBOUNCE_DEFAULT_SECONDS));
   }, [messageReplyDelaySeconds]);
 
   const tickMinutes = Math.round((agentReplyTickIntervalSeconds || 300) / 60);
-  const delayMinutes = delayEnabled
-    ? minutesFromDelaySeconds(messageReplyDelaySeconds)
-    : 0;
+  const debounceSeconds = messageReplyDelaySeconds || DEBOUNCE_DEFAULT_SECONDS;
+  const debounceLabel = formatDebounceLabel(debounceSeconds);
 
-  const replyDelayHint =
-    t.replyDelayHint +
-    (delayMinutes > 0
-      ? interpolate(t.replyDelayCadenceDelayed, {
-          delay: delayMinutes,
-          tick: tickMinutes,
-        })
-      : interpolate(t.replyDelayCadenceImmediate, { tick: tickMinutes }));
+  const replyDebounceHint = interpolate(t.replyDebounceHint, {
+    debounce: debounceLabel,
+    tick: tickMinutes,
+  });
 
   async function handleChange(next: ReplyMode) {
     setSaving(true);
@@ -90,29 +81,23 @@ export function MessageAgentAutoReplyCard({
     }
   }
 
-  const persistDelay = useCallback(
-    async (enabled: boolean, rawMinutes: string) => {
-      setSavingDelay(true);
+  const persistDebounce = useCallback(
+    async (rawSeconds: string) => {
+      setSavingDebounce(true);
       try {
-        const minutes = enabled
-          ? Math.min(
-              DELAY_MAX_MINUTES,
-              Math.max(
-                DELAY_MIN_MINUTES,
-                Number.parseInt(rawMinutes, 10) || DELAY_SUGGESTED_MINUTES,
-              ),
-            )
-          : 0;
-        await saveMessageReplyDelaySeconds(minutes * 60);
-        toast.success(
-          minutes > 0
-            ? interpolate(t.toasts.delayQueued, { minutes })
-            : t.toasts.delayImmediate,
+        const seconds = Math.min(
+          DEBOUNCE_MAX_SECONDS,
+          Math.max(
+            DEBOUNCE_MIN_SECONDS,
+            Number.parseInt(rawSeconds, 10) || DEBOUNCE_DEFAULT_SECONDS,
+          ),
         );
+        await saveMessageReplyDelaySeconds(seconds);
+        toast.success(interpolate(t.toasts.debounceUpdated, { debounce: formatDebounceLabel(seconds) }));
       } catch (err) {
-        toast.error(getApiErrorMessage(err, locale) || t.toasts.delayFailed);
+        toast.error(getApiErrorMessage(err, locale) || t.toasts.debounceFailed);
       } finally {
-        setSavingDelay(false);
+        setSavingDebounce(false);
       }
     },
     [locale, saveMessageReplyDelaySeconds, t.toasts],
@@ -146,88 +131,54 @@ export function MessageAgentAutoReplyCard({
 
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="space-y-1">
-              <Label className="text-sm font-semibold">{t.replyDelayLabel}</Label>
-              <p className="text-sm text-muted-foreground">{replyDelayHint}</p>
+              <Label className="text-sm font-semibold">{t.replyDebounceLabel}</Label>
+              <p className="text-sm text-muted-foreground">{replyDebounceHint}</p>
             </div>
 
-            <div className="flex flex-wrap gap-4">
-              <label className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="message-reply-delay-mode"
-                  checked={!delayEnabled}
-                  disabled={savingDelay}
-                  onChange={() => {
-                    setDelayEnabled(false);
-                    void persistDelay(false, delayInput);
+            <div className="flex flex-wrap gap-2">
+              {DEBOUNCE_PRESETS.map((preset) => (
+                <button
+                  key={preset.seconds}
+                  type="button"
+                  disabled={savingDebounce}
+                  onClick={() => {
+                    setDebounceInput(String(preset.seconds));
+                    void persistDebounce(String(preset.seconds));
                   }}
-                />
-                {t.delayImmediate}
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="message-reply-delay-mode"
-                  checked={delayEnabled}
-                  disabled={savingDelay}
-                  onChange={() => {
-                    setDelayEnabled(true);
-                    void persistDelay(true, delayInput);
-                  }}
-                />
-                {t.delayQueued}
-              </label>
+                  className={`rounded-md border px-3 py-1.5 text-xs ${
+                    debounceSeconds === preset.seconds
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-foreground"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
 
-            {delayEnabled ? (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {DELAY_PRESETS.map((preset) => (
-                    <button
-                      key={preset.minutes}
-                      type="button"
-                      disabled={savingDelay}
-                      onClick={() => {
-                        setDelayInput(String(preset.minutes));
-                        void persistDelay(true, String(preset.minutes));
-                      }}
-                      className={`rounded-md border px-3 py-1.5 text-xs ${
-                        minutesFromDelaySeconds(messageReplyDelaySeconds) ===
-                        preset.minutes
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-background text-foreground"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="message-reply-delay-minutes"
-                    className="text-sm font-semibold"
-                  >
-                    {interpolate(t.delayMinutesLabel, {
-                      min: DELAY_MIN_MINUTES,
-                      max: DELAY_MAX_MINUTES,
-                    })}
-                  </Label>
-                  <Input
-                    id="message-reply-delay-minutes"
-                    type="number"
-                    min={DELAY_MIN_MINUTES}
-                    max={DELAY_MAX_MINUTES}
-                    step={1}
-                    value={delayInput}
-                    disabled={savingDelay}
-                    onChange={(event) => setDelayInput(event.target.value)}
-                    onBlur={() => void persistDelay(true, delayInput)}
-                    className="max-w-[10rem]"
-                  />
-                </div>
-              </div>
-            ) : null}
+            <div className="space-y-2">
+              <Label
+                htmlFor="message-reply-debounce-seconds"
+                className="text-sm font-semibold"
+              >
+                {interpolate(t.debounceSecondsLabel, {
+                  min: DEBOUNCE_MIN_SECONDS,
+                  max: DEBOUNCE_MAX_SECONDS,
+                })}
+              </Label>
+              <Input
+                id="message-reply-debounce-seconds"
+                type="number"
+                min={DEBOUNCE_MIN_SECONDS}
+                max={DEBOUNCE_MAX_SECONDS}
+                step={1}
+                value={debounceInput}
+                disabled={savingDebounce}
+                onChange={(event) => setDebounceInput(event.target.value)}
+                onBlur={() => void persistDebounce(debounceInput)}
+                className="max-w-[10rem]"
+              />
+            </div>
           </div>
         </div>
       )}

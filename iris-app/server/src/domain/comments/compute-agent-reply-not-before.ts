@@ -1,31 +1,31 @@
-/** 1 minuto — delay mínimo quando fila ativa (UI trabalha em minutos). */
-export const REPLY_DELAY_MIN_SECONDS = 60;
-/** 60 minutos. */
-export const REPLY_DELAY_MAX_SECONDS = 3600;
+import {
+  AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS,
+  AGENT_REPLY_DEBOUNCE_MAX_SECONDS,
+  AGENT_REPLY_DEBOUNCE_MIN_SECONDS,
+  computeAgentReplyDebounceNotBefore,
+  isValidAgentReplyDebounceSeconds,
+  normalizeAgentReplyDebounceSeconds,
+} from "../agent-reply/agent-reply-debounce.ts";
+
+/** @deprecated use AGENT_REPLY_DEBOUNCE_MIN_SECONDS */
+export const REPLY_DELAY_MIN_SECONDS = AGENT_REPLY_DEBOUNCE_MIN_SECONDS;
+/** @deprecated use AGENT_REPLY_DEBOUNCE_MAX_SECONDS */
+export const REPLY_DELAY_MAX_SECONDS = AGENT_REPLY_DEBOUNCE_MAX_SECONDS;
 
 export function isValidReplyDelaySeconds(value: number): boolean {
-  if (!Number.isFinite(value)) {
-    return false;
-  }
-  const rounded = Math.round(value);
-  return rounded === 0 || (rounded >= REPLY_DELAY_MIN_SECONDS && rounded <= REPLY_DELAY_MAX_SECONDS);
+  return isValidAgentReplyDebounceSeconds(value);
 }
 
 export function normalizeReplyDelaySeconds(value: number): number {
-  if (!Number.isFinite(value) || value <= 0) {
-    return 0;
-  }
-  const rounded = Math.round(value);
-  if (rounded < REPLY_DELAY_MIN_SECONDS) {
-    return 0;
-  }
-  return Math.min(REPLY_DELAY_MAX_SECONDS, rounded);
+  return normalizeAgentReplyDebounceSeconds(value);
 }
 
 export function computeAgentReplyNotBefore(now: Date, delaySeconds: number): string {
-  const delay = normalizeReplyDelaySeconds(delaySeconds);
-  if (delay <= 0) {
-    return now.toISOString();
-  }
-  return new Date(now.getTime() + delay * 1000).toISOString();
+  return computeAgentReplyDebounceNotBefore(now, delaySeconds);
 }
+
+export {
+  AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS,
+  AGENT_REPLY_DEBOUNCE_MAX_SECONDS,
+  AGENT_REPLY_DEBOUNCE_MIN_SECONDS,
+};

@@ -9,6 +9,7 @@ import {
   buildCommentTooOldMessage,
   isCommentWithinReplyMaxAge,
 } from "./comment-reply-max-age.ts";
+import { supersedeOlderPendingCommentReplies } from "../agent-reply/supersede-pending-agent-replies.ts";
 
 export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean {
   const comment = ctx.comments.findById(commentId);
@@ -46,6 +47,8 @@ export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean
     );
     return false;
   }
+
+  supersedeOlderPendingCommentReplies(ctx.comments, comment);
 
   const notBefore = computeAgentReplyNotBefore(new Date(), appSettings.replyDelaySeconds);
   return ctx.comments.scheduleAgentReply(commentId, notBefore);

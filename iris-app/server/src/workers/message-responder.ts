@@ -3,6 +3,7 @@ import type { LlmCompleter } from "../ports/llm-completer.ts";
 import type { MetaMessageSender } from "../ports/meta-message-sender.ts";
 import { getAppSettingsOrDefault } from "../adapters/sqlite/app-settings-repository.ts";
 import { resolveAgentReplyTickIntervalMs } from "../domain/settings/resolve-agent-reply-tick-interval.ts";
+import { pickLatestPendingMessagePerConversation } from "../domain/agent-reply/agent-reply-debounce.ts";
 import { processMessageReply } from "../domain/messages/process-message-reply.ts";
 import { startSettingsPolledWorker } from "./start-settings-polled-worker.ts";
 
@@ -30,7 +31,9 @@ export function startMessageResponder(
       resolveAgentReplyTickIntervalMs(getAppSettingsOrDefault(ctx.appSettingsStore)),
     onTickError: options.onTickError,
     tick: async () => {
-      const pending = ctx.messages.listPendingForAgentReply();
+      const pending = pickLatestPendingMessagePerConversation(
+        ctx.messages.listPendingForAgentReply(),
+      );
 
       for (const message of pending) {
         await processMessageReply(ctx, message.id, {

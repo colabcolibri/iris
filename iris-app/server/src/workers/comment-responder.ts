@@ -3,6 +3,7 @@ import type { MetaCommentReplier } from "../ports/meta-comment-replier.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
 import { getAppSettingsOrDefault } from "../adapters/sqlite/app-settings-repository.ts";
 import { resolveAgentReplyTickIntervalMs } from "../domain/settings/resolve-agent-reply-tick-interval.ts";
+import { pickLatestPendingCommentPerAuthorOnPost } from "../domain/agent-reply/agent-reply-debounce.ts";
 import { enqueueSchedulablePendingComments } from "../domain/comments/enqueue-schedulable-pending-comments.ts";
 import { processCommentReply } from "../domain/comments/process-comment-reply.ts";
 import { startSettingsPolledWorker } from "./start-settings-polled-worker.ts";
@@ -33,7 +34,9 @@ export function startCommentResponder(
     tick: async () => {
       enqueueSchedulablePendingComments(ctx);
 
-      const pending = ctx.comments.listPendingForAgentReply();
+      const pending = pickLatestPendingCommentPerAuthorOnPost(
+        ctx.comments.listPendingForAgentReply(),
+      );
 
       for (const comment of pending) {
         await processCommentReply(ctx, comment.id, {

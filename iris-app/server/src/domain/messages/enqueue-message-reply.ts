@@ -9,6 +9,7 @@ import {
   resolveEffectiveMessageReplyMode,
   shouldScheduleMessageReply,
 } from "./message-reply-mode.ts";
+import { supersedeOlderPendingMessageReplies } from "../agent-reply/supersede-pending-agent-replies.ts";
 
 export function enqueueMessageReply(ctx: AppContext, messageId: string): boolean {
   const message = ctx.messages.findById(messageId);
@@ -43,6 +44,8 @@ export function enqueueMessageReply(ctx: AppContext, messageId: string): boolean
   if (!ctx.resolveLlmCompleter()) {
     return false;
   }
+
+  supersedeOlderPendingMessageReplies(ctx.messages, conversation.id, message);
 
   const notBefore = computeAgentReplyNotBefore(
     new Date(),

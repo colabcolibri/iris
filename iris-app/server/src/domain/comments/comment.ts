@@ -9,6 +9,7 @@ export type Comment = {
   text: string | null;
   status: CommentStatus;
   errorMessage: string | null;
+  agentReplyNotBefore: string | null;
   createdAt: string;
   igTimestamp: string | null;
   deletedAt: string | null;

@@ -73,6 +73,10 @@ export const settingsPt = {
       "De quanto em quanto o agente verifica a fila no banco (comentários e DMs compartilham o mesmo ciclo). Padrão: 5 minutos.",
     workerIntervalHintShort:
       "Frequência do ciclo que processa a fila de comentários.",
+    replyDebounceLabel: "Janela de debounce",
+    replyDebounceHint:
+      "Aguarda {debounce} após o último comentário do mesmo autor no post antes de gerar a resposta. Se o autor comentar de novo nesse intervalo, o timer reinicia e só o comentário mais recente dele é respondido. Cadência real: debounce + até {tick} min até o próximo ciclo do worker.",
+    debounceSecondsLabel: "Segundos de debounce ({min}–{max})",
     replyDelayLabel: "Tempo antes de responder",
     replyDelayHint:
       "Padrão: imediato no próximo ciclo. Com fila, o agente aguarda o intervalo antes do harness — a fila fica no banco e sobrevive a reinícios.",
@@ -90,6 +94,8 @@ export const settingsPt = {
     loading: "Carregando…",
     toasts: {
       modeUpdated: "Modo global do agente: {mode}.",
+      debounceUpdated: "Debounce de comentários: {debounce}.",
+      debounceFailed: "Falha ao salvar debounce.",
       delayQueued: "Fila ativa: resposta após {minutes} min.",
       delayImmediate: "Resposta imediata no próximo ciclo do agente.",
       workerInterval: "Intervalo do worker: {minutes} min.",
@@ -108,6 +114,10 @@ export const settingsPt = {
     workerIntervalLabel: "Intervalo do worker",
     workerIntervalHint:
       "Compartilhado com comentários — configurado no card do agente de comentários. Ciclo atual: {minutes} min.",
+    replyDebounceLabel: "Janela de debounce",
+    replyDebounceHint:
+      "Aguarda {debounce} após a última mensagem do cliente na mesma conversa antes de gerar a resposta. Se chegar outra mensagem nesse intervalo, o timer reinicia e só a mais recente é respondida. Cadência real: debounce + até {tick} min até o próximo ciclo do worker.",
+    debounceSecondsLabel: "Segundos de debounce ({min}–{max})",
     replyDelayLabel: "Tempo antes de responder",
     replyDelayHint:
       "Mesma fila persistente usada nos comentários, com settings próprios para DM.",
@@ -121,6 +131,8 @@ export const settingsPt = {
     loading: "Carregando…",
     toasts: {
       modeUpdated: "Modo global de DM: {mode}.",
+      debounceUpdated: "Debounce DM: {debounce}.",
+      debounceFailed: "Falha ao salvar debounce.",
       delayQueued: "Fila DM ativa: resposta após {minutes} min.",
       delayImmediate: "Resposta imediata no próximo ciclo do agente de DM.",
       saveFailed: "Falha ao salvar.",

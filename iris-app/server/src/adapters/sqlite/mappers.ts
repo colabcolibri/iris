@@ -44,6 +44,7 @@ type CommentRow = {
   text: string | null;
   status: string;
   error_message: string | null;
+  agent_reply_not_before: string | null;
   created_at: string;
   ig_timestamp: string | null;
   deleted_at: string | null;
@@ -123,6 +124,7 @@ export function mapCommentRow(row: CommentRow): Comment {
     text: row.text,
     status: row.status as Comment["status"],
     errorMessage: row.error_message,
+    agentReplyNotBefore: row.agent_reply_not_before ?? null,
     createdAt: row.created_at,
     igTimestamp: row.ig_timestamp ?? null,
     deletedAt: row.deleted_at ?? null,

@@ -14,6 +14,7 @@ import type {
   MessageActivityKind,
   MessageActivityRow,
 } from "../../domain/messages/list-message-activity.ts";
+import { AGENT_REPLY_EDIT_SKIP_REASON } from "../../domain/agent-reply/agent-reply-debounce.ts";
 import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { mapMessageReplyRow, mapMessageRow } from "./message-mappers.ts";
 
@@ -74,7 +75,12 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     SET agent_reply_not_before = ?
     WHERE id = ?
       AND status = 'pending'
-      AND agent_reply_not_before IS NULL
+  `);
+
+  const clearAgentReplyScheduleStmt = db.prepare(`
+    UPDATE messages
+    SET agent_reply_not_before = NULL
+    WHERE id = ?
   `);
 
   const countPendingStmt = db.prepare(`
@@ -183,14 +189,28 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
       const igTimestamp = normalizeCommentTimestamp(input.igTimestamp);
       const existing = selectByIgMessageId.get(input.igMessageId);
       if (existing) {
+        const current = mapMessageRow(existing as never);
+        const nextText = input.text ?? null;
+        const textChanged = nextText !== current.text;
+
         updateInbound.run(
           input.text,
           input.attachmentUrl ?? null,
           input.attachmentMediaType ?? null,
           igTimestamp,
-          (existing as { id: string }).id,
+          current.id,
         );
-        const row = selectById.get((existing as { id: string }).id);
+
+        if (
+          textChanged &&
+          current.status === "pending" &&
+          (current.agentReplyNotBefore != null || current.text != null)
+        ) {
+          clearAgentReplyScheduleStmt.run(current.id);
+          markSkippedStmt.run(AGENT_REPLY_EDIT_SKIP_REASON, current.id);
+        }
+
+        const row = selectById.get(current.id);
         return {
           message: mapMessageRow(row as never),
           created: false,
@@ -275,6 +295,10 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     scheduleAgentReply(messageId: string, notBeforeIso: string) {
       const result = scheduleAgentReplyStmt.run(notBeforeIso, messageId);
       return result.changes > 0;
+    },
+
+    clearAgentReplySchedule(messageId: string) {
+      clearAgentReplyScheduleStmt.run(messageId);
     },
 
     countPendingByConversation(conversationId: string) {

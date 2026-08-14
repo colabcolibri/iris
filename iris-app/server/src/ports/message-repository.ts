@@ -42,6 +42,7 @@ export type MessageRepository = {
   markFailed(messageId: string, errorMessage: string): Message | null;
   markPending(messageId: string): Message | null;
   scheduleAgentReply(messageId: string, notBeforeIso: string): boolean;
+  clearAgentReplySchedule(messageId: string): void;
   listPendingForAgentReply(): PendingAgentReplyMessage[];
   countPendingByConversation(conversationId: string): number;
   countUnreadByConversation(conversationId: string, readAtIso: string | null): number;

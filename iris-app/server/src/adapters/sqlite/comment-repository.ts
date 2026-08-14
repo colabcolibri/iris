@@ -7,6 +7,7 @@ import type {
 import type { Comment } from "../../domain/comments/comment.ts";
 import type { CommentActivityKind } from "../../domain/comments/list-comment-activity.ts";
 import type { CommentActivityRow } from "../../domain/comments/list-comment-activity.ts";
+import { AGENT_REPLY_EDIT_SKIP_REASON } from "../../domain/agent-reply/agent-reply-debounce.ts";
 import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { mapCommentRow } from "./mappers.ts";
 
@@ -64,7 +65,12 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     SET agent_reply_not_before = ?
     WHERE id = ?
       AND status = 'pending'
-      AND agent_reply_not_before IS NULL
+  `);
+
+  const clearAgentReplyScheduleStmt = db.prepare(`
+    UPDATE comments
+    SET agent_reply_not_before = NULL
+    WHERE id = ?
   `);
 
   const insertReply = db.prepare(`
@@ -359,6 +365,16 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
             nextTimestamp,
             input.igCommentId,
           );
+
+          if (
+            textChanged &&
+            current.status === "pending" &&
+            (current.agentReplyNotBefore != null || current.text != null)
+          ) {
+            clearAgentReplyScheduleStmt.run(current.id);
+            markSkippedStmt.run(AGENT_REPLY_EDIT_SKIP_REASON, current.id);
+          }
+
           const updated = selectByIgCommentId.get(input.igCommentId);
           return { comment: mapCommentRow(updated as never), created: false };
         }
@@ -599,6 +615,10 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     scheduleAgentReply(commentId, notBeforeIso) {
       const result = scheduleAgentReplyStmt.run(notBeforeIso, commentId);
       return (result.changes ?? 0) > 0;
+    },
+
+    clearAgentReplySchedule(commentId) {
+      clearAgentReplyScheduleStmt.run(commentId);
     },
 
     createReply(input) {

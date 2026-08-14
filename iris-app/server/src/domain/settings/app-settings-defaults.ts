@@ -4,6 +4,7 @@ import type { ServerAppLocale } from "../../i18n/locale.ts";
 import { AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS } from "./auto-monitor-settings.ts";
 import { AGENT_REPLY_TICK_INTERVAL_DEFAULT_SECONDS } from "./agent-reply-tick-settings.ts";
 import { REPLY_MAX_AGE_DAYS_DEFAULT } from "./reply-max-age-settings.ts";
+import { AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS } from "../agent-reply/agent-reply-debounce.ts";
 
 export function defaultAppSettings(): AppSettings {
   return {
@@ -11,11 +12,11 @@ export function defaultAppSettings(): AppSettings {
     adminLocale: "pt",
     replyMode: "auto",
     autoReplyEnabled: true,
-    replyDelaySeconds: 0,
+    replyDelaySeconds: AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS,
     replyMaxAgeDays: REPLY_MAX_AGE_DAYS_DEFAULT,
     messageReplyMode: "draft",
     messageAutoReplyEnabled: false,
-    messageReplyDelaySeconds: 0,
+    messageReplyDelaySeconds: AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS,
     agentReplyTickIntervalSeconds: AGENT_REPLY_TICK_INTERVAL_DEFAULT_SECONDS,
     autoMonitorEnabled: true,
     autoMonitorIntervalSeconds: AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,

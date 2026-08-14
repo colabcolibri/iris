@@ -79,6 +79,7 @@ export type CommentRepository = {
   markSkipped(id: string, errorMessage?: string | null): Comment | null;
   markFailed(id: string, errorMessage: string): Comment | null;
   scheduleAgentReply(commentId: string, notBeforeIso: string): boolean;
+  clearAgentReplySchedule(commentId: string): void;
   createReply(input: CreateReplyInput): CommentReplyRecord;
   linkInstagramReply(input: LinkInstagramReplyInput): boolean;
   listActivityRows(

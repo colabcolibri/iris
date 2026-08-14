@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-test("agent auto reply card exposes reply delay, max age, and tick interval controls", () => {
+test("agent auto reply card exposes debounce, max age, and tick interval controls", () => {
   const card = readFileSync("../admin/src/components/settings/agent-auto-reply-card.tsx", "utf8");
   assert.match(card, /replyDelaySeconds/);
   assert.match(card, /saveReplyDelaySeconds/);
@@ -12,18 +12,18 @@ test("agent auto reply card exposes reply delay, max age, and tick interval cont
   assert.match(card, /saveAgentReplyTickIntervalSeconds/);
   assert.match(card, /t\.workerIntervalLabel/);
   assert.match(card, /t\.maxAgeLabel/);
-  assert.match(card, /t\.delayImmediate/);
-  assert.match(card, /t\.delayQueued/);
-  assert.match(card, /t\.delayMinutesLabel/);
+  assert.match(card, /t\.replyDebounceLabel/);
+  assert.match(card, /t\.debounceSecondsLabel/);
 });
 
-test("message agent card shows shared tick interval and delay in minutes", () => {
+test("message agent card shows shared tick interval and debounce controls", () => {
   const card = readFileSync(
     "../admin/src/components/settings/message-agent-auto-reply-card.tsx",
     "utf8",
   );
   assert.match(card, /agentReplyTickIntervalSeconds/);
-  assert.match(card, /t\.delayMinutesLabel/);
+  assert.match(card, /t\.debounceSecondsLabel/);
+  assert.match(card, /t\.replyDebounceLabel/);
   assert.match(card, /t\.workerIntervalHint/);
 });
 
