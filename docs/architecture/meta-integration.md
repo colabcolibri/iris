@@ -140,3 +140,81 @@ Mídia: métricas lifetime no endpoint por-id — filtros de data na query do po
 | Token expired | Alert operador; posts queue paused |
 | Rate limit | Exponential backoff in worker |
 | Invalid media URL | Post `failed` before publish attempt |
+
+## Recuperação de thread control (DMs)
+
+> Guia passo a passo (didático, para quem só quer configurar): `docs/architecture/meta-thread-control-setup.md`
+
+### O problema
+
+Ao responder uma DM, a Meta pode recusar o envio com:
+
+```
+The action is invalid since it's not the thread owner.
+```
+
+(`error_subcode: 2534037`, mapeado no Iris como `MetaMessageSendError` código `thread_owner`, HTTP 502, `ErrorCodes.META_THREAD_OWNER`).
+
+Isso acontece quando alguém responde a mesma conversa **pelo app nativo do Instagram** (celular) — a Meta atribui temporariamente o controle da thread a essa superfície, e a API deixa de poder enviar até a thread ser "reclamada" de volta.
+
+### Por que não dá para resolver com o token normal
+
+O Iris autentica via **Instagram Login direto** (`instagram_business_*` scopes, `graph.instagram.com`, sem Página do Facebook — ver seção acima). Isso cobre 100% do envio/recebimento normal de mensagens.
+
+Só que a recuperação de thread (`take_thread_control`) é um **edge do node `Page`** da Graph API (`/{page-id}/take_thread_control`), parte do Handover Protocol da Messenger Platform — [doc oficial](https://developers.facebook.com/docs/graph-api/reference/page/take_thread_control/). Esse endpoint:
+
+- Só existe em `graph.facebook.com`, nunca em `graph.instagram.com`.
+- Exige um **Page Access Token**, não o token de Instagram User que o Iris já guarda.
+
+Confirmado testando: `graph.instagram.com/{v}/me/take_thread_control` retorna `Object with ID 'me' does not exist...` — o recurso simplesmente não existe fora do node Page.
+
+### Solução: Page Access Token dedicado (fallback opcional)
+
+Em vez de migrar toda a autenticação do Iris para Facebook Login + Page (grande, arriscado, desnecessário — o resto da API já funciona bem via Instagram Login), o Iris usa um **Page Access Token separado**, só para essa chamada pontual. Ver `iris-app/server/src/adapters/meta/graph-api-message-sender.ts`.
+
+Sem essas variáveis configuradas, o comportamento é o de sempre: erro `thread_owner` propaga, operador vê mensagem clara pedindo para o cliente mandar nova mensagem (isso libera a thread automaticamente, mesmo sem Page Token).
+
+#### Variáveis
+
+```env
+META_PAGE_ID=<id da Facebook Page vinculada à conta Instagram>
+META_PAGE_ACCESS_TOKEN=<page access token com escopo pages_messaging>
+```
+
+#### Passo a passo para gerar o Page Access Token
+
+1. **Confirme a Page vinculada** — em [business.facebook.com](https://business.facebook.com) → Configurações → Contas → **Contas do Instagram** → selecione a conta → o card mostra "Propriedade de: {Negócio}". Isso *não* mostra a Page vinculada diretamente; confirme com o suporte Meta ou em Páginas → aba Instagram conectado. O ID da Page vai em `META_PAGE_ID`.
+
+2. **Habilite o produto Facebook Login for Business no app** (obrigatório para o escopo `pages_messaging` aparecer) — em [developers.facebook.com](https://developers.facebook.com) → seu app → **Adicionar produto** → **Login do Facebook para Empresas** → **Configurações** → **Criar configuração**:
+   - Selecione a Page como ativo.
+   - Em permissões, marque `pages_messaging` (+ `pages_show_list` se sugerida como dependência).
+   - URL de redirecionamento: mesma do OAuth do Iris (`{IRIS_PUBLIC_BASE_URL}/auth/meta/callback}`) — não é exercitada por esse fluxo específico, mas a Meta exige uma URL válida cadastrada.
+   - Salve.
+
+3. **Crie um Usuário do Sistema dedicado** — em business.facebook.com → Configurações → Usuários → **Usuários do sistema** → **+ Adicionar**:
+   - Nome: algo como `Iris - Thread Recovery`.
+   - Função: **Employee** basta (não precisa Admin).
+
+4. **Atribua o Usuário do Sistema ao app** — Configurações → Contas → **Apps** → seu app → atribuir o Usuário do Sistema criado (função Employee/Standard access). **Sem esse passo, o próximo não mostra nenhuma permissão disponível** — é a pegadinha mais fácil de cair.
+
+5. **Gere o token** — volte em Usuários do sistema → seu usuário → **Gerar novo token**:
+   - App: o mesmo do Iris.
+   - Expiração: a mais longa disponível ("Nunca expira", se oferecida).
+   - Permissões: marque `pages_messaging` (agora deve aparecer, já que o app tem o produto habilitado).
+   - **Gerar token** → copie imediatamente (só aparece uma vez).
+
+6. **Configure no servidor** — cole o token **direto na variável de ambiente do servidor de produção** (painel do provedor, `.env` remoto via SSH, etc.). **Nunca cole o token em chat, PR, issue ou qualquer lugar versionado** — é equivalente a uma senha com acesso de gerenciamento de mensagens da Page.
+
+7. Deploy da versão do Iris com o fallback (branch `main`, commit que introduziu `resolvePageId`/`resolvePageAccessToken` em `graph-api-message-sender.ts`).
+
+Nenhuma reconexão da conta Instagram no admin do Iris é necessária — o fluxo OAuth existente (Instagram Login) não muda.
+
+#### Validação
+
+Depois do deploy: peça para alguém responder uma DM pelo app nativo do Instagram, depois tente responder a mesma conversa pelo Iris **sem** esperar nova mensagem do cliente. Log esperado em caso de sucesso (procure por `[messages]`/`[meta]` no stdout do servidor):
+
+```
+[meta] take_thread_control failed for recipient ...   ← só aparece se a chamada falhar
+```
+
+Se não aparecer nenhum warning e a mensagem sair, o fallback funcionou silenciosamente (best-effort, só loga em caso de erro).
