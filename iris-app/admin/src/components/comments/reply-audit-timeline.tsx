@@ -152,6 +152,44 @@ function AuditSummaryBar({
   );
 }
 
+function ToolStepDetail({ step }: { step: ReplyAuditStep }) {
+  const auditMessages = useDomainMessages("comments").audit;
+  const hasToolPayload =
+    step.tool_name ||
+    step.tool_input ||
+    step.tool_output !== undefined ||
+    step.tool_latency_ms != null;
+
+  if (!hasToolPayload) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2 rounded-md border border-border/50 bg-muted/20 p-3">
+      {step.tool_name ? (
+        <p className="text-sm font-medium text-foreground">
+          {interpolate(auditMessages.toolLabel, { name: step.tool_name })}
+        </p>
+      ) : null}
+      {step.tool_input ? (
+        <pre className="max-w-full overflow-x-auto font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+          {JSON.stringify(step.tool_input, null, 2)}
+        </pre>
+      ) : null}
+      {step.tool_output !== undefined ? (
+        <pre className="max-w-full overflow-x-auto font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+          {JSON.stringify(step.tool_output, null, 2)}
+        </pre>
+      ) : null}
+      {step.tool_latency_ms != null ? (
+        <p className="text-xs text-muted-foreground">
+          {interpolate(auditMessages.toolLatency, { ms: step.tool_latency_ms })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function StageStepContent({ step }: { step: ReplyAuditStep }) {
   const auditMessages = useDomainMessages("comments").audit;
   const [detailTab, setDetailTab] = useState<"reasoning" | "json" | null>(null);
@@ -183,7 +221,15 @@ function StageStepContent({ step }: { step: ReplyAuditStep }) {
         </div>
       ) : null}
 
-      {step.reasoning || step.structured ? (
+      <ToolStepDetail step={step} />
+
+      {step.turn_index != null && step.stage === "message_draft_turn" ? (
+        <span className="inline-flex rounded-md border border-border/60 bg-muted/25 px-2.5 py-1 text-sm text-foreground">
+          {interpolate(auditMessages.draftTurn, { index: step.turn_index })}
+        </span>
+      ) : null}
+
+      {step.reasoning || step.structured || step.tool_input || step.tool_output !== undefined ? (
         <div className="flex min-w-0 flex-wrap gap-2">
           {step.reasoning ? (
             <button

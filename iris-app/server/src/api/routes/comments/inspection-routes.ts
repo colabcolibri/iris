@@ -3,6 +3,7 @@ import { createRouter, route } from "../../router.ts";
 import { buildReplyInspection } from "../../../domain/reply-context/build-reply-inspection.ts";
 import { assembleReplyContext } from "../../../domain/reply-context/reply-context-assembler.ts";
 import { serializeReplyContext } from "../../../domain/reply-context/serialize-reply-context.ts";
+import { resolveCommentReplyAudit } from "../../../domain/reply-audit/resolve-reply-audit.ts";
 import { serializeReplyAudit } from "../../../domain/reply-audit/serialize-reply-audit.ts";
 import { requireComment, routeParam } from "../../route-resources.ts";
 
@@ -68,25 +69,17 @@ export const commentsInspectionRouter = createRouter([
         return;
       }
 
-      const steps = match.ctx.agentRunSteps.listByCommentId(commentId);
-      if (steps.length === 0) {
+      const resolved = resolveCommentReplyAudit(commentId, {
+        agentRuns: match.ctx.agentRuns,
+        agentRunSteps: match.ctx.agentRunSteps,
+        comments: match.ctx.comments,
+      });
+      if (!resolved) {
         sendError(match.res, 404, "no agent run for comment");
         return;
       }
 
-      const agentRunId = match.ctx.agentRunSteps.findLatestRunIdByCommentId(commentId);
-      if (!agentRunId) {
-        sendError(match.res, 404, "no agent run for comment");
-        return;
-      }
-
-      const run = match.ctx.agentRuns.findById(agentRunId);
-      if (!run) {
-        sendError(match.res, 404, "no agent run for comment");
-        return;
-      }
-
-      sendJson(match.res, 200, serializeReplyAudit(run, steps));
+      sendJson(match.res, 200, serializeReplyAudit(resolved.run, resolved.steps));
     },
     { paramNames: ["commentId"] },
   ),

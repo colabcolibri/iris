@@ -163,7 +163,7 @@ Calendar, kanban, comment inbox, persona, and MCP connection — one admin.
 
 ## Quick start
 
-**Requirements:** Node.js ≥ 22, [pnpm](https://pnpm.io/). To publish to Instagram: Business/Creator account + [Meta app for your deployment](docs/architecture/meta-integration.md).
+**Requirements:** Node.js ≥ 22, [pnpm](https://pnpm.io/). To publish to Instagram: Business/Creator account + [Meta app for your deployment](docs/meta/README.md).
 
 ```bash
 git clone https://github.com/colabcolibri/iris.git
@@ -229,7 +229,7 @@ Node 22 + TypeScript · `node:http` · SQLite (`node:sqlite`) · React 19 / Vite
 | [`docs/05_architecture.md`](docs/05_architecture.md) | Architecture and flows (incl. reply agent) |
 | [`docs/07_api_contracts.md`](docs/07_api_contracts.md) | REST contracts |
 | [`docs/08_environments.md`](docs/08_environments.md) | Variables and environments |
-| [`docs/architecture/meta-integration.md`](docs/architecture/meta-integration.md) | Instagram — OAuth, webhooks, BYOA |
+| [`docs/meta/README.md`](docs/meta/README.md) | Instagram / Meta — step-by-step guides (01–08) |
 | [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md) | MCP — Cursor, ChatGPT, Claude |
 | [`docs/architecture/diagrams/iris-reply-agent-flow.md`](docs/architecture/diagrams/iris-reply-agent-flow.md) | Comment-reply agent flow |
 

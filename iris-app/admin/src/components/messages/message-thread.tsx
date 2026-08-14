@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Loader2, Send, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { BrainCircuit, Loader2, Send, Sparkles, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,10 +17,10 @@ import {
   participantDisplayLabel,
   resolveParticipantForDisplay,
 } from "@/lib/participant-display";
-import { useAppLocale } from "@/i18n/provider";
-import type { Message } from "@/lib/types";
 import { formatMessageDateTime } from "@/lib/message-time";
 import { cn } from "@/lib/utils";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import type { Message } from "@/lib/types";
 
 type MessageThreadProps = {
   messages: Message[];
@@ -146,6 +146,9 @@ function MessageDraftPanel({
   approvingId,
   removingDraftId,
   savingDraftId,
+  auditActive,
+  onAuditToggle,
+  auditTriggerLabel,
   onApproveDraft,
   onRemoveDraft,
   onSaveDraft,
@@ -155,10 +158,14 @@ function MessageDraftPanel({
   approvingId: string | null;
   removingDraftId: string | null;
   savingDraftId: string | null;
+  auditActive: boolean;
+  onAuditToggle: () => void;
+  auditTriggerLabel: string;
   onApproveDraft: MessageThreadProps["onApproveDraft"];
   onRemoveDraft: MessageThreadProps["onRemoveDraft"];
   onSaveDraft: MessageThreadProps["onSaveDraft"];
 }) {
+  const thread = useDomainMessages("messages").thread;
   const [editing, setEditing] = useState(false);
   const [draftValue, setDraftValue] = useState(message.draft_text ?? "");
 
@@ -217,6 +224,18 @@ function MessageDraftPanel({
             </>
           ) : (
             <>
+              <Button
+                type="button"
+                size="sm"
+                variant={auditActive ? "secondary" : "ghost"}
+                className="gap-1"
+                onClick={onAuditToggle}
+                title={auditTriggerLabel}
+                aria-label={auditTriggerLabel}
+              >
+                <BrainCircuit className="size-3.5" />
+                <span className="hidden sm:inline">{thread.viewReasoning}</span>
+              </Button>
               <Button
                 type="button"
                 size="sm"
@@ -286,6 +305,7 @@ function MessageSideActions({
   onAuditToggle,
   onOpenManual,
   onGenerateDraft,
+  auditTriggerLabel,
 }: {
   message: Message;
   canReply: boolean;
@@ -296,9 +316,11 @@ function MessageSideActions({
   onAuditToggle: () => void;
   onOpenManual: () => void;
   onGenerateDraft: MessageThreadProps["onGenerateDraft"];
+  auditTriggerLabel: string;
 }) {
   const showReplyActions =
     message.status === "pending" && !message.draft_text && !manualOpen;
+  const pinSideActionsVisible = showAudit && Boolean(message.draft_text?.trim());
 
   if (!showReplyActions && !showAudit) {
     return null;
@@ -308,8 +330,9 @@ function MessageSideActions({
     <div
       className={cn(
         "flex shrink-0 flex-row items-center gap-0.5 self-start pt-1",
-        "opacity-100 sm:opacity-0 sm:transition-opacity",
-        "group-hover/message:opacity-100 group-focus-within/message:opacity-100",
+        pinSideActionsVisible
+          ? "opacity-100"
+          : "opacity-100 sm:opacity-0 sm:transition-opacity group-hover/message:opacity-100 group-focus-within/message:opacity-100",
       )}
     >
       {showReplyActions ? (
@@ -341,9 +364,21 @@ function MessageSideActions({
         </>
       ) : null}
       {showAudit ? (
-        <ReplyAuditTrigger active={auditActive} onClick={onAuditToggle} />
+        <ReplyAuditTrigger
+          active={auditActive}
+          label={auditTriggerLabel}
+          onClick={onAuditToggle}
+        />
       ) : null}
     </div>
+  );
+}
+
+function resolveProposedReplyText(message: Message): string | null {
+  return (
+    message.draft_text?.trim() ||
+    message.linked_reply_text?.trim() ||
+    null
   );
 }
 
@@ -382,6 +417,14 @@ function InboundMessageContent({
 }) {
   const auditState = useMessageReplyAudit(message.id);
   const showAudit = shouldShowReplyAudit(message);
+  const auditPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!auditState.open || auditState.loading) {
+      return;
+    }
+    auditPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [auditState.open, auditState.loading, auditState.audit]);
 
   return (
     <>
@@ -397,6 +440,7 @@ function InboundMessageContent({
           onAuditToggle={() => void auditState.toggle()}
           onOpenManual={onOpenManual}
           onGenerateDraft={onGenerateDraft}
+          auditTriggerLabel={auditState.triggerLabel}
         />
       </div>
 
@@ -413,12 +457,25 @@ function InboundMessageContent({
         approvingId={approvingId}
         removingDraftId={removingDraftId}
         savingDraftId={savingDraftId}
+        auditActive={auditState.open}
+        onAuditToggle={() => void auditState.toggle()}
+        auditTriggerLabel={auditState.triggerLabel}
         onApproveDraft={onApproveDraft}
         onRemoveDraft={onRemoveDraft}
         onSaveDraft={onSaveDraft}
       />
       {showAudit && auditState.open ? (
-        <ReplyAuditPanel {...auditState} className="mt-1.5 w-full min-w-0" />
+        <div ref={auditPanelRef} className="mt-2 w-full min-w-0">
+          <ReplyAuditPanel
+            {...auditState}
+            proposedReply={
+              shouldShowMessageDraft(message)
+                ? null
+                : resolveProposedReplyText(message)
+            }
+            className="w-full min-w-0"
+          />
+        </div>
       ) : null}
     </>
   );

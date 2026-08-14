@@ -187,8 +187,9 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | `docs/architecture/mcp-integration.md` | MCP — Cursor, ChatGPT, Claude, validate, tools |
 | `docs/architecture/ecommerce-stores.md` | Lojas virtuais — port/adapter, sync, políticas de campo, Yampi |
 | `docs/architecture/image-optimization.md` | Pipeline sharp, limites, env |
-| `docs/architecture/meta-integration.md` | Graph API, webhooks |
-| `docs/architecture/meta-app-review.md` | Checklist revisão app Meta (IGIris) |
+| `docs/meta/README.md` | Guias passo a passo Meta / Instagram (01–08) |
+| `docs/meta/referencia-tecnica.md` | Graph API, webhooks — referência dev |
+| `docs/meta/08-app-review.md` | Checklist revisão app Meta (IGIris) |
 | `docs/architecture/srp-modules.md` | Módulos e dependências |
 | `docs/architecture/admin-ui-layout.md` | Admin React — shell persistente, `PageContainer`, providers |
 | `docs/architecture/admin-demo-mode.md` | Demo público `/demo` — fixtures client-side, isolamento de sessão |

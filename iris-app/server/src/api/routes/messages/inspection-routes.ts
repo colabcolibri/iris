@@ -2,6 +2,7 @@ import { sendError, sendJson } from "../../json.ts";
 import { createRouter, route } from "../../router.ts";
 import { assembleMessageReplyContext } from "../../../domain/message-reply-context/message-reply-context-assembler.ts";
 import { serializeMessageReplyContext } from "../../../domain/message-reply-context/serialize-message-reply-context.ts";
+import { resolveMessageReplyAudit } from "../../../domain/reply-audit/resolve-reply-audit.ts";
 import { serializeReplyAudit } from "../../../domain/reply-audit/serialize-reply-audit.ts";
 import { routeParam } from "../../route-resources.ts";
 import { requireMessage } from "./message-resources.ts";
@@ -51,25 +52,17 @@ export const messagesInspectionRouter = createRouter([
         return;
       }
 
-      const steps = match.ctx.agentRunSteps.listByMessageId(messageId);
-      if (steps.length === 0) {
+      const resolved = resolveMessageReplyAudit(messageId, {
+        agentRuns: match.ctx.agentRuns,
+        agentRunSteps: match.ctx.agentRunSteps,
+        messageReplies: match.ctx.messageReplies,
+      });
+      if (!resolved) {
         sendError(match.res, 404, "no agent run for message");
         return;
       }
 
-      const agentRunId = match.ctx.agentRunSteps.findLatestRunIdByMessageId(messageId);
-      if (!agentRunId) {
-        sendError(match.res, 404, "no agent run for message");
-        return;
-      }
-
-      const run = match.ctx.agentRuns.findById(agentRunId);
-      if (!run) {
-        sendError(match.res, 404, "no agent run for message");
-        return;
-      }
-
-      sendJson(match.res, 200, serializeReplyAudit(run, steps));
+      sendJson(match.res, 200, serializeReplyAudit(resolved.run, resolved.steps));
     },
     { paramNames: ["messageId"] },
   ),

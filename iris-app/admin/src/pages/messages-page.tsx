@@ -219,14 +219,6 @@ export function MessagesPage() {
     void loadMessages(selectedConversationId);
   }, [loadMessages, selectedConversationId]);
 
-  useEffect(() => {
-    if (!selectedMessageId || messagesConversationId !== selectedConversationId) {
-      return;
-    }
-    const element = document.getElementById(`message-${selectedMessageId}`);
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [messages, messagesConversationId, selectedConversationId, selectedMessageId]);
-
   const scheduleRefresh = useCallback(
     (conversationId?: string) => {
       if (refreshTimerRef.current) {
@@ -702,6 +694,7 @@ export function MessagesPage() {
                     <ConversationDetailPanel
                       conversation={selectedConversation}
                       messages={messages}
+                      highlightMessageId={selectedMessageId || undefined}
                       brandUsername={meta?.igUsername}
                       metaReady={Boolean(meta?.connected)}
                       metaUnsupported={meta?.messaging_supported === false}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCw, Settings2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 type ConversationDetailPanelProps = {
   conversation: ConversationSummary;
   messages: Message[];
+  highlightMessageId?: string;
   brandUsername?: string | null;
   metaReady: boolean;
   metaUnsupported?: boolean;
@@ -52,6 +53,7 @@ type ConversationDetailPanelProps = {
 export function ConversationDetailPanel({
   conversation,
   messages,
+  highlightMessageId,
   brandUsername,
   metaReady,
   metaUnsupported = false,
@@ -77,6 +79,7 @@ export function ConversationDetailPanel({
 }: ConversationDetailPanelProps) {
   const detail = useDomainMessages("messages").detail;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const threadViewportRef = useRef<HTMLDivElement>(null);
   const lastInbound = lastInboundMessage(messages);
   const windowOpen = isWithinMessagingWindow(
     lastInbound?.ig_timestamp ?? lastInbound?.created_at ?? null,
@@ -93,6 +96,31 @@ export function ConversationDetailPanel({
   const participantHandle = formatParticipantHandle(participant.username);
   const pendingReplyCount = countPendingInboundMessages(messages);
   const replyEnabled = canReply && !metaUnsupported;
+
+  useEffect(() => {
+    const viewport = threadViewportRef.current;
+    if (!viewport || messages.length === 0) {
+      return;
+    }
+
+    const scrollToTarget = () => {
+      if (highlightMessageId) {
+        const target = viewport.querySelector(
+          `#message-${CSS.escape(highlightMessageId)}`,
+        );
+        if (target) {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+          return;
+        }
+      }
+
+      viewport.scrollTop = viewport.scrollHeight;
+    };
+
+    scrollToTarget();
+    const frame = requestAnimationFrame(scrollToTarget);
+    return () => cancelAnimationFrame(frame);
+  }, [conversation.id, highlightMessageId, messages.length]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -174,7 +202,11 @@ export function ConversationDetailPanel({
         ) : null}
       </div>
 
-      <PageScrollArea className="min-h-0 flex-1 overflow-x-hidden p-3 sm:p-4">
+      <PageScrollArea
+        className="min-h-0 flex-1 overflow-x-hidden"
+        contentClassName="p-3 sm:p-4"
+        scrollViewportRef={threadViewportRef}
+      >
         {messages.length === 0 ? (
           <p className="text-sm text-muted-foreground">{detail.emptyMessages}</p>
         ) : (

@@ -91,6 +91,10 @@ export const messagesPt = {
     placeholder: "Sua resposta…",
     noText: "(sem texto)",
     viewAudit: "Ver decisão do agente",
+    viewReasoning: "Ver raciocínio",
+    auditFailed: "Falha ao carregar o histórico do agente.",
+    auditNoRun:
+      "Nenhum histórico salvo para esta mensagem. Gere um novo rascunho com IA se precisar revisar as etapas.",
     brandBadge: "Marca",
   },
   confirm: {

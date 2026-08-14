@@ -2,6 +2,7 @@ import type { ConversationRepository } from "../../ports/conversation-repository
 import type { MessageRepository } from "../../ports/message-repository.ts";
 import type { RemoteMessage } from "../../ports/meta-conversations-reader.ts";
 import { isWithinMessageImportWindow } from "./message-sync-window.ts";
+import { maxMessageTimestamp } from "./message-timestamp.ts";
 import { remoteMessagePayload } from "./remote-message-utils.ts";
 import { reconcileConversationPendingStatuses } from "./reconcile-conversation-pending-statuses.ts";
 
@@ -80,9 +81,7 @@ export function applyRemoteMessages(
       }
     }
 
-    if (remote.createdTime) {
-      lastTimestamp = remote.createdTime;
-    }
+    lastTimestamp = maxMessageTimestamp(lastTimestamp, remote.createdTime);
   }
 
   if (latestParticipantUsername || latestParticipantDisplayName) {

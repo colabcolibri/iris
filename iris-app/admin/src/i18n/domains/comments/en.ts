@@ -254,6 +254,9 @@ export const commentsEn = {
     suggestEditLink: "agent content",
     category: "category: {value}",
     product: "product: {value}",
+    toolLabel: "tool: {name}",
+    toolLatency: "tool latency: {ms} ms",
+    draftTurn: "draft turn: {index}",
     terminal: {
       approved: "approved",
       approvedSimple: "approved (simple)",

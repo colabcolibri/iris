@@ -53,14 +53,17 @@ type ReplyAuditTriggerProps = {
   active?: boolean;
   className?: string;
   onClick: () => void;
+  label?: string;
 };
 
 export function ReplyAuditTrigger({
   active = false,
   className,
   onClick,
+  label,
 }: ReplyAuditTriggerProps) {
   const thread = useDomainMessages("comments").thread;
+  const resolvedLabel = label ?? thread.viewAudit;
 
   return (
     <button
@@ -70,8 +73,8 @@ export function ReplyAuditTrigger({
         active && "bg-primary/15 text-primary",
         className,
       )}
-      aria-label={thread.viewAudit}
-      title={thread.viewAudit}
+      aria-label={resolvedLabel}
+      title={resolvedLabel}
       onClick={onClick}
     >
       <BrainCircuit className="size-3.5" />
@@ -86,6 +89,10 @@ type ReplyAuditPanelProps = {
   empty: boolean;
   error: string | null;
   className?: string;
+  proposedReply?: string | null;
+  proposedReplyLanguageLabel?: string | null;
+  emptyLabel?: string;
+  failedLabel?: string;
 };
 
 export function ReplyAuditPanel({
@@ -95,8 +102,14 @@ export function ReplyAuditPanel({
   empty,
   error,
   className,
+  proposedReply,
+  proposedReplyLanguageLabel,
+  emptyLabel,
+  failedLabel,
 }: ReplyAuditPanelProps) {
   const thread = useDomainMessages("comments").thread;
+  const resolvedEmptyLabel = emptyLabel ?? thread.auditNoRun;
+  const resolvedFailedLabel = failedLabel ?? thread.auditFailed;
 
   if (!open) {
     return null;
@@ -116,11 +129,22 @@ export function ReplyAuditPanel({
           <Skeleton className="h-16 w-full" />
         </div>
       ) : error ? (
-        <p className="text-sm text-destructive">{error}</p>
+        <p className="text-sm text-destructive">{error || resolvedFailedLabel}</p>
       ) : empty ? (
-        <p className="text-sm text-muted-foreground">{thread.auditNoRun}</p>
+        <p className="text-sm text-muted-foreground">{resolvedEmptyLabel}</p>
       ) : audit ? (
-        <ReplyAuditTimeline audit={audit} />
+        <ReplyAuditTimeline
+          audit={audit}
+          proposedReply={proposedReply}
+          proposedReplyLanguageLabel={proposedReplyLanguageLabel}
+          summary={{
+            toolCallCount: audit.session_summary?.toolCallCount ?? null,
+            totalTokens: audit.session_summary?.totalTokens ?? null,
+            totalPromptTokens: audit.session_summary?.totalPromptTokens ?? null,
+            totalCompletionTokens: audit.session_summary?.totalCompletionTokens ?? null,
+            durationMs: audit.session_summary?.durationMs ?? null,
+          }}
+        />
       ) : null}
     </div>
   );

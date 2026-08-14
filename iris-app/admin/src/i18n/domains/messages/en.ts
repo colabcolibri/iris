@@ -91,6 +91,10 @@ export const messagesEn = {
     placeholder: "Your reply…",
     noText: "(no text)",
     viewAudit: "View agent decision",
+    viewReasoning: "View reasoning",
+    auditFailed: "Failed to load agent history.",
+    auditNoRun:
+      "No saved history for this message. Generate a new AI draft if you need to review the steps.",
     brandBadge: "Brand",
   },
   confirm: {

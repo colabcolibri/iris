@@ -5,6 +5,7 @@ import type {
   UpsertConversationInput,
 } from "../../ports/conversation-repository.ts";
 import type { Conversation, ConversationReplyMode } from "../../domain/messages/conversation.ts";
+import { maxMessageTimestamp, normalizeMessageTimestamp } from "../../domain/messages/message-timestamp.ts";
 import { mapConversationRow } from "./message-mappers.ts";
 
 function isPlaceholderParticipantId(value: string): boolean {
@@ -40,7 +41,7 @@ export function createSqliteConversationRepository(
         participant_username = COALESCE(?, participant_username),
         participant_display_name = COALESCE(?, participant_display_name),
         participant_avatar_url = COALESCE(?, participant_avatar_url),
-        last_message_at = COALESCE(?, last_message_at),
+        last_message_at = ?,
         updated_at = ?
     WHERE id = ?
   `);
@@ -70,8 +71,18 @@ export function createSqliteConversationRepository(
   `);
 
   const listRecentStmt = db.prepare(`
-    SELECT * FROM conversations
-    ORDER BY datetime(COALESCE(last_message_at, updated_at)) DESC
+    SELECT
+      c.*,
+      activity.latest_activity_at
+    FROM conversations c
+    LEFT JOIN (
+      SELECT
+        conversation_id,
+        MAX(COALESCE(ig_timestamp, created_at)) AS latest_activity_at
+      FROM messages
+      GROUP BY conversation_id
+    ) activity ON activity.conversation_id = c.id
+    ORDER BY datetime(COALESCE(activity.latest_activity_at, c.last_message_at, c.updated_at)) DESC
     LIMIT ?
   `);
 
@@ -107,14 +118,20 @@ export function createSqliteConversationRepository(
       const existing = existingByConversation ?? existingByParticipant;
 
       const ts = nowIso();
+      const normalizedLastMessageAt = normalizeMessageTimestamp(input.lastMessageAt);
 
       if (existing) {
+        const current = mapConversationRow(existing as never);
         const currentParticipantId = existing.participant_ig_user_id;
         const nextParticipantId =
           isPlaceholderParticipantId(currentParticipantId) &&
           !isPlaceholderParticipantId(input.participantIgUserId)
             ? input.participantIgUserId
             : null;
+        const nextLastMessageAt = maxMessageTimestamp(
+          current.lastMessageAt,
+          normalizedLastMessageAt,
+        );
 
         if (
           isSyntheticConversationId(existing.ig_conversation_id) &&
@@ -128,7 +145,7 @@ export function createSqliteConversationRepository(
           input.participantUsername ?? null,
           input.participantDisplayName ?? null,
           input.participantAvatarUrl ?? null,
-          input.lastMessageAt ?? null,
+          nextLastMessageAt,
           ts,
           existing.id,
         );
@@ -147,7 +164,7 @@ export function createSqliteConversationRepository(
         input.participantUsername ?? null,
         input.participantDisplayName ?? null,
         input.participantAvatarUrl ?? null,
-        input.lastMessageAt ?? null,
+        normalizedLastMessageAt,
         ts,
         ts,
       );
@@ -159,7 +176,18 @@ export function createSqliteConversationRepository(
     },
 
     updateLastMessageAt(conversationId: string, iso: string) {
-      updateLastMessage.run(iso, nowIso(), conversationId);
+      const row = selectById.get(conversationId);
+      if (!row) {
+        return;
+      }
+
+      const current = mapConversationRow(row as never);
+      const next = maxMessageTimestamp(current.lastMessageAt, iso);
+      if (next === current.lastMessageAt) {
+        return;
+      }
+
+      updateLastMessage.run(next, nowIso(), conversationId);
     },
 
     updateReplyMode(conversationId: string, replyMode: ConversationReplyMode) {
@@ -188,8 +216,21 @@ export function createSqliteConversationRepository(
 
     listRecent(limit: number) {
       const safeLimit = Math.min(Math.max(limit, 1), 100);
-      const rows = listRecentStmt.all(safeLimit) as never[];
-      return rows.map(mapConversationRow);
+      const rows = listRecentStmt.all(safeLimit) as Array<
+        Parameters<typeof mapConversationRow>[0] & {
+          latest_activity_at?: string | null;
+        }
+      >;
+      return rows.map((row) => {
+        const conversation = mapConversationRow(row);
+        if (row.latest_activity_at) {
+          conversation.lastMessageAt = maxMessageTimestamp(
+            conversation.lastMessageAt,
+            row.latest_activity_at,
+          );
+        }
+        return conversation;
+      });
     },
   };
 }

@@ -163,7 +163,7 @@ Calendário, kanban, inbox de comentários, persona e conexão MCP — no mesmo 
 
 ## Quick start
 
-**Requisitos:** Node.js ≥ 22, [pnpm](https://pnpm.io/). Para publicar no Instagram: conta Business/Creator + [app Meta no seu deploy](docs/architecture/meta-integration.md).
+**Requisitos:** Node.js ≥ 22, [pnpm](https://pnpm.io/). Para publicar no Instagram: conta Business/Creator + [app Meta no seu deploy](docs/meta/README.md).
 
 ```bash
 git clone https://github.com/colabcolibri/iris.git
@@ -229,7 +229,7 @@ Node 22 + TypeScript · `node:http` · SQLite (`node:sqlite`) · React 19 / Vite
 | [`docs/05_architecture.md`](docs/05_architecture.md) | Arquitetura e fluxos (incl. agente de replies) |
 | [`docs/07_api_contracts.md`](docs/07_api_contracts.md) | Contratos REST |
 | [`docs/08_environments.md`](docs/08_environments.md) | Variáveis e ambientes |
-| [`docs/architecture/meta-integration.md`](docs/architecture/meta-integration.md) | Instagram — OAuth, webhooks, BYOA |
+| [`docs/meta/README.md`](docs/meta/README.md) | Instagram / Meta — guias passo a passo (01–08) |
 | [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md) | MCP — Cursor, ChatGPT, Claude |
 | [`docs/architecture/diagrams/iris-reply-agent-flow.md`](docs/architecture/diagrams/iris-reply-agent-flow.md) | Fluxo do agente de comentários |
 

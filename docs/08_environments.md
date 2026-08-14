@@ -148,7 +148,7 @@ Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar 
 | `RESEND_API_KEY` | API key Resend (somente no provedor) |
 | `IRIS_ADMIN_EMAIL` | Email allowlisted para OTP |
 | `META_*` | App credentials + access token |
-| `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — recuperação de thread control em DMs. Guia: `docs/architecture/meta-integration.md` § Recuperação de thread control |
+| `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — DMs: guias [07](../meta/07-page-access-token.md) e [06](../meta/06-mensagens-receptor-primario.md) em `docs/meta/` |
 | `LLM_API_KEY` | For comment responder (v1-S6) |
 | `IRIS_REPLY_MAX_CONCURRENT` | Default `10` — ajuste conforme quota/custo do provedor LLM |
 | `IRIS_RETENTION_DAYS` | Default `90` — purge de `meta_webhook_events` antigos |
@@ -166,7 +166,7 @@ Production: `https://<your-public-host>/webhooks/meta`
 
 Configure in Meta Developers → Webhooks → Instagram. OAuth callback: `https://<your-public-host>/auth/meta/callback`.
 
-Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup guide: `docs/architecture/meta-integration.md`.
+Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `docs/meta/README.md`.
 
 ## Ports
 

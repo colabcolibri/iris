@@ -1,12 +1,16 @@
 import { useCallback, useState } from "react";
 import { fetchMessageReplyAudit } from "@/lib/api";
 import type { ReplyAudit } from "@/lib/types";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   ReplyAuditPanel,
   ReplyAuditTrigger,
 } from "@/components/comments/reply-audit-section";
 
 export function useMessageReplyAudit(messageId: string) {
+  const { locale } = useAppLocale();
+  const thread = useDomainMessages("messages").thread;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
@@ -36,13 +40,23 @@ export function useMessageReplyAudit(messageId: string) {
         setAudit(data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar audit.");
+      setError(getApiErrorMessage(err, locale) || thread.auditFailed);
     } finally {
       setLoading(false);
     }
-  }, [audit, empty, messageId, open]);
+  }, [audit, empty, locale, messageId, open, thread.auditFailed]);
 
-  return { open, loading, audit, empty, error, toggle };
+  return {
+    open,
+    loading,
+    audit,
+    empty,
+    error,
+    toggle,
+    emptyLabel: thread.auditNoRun,
+    failedLabel: thread.auditFailed,
+    triggerLabel: thread.viewReasoning,
+  };
 }
 
 export function MessageReplyAuditSection({
@@ -58,9 +72,13 @@ export function MessageReplyAuditSection({
     <div className={className}>
       <ReplyAuditTrigger
         active={auditState.open}
+        label={auditState.triggerLabel}
         onClick={() => void auditState.toggle()}
       />
-      <ReplyAuditPanel {...auditState} className="mt-2" />
+      <ReplyAuditPanel
+        {...auditState}
+        className="mt-2"
+      />
     </div>
   );
 }
