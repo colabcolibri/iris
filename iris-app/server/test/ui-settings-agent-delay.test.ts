@@ -8,10 +8,10 @@ test("agent auto reply card exposes reply delay and tick interval controls", () 
   assert.match(card, /saveReplyDelaySeconds/);
   assert.match(card, /agentReplyTickIntervalSeconds/);
   assert.match(card, /saveAgentReplyTickIntervalSeconds/);
-  assert.match(card, /Intervalo do worker/);
-  assert.match(card, /Resposta imediata/);
-  assert.match(card, /Fila com delay/);
-  assert.match(card, /Minutos de espera/);
+  assert.match(card, /t\.workerIntervalLabel/);
+  assert.match(card, /t\.delayImmediate/);
+  assert.match(card, /t\.delayQueued/);
+  assert.match(card, /t\.delayMinutesLabel/);
 });
 
 test("message agent card shows shared tick interval and delay in minutes", () => {
@@ -20,8 +20,8 @@ test("message agent card shows shared tick interval and delay in minutes", () =>
     "utf8",
   );
   assert.match(card, /agentReplyTickIntervalSeconds/);
-  assert.match(card, /Minutos de espera/);
-  assert.match(card, /Compartilhado com comentários/);
+  assert.match(card, /t\.delayMinutesLabel/);
+  assert.match(card, /t\.workerIntervalHint/);
 });
 
 test("app settings context loads reply and tick fields", () => {

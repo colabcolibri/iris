@@ -12,9 +12,9 @@ test("persona page and route exist", () => {
   assert.match(page, /updateReplyPersona/);
   assert.match(page, /fetchAgentContent/);
   assert.match(page, /updateAgentContent/);
-  assert.match(page, /Conteúdo do agente/);
+  assert.match(page, /t\.sections\.commentContent\.title/);
   assert.match(page, /response_language/);
-  assert.match(page, /Idioma das respostas/);
+  assert.match(page, /t\.fields\.responseLanguage/);
 
   const api = readFileSync("../admin/src/lib/api.ts", "utf8");
   assert.match(api, /\/api\/settings\/reply-persona/);

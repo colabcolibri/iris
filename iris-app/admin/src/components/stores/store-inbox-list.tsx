@@ -1,5 +1,6 @@
 import { Store } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import type { StoreConnection } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -7,12 +8,6 @@ const PROVIDER_LABELS: Record<StoreConnection["provider_type"], string> = {
   yampi: "Yampi",
   shopify: "Shopify",
   woocommerce: "WooCommerce",
-};
-
-const STATUS_LABELS: Record<StoreConnection["status"], string> = {
-  active: "Ativa",
-  error: "Erro",
-  disconnected: "Desconectada",
 };
 
 type StoreInboxListProps = {
@@ -26,6 +21,9 @@ export function StoreInboxList({
   selectedId,
   onSelect,
 }: StoreInboxListProps) {
+  const { bcp47 } = useAppLocale();
+  const storesMsg = useDomainMessages("products").stores;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {connections.map((connection) => {
@@ -52,7 +50,7 @@ export function StoreInboxList({
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {connection.yampi_alias
-                      ? `alias: ${connection.yampi_alias}`
+                      ? `${storesMsg.detail.alias} ${connection.yampi_alias}`
                       : PROVIDER_LABELS[connection.provider_type]}
                   </p>
                 </div>
@@ -67,19 +65,21 @@ export function StoreInboxList({
                         : "bg-muted text-muted-foreground",
                   )}
                 >
-                  {STATUS_LABELS[connection.status]}
+                  {storesMsg.status[connection.status]}
                 </Badge>
               </div>
               {connection.last_sync_at ? (
                 <p className="text-xs text-muted-foreground">
-                  Sync:{" "}
-                  {new Date(connection.last_sync_at).toLocaleString("pt-BR", {
+                  {storesMsg.inbox.syncPrefix}{" "}
+                  {new Date(connection.last_sync_at).toLocaleString(bcp47, {
                     dateStyle: "short",
                     timeStyle: "short",
                   })}
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">Nunca sincronizado</p>
+                <p className="text-xs text-muted-foreground">
+                  {storesMsg.inbox.neverSynced}
+                </p>
               )}
             </div>
           </button>

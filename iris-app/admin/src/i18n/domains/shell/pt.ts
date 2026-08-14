@@ -74,5 +74,11 @@ export const shellPt = {
     delete: "Excluir",
     loading: "Carregando…",
     close: "Fechar",
+    verifyingSession: "Verificando sessão",
+  },
+  agentBadge: {
+    loading: "Agente…",
+    label: "Agente: {mode}",
+    title: "Agente global: {mode}. Clique para abrir configurações.",
   },
 } satisfies ShellMessages;

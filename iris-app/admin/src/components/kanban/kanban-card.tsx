@@ -11,6 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDomainMessages } from "@/i18n/provider";
 import { formatWhen } from "@/lib/datetime";
 import { postDisplayDate, truncate } from "@/lib/date-utils";
 import { getKanbanActions } from "@/lib/status";
@@ -25,24 +26,28 @@ type KanbanCardProps = {
   onPurge?: () => void;
 };
 
-function dateMeta(post: Post, timeZone: string) {
+function dateMeta(
+  post: Post,
+  timeZone: string,
+  card: ReturnType<typeof useDomainMessages<"posts">>["kanban"]["card"],
+) {
   const when = formatWhen(postDisplayDate(post), timeZone);
   if (!when) return null;
 
   switch (post.status) {
     case "scheduled":
-      return { label: "Publica em", when, tone: "scheduled" as const };
+      return { label: card.publishesAt, when, tone: "scheduled" as const };
     case "published":
-      return { label: "Publicado em", when, tone: "published" as const };
+      return { label: card.publishedAt, when, tone: "published" as const };
     case "failed":
-      return { label: "Falhou em", when, tone: "failed" as const };
+      return { label: card.failedAt, when, tone: "failed" as const };
     case "draft":
       return post.scheduled_at
-        ? { label: "Data planejada", when, tone: "draft" as const }
+        ? { label: card.plannedDate, when, tone: "draft" as const }
         : null;
     case "cancelled":
       return post.scheduled_at
-        ? { label: "Era para", when, tone: "muted" as const }
+        ? { label: card.wasScheduledFor, when, tone: "muted" as const }
         : null;
     default:
       return null;
@@ -57,8 +62,9 @@ export function KanbanCard({
   onStatusChange,
   onPurge,
 }: KanbanCardProps) {
+  const cardMsg = useDomainMessages("posts").kanban.card;
   const actions = getKanbanActions(post.status);
-  const meta = dateMeta(post, timeZone);
+  const meta = dateMeta(post, timeZone, cardMsg);
   const isFailed = post.status === "failed";
   const isPublished = post.status === "published";
   const assetsCount = post.assets_count ?? 0;
@@ -73,7 +79,7 @@ export function KanbanCard({
                 variant="ghost"
                 size="icon-sm"
                 className="size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-popup-open:opacity-100"
-                aria-label="Ações da postagem"
+                aria-label={cardMsg.actionsAria}
                 onClick={(event) => event.stopPropagation()}
               />
             }
@@ -82,7 +88,7 @@ export function KanbanCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              <DropdownMenuLabel>{cardMsg.actionsLabel}</DropdownMenuLabel>
               {actions.map((action) => (
                 <DropdownMenuItem
                   key={
@@ -152,7 +158,7 @@ export function KanbanCard({
 
       {isFailed && post.error_message && (
         <div className="mb-3 flex items-start gap-2 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
-          <span className="shrink-0 font-semibold">Erro:</span>
+          <span className="shrink-0 font-semibold">{cardMsg.error}</span>
           <span className="line-clamp-2">{post.error_message}</span>
         </div>
       )}
@@ -167,10 +173,11 @@ export function KanbanCard({
         {assetsCount > 0 ? (
           <span className="inline-flex items-center gap-1">
             <ImageIcon className="size-3.5" />
-            {assetsCount} {assetsCount === 1 ? "mídia" : "mídias"}
+            {assetsCount}{" "}
+            {assetsCount === 1 ? cardMsg.mediaOne : cardMsg.mediaOther}
           </span>
         ) : (
-          <span className="text-amber-700">Sem mídia</span>
+          <span className="text-amber-700">{cardMsg.noMedia}</span>
         )}
         <PostReplyStatusBadge post={post} globalReplyMode={globalReplyMode} />
       </div>

@@ -8,12 +8,12 @@ test("reply audit UI is wired in comment surfaces", () => {
     "utf8",
   );
   assert.match(timeline, /ReplyAuditTimeline/);
-  assert.match(timeline, /Ver reasoning/);
-  assert.match(timeline, /Ver JSON estruturado/);
+  assert.match(timeline, /auditMessages\.detailTabs\.reasoning/);
+  assert.match(timeline, /auditMessages\.detailTabs\.json/);
 
   const section = readFileSync("../admin/src/components/comments/reply-audit-section.tsx", "utf8");
   const thread = readFileSync("../admin/src/components/comments/comment-thread.tsx", "utf8");
-  assert.match(section, /Ver decisão do agente/);
+  assert.match(section, /thread\.viewAudit/);
   assert.match(thread, /ReplyAuditTrigger/);
   assert.match(section, /fetchReplyAudit/);
 
@@ -24,7 +24,7 @@ test("reply audit UI is wired in comment surfaces", () => {
   assert.doesNotMatch(thread, /depth \+ 1/);
 
   const dialog = readFileSync("../admin/src/components/posts/post-dialog.tsx", "utf8");
-  assert.match(dialog, /ReplyAuditSection/);
+  assert.match(dialog, /CommentThread/);
 
   const api = readFileSync("../admin/src/lib/api.ts", "utf8");
   assert.match(api, /reply-audit/);

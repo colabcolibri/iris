@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { disconnectMeta, fetchMetaHealth, fetchMetaStatus } from "@/lib/api";
 import type { MetaStatus } from "@/lib/types";
 
@@ -21,6 +23,8 @@ type MetaSessionContextValue = {
 const MetaSessionContext = createContext<MetaSessionContextValue | null>(null);
 
 export function MetaSessionProvider({ children }: { children: ReactNode }) {
+  const { locale } = useAppLocale();
+  const metaMsg = useDomainMessages("settings").meta;
   const [meta, setMeta] = useState<MetaStatus | null>(null);
 
   useEffect(() => {
@@ -35,23 +39,22 @@ export function MetaSessionProvider({ children }: { children: ReactNode }) {
     try {
       const result = await fetchMetaHealth({ messaging: true });
       if (!result.ok) {
-        toast.error(result.message ?? "Falha na conexão.");
+        toast.error(result.message ?? metaMsg.toasts.connectionFailed);
         return;
       }
       if (result.messaging && !result.messaging.ok) {
         toast.error(
-          result.messaging.message ??
-            "Sem permissão para enviar mensagens. Reconecte o Instagram.",
+          result.messaging.message ?? metaMsg.toasts.messagingPermission,
         );
         return;
       }
-      toast.success("Conexão com a Meta OK (incluindo mensagens).");
+      toast.success(metaMsg.toasts.healthOk);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Falha ao testar conexão.",
+        getApiErrorMessage(err, locale) || metaMsg.toasts.testFailed,
       );
     }
-  }, []);
+  }, [locale, metaMsg]);
 
   const handleDisconnect = useCallback(async (): Promise<boolean> => {
     try {
@@ -61,17 +64,15 @@ export function MetaSessionProvider({ children }: { children: ReactNode }) {
         igUsername: null,
         tokenExpired: false,
       });
-      toast.success("Instagram desconectado.");
+      toast.success(metaMsg.toasts.disconnected);
       return true;
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível desconectar o Instagram.",
+        getApiErrorMessage(err, locale) || metaMsg.toasts.disconnectFailed,
       );
       return false;
     }
-  }, []);
+  }, [locale, metaMsg]);
 
   const value = useMemo(
     () => ({

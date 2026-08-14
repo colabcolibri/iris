@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { PostFormSection } from "@/components/posts/post-form-section";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { updatePost } from "@/lib/api";
 
 type PostReplyBriefingEditorProps = {
@@ -26,30 +29,24 @@ type PostReplyBriefingEditorProps = {
   embedded?: boolean;
 };
 
-const SILENCE_BLOCKS = [
-  {
-    key: "silence_soul" as const,
-    label: "SOUL",
-    description: "Omite voz e tom globais neste post.",
-  },
-  {
-    key: "silence_page" as const,
-    label: "Sobre a página",
-    description: "Omite contexto de perfil/campanha global.",
-  },
-  {
-    key: "silence_knowledge" as const,
-    label: "Base de conhecimento",
-    description: "Omite fatos e políticas globais.",
-  },
-  {
-    key: "silence_restrictions" as const,
-    label: "Restrições",
-    description: "Omite restrições editoriais globais.",
-  },
+const SILENCE_BLOCK_KEYS = [
+  "silence_soul",
+  "silence_page",
+  "silence_knowledge",
+  "silence_restrictions",
 ] as const;
 
-type SilenceKey = (typeof SILENCE_BLOCKS)[number]["key"];
+type SilenceKey = (typeof SILENCE_BLOCK_KEYS)[number];
+
+const SILENCE_BLOCK_MAP: Record<
+  SilenceKey,
+  "soul" | "page" | "knowledge" | "restrictions"
+> = {
+  silence_soul: "soul",
+  silence_page: "page",
+  silence_knowledge: "knowledge",
+  silence_restrictions: "restrictions",
+};
 
 export function PostReplyBriefingEditor({
   postId,
@@ -70,6 +67,8 @@ export function PostReplyBriefingEditor({
   onSilenceRestrictionsChange,
   embedded = false,
 }: PostReplyBriefingEditorProps) {
+  const { locale } = useAppLocale();
+  const briefingMsg = useDomainMessages("posts").briefing;
   const isReplyPromptControlled = onReplyPromptChange !== undefined;
   const [internalReplyPrompt, setInternalReplyPrompt] = useState(
     initialReplyPrompt ?? "",
@@ -201,10 +200,10 @@ export function PostReplyBriefingEditor({
         silence_knowledge: silenceKnowledge,
         silence_restrictions: silenceRestrictions,
       });
-      toast.success("Briefing de reply salvo.");
+      toast.success(briefingMsg.saved);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Falha ao salvar briefing.",
+        getApiErrorMessage(err, locale) || briefingMsg.saveFailed,
       );
     } finally {
       setSaving(false);
@@ -218,47 +217,48 @@ export function PostReplyBriefingEditor({
         rows={6}
         value={replyPrompt}
         onChange={(event) => setReplyPrompt(event.target.value)}
-        placeholder="Ex.: produto em destaque, preço promocional, link da landing…"
+        placeholder={briefingMsg.placeholder}
         className="min-h-36 w-full max-w-full resize-y bg-background"
       />
 
       <div className="w-full max-w-full min-w-0 space-y-3 border-t border-border/60 pt-4">
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Silenciar blocos globais
+            {briefingMsg.silenceTitle}
           </p>
-          <p className="text-xs text-muted-foreground">
-            Marque o que não deve entrar no harness deste post. Os guardrails do
-            sistema (regras fixas de segurança) permanecem ativos mesmo ao
-            silenciar restrições editoriais.
-          </p>
+          <p className="text-xs text-muted-foreground">{briefingMsg.silenceHint}</p>
         </div>
 
         <div className="grid w-full max-w-full min-w-0 gap-3 sm:grid-cols-2">
-          {SILENCE_BLOCKS.map((block) => (
-            <label
-              key={block.key}
-              className="flex min-w-0 items-start gap-2 rounded-(--iris-radius-sm) border border-border/60 bg-muted/10 px-3 py-2.5 text-sm"
-            >
-              <input
-                type="checkbox"
-                checked={silenceValues[block.key]}
-                onChange={(event) =>
-                  setSilenceValue(block.key, event.target.checked)
-                }
-                className="mt-0.5 size-4 shrink-0 rounded border-input"
-                aria-label={`Silenciar ${block.label}`}
-              />
-              <span className="min-w-0 space-y-0.5">
-                <span className="block font-medium text-foreground">
-                  {block.label}
+          {SILENCE_BLOCK_KEYS.map((key) => {
+            const block = briefingMsg.blocks[SILENCE_BLOCK_MAP[key]];
+            return (
+              <label
+                key={key}
+                className="flex min-w-0 items-start gap-2 rounded-(--iris-radius-sm) border border-border/60 bg-muted/10 px-3 py-2.5 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={silenceValues[key]}
+                  onChange={(event) =>
+                    setSilenceValue(key, event.target.checked)
+                  }
+                  className="mt-0.5 size-4 shrink-0 rounded border-input"
+                  aria-label={interpolate(briefingMsg.silenceAria, {
+                    label: block.label,
+                  })}
+                />
+                <span className="min-w-0 space-y-0.5">
+                  <span className="block font-medium text-foreground">
+                    {block.label}
+                  </span>
+                  <span className="block text-xs leading-relaxed text-muted-foreground">
+                    {block.description}
+                  </span>
                 </span>
-                <span className="block text-xs leading-relaxed text-muted-foreground">
-                  {block.description}
-                </span>
-              </span>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
       </div>
     </>
@@ -267,10 +267,7 @@ export function PostReplyBriefingEditor({
   if (embedded) {
     return (
       <div className="w-full max-w-full min-w-0 space-y-4">
-        <p className="text-xs text-muted-foreground">
-          Contexto específico desta publicação no harness. Tem precedência sobre
-          o conteúdo global do agente quando definido.
-        </p>
+        <p className="text-xs text-muted-foreground">{briefingMsg.description}</p>
         {formBody}
         {postId ? (
           <Button
@@ -282,7 +279,7 @@ export function PostReplyBriefingEditor({
             {saving ? (
               <Loader2 className="mr-1.5 size-3.5 animate-spin" />
             ) : null}
-            Salvar briefing
+            {briefingMsg.save}
           </Button>
         ) : null}
       </div>
@@ -291,8 +288,8 @@ export function PostReplyBriefingEditor({
 
   return (
     <PostFormSection
-      title="Briefing de reply"
-      description="Contexto específico desta publicação no harness. Tem precedência sobre o conteúdo global do agente quando definido."
+      title={briefingMsg.title}
+      description={briefingMsg.description}
       action={
         postId ? (
           <Button
@@ -304,7 +301,7 @@ export function PostReplyBriefingEditor({
             {saving ? (
               <Loader2 className="mr-1.5 size-3.5 animate-spin" />
             ) : null}
-            Salvar briefing
+            {briefingMsg.save}
           </Button>
         ) : null
       }

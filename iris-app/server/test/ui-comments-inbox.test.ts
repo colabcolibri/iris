@@ -14,15 +14,15 @@ test("comments page includes post-centric sync UI", () => {
 
 test("app sidebar includes comments in main navigation", () => {
   const navigation = readFileSync("../admin/src/components/layout/app-navigation.tsx", "utf8");
-  assert.match(navigation, /Comentários/);
-  assert.match(navigation, /ROUTES\.admin\.comments/);
-  assert.match(navigation, /ROUTES\.admin\.webhooks/);
-  assert.match(navigation, /VIEW_ITEMS\.map/);
+  assert.match(navigation, /shell\.nav\[item\.navKey\]/);
+  assert.match(navigation, /key: "comments"/);
+  assert.match(navigation, /key: "webhooks"/);
+  assert.match(navigation, /MAIN_ROUTE_DEFS\.map/);
 });
 
 test("sidebar navigation exposes main operation links", () => {
   const sidebar = readFileSync("../admin/src/components/layout/app-sidebar.tsx", "utf8");
   assert.match(sidebar, /AppNavigation/);
   const navigation = readFileSync("../admin/src/components/layout/app-navigation.tsx", "utf8");
-  assert.match(navigation, /ROUTES\.admin\.agentRuns/);
+  assert.match(navigation, /navKey: "agentRuns"/);
 });

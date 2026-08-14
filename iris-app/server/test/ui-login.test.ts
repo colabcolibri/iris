@@ -8,7 +8,7 @@ test("login page uses auth api", () => {
   const login = readFileSync(`${ADMIN}/pages/login-page.tsx`, "utf8");
   assert.match(login, /requestLoginCode/);
   assert.match(login, /confirmLoginCode/);
-  assert.match(login, /Reenviar código/);
+  assert.match(login, /shell\.login\.resendCode/);
 });
 
 test("dashboard gates unauthenticated users via api client", () => {

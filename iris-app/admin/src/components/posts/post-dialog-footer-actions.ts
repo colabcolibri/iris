@@ -1,3 +1,5 @@
+import type { PostsMessages } from "@/i18n/domains/posts/types";
+
 export type PostDialogFooterStatus =
   | "draft"
   | "scheduled"
@@ -29,6 +31,8 @@ export type PostDialogFooterAction = {
   disabled?: boolean;
 };
 
+export type PostDialogFooterLabels = PostsMessages["footer"];
+
 export type PostDialogFooterActionsInput = {
   status: PostDialogFooterStatus | null | undefined;
   mode: "create" | "edit";
@@ -39,6 +43,7 @@ export type PostDialogFooterActionsInput = {
   canRetryDraft: boolean;
   canRetrySchedule: boolean;
   canDelete: boolean;
+  labels: PostDialogFooterLabels;
 };
 
 /**
@@ -58,6 +63,7 @@ export function getPostDialogFooterActions(
     canRetryDraft,
     canRetrySchedule,
     canDelete,
+    labels,
   } = input;
 
   const effectiveStatus: PostDialogFooterStatus | "create" =
@@ -65,7 +71,7 @@ export function getPostDialogFooterActions(
 
   const withDelete = (
     actions: PostDialogFooterAction[],
-    label = "Deletar",
+    label = labels.delete,
   ): PostDialogFooterAction[] => {
     if (!canDelete) {
       return actions;
@@ -87,7 +93,7 @@ export function getPostDialogFooterActions(
       if (canPublishNow) {
         actions.push({
           id: "publish_now",
-          label: "Publicar agora",
+          label: labels.publishNow,
           variant: "outline",
           disabled: !metaConnected,
         });
@@ -95,14 +101,14 @@ export function getPostDialogFooterActions(
       if (hasSchedule) {
         actions.push({
           id: "schedule",
-          label: "Agendar publicação",
+          label: labels.schedulePublication,
           variant: "outline",
           disabled: !metaConnected,
         });
       }
       actions.push({
         id: "save_draft",
-        label: "Salvar rascunho",
+        label: labels.saveDraft,
         variant: "default",
       });
       return actions;
@@ -113,7 +119,7 @@ export function getPostDialogFooterActions(
       if (canPublishNow) {
         actions.push({
           id: "publish_now",
-          label: "Publicar agora",
+          label: labels.publishNow,
           variant: "outline",
           disabled: !metaConnected,
         });
@@ -121,14 +127,14 @@ export function getPostDialogFooterActions(
       if (hasSchedule) {
         actions.push({
           id: "schedule",
-          label: "Agendar publicação",
+          label: labels.schedulePublication,
           variant: "outline",
           disabled: !metaConnected,
         });
       }
       actions.push({
         id: "save_draft",
-        label: "Salvar rascunho",
+        label: labels.saveDraft,
         variant: "default",
       });
       return withDelete(actions);
@@ -139,21 +145,21 @@ export function getPostDialogFooterActions(
       if (canRevertToDraft) {
         actions.push({
           id: "revert_to_draft",
-          label: "Desagendar",
+          label: labels.unschedule,
           variant: "ghost",
         });
       }
       if (canPublishNow) {
         actions.push({
           id: "publish_now",
-          label: "Publicar agora",
+          label: labels.publishNow,
           variant: "outline",
           disabled: !metaConnected,
         });
       }
       actions.push({
         id: "save_scheduled",
-        label: "Salvar",
+        label: labels.save,
         variant: "default",
         disabled: !metaConnected,
       });
@@ -165,14 +171,14 @@ export function getPostDialogFooterActions(
       if (canRetryDraft) {
         actions.push({
           id: "retry_draft",
-          label: "Voltar a rascunho",
+          label: labels.backToDraft,
           variant: "ghost",
         });
       }
       if (canRetrySchedule) {
         actions.push({
           id: "retry_schedule",
-          label: "Reagendar",
+          label: labels.reschedule,
           variant: "outline",
           disabled: !metaConnected || !hasSchedule,
         });
@@ -185,11 +191,11 @@ export function getPostDialogFooterActions(
       if (canRevertToDraft) {
         actions.push({
           id: "revert_to_draft",
-          label: "Restaurar rascunho",
+          label: labels.restoreDraft,
           variant: "ghost",
         });
       }
-      return withDelete(actions, "Deletar permanentemente");
+      return withDelete(actions, labels.deletePermanent);
     }
 
     case "published":

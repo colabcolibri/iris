@@ -17,6 +17,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   createStoreConnection,
   deleteStoreConnection,
@@ -43,6 +45,9 @@ function policiesToMap(
 
 export function StoresPage() {
   const { confirm } = useConfirmDialog();
+  const { locale } = useAppLocale();
+  const productsMsg = useDomainMessages("products");
+  const storesMsg = productsMsg.stores;
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("connection_id")?.trim() ?? "";
   const [connections, setConnections] = useState<StoreConnection[]>([]);
@@ -72,12 +77,12 @@ export function StoresPage() {
       setConnections(items);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Falha ao carregar lojas.",
+        getApiErrorMessage(err, locale) || storesMsg.toasts.loadFailed,
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale, storesMsg.toasts.loadFailed]);
 
   useEffect(() => {
     void loadConnections();
@@ -136,7 +141,7 @@ export function StoresPage() {
 
   async function handleDiscover() {
     if (!newUserToken.trim() || !newUserSecretKey.trim()) {
-      toast.error("Informe User Token e User Secret Key.");
+      toast.error(storesMsg.toasts.credentialsRequired);
       return;
     }
 
@@ -157,11 +162,16 @@ export function StoresPage() {
       }
       toast.success(
         result.merchants.length === 0
-          ? "Nenhuma loja encontrada."
-          : `${result.merchants.length} loja(s) encontrada(s).`,
+          ? storesMsg.toasts.noneFound
+          : storesMsg.toasts.merchantsFound.replace(
+              "{count}",
+              String(result.merchants.length),
+            ),
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao buscar lojas.");
+      toast.error(
+        getApiErrorMessage(err, locale) || storesMsg.toasts.searchFailed,
+      );
     } finally {
       setDiscovering(false);
     }
@@ -169,12 +179,12 @@ export function StoresPage() {
 
   async function handleCreate() {
     if (!newLabel.trim() || !newUserToken.trim() || !newUserSecretKey.trim()) {
-      toast.error("Preencha nome e credenciais Yampi.");
+      toast.error(storesMsg.toasts.formIncomplete);
       return;
     }
 
     if (newMerchants.length > 1 && !newAlias.trim()) {
-      toast.error("Selecione o alias da loja retornado pela Yampi.");
+      toast.error(storesMsg.toasts.aliasRequired);
       return;
     }
 
@@ -196,11 +206,16 @@ export function StoresPage() {
       selectConnection(created.id);
       toast.success(
         created.yampi_alias
-          ? `Loja conectada (alias: ${created.yampi_alias}).`
-          : "Loja conectada.",
+          ? storesMsg.toasts.connectedWithAlias.replace(
+              "{alias}",
+              created.yampi_alias,
+            )
+          : storesMsg.toasts.connected,
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao conectar loja.");
+      toast.error(
+        getApiErrorMessage(err, locale) || storesMsg.toasts.connectFailed,
+      );
     } finally {
       setCreating(false);
     }
@@ -222,9 +237,9 @@ export function StoresPage() {
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
       setDraft({ ...updated });
-      toast.success("Conexão salva.");
+      toast.success(storesMsg.toasts.saved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      toast.error(getApiErrorMessage(err, locale) || storesMsg.toasts.saveFailed);
     } finally {
       setBusy(false);
     }
@@ -236,16 +251,16 @@ export function StoresPage() {
     try {
       const result = await testStoreConnection(draft.id);
       if (result.ok) {
-        toast.success(result.message || "Conexão OK.");
+        toast.success(result.message || storesMsg.toasts.testOk);
       } else {
-        toast.error(result.message || "Falha no teste.");
+        toast.error(result.message || storesMsg.toasts.testFailed);
       }
       const items = await fetchStoreConnections();
       setConnections(items);
       const refreshed = items.find((item) => item.id === draft.id);
       if (refreshed) setDraft({ ...refreshed });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao testar.");
+      toast.error(getApiErrorMessage(err, locale) || storesMsg.toasts.testError);
       const items = await fetchStoreConnections();
       setConnections(items);
     } finally {
@@ -258,17 +273,25 @@ export function StoresPage() {
     setBusy(true);
     try {
       const result = await syncStoreConnection(draft.id, importNewOnSync);
+      const errorsSuffix = result.errors.length
+        ? storesMsg.toasts.syncErrorsSuffix.replace(
+            "{count}",
+            String(result.errors.length),
+          )
+        : "";
       toast.success(
-        `Sync: ${result.imported} importados, ${result.updated} atualizados, ${result.skipped} ignorados${
-          result.errors.length ? `, ${result.errors.length} erros` : ""
-        }.`,
+        storesMsg.toasts.syncResult
+          .replace("{imported}", String(result.imported))
+          .replace("{updated}", String(result.updated))
+          .replace("{skipped}", String(result.skipped))
+          .replace("{errors}", errorsSuffix),
       );
       const items = await fetchStoreConnections();
       setConnections(items);
       const refreshed = items.find((item) => item.id === draft.id);
       if (refreshed) setDraft({ ...refreshed });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao sincronizar.");
+      toast.error(getApiErrorMessage(err, locale) || storesMsg.toasts.syncFailed);
       const items = await fetchStoreConnections();
       setConnections(items);
     } finally {
@@ -279,9 +302,12 @@ export function StoresPage() {
   async function handleDelete() {
     if (!draft) return;
     const ok = await confirm({
-      title: "Remover conexão?",
-      description: `A loja "${draft.label}" será desconectada. Vínculos de produtos também serão removidos.`,
-      confirmLabel: "Remover",
+      title: storesMsg.confirm.remove.title,
+      description: storesMsg.confirm.remove.description.replace(
+        "{label}",
+        draft.label,
+      ),
+      confirmLabel: storesMsg.confirm.remove.confirmLabel,
       variant: "destructive",
     });
     if (!ok) return;
@@ -291,9 +317,11 @@ export function StoresPage() {
       await deleteStoreConnection(draft.id);
       setConnections((current) => current.filter((item) => item.id !== draft.id));
       clearStage();
-      toast.success("Conexão removida.");
+      toast.success(storesMsg.toasts.removed);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao remover.");
+      toast.error(
+        getApiErrorMessage(err, locale) || storesMsg.toasts.removeFailed,
+      );
     } finally {
       setBusy(false);
     }
@@ -303,9 +331,9 @@ export function StoresPage() {
 
   const pageHeader = (
     <PageContainer.Header
-      eyebrow="Catálogo"
-      title="Lojas conectadas"
-      description="Conecte sua loja Yampi, sincronize o catálogo e defina políticas globais de campo."
+      eyebrow={storesMsg.page.eyebrow}
+      title={storesMsg.page.title}
+      description={storesMsg.page.description}
     />
   );
 
@@ -319,7 +347,7 @@ export function StoresPage() {
           onClick={() => selectConnection(NEW_STORE_ID)}
         >
           <Plus className="size-4" />
-          Nova conexão
+          {storesMsg.page.newConnection}
         </Button>
       </div>
       <div className="relative w-full min-w-0">
@@ -327,7 +355,7 @@ export function StoresPage() {
         <Input
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Buscar por nome…"
+          placeholder={storesMsg.page.searchPlaceholder}
           className="h-9 pl-10 text-sm focus-visible:ring-primary/40"
         />
       </div>
@@ -335,7 +363,7 @@ export function StoresPage() {
   );
 
   const listBody = loading ? (
-    <OpsEmptyState>Carregando lojas…</OpsEmptyState>
+    <OpsEmptyState>{storesMsg.page.loading}</OpsEmptyState>
   ) : (
     <>
       <StoreInboxNewItem
@@ -343,10 +371,10 @@ export function StoresPage() {
         onSelect={() => selectConnection(NEW_STORE_ID)}
       />
       {filteredConnections.length === 0 ? (
-        <OpsEmptyState title="Nenhuma loja">
+        <OpsEmptyState title={storesMsg.empty.title}>
           {connections.length === 0
-            ? "Conecte sua primeira loja Yampi para importar o catálogo."
-            : "Nenhuma loja corresponde à busca."}
+            ? storesMsg.empty.noStores
+            : storesMsg.empty.noResults}
         </OpsEmptyState>
       ) : (
         <StoreInboxList
@@ -394,12 +422,12 @@ export function StoresPage() {
     ) : selectedId ? (
       <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
         <Loader2 className="mr-2 size-4 animate-spin" />
-        Carregando conexão…
+        {storesMsg.page.loadingConnection}
       </div>
     ) : (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-        <OpsEmptyState title="Selecione uma loja">
-          Escolha uma conexão na lista ou crie uma nova loja Yampi.
+        <OpsEmptyState title={storesMsg.page.selectTitle}>
+          {storesMsg.page.selectBody}
         </OpsEmptyState>
       </div>
     );
@@ -442,7 +470,7 @@ export function StoresPage() {
                       onClick={clearStage}
                     >
                       <ArrowLeft className="size-4" />
-                      Voltar
+                      {storesMsg.page.back}
                     </Button>
                     <Button
                       type="button"
@@ -471,7 +499,7 @@ export function StoresPage() {
         >
           <SheetHeader className="border-b border-border">
             <SheetTitle className="font-display text-lg font-semibold">
-              Lojas
+              {storesMsg.page.sheetTitle}
             </SheetTitle>
           </SheetHeader>
           <div className="shrink-0 border-b p-3">{listControls}</div>

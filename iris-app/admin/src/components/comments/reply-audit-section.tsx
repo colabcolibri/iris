@@ -1,12 +1,16 @@
 import { useCallback, useState } from "react";
 import { BrainCircuit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import { fetchReplyAudit } from "@/lib/api";
 import type { ReplyAudit } from "@/lib/types";
 import { ReplyAuditTimeline } from "@/components/comments/reply-audit-timeline";
 
 export function useReplyAudit(commentId: string) {
+  const { locale } = useAppLocale();
+  const thread = useDomainMessages("comments").thread;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
@@ -36,11 +40,11 @@ export function useReplyAudit(commentId: string) {
         setAudit(data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar audit.");
+      setError(getApiErrorMessage(err, locale) || thread.auditFailed);
     } finally {
       setLoading(false);
     }
-  }, [audit, commentId, empty, open]);
+  }, [audit, commentId, empty, locale, open, thread.auditFailed]);
 
   return { open, loading, audit, empty, error, toggle };
 }
@@ -56,6 +60,8 @@ export function ReplyAuditTrigger({
   className,
   onClick,
 }: ReplyAuditTriggerProps) {
+  const thread = useDomainMessages("comments").thread;
+
   return (
     <button
       type="button"
@@ -64,8 +70,8 @@ export function ReplyAuditTrigger({
         active && "bg-primary/15 text-primary",
         className,
       )}
-      aria-label="Ver decisão do agente"
-      title="Ver decisão do agente"
+      aria-label={thread.viewAudit}
+      title={thread.viewAudit}
       onClick={onClick}
     >
       <BrainCircuit className="size-3.5" />
@@ -90,6 +96,8 @@ export function ReplyAuditPanel({
   error,
   className,
 }: ReplyAuditPanelProps) {
+  const thread = useDomainMessages("comments").thread;
+
   if (!open) {
     return null;
   }
@@ -110,9 +118,7 @@ export function ReplyAuditPanel({
       ) : error ? (
         <p className="text-sm text-destructive">{error}</p>
       ) : empty ? (
-        <p className="text-sm text-muted-foreground">
-          Nenhuma execução do agente para este comentário.
-        </p>
+        <p className="text-sm text-muted-foreground">{thread.auditNoRun}</p>
       ) : audit ? (
         <ReplyAuditTimeline audit={audit} />
       ) : null}

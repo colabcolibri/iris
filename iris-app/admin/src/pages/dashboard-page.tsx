@@ -508,11 +508,10 @@ export function DashboardPage() {
 
   async function purgePost(post: Post) {
     const ok = await confirm({
-      title: "Deletar permanentemente?",
-      description:
-        "A postagem e as mídias saem do banco de dados. Esta ação não pode ser desfeita.",
-      confirmLabel: "Deletar permanentemente",
-      confirmPhrase: "deletar",
+      title: postsMsg.confirm.purgePost.title,
+      description: postsMsg.confirm.purgePost.description,
+      confirmLabel: postsMsg.confirm.purgePost.confirmLabel,
+      confirmPhrase: postsMsg.confirm.purgePost.confirmPhrase,
       variant: "destructive",
     });
     if (!ok) return;

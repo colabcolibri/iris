@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import { AppDialog } from "@/components/templates/app-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { browseMetaMedia, importMonitoredPostsBatch } from "@/lib/api";
 import type { BrowseableMediaItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -22,10 +25,13 @@ type ImportPostsDialogProps = {
   onImported: () => void;
 };
 
-function captionPreview(caption: string | null): string {
+function captionPreview(
+  caption: string | null,
+  noCaption: string,
+): string {
   const text = caption?.trim();
   if (!text) {
-    return "(sem legenda)";
+    return noCaption;
   }
   if (text.length <= 60) {
     return text;
@@ -33,22 +39,26 @@ function captionPreview(caption: string | null): string {
   return `${text.slice(0, 60)}…`;
 }
 
-function formatDate(value: string | null): string {
+function formatDate(
+  value: string | null,
+  locale: string,
+  noDate: string,
+): string {
   if (!value) {
-    return "sem data";
+    return noDate;
   }
-  return new Date(value).toLocaleDateString("pt-BR", {
+  return new Date(value).toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function formatCount(value: number | null): string {
+function formatCount(value: number | null, locale: string): string {
   if (value === null) {
     return "—";
   }
-  return new Intl.NumberFormat("pt-BR").format(value);
+  return new Intl.NumberFormat(locale).format(value);
 }
 
 export function ImportPostsDialog({
@@ -56,6 +66,9 @@ export function ImportPostsDialog({
   onOpenChange,
   onImported,
 }: ImportPostsDialogProps) {
+  const { locale, bcp47 } = useAppLocale();
+  const detail = useDomainMessages("comments").detail;
+  const importMsg = useDomainMessages("comments").importDialog;
   const [items, setItems] = useState<BrowseableMediaItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -95,17 +108,15 @@ export function ImportPostsDialog({
         );
         setNextCursor(page.next_cursor);
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Falha ao listar publicações.";
-        toast.error(message);
+        toast.error(
+          getApiErrorMessage(error, locale) || importMsg.listFailed,
+        );
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     },
-    [],
+    [importMsg.listFailed, locale],
   );
 
   useEffect(() => {
@@ -145,7 +156,7 @@ export function ImportPostsDialog({
 
   const handleImport = async () => {
     if (selectedImportableCount === 0) {
-      toast.error("Selecione ao menos uma publicação para importar.");
+      toast.error(importMsg.selectOne);
       return;
     }
 
@@ -157,26 +168,24 @@ export function ImportPostsDialog({
 
       if (importedCount > 0) {
         toast.success(
-          `${importedCount} publicação${importedCount === 1 ? "" : "ões"} importada${importedCount === 1 ? "" : "s"}.`,
+          importedCount === 1
+            ? interpolate(importMsg.importedOne, { count: importedCount })
+            : interpolate(importMsg.importedOther, { count: importedCount }),
         );
         onImported();
       }
 
       if (skippedCount > 0 && importedCount === 0) {
-        toast.error("Nenhuma publicação nova foi importada.");
+        toast.error(importMsg.noneImported);
       } else if (skippedCount > 0) {
-        toast.message(
-          `${skippedCount} ignorada(s) (já gerenciadas ou inválidas).`,
-        );
+        toast.message(interpolate(importMsg.skipped, { count: skippedCount }));
       }
 
       onOpenChange(false);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Falha ao importar publicações.";
-      toast.error(message);
+      toast.error(
+        getApiErrorMessage(error, locale) || importMsg.importFailed,
+      );
     } finally {
       setImporting(false);
     }
@@ -185,8 +194,8 @@ export function ImportPostsDialog({
   return (
     <AppDialog open={open} onOpenChange={onOpenChange} size="xl" height="full">
       <AppDialog.Header
-        title="Importar da Meta"
-        description="Selecione publicações recentes da conta conectada para monitorar comentários no Iris."
+        title={importMsg.title}
+        description={importMsg.description}
       />
 
       <AppDialog.Body className="px-0 pb-2">
@@ -204,7 +213,9 @@ export function ImportPostsDialog({
               disabled={importableItems.length === 0 || loading}
               onChange={toggleSelectAll}
             />
-            Selecionar todas disponíveis ({importableItems.length})
+            {interpolate(importMsg.selectAll, {
+              count: importableItems.length,
+            })}
           </label>
         </div>
 
@@ -212,11 +223,11 @@ export function ImportPostsDialog({
           {loading && items.length === 0 ? (
             <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Carregando publicações…
+              {importMsg.loadingList}
             </div>
           ) : items.length === 0 ? (
             <p className="px-4 py-16 text-center text-sm text-muted-foreground">
-              Nenhuma publicação encontrada na conta conectada.
+              {importMsg.empty}
             </p>
           ) : (
             <ul className="space-y-1">
@@ -266,24 +277,28 @@ export function ImportPostsDialog({
                         <div className="flex flex-wrap items-center gap-2">
                           {disabled ? (
                             <Badge variant="secondary" className="text-xs">
-                              Já gerenciada
+                              {importMsg.alreadyManaged}
                             </Badge>
                           ) : null}
                           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="size-3" />
-                            {formatDate(item.published_at)}
+                            {formatDate(
+                              item.published_at,
+                              bcp47,
+                              detail.noDate,
+                            )}
                           </span>
                           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <Heart className="size-3" />
-                            {formatCount(item.like_count)}
+                            {formatCount(item.like_count, bcp47)}
                           </span>
                           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <MessageCircle className="size-3" />
-                            {formatCount(item.comments_count)}
+                            {formatCount(item.comments_count, bcp47)}
                           </span>
                         </div>
                         <p className="line-clamp-2 text-sm leading-snug">
-                          {captionPreview(item.caption)}
+                          {captionPreview(item.caption, detail.noCaption)}
                         </p>
                       </div>
                     </button>
@@ -305,7 +320,7 @@ export function ImportPostsDialog({
                 {loadingMore ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 ) : null}
-                Carregar mais 20
+                {importMsg.loadMore}
               </Button>
             </div>
           ) : null}
@@ -318,7 +333,7 @@ export function ImportPostsDialog({
           variant="outline"
           onClick={() => onOpenChange(false)}
         >
-          Cancelar
+          {importMsg.cancel}
         </Button>
         <Button
           type="button"
@@ -326,7 +341,7 @@ export function ImportPostsDialog({
           disabled={importing || selectedImportableCount === 0}
         >
           {importing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          Importar{" "}
+          {importMsg.importSelected}{" "}
           {selectedImportableCount > 0 ? `(${selectedImportableCount})` : ""}
         </Button>
       </AppDialog.Footer>

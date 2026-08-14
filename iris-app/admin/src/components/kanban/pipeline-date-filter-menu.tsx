@@ -24,6 +24,8 @@ import {
   type PipelineDateFilter,
   type PipelineDatePresetId,
 } from "@iris/domain/posts/pipeline-date-filter";
+import { interpolate } from "@/i18n/compose";
+import { useDomainMessages } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 
 type PipelineDateFilterMenuProps = {
@@ -33,29 +35,33 @@ type PipelineDateFilterMenuProps = {
   className?: string;
 };
 
-const PRESETS: { id: PipelineDatePresetId; label: string }[] = [
-  { id: "all", label: "Tudo" },
-  { id: "default", label: "Hoje → +15 dias" },
-  { id: "past-30", label: "Últimos 30 dias" },
-  { id: "past-60", label: "Últimos 60 dias" },
-  { id: "future-30", label: "Hoje → +30 dias" },
-  { id: "future-60", label: "Hoje → +60 dias" },
-  { id: "current-month", label: "Mês atual" },
-  { id: "next-month", label: "Próximo mês" },
-];
-
-function dayLabel(days: number) {
-  if (days === 0) return "Nenhum";
-  if (days === 1) return "1 dia";
-  return `${days} dias`;
-}
-
 export function PipelineDateFilterMenu({
   filter,
   label,
   onChange,
   className,
 }: PipelineDateFilterMenuProps) {
+  const pipeline = useDomainMessages("posts").kanban.pipeline;
+  const presets = useMemo(
+  (): { id: PipelineDatePresetId; label: string }[] => [
+    { id: "all", label: pipeline.presetAll },
+    { id: "default", label: pipeline.presets.default },
+    { id: "past-30", label: pipeline.presets.past30 },
+    { id: "past-60", label: pipeline.presets.past60 },
+    { id: "future-30", label: pipeline.presets.future30 },
+    { id: "future-60", label: pipeline.presets.future60 },
+    { id: "current-month", label: pipeline.presets.currentMonth },
+    { id: "next-month", label: pipeline.presets.nextMonth },
+  ],
+    [pipeline],
+  );
+
+  function dayLabel(days: number) {
+    if (days === 0) return pipeline.none;
+    if (days === 1) return pipeline.dayOne;
+    return interpolate(pipeline.daysCount, { count: days });
+  }
+
   const [open, setOpen] = useState(false);
   const activePreset = useMemo(() => pipelineFilterToPresetId(filter), [filter]);
 
@@ -94,7 +100,7 @@ export function PipelineDateFilterMenu({
               "h-11 max-w-full gap-2 border-border bg-card px-3 font-normal sm:px-4",
               className,
             )}
-            aria-label="Filtrar período editorial"
+            aria-label={pipeline.filterAria}
           />
         }
       >
@@ -112,9 +118,9 @@ export function PipelineDateFilterMenu({
           }}
         >
           <DropdownMenuLabel className="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Período
+            {pipeline.period}
           </DropdownMenuLabel>
-          {PRESETS.map((preset) => (
+          {presets.map((preset) => (
             <DropdownMenuRadioItem
               key={preset.id}
               value={preset.id}
@@ -129,13 +135,13 @@ export function PipelineDateFilterMenu({
 
         <div className="space-y-3 px-1.5 pb-1">
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Personalizar
+            {pipeline.customTitle}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="space-y-1.5">
               <span className="text-xs font-medium text-muted-foreground">
-                Passado
+                {pipeline.past}
               </span>
               <Select
                 value={String(customPast)}
@@ -158,7 +164,7 @@ export function PipelineDateFilterMenu({
 
             <label className="space-y-1.5">
               <span className="text-xs font-medium text-muted-foreground">
-                Futuro
+                {pipeline.future}
               </span>
               <Select
                 value={String(customFuture)}
@@ -181,7 +187,7 @@ export function PipelineDateFilterMenu({
           </div>
 
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Rascunhos sem data planejada permanecem sempre visíveis.
+            {pipeline.customHint}
           </p>
         </div>
       </DropdownMenuContent>

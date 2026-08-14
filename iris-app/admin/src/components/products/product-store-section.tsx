@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   fetchProductFieldPolicies,
   fetchProductStoreLinks,
@@ -19,11 +21,7 @@ import {
   unlinkProductFromStore,
   updateProductFieldPolicies,
 } from "@/lib/api";
-import {
-  FIELD_SOURCE_LABELS,
-  PRODUCT_FIELD_KEYS,
-  PRODUCT_FIELD_LABELS,
-} from "@/lib/product-field-keys";
+import { PRODUCT_FIELD_KEYS } from "@/lib/product-field-keys";
 import type {
   FieldSource,
   ProductFieldKey,
@@ -38,6 +36,16 @@ type ProductStoreSectionProps = {
 };
 
 type FieldOverride = FieldSource | "inherit";
+
+const FIELD_MESSAGE_KEYS = {
+  name: "name",
+  short_description: "shortDescription",
+  long_description: "longDescription",
+  price: "price",
+  url: "url",
+  image_url: "imageUrl",
+  sku: "sku",
+} as const;
 
 function policiesToMap(
   policies: Array<{ field_key: ProductFieldKey; source: FieldSource }>,
@@ -63,11 +71,13 @@ function PreviewRow({
   label,
   value,
   source,
+  sourceLabel,
   differs,
 }: {
   label: string;
   value: string | null;
   source: FieldSource;
+  sourceLabel: string;
   differs?: boolean;
 }) {
   if (!value && source === "disabled") {
@@ -83,9 +93,7 @@ function PreviewRow({
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-semibold text-foreground">{label}</span>
-        <span className="text-xs text-muted-foreground">
-          {FIELD_SOURCE_LABELS[source]}
-        </span>
+        <span className="text-xs text-muted-foreground">{sourceLabel}</span>
       </div>
       <p className="mt-1 break-words text-muted-foreground">
         {value || "—"}
@@ -95,6 +103,12 @@ function PreviewRow({
 }
 
 export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
+  const { locale } = useAppLocale();
+  const productsMsg = useDomainMessages("products");
+  const storeMsg = productsMsg.store;
+  const fieldSources = productsMsg.fieldSources;
+  const fieldLabels = storeMsg.fields;
+
   const [connections, setConnections] = useState<StoreConnection[]>([]);
   const [links, setLinks] = useState<ProductStoreLink[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState("");
@@ -113,6 +127,15 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
   const [globalPolicies, setGlobalPolicies] = useState<
     Partial<Record<ProductFieldKey, FieldSource>>
   >({});
+
+  function fieldLabel(fieldKey: ProductFieldKey): string {
+    const key = FIELD_MESSAGE_KEYS[fieldKey];
+    return fieldLabels[key as keyof typeof fieldLabels] ?? fieldKey;
+  }
+
+  function inheritLabel(source: FieldSource): string {
+    return storeMsg.inheritWithSource.replace("{source}", fieldSources[source]);
+  }
 
   const activeLink = useMemo(
     () => links.find((link) => link.store_connection_id === selectedConnectionId) ?? null,
@@ -133,11 +156,13 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
         storeLinks[0]?.store_connection_id ?? storeConnections[0]?.id ?? "";
       setSelectedConnectionId((current) => current || defaultConnectionId);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao carregar lojas.");
+      toast.error(
+        getApiErrorMessage(err, locale) || productsMsg.toasts.storesLoadFailed,
+      );
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [locale, productId, productsMsg.toasts.storesLoadFailed]);
 
   const loadPolicies = useCallback(async () => {
     if (!selectedConnectionId) {
@@ -169,7 +194,7 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
 
   async function handleLink() {
     if (!selectedConnectionId || !externalProductId.trim()) {
-      toast.error("Informe o ID do produto na Yampi.");
+      toast.error(productsMsg.toasts.externalIdRequired);
       return;
     }
 
@@ -186,10 +211,10 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
         return [...without, link];
       });
       setExternalProductId("");
-      toast.success("Produto vinculado à loja.");
+      toast.success(productsMsg.toasts.linked);
       await loadPolicies();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao vincular.");
+      toast.error(getApiErrorMessage(err, locale) || productsMsg.toasts.linkFailed);
     } finally {
       setBusy(false);
     }
@@ -201,10 +226,10 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
     try {
       await unlinkProductFromStore(productId, activeLink.id);
       setLinks((current) => current.filter((item) => item.id !== activeLink.id));
-      toast.success("Vínculo removido.");
+      toast.success(productsMsg.toasts.unlinked);
       await loadPolicies();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao desvincular.");
+      toast.error(getApiErrorMessage(err, locale) || productsMsg.toasts.unlinkFailed);
     } finally {
       setBusy(false);
     }
@@ -232,10 +257,12 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
         store_connection_id: selectedConnectionId,
         policies,
       });
-      toast.success("Políticas salvas.");
+      toast.success(productsMsg.toasts.policiesSaved);
       await loadPolicies();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar políticas.");
+      toast.error(
+        getApiErrorMessage(err, locale) || productsMsg.toasts.policiesFailed,
+      );
     } finally {
       setBusy(false);
     }
@@ -245,30 +272,26 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
     return (
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
-        Carregando integração com loja…
+        {storeMsg.loadingIntegration}
       </p>
     );
   }
 
   if (connections.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Nenhuma loja conectada. Use a página Lojas para conectar sua Yampi.
-      </p>
+      <p className="text-sm text-muted-foreground">{storeMsg.storePageHint}</p>
     );
   }
 
   return (
     <div className="space-y-5 rounded-lg border border-border/60 p-4">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">Loja virtual</h3>
-        <p className="text-sm text-muted-foreground">
-          Vincule este produto ao catálogo Yampi e escolha a origem de cada campo.
-        </p>
+        <h3 className="text-sm font-semibold text-foreground">{storeMsg.title}</h3>
+        <p className="text-sm text-muted-foreground">{storeMsg.storeDescription}</p>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm font-semibold">Conexão</Label>
+        <Label className="text-sm font-semibold">{storeMsg.connectionLabel}</Label>
         <Select
           value={selectedConnectionId}
           onValueChange={(value) => {
@@ -277,7 +300,7 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
           disabled={busy}
         >
           <SelectTrigger className="h-10 w-full bg-background">
-            <SelectValue placeholder="Selecione a loja" />
+            <SelectValue placeholder={storeMsg.selectStore} />
           </SelectTrigger>
           <SelectContent align="start">
             {connections.map((connection) => (
@@ -292,13 +315,15 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
       {activeLink ? (
         <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
           <p className="text-sm font-semibold text-foreground">
-            {activeLink.snapshot?.name ?? "Produto externo"}
+            {activeLink.snapshot?.name ?? storeMsg.externalFallback}
           </p>
           <p className="font-mono text-xs text-muted-foreground">
-            ID Yampi: {activeLink.external_product_id}
+            {storeMsg.yampiIdLabel} {activeLink.external_product_id}
           </p>
           {activeLink.external_sku ? (
-            <p className="text-xs text-muted-foreground">SKU: {activeLink.external_sku}</p>
+            <p className="text-xs text-muted-foreground">
+              {storeMsg.sku.replace("{sku}", activeLink.external_sku)}
+            </p>
           ) : null}
           <Button
             type="button"
@@ -309,20 +334,20 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
             onClick={() => void handleUnlink()}
           >
             <Unlink className="size-4" />
-            Desvincular
+            {storeMsg.unlink}
           </Button>
         </div>
       ) : (
         <div className="space-y-2">
           <Label htmlFor="external-product-id" className="text-sm font-semibold">
-            ID do produto na Yampi
+            {storeMsg.externalProductLabel}
           </Label>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               id="external-product-id"
               value={externalProductId}
               onChange={(event) => setExternalProductId(event.target.value)}
-              placeholder="Ex.: 12345"
+              placeholder={storeMsg.externalProductPlaceholder}
               className="h-10 font-mono"
               disabled={busy}
             />
@@ -332,12 +357,10 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
               className="shrink-0"
               onClick={() => void handleLink()}
             >
-              Vincular
+              {storeMsg.link}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            O Iris busca os dados na Yampi ao vincular. Você também pode importar via sync na página Lojas.
-          </p>
+          <p className="text-xs text-muted-foreground">{storeMsg.linkExtendedHint}</p>
         </div>
       )}
 
@@ -351,16 +374,14 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
               className="size-4 rounded border-input"
               disabled={busy}
             />
-            Override por produto (em vez do padrão global da loja)
+            {storeMsg.overrideCheckbox}
           </label>
 
           {overrideGlobal ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {PRODUCT_FIELD_KEYS.map((fieldKey) => (
                 <div key={fieldKey} className="space-y-2">
-                  <Label className="text-sm font-semibold">
-                    {PRODUCT_FIELD_LABELS[fieldKey]}
-                  </Label>
+                  <Label className="text-sm font-semibold">{fieldLabel(fieldKey)}</Label>
                   <Select
                     value={fieldOverrides[fieldKey]}
                     onValueChange={(value) => {
@@ -381,15 +402,15 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
                     <SelectTrigger className="h-10 w-full bg-background">
                       <SelectValue>
                         {fieldOverrides[fieldKey] === "inherit"
-                          ? `Padrão (${FIELD_SOURCE_LABELS[globalPolicies[fieldKey] ?? "iris"]})`
-                          : FIELD_SOURCE_LABELS[fieldOverrides[fieldKey] as FieldSource]}
+                          ? inheritLabel(globalPolicies[fieldKey] ?? "iris")
+                          : fieldSources[fieldOverrides[fieldKey] as FieldSource]}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent align="start">
-                      <SelectItem value="inherit">Padrão da loja</SelectItem>
-                      {(Object.keys(FIELD_SOURCE_LABELS) as FieldSource[]).map((source) => (
+                      <SelectItem value="inherit">{storeMsg.inheritDefault}</SelectItem>
+                      {(Object.keys(fieldSources) as FieldSource[]).map((source) => (
                         <SelectItem key={source} value={source}>
-                          {FIELD_SOURCE_LABELS[source]}
+                          {fieldSources[source]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -401,46 +422,54 @@ export function ProductStoreSection({ productId }: ProductStoreSectionProps) {
 
           <Button type="button" size="sm" disabled={busy} onClick={() => void handleSavePolicies()}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Salvar políticas de campo
+            {storeMsg.savePoliciesButton}
           </Button>
 
           {preview ? (
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-foreground">Preview resolvido</h4>
+              <h4 className="text-sm font-semibold text-foreground">
+                {storeMsg.resolvedPreviewTitle}
+              </h4>
               <p className="text-xs text-muted-foreground">
-                Valores que o agente verá após aplicar as políticas.
+                {storeMsg.resolvedPreviewAgentHint}
               </p>
               <div className="space-y-2">
                 <PreviewRow
-                  label="Nome"
+                  label={fieldLabels.name}
                   value={preview.name}
                   source={preview.fieldSources.name}
+                  sourceLabel={fieldSources[preview.fieldSources.name]}
                 />
                 <PreviewRow
-                  label="Descrição curta"
+                  label={fieldLabels.shortDescription}
                   value={preview.shortDescription}
                   source={preview.fieldSources.short_description}
+                  sourceLabel={fieldSources[preview.fieldSources.short_description]}
                 />
                 <PreviewRow
-                  label="Descrição longa"
+                  label={fieldLabels.longDescription}
                   value={preview.longDescription}
                   source={preview.fieldSources.long_description}
+                  sourceLabel={fieldSources[preview.fieldSources.long_description]}
                 />
                 <PreviewRow
-                  label="Preço"
+                  label={fieldLabels.price}
                   value={preview.price}
                   source={preview.fieldSources.price}
+                  sourceLabel={fieldSources[preview.fieldSources.price]}
                   differs={Boolean(preview.price && activeLink.snapshot?.price && preview.price !== activeLink.snapshot.price)}
                 />
                 <PreviewRow
-                  label="URL"
+                  label={fieldLabels.url}
                   value={preview.url}
                   source={preview.fieldSources.url}
+                  sourceLabel={fieldSources[preview.fieldSources.url]}
                 />
                 <PreviewRow
-                  label="SKU"
+                  label={fieldLabels.sku}
                   value={preview.sku}
                   source={preview.fieldSources.sku}
+                  sourceLabel={fieldSources[preview.fieldSources.sku]}
                 />
               </div>
             </div>

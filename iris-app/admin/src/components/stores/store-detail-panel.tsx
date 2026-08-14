@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import type { FieldSource, ProductFieldKey, StoreConnection } from "@/lib/types";
 
 const PROVIDER_LABELS: Record<StoreConnection["provider_type"], string> = {
@@ -41,6 +42,9 @@ export function StoreDetailPanel({
   onSync,
   onDelete,
 }: StoreDetailPanelProps) {
+  const { bcp47 } = useAppLocale();
+  const storesMsg = useDomainMessages("products").stores;
+
   return (
     <PagePanel className="flex min-h-0 flex-1 flex-col border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
       <PagePanel.Header
@@ -50,10 +54,12 @@ export function StoreDetailPanel({
             <Badge variant="secondary">{PROVIDER_LABELS[connection.provider_type]}</Badge>
             {connection.yampi_alias ? (
               <span className="font-mono text-xs text-muted-foreground">
-                alias: {connection.yampi_alias}
+                {storesMsg.detail.alias} {connection.yampi_alias}
               </span>
             ) : null}
-            <span className="text-muted-foreground">Status: {connection.status}</span>
+            <span className="text-muted-foreground">
+              {storesMsg.detail.status} {connection.status}
+            </span>
           </span>
         }
       />
@@ -61,7 +67,7 @@ export function StoreDetailPanel({
         <PageScrollArea contentClassName="space-y-6 p-4 sm:p-6">
           <div className="space-y-2">
             <Label htmlFor="store-edit-label" className="text-sm font-semibold">
-              Nome da conexão
+              {storesMsg.detail.connectionName}
             </Label>
             <Input
               id="store-edit-label"
@@ -73,8 +79,8 @@ export function StoreDetailPanel({
 
           {connection.last_sync_at ? (
             <p className="text-sm text-muted-foreground">
-              Último sync:{" "}
-              {new Date(connection.last_sync_at).toLocaleString("pt-BR", {
+              {storesMsg.detail.lastSync}{" "}
+              {new Date(connection.last_sync_at).toLocaleString(bcp47, {
                 dateStyle: "medium",
                 timeStyle: "short",
               })}
@@ -88,15 +94,17 @@ export function StoreDetailPanel({
           ) : null}
 
           <div className="space-y-3 rounded-lg border border-border/60 p-4">
-            <h3 className="text-sm font-semibold text-foreground">Ações</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {storesMsg.detail.actions}
+            </h3>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" disabled={busy} onClick={onTest}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4" />}
-                Testar conexão
+                {storesMsg.detail.test}
               </Button>
               <Button type="button" variant="outline" disabled={busy} onClick={onSync}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                Sincronizar catálogo
+                {storesMsg.detail.sync}
               </Button>
             </div>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
@@ -106,13 +114,13 @@ export function StoreDetailPanel({
                 onChange={(event) => onImportNewChange(event.target.checked)}
                 className="size-4 rounded border-input"
               />
-              Importar produtos novos da loja (cria cadastro Iris)
+              {storesMsg.detail.importNewOnSync}
             </label>
           </div>
 
           <div className="space-y-3 rounded-lg border border-border/60 p-4">
             <h3 className="text-sm font-semibold text-foreground">
-              Políticas globais de campo
+              {storesMsg.detail.globalPolicies}
             </h3>
             <StoreFieldPoliciesForm
               values={fieldPolicies}
@@ -125,7 +133,7 @@ export function StoreDetailPanel({
         <div className="flex shrink-0 flex-wrap gap-2 border-t border-border/60 p-4 sm:px-6">
           <Button type="button" disabled={busy} onClick={onSave}>
             {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-            Salvar alterações
+            {storesMsg.detail.save}
           </Button>
           <Button
             type="button"
@@ -135,7 +143,7 @@ export function StoreDetailPanel({
             onClick={onDelete}
           >
             <Trash2 className="size-4" aria-hidden />
-            Remover conexão
+            {storesMsg.detail.delete}
           </Button>
         </div>
       </PagePanel.Body>

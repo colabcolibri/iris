@@ -60,10 +60,19 @@ export const messagesPt = {
     syncAria: "Sincronizar conversa",
     settings: "Configurações da conversa",
     settingsAria: "Configurações da conversa",
+    settingsDescription: "Modo de resposta e briefing específicos desta DM.",
+    replyModeInheritHint:
+      "Herda o padrão global quando definido como herdar.",
+    briefingPlaceholder:
+      "Contexto específico desta conversa para a Iris…",
+    pendingBadge: "{count} para responder",
     windowOpen: "Janela aberta",
     windowClosed: "Janela fechada",
-    pendingBadge: "Pendente",
+    pendingBadgeShort: "Pendente",
     cannotReply: "Não é possível responder nesta conversa.",
+    metaUnsupported: "Conta Meta sem suporte a conversas via API.",
+    emptyMessages:
+      "Nenhuma mensagem nesta conversa. Use sincronizar para importar do Instagram.",
     briefing: "Briefing desta conversa",
     briefingHint: "Contexto extra injetado no harness para esta DM.",
     replyMode: "Modo de resposta",

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
+import { useDomainMessages } from "@/i18n/provider";
 import {
   Sheet,
   SheetContent,
@@ -35,21 +36,21 @@ export function ConversationSettingsSheet({
   onReplyPromptChange,
   onSaveBriefing,
 }: ConversationSettingsSheetProps) {
+  const detail = useDomainMessages("messages").detail;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
         <SheetHeader className="border-b border-border px-4 py-4 text-left">
           <SheetTitle className="font-display text-lg font-semibold">
-            Configurações da conversa
+            {detail.settings}
           </SheetTitle>
-          <SheetDescription>
-            Modo de resposta e briefing específicos desta DM.
-          </SheetDescription>
+          <SheetDescription>{detail.settingsDescription}</SheetDescription>
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
           <div className="space-y-2">
-            <Label htmlFor="conversation-reply-mode">Modo de resposta</Label>
+            <Label htmlFor="conversation-reply-mode">{detail.replyMode}</Label>
             <ReplyModeSelect
               id="conversation-reply-mode"
               variant="post"
@@ -58,18 +59,18 @@ export function ConversationSettingsSheet({
               onChange={(value) => onReplyModeChange(value as ConversationReplyMode)}
             />
             <p className="text-xs text-muted-foreground">
-              Herda o padrão global quando definido como herdar.
+              {detail.replyModeInheritHint}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="conversation-reply-prompt">Briefing da conversa</Label>
+            <Label htmlFor="conversation-reply-prompt">{detail.briefing}</Label>
             <Textarea
               id="conversation-reply-prompt"
               value={replyPrompt}
               onChange={(event) => onReplyPromptChange(event.target.value)}
               rows={6}
-              placeholder="Contexto específico desta conversa para a Iris…"
+              placeholder={detail.briefingPlaceholder}
               className="min-h-[8rem] resize-y"
             />
             <Button
@@ -79,7 +80,7 @@ export function ConversationSettingsSheet({
               onClick={onSaveBriefing}
             >
               {savingBriefing ? <Loader2 className="size-4 animate-spin" /> : null}
-              Salvar briefing
+              {detail.saveBriefing}
             </Button>
           </div>
         </div>

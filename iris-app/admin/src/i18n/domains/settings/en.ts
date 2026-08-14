@@ -271,4 +271,15 @@ export const settingsEn = {
       failed: "Failed to refresh insights.",
     },
   },
+  meta: {
+    toasts: {
+      connectionFailed: "Connection failed.",
+      messagingPermission:
+        "No permission to send messages. Reconnect Instagram.",
+      healthOk: "Meta connection OK (including messaging).",
+      testFailed: "Failed to test connection.",
+      disconnected: "Instagram disconnected.",
+      disconnectFailed: "Could not disconnect Instagram.",
+    },
+  },
 } satisfies SettingsMessages;

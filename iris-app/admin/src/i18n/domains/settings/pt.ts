@@ -272,4 +272,15 @@ export const settingsPt = {
       failed: "Falha ao atualizar insights.",
     },
   },
+  meta: {
+    toasts: {
+      connectionFailed: "Falha na conexão.",
+      messagingPermission:
+        "Sem permissão para enviar mensagens. Reconecte o Instagram.",
+      healthOk: "Conexão com a Meta OK (incluindo mensagens).",
+      testFailed: "Falha ao testar conexão.",
+      disconnected: "Instagram desconectado.",
+      disconnectFailed: "Não foi possível desconectar o Instagram.",
+    },
+  },
 };

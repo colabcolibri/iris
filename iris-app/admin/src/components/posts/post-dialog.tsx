@@ -23,6 +23,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppSettings } from "@/contexts/app-settings-context";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   replyStatusPresentation,
   resolveEffectivePostReplyStatus,
@@ -126,6 +129,8 @@ export function PostDialog({
   onRetryDraft,
   onRetrySchedule,
 }: PostDialogProps) {
+  const { locale } = useAppLocale();
+  const postsMsg = useDomainMessages("posts");
   const { replyMode: globalReplyMode } = useAppSettings();
   const routes = useAppRoutes();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -162,7 +167,7 @@ export function PostDialog({
       .catch((err) => {
         if (!cancelled) {
           toast.error(
-            err instanceof Error ? err.message : "Falha ao carregar comentários.",
+            getApiErrorMessage(err, locale) || postsMsg.toasts.commentsLoadFailed,
           );
           setComments([]);
         }
@@ -198,19 +203,19 @@ export function PostDialog({
           draftText ?? undefined,
         );
         replaceComment(updated);
-        toast.success("Resposta publicada na Meta.");
+        toast.success(postsMsg.toasts.replyPublished);
         if (post?.id) {
           await reloadComments(post.id);
         }
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Falha ao aprovar resposta.",
+          getApiErrorMessage(err, locale) || postsMsg.toasts.approveFailed,
         );
       } finally {
         setApprovingId(null);
       }
     },
-    [post?.id, reloadComments, replaceComment],
+    [post?.id, reloadComments, replaceComment, locale, postsMsg],
   );
 
   const handleRemoveDraft = useCallback(
@@ -219,16 +224,16 @@ export function PostDialog({
       try {
         const updated = await removeCommentDraft(commentId);
         replaceComment(updated);
-        toast.success("Rascunho removido.");
+        toast.success(postsMsg.toasts.draftRemoved);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Falha ao remover rascunho.",
+          getApiErrorMessage(err, locale) || postsMsg.toasts.removeDraftFailed,
         );
       } finally {
         setRemovingDraftId(null);
       }
     },
-    [replaceComment],
+    [replaceComment, locale, postsMsg],
   );
 
   const handleSaveDraft = useCallback(
@@ -237,17 +242,17 @@ export function PostDialog({
       try {
         const updated = await updateCommentDraft(commentId, draftText);
         replaceComment(updated);
-        toast.success("Rascunho salvo.");
+        toast.success(postsMsg.toasts.draftSavedComment);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Falha ao salvar rascunho.",
+          getApiErrorMessage(err, locale) || postsMsg.toasts.saveDraftFailed,
         );
         throw err;
       } finally {
         setSavingDraftId(null);
       }
     },
-    [replaceComment],
+    [replaceComment, locale, postsMsg],
   );
 
   const handleGenerateDraft = useCallback(
@@ -256,21 +261,22 @@ export function PostDialog({
       try {
         const updated = await requestCommentAiReply(commentId, "draft");
         replaceComment(updated);
-        toast.success("Rascunho gerado.");
+        toast.success(postsMsg.toasts.draftGenerated);
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Falha ao gerar rascunho.",
+          getApiErrorMessage(err, locale) || postsMsg.toasts.generateDraftFailed,
         );
       } finally {
         setGeneratingId(null);
       }
     },
-    [replaceComment],
+    [replaceComment, locale, postsMsg],
   );
 
   if (!mode) return null;
 
-  const title = mode === "create" ? "Nova postagem" : "Editar postagem";
+  const title =
+    mode === "create" ? postsMsg.dialog.createTitle : postsMsg.dialog.editTitle;
   const status = post?.status;
   const isReadOnly = status === "published" || status === "monitored";
   const isScheduled = status === "scheduled";
@@ -296,6 +302,7 @@ export function PostDialog({
       mode === "edit" &&
       Boolean(post?.id) &&
       !isReadOnly,
+    labels: postsMsg.footer,
   });
   const footerHandlers: Partial<Record<PostDialogFooterActionId, () => void>> =
     {
@@ -316,19 +323,19 @@ export function PostDialog({
 
   const statusHint = (() => {
     if (mode === "create") {
-      return "Preencha legenda, resumo e briefing antes de salvar. Use “Agendar” para entrar no calendário editorial.";
+      return postsMsg.dialog.statusHints.create;
     }
     switch (status) {
       case "draft":
-        return "Rascunho — não aparece no calendário até ser agendado.";
+        return postsMsg.dialog.statusHints.draft;
       case "scheduled":
-        return "Agendado — aparece no calendário e será publicado automaticamente.";
+        return postsMsg.dialog.statusHints.scheduled;
       case "published":
-        return "Publicado — já está no Instagram.";
+        return postsMsg.dialog.statusHints.published;
       case "failed":
-        return "Falhou na publicação — revise mídia, legenda ou conexão Meta.";
+        return postsMsg.dialog.statusHints.failed;
       case "cancelled":
-        return "Cancelado — restaure como rascunho para editar novamente.";
+        return postsMsg.dialog.statusHints.cancelled;
       default:
         return null;
     }
@@ -358,7 +365,9 @@ export function PostDialog({
       <AppDialog.Body>
         {isFailed && post?.error_message ? (
           <p className="mb-4 rounded-(--iris-radius-sm) border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            Causa da falha: {post.error_message}
+            {interpolate(postsMsg.dialog.failureCause, {
+              message: post.error_message,
+            })}
           </p>
         ) : null}
 
@@ -368,11 +377,13 @@ export function PostDialog({
           onValueChange={setOpenSections}
         >
           <AppAccordion.Item value="content">
-            <AppAccordion.Trigger>Conteúdo</AppAccordion.Trigger>
+            <AppAccordion.Trigger>
+              {postsMsg.dialog.sections.content}
+            </AppAccordion.Trigger>
             <AppAccordion.Content className="space-y-8">
               {status === "published" && post?.ig_media_id ? (
                 <p className="text-xs text-muted-foreground">
-                  ID na Meta:{" "}
+                  {postsMsg.dialog.metaId}{" "}
                   <span className="font-mono text-foreground/80">
                     {post.ig_media_id}
                   </span>
@@ -385,7 +396,7 @@ export function PostDialog({
                         rel="noopener noreferrer"
                         className="text-primary underline-offset-4 hover:underline"
                       >
-                        Abrir perfil
+                        {postsMsg.dialog.openProfile}
                       </a>
                     </>
                   ) : null}
@@ -402,13 +413,13 @@ export function PostDialog({
                   className="mb-4 h-auto min-h-8 w-full max-w-full flex-wrap justify-start gap-x-1 overflow-x-auto overflow-y-hidden pb-1.5"
                 >
                   <TabsTrigger value="caption" className="shrink-0">
-                    Legenda
+                    {postsMsg.dialog.tabs.caption}
                   </TabsTrigger>
                   <TabsTrigger value="summary" className="shrink-0">
-                    Resumo
+                    {postsMsg.dialog.tabs.summary}
                   </TabsTrigger>
                   <TabsTrigger value="prompt" className="shrink-0">
-                    Prompt adicional
+                    {postsMsg.dialog.tabs.additionalPrompt}
                   </TabsTrigger>
                 </TabsList>
 
@@ -419,14 +430,14 @@ export function PostDialog({
                     onChange={(e) => onCaptionChange(e.target.value)}
                     rows={8}
                     className="min-h-40 w-full resize-y bg-background"
-                    placeholder="Escreva a legenda da publicação…"
+                    placeholder={postsMsg.dialog.fields.captionPlaceholder}
                     required
                     readOnly={isReadOnly}
                     disabled={isReadOnly}
                   />
                   <div className="space-y-1.5">
                     <Label htmlFor="post-collaborators">
-                      Colaboradores (Instagram)
+                      {postsMsg.dialog.fields.collaborators}
                     </Label>
                     <UsernamePillsField
                       id="post-collaborators"
@@ -439,12 +450,10 @@ export function PostDialog({
                       }
                       max={3}
                       disabled={isReadOnly}
-                      placeholder="username + Enter (até 3)"
+                      placeholder={postsMsg.dialog.fields.collaboratorsPlaceholder}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Até 3 usernames convidados como collab no publish. Eles
-                      precisam aceitar o convite no Instagram. Não é tag na
-                      foto.
+                      {postsMsg.dialog.fields.collaboratorsHint}
                     </p>
                   </div>
                 </TabsContent>
@@ -508,11 +517,16 @@ export function PostDialog({
           <AppAccordion.Item value="replies">
             <AppAccordion.Trigger>
               <span className="flex items-center gap-2">
-                <span>Resposta IA</span>
+                <span>{postsMsg.dialog.sections.aiReply}</span>
                 {showCommentsSection && comments.length > 0 ? (
                   <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
-                    {comments.length} comentário
-                    {comments.length === 1 ? "" : "s"}
+                    {comments.length === 1
+                      ? interpolate(postsMsg.dialog.comments.countOne, {
+                          count: comments.length,
+                        })
+                      : interpolate(postsMsg.dialog.comments.countOther, {
+                          count: comments.length,
+                        })}
                   </span>
                 ) : null}
               </span>
@@ -521,10 +535,10 @@ export function PostDialog({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">
-                    Modo de resposta
+                    {postsMsg.dialog.fields.replyModeTitle}
                   </h3>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Como a Iris deve responder comentários nesta publicação.
+                    {postsMsg.dialog.fields.replyModeHint}
                   </p>
                 </div>
                 <PostReplyStatusBadge
@@ -539,7 +553,7 @@ export function PostDialog({
                   htmlFor="post-reply-mode"
                   className="text-sm font-semibold"
                 >
-                  Respostas da IA neste post
+                  {postsMsg.dialog.fields.postReplies}
                 </Label>
                 <ReplyModeSelect
                   id="post-reply-mode"
@@ -550,13 +564,15 @@ export function PostDialog({
                 />
                 <p className="text-xs text-muted-foreground">
                   {effectiveReplyCopy.hint ??
-                    `Estado efetivo agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
+                    interpolate(postsMsg.dialog.fields.effectiveState, {
+                      label: effectiveReplyCopy.label.toLowerCase(),
+                    })}
                   {" · "}
                   <Link
                     to={routes.persona}
                     className="text-primary underline-offset-4 hover:underline"
                   >
-                    Editar persona
+                    {postsMsg.dialog.fields.editPersona}
                   </Link>
                 </p>
               </div>
@@ -565,22 +581,24 @@ export function PostDialog({
                 <section className="space-y-3 border-t border-border/60 pt-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-foreground">
-                      Comentários
+                      {postsMsg.dialog.comments.title}
                     </p>
                     {post?.id ? (
                       <Link
                         to={`/comments?post_id=${post.id}`}
                         className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
                       >
-                        Abrir no hub
+                        {postsMsg.dialog.comments.openInHub}
                       </Link>
                     ) : null}
                   </div>
                   {loadingComments && comments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Carregando…</p>
+                    <p className="text-sm text-muted-foreground">
+                      {postsMsg.dialog.comments.loading}
+                    </p>
                   ) : threadGroups.length === 0 ? (
                     <p className="rounded-(--iris-radius-sm) border border-dashed border-border/60 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
-                      Nenhum comentário neste post ainda.
+                      {postsMsg.dialog.comments.empty}
                     </p>
                   ) : (
                     <CommentThread
@@ -611,7 +629,9 @@ export function PostDialog({
           </AppAccordion.Item>
 
           <AppAccordion.Item value="schedule">
-            <AppAccordion.Trigger>Agendamento</AppAccordion.Trigger>
+            <AppAccordion.Trigger>
+              {postsMsg.dialog.sections.schedule}
+            </AppAccordion.Trigger>
             <AppAccordion.Content>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
                 <div className="space-y-2 shrink-0">
@@ -619,7 +639,9 @@ export function PostDialog({
                     htmlFor="post-scheduled-at"
                     className="text-sm font-semibold"
                   >
-                    {isScheduled ? "Publicação agendada para" : "Agendar para"}
+                    {isScheduled
+                      ? postsMsg.dialog.fields.scheduledFor
+                      : postsMsg.dialog.fields.scheduledAt}
                   </Label>
                   <div className="flex flex-wrap items-center gap-2">
                     <Input
@@ -641,21 +663,22 @@ export function PostDialog({
                         className="shrink-0 text-muted-foreground"
                         onClick={() => onScheduledAtChange("")}
                       >
-                        Limpar data
+                        {postsMsg.dialog.schedule.clearDate}
                       </Button>
                     ) : null}
                   </div>
                 </div>
                 <div className="flex flex-col gap-0.5 text-right text-sm leading-snug text-muted-foreground sm:max-w-md">
-                  <span>Fuso editorial: {timeZone}</span>
+                  <span>
+                    {interpolate(postsMsg.dialog.schedule.editorialTimezone, {
+                      timezone: timeZone,
+                    })}
+                  </span>
                   {isDraft && scheduledAt ? (
-                    <span>Confirme com “Agendar publicação”.</span>
+                    <span>{postsMsg.dialog.schedule.confirmSchedule}</span>
                   ) : null}
                   {!metaConnected ? (
-                    <span>
-                      Conecte o Instagram em configurações para agendar
-                      publicações.
-                    </span>
+                    <span>{postsMsg.dialog.schedule.connectForSchedule}</span>
                   ) : null}
                 </div>
               </div>

@@ -49,7 +49,10 @@ import {
 } from "@iris/domain/reply-effective-status";
 import { igMediaStatusPresentation } from "@iris/domain/meta/ig-media-status";
 import type { IgMediaStatus } from "@iris/domain/meta/ig-media-status";
+import type { CommentsMessages } from "@/i18n/domains/comments/types";
 import type { PostReplyModeSetting } from "@/lib/types";
+
+type DetailMessages = CommentsMessages["detail"];
 
 type PostDetailPanelProps = {
   post: CommentPostSummary;
@@ -82,63 +85,67 @@ type PostDetailPanelProps = {
   onReplyModeChange: (mode: PostReplyModeSetting) => void;
 };
 
-const STAT_CONFIG: Array<{
+const STAT_ICON_CONFIG: Array<{
   key: string;
-  label: string;
+  metricKey: keyof DetailMessages["metrics"];
   icon: LucideIcon;
   accent: string;
 }> = [
   {
     key: "reach",
-    label: "Alcance",
+    metricKey: "reach",
     icon: Users,
     accent: "bg-primary/10 text-primary",
   },
   {
     key: "views",
-    label: "Visualizações",
+    metricKey: "views",
     icon: Eye,
     accent: "bg-primary/10 text-primary",
   },
   {
     key: "likes",
-    label: "Curtidas",
+    metricKey: "likes",
     icon: Heart,
     accent: "bg-destructive/10 text-destructive",
   },
   {
     key: "saved",
-    label: "Salvos",
+    metricKey: "saved",
     icon: Bookmark,
     accent: "bg-muted text-muted-foreground",
   },
   {
     key: "comments",
-    label: "Comentários",
+    metricKey: "comments",
     icon: MessageCircle,
     accent: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
   },
 ];
 
-function formatPublishedCompact(value: string | null): string {
+function formatPublishedCompact(
+  value: string | null,
+  noDateLabel: string,
+  bcp47: string,
+): string {
   if (!value) {
-    return "sem data";
+    return noDateLabel;
   }
   const parsed = new Date(value);
   const day = String(parsed.getDate()).padStart(2, "0");
   const month = String(parsed.getMonth() + 1).padStart(2, "0");
   const year = String(parsed.getFullYear()).slice(-2);
-  const time = parsed.toLocaleTimeString("pt-BR", {
+  const time = parsed.toLocaleTimeString(bcp47, {
     hour: "2-digit",
     minute: "2-digit",
   });
   return `${day}/${month}/${year} ${time}`;
 }
 
-function postTitle(caption: string | null): string {
+function postTitle(caption: string | null, noCaptionTitle: string): string {
   const text = caption?.trim();
   if (!text) {
-    return "Publicação sem legenda";
+    return noCaptionTitle;
   }
   return text.replace(/\s+/g, " ");
 }
@@ -218,6 +225,7 @@ type DetailTab =
   | "config";
 
 function PerformanceTabContent({
+  detail,
   insightsError,
   hasInsightsData,
   metricRows,
@@ -225,6 +233,7 @@ function PerformanceTabContent({
   igMediaStatus,
   igMediaStatusDetail,
 }: {
+  detail: DetailMessages;
   insightsError: string | null;
   hasInsightsData: boolean;
   metricRows: NonNullable<PostInsightsResult["insights"]>;
@@ -266,18 +275,18 @@ function PerformanceTabContent({
         >
           <p className="font-semibold">
             {hasInsightsData
-              ? "Algumas métricas não estão disponíveis"
-              : "Não foi possível carregar insights"}
+              ? detail.insightsPartial
+              : detail.insightsFailed}
           </p>
           <p className="mt-0.5 text-xs opacity-90">{insightsError}</p>
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {STAT_CONFIG.map((stat) => (
+        {STAT_ICON_CONFIG.map((stat) => (
           <InsightMetricCard
             key={stat.key}
-            label={stat.label}
+            label={detail.metrics[stat.metricKey]}
             icon={stat.icon}
             accent={stat.accent}
             value={insightMetricValue(metricRows, stat.key)}
@@ -290,6 +299,7 @@ function PerformanceTabContent({
 }
 
 function PostMetaToolbar({
+  detail,
   permalink,
   metaConnected,
   syncing,
@@ -297,6 +307,7 @@ function PostMetaToolbar({
   onSync,
   lastSyncedAt,
 }: {
+  detail: DetailMessages;
   permalink: string | null;
   metaConnected: boolean;
   syncing: boolean;
@@ -315,7 +326,7 @@ function PostMetaToolbar({
             className="inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2 text-sm font-semibold hover:bg-muted"
           >
             <ExternalLink className="size-4 shrink-0" />
-            <span className="truncate">Ver no IG</span>
+            <span className="truncate">{detail.viewOnIg}</span>
           </a>
         ) : (
           <Button
@@ -325,7 +336,7 @@ function PostMetaToolbar({
             disabled
           >
             <InstagramIcon className="size-4 shrink-0 opacity-50" />
-            <span className="truncate">Ver no IG</span>
+            <span className="truncate">{detail.viewOnIg}</span>
           </Button>
         )}
         <Button
@@ -334,14 +345,14 @@ function PostMetaToolbar({
           className="h-9 gap-1.5 px-2"
           onClick={onSync}
           disabled={!metaConnected || syncing || reconciling}
-          title="Sincroniza comentários, mídia e métricas com o Instagram"
+          title={detail.syncTitle}
         >
           {syncing ? (
             <Loader2 className="size-4 shrink-0 animate-spin" />
           ) : (
             <RefreshCw className="size-4 shrink-0" />
           )}
-          <span className="truncate">Sincronizar</span>
+          <span className="truncate">{detail.sync}</span>
         </Button>
       </div>
       <LastSyncedLabel syncedAt={lastSyncedAt} />
@@ -379,6 +390,9 @@ export function PostDetailPanel({
   savingReplyMode = false,
   onReplyModeChange,
 }: PostDetailPanelProps) {
+  const { bcp47 } = useAppLocale();
+  const commentsMsg = useDomainMessages("comments");
+  const detail = commentsMsg.detail;
   const { replyMode: globalReplyMode } = useAppSettings();
   const effectiveReply = resolveEffectivePostReplyStatus(
     globalReplyMode,
@@ -401,15 +415,20 @@ export function PostDetailPanel({
     insights?.ig_media_status_detail ?? post.ig_media_status_detail ?? null;
   const insightsError = insights && !insights.ok ? insights.message : null;
   const hasInsightsData = metricRows.length > 0;
-  const publishedLabel = formatPublishedCompact(post.published_at);
+  const publishedLabel = formatPublishedCompact(
+    post.published_at,
+    detail.noDate,
+    bcp47,
+  );
   const captionPreview = post.caption?.trim();
-  const title = postTitle(post.caption);
+  const title = postTitle(post.caption, detail.noCaptionTitle);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
       <div className="flex max-h-[min(48vh,22rem)] min-h-0 w-full shrink-0 flex-col overflow-hidden border-b border-border lg:max-h-none lg:w-[42%] lg:border-b-0 lg:border-r">
         <PageScrollArea>
           <PostMetaToolbar
+            detail={detail}
             permalink={permalink}
             metaConnected={metaConnected}
             syncing={syncing}
@@ -435,23 +454,30 @@ export function PostDetailPanel({
                     variant="outline"
                     className="h-5 shrink-0 px-1.5 text-xs border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-100"
                   >
-                    Externa
+                    {detail.badges.external}
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
                     className="h-5 shrink-0 px-1.5 text-xs border-primary/25 bg-primary/10 text-primary"
                   >
-                    Iris
+                    {detail.badges.iris}
                   </Badge>
                 )}
                 {post.pending_count > 0 ? (
                   <Badge
                     className="h-5 shrink-0 px-1.5 text-xs bg-amber-500 text-white hover:bg-amber-500/90"
-                    title="Comentários aguardando resposta ou aprovação da Iris"
+                    title={detail.pendingCommentsTitle}
                   >
-                    {post.pending_count} pendente
-                    {post.pending_count === 1 ? "" : "s"}
+                    {post.pending_count === 1
+                      ? detail.badges.pendingOne.replace(
+                          "{count}",
+                          String(post.pending_count),
+                        )
+                      : detail.badges.pendingOther.replace(
+                          "{count}",
+                          String(post.pending_count),
+                        )}
                   </Badge>
                 ) : null}
                 {igMediaStatus && igMediaStatus !== "on_feed" ? (
@@ -498,7 +524,7 @@ export function PostDetailPanel({
           <div className="-mx-1 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
             <div
               role="tablist"
-              aria-label="Detalhes da publicação"
+              aria-label={detail.tabsAria}
               className="flex w-max min-w-full flex-nowrap items-center gap-x-4 border-b border-border/50 px-1 pb-2"
             >
             <button
@@ -513,7 +539,7 @@ export function PostDetailPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Desempenho
+              {detail.tabs.performance}
             </button>
             <button
               type="button"
@@ -527,7 +553,7 @@ export function PostDetailPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Comentários
+              {detail.tabs.comments}
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums",
@@ -551,7 +577,7 @@ export function PostDetailPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Legenda
+              {detail.tabs.caption}
             </button>
             <button
               type="button"
@@ -565,7 +591,7 @@ export function PostDetailPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Resumo
+              {detail.tabs.summary}
             </button>
             <button
               type="button"
@@ -579,7 +605,7 @@ export function PostDetailPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Prompt adicional
+              {detail.tabs.briefing}
             </button>
             <button
               type="button"
@@ -593,7 +619,7 @@ export function PostDetailPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Config
+              {detail.tabs.config}
               <PostReplyStatusBadge
                 post={{ reply_mode: replyMode }}
                 globalReplyMode={globalReplyMode}
@@ -608,6 +634,7 @@ export function PostDetailPanel({
         <PageScrollArea contentClassName="p-4 sm:p-5">
           {activeTab === "performance" ? (
             <PerformanceTabContent
+              detail={detail}
               insightsError={insightsError ?? null}
               hasInsightsData={hasInsightsData}
               metricRows={metricRows}
@@ -634,14 +661,14 @@ export function PostDetailPanel({
                   disabled={
                     !metaConnected || reconciling || syncing || loadingComments
                   }
-                  title="Sincroniza com o Instagram, marca removidos e vincula respostas da marca já existentes no thread"
+                  title={detail.reconcileTitle}
                 >
                   {reconciling ? (
                     <Loader2 className="size-4 shrink-0 animate-spin" />
                   ) : (
                     <Link2 className="size-4 shrink-0" />
                   )}
-                  Vincular respostas
+                  {detail.reconcile}
                 </Button>
               </div>
 
@@ -659,10 +686,9 @@ export function PostDetailPanel({
               ) : threadGroups.length === 0 ? (
                 <div className="px-4 py-12 text-center">
                   <MessageCircle className="mx-auto mb-3 size-8 text-muted-foreground/40" />
-                  <p className="font-semibold">Nenhum comentário ainda</p>
+                  <p className="font-semibold">{detail.commentsEmptyTitle}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Novos chegam via webhook. Use sincronizar para buscar
-                    histórico na Meta.
+                    {detail.commentsEmptyBody}
                   </p>
                 </div>
               ) : (
@@ -685,7 +711,7 @@ export function PostDetailPanel({
           ) : activeTab === "caption" ? (
             <div className="min-w-0">
               <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
-                {captionPreview || "(sem legenda)"}
+                {captionPreview || detail.noCaption}
               </p>
             </div>
           ) : activeTab === "summary" ? (
@@ -710,23 +736,26 @@ export function PostDetailPanel({
             <div className="mx-auto flex w-full max-w-lg flex-col gap-5">
               <div className="space-y-1">
                 <h3 className="text-base font-semibold text-foreground">
-                  Resposta da Iris
+                  {detail.config.title}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {post.is_external
-                    ? "Post externo — novos comentários chegam via webhook da Meta."
-                    : "Novos comentários chegam via webhook da Meta."}
+                    ? detail.config.webhookExternal
+                    : detail.config.webhookDefault}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 p-4">
                 <div>
                   <p className="text-sm font-semibold text-foreground">
-                    Estado efetivo
+                    {detail.config.effectiveState}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {effectiveReplyCopy.hint ??
-                      `Agora: ${effectiveReplyCopy.label.toLowerCase()}.`}
+                      detail.config.effectiveNow.replace(
+                        "{label}",
+                        effectiveReplyCopy.label.toLowerCase(),
+                      )}
                   </p>
                 </div>
                 <PostReplyStatusBadge
@@ -741,7 +770,7 @@ export function PostDetailPanel({
                   htmlFor="comments-post-reply-mode"
                   className="text-sm font-semibold"
                 >
-                  Modo nesta publicação
+                  {detail.config.postReplyModeLabel}
                 </Label>
                 <ReplyModeSelect
                   id="comments-post-reply-mode"
@@ -751,9 +780,7 @@ export function PostDetailPanel({
                   disabled={savingReplyMode}
                 />
                 <p className="text-xs leading-snug text-muted-foreground">
-                  &quot;Seguir global&quot; usa o modo em Configurações →
-                  Agente. &quot;Pausar nesta publicação&quot; desliga a Iris só
-                  aqui.
+                  {detail.config.postReplyModeHint}
                 </p>
               </div>
             </div>

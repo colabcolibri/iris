@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { usePostMediaAssets } from "@/hooks/use-post-media-assets";
+import { interpolate } from "@/i18n/compose";
+import { useDomainMessages } from "@/i18n/provider";
 import type { AssetUserTag } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +56,7 @@ export function PostMediaSection({
   onFilesChange,
   onFilesReplace,
 }: PostMediaSectionProps) {
+  const mediaMsg = useDomainMessages("posts").media;
   const { items, loading, busyId, deleteAsset, updateAssetMeta, reorder, move } =
     usePostMediaAssets(postId, refreshKey);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -207,7 +210,7 @@ export function PostMediaSection({
       })}
     >
       <ImagePlus className="size-3.5" />
-      Adicionar mídia
+      {mediaMsg.add}
       <Input
         key={inputKey}
         type="file"
@@ -236,18 +239,16 @@ export function PostMediaSection({
 
   return (
     <PostFormSection
-      title="Mídia"
+      title={mediaMsg.title}
       description={
-        canManage
-          ? "PNG, JPEG ou WebP · barrinha: ordenar, metadados (tags) e remover"
-          : "PNG, JPEG ou WebP · salve o rascunho para editar alt text, tags e ordem"
+        canManage ? mediaMsg.descriptionManage : mediaMsg.descriptionPending
       }
       action={addMediaControl}
     >
       {loading && canManage ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
-          Carregando mídia…
+          {mediaMsg.loading}
         </div>
       ) : gridItems.length === 0 ? (
         <div
@@ -257,10 +258,10 @@ export function PostMediaSection({
           )}
         >
           {readOnly
-            ? "Sem mídia nesta publicação."
+            ? mediaMsg.emptyReadOnly
             : canManage
-              ? "Nenhuma mídia ainda. Use “Adicionar mídia” acima."
-              : "Nenhuma mídia selecionada. Use “Adicionar mídia” e salve o rascunho."}
+              ? mediaMsg.emptyManage
+              : mediaMsg.emptyPending}
         </div>
       ) : (
         <div className="space-y-4">
@@ -329,12 +330,13 @@ export function PostMediaSection({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">
-                    Slide{" "}
-                    {items.findIndex((item) => item.id === selected.id) + 1} —
-                    acessibilidade e tags
+                    {interpolate(mediaMsg.slideMetaTitle, {
+                      index:
+                        items.findIndex((item) => item.id === selected.id) + 1,
+                    })}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Tags aqui ≠ colaboradores da aba Legenda.
+                    {mediaMsg.slideMetaHint}
                   </p>
                 </div>
                 <Button
@@ -344,22 +346,22 @@ export function PostMediaSection({
                   className="shrink-0"
                   onClick={() => setMetaEditorOpen(false)}
                 >
-                  Fechar
+                  {mediaMsg.close}
                 </Button>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="asset-alt-text">Texto alternativo</Label>
+                <Label htmlFor="asset-alt-text">{mediaMsg.altText}</Label>
                 <Textarea
                   id="asset-alt-text"
                   value={altDraft}
                   onChange={(event) => setAltDraft(event.target.value)}
                   rows={2}
-                  placeholder="Descreva o que aparece na imagem…"
+                  placeholder={mediaMsg.altPlaceholder}
                   disabled={readOnly || savingMeta || busyId === selected.id}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Tags na imagem</Label>
+                <Label>{mediaMsg.imageTags}</Label>
                 <AssetUserTagsEditor
                   key={selected.id}
                   previewUrl={selected.previewUrl}
@@ -380,7 +382,7 @@ export function PostMediaSection({
                   {savingMeta ? (
                     <Loader2 className="mr-2 size-4 animate-spin" />
                   ) : null}
-                  Salvar metadados do slide
+                  {mediaMsg.saveSlideMeta}
                 </Button>
               ) : null}
             </div>

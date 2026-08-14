@@ -68,5 +68,11 @@ export type ShellMessages = {
     delete: string;
     loading: string;
     close: string;
+    verifyingSession: string;
+  };
+  agentBadge: {
+    loading: string;
+    label: string;
+    title: string;
   };
 };

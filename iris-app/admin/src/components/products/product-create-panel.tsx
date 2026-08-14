@@ -4,6 +4,7 @@ import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDomainMessages } from "@/i18n/provider";
 
 type ProductCreatePanelProps = {
   slug: string;
@@ -22,11 +23,13 @@ export function ProductCreatePanel({
   onNameChange,
   onSubmit,
 }: ProductCreatePanelProps) {
+  const products = useDomainMessages("products");
+
   return (
     <PagePanel className="flex min-h-0 flex-1 flex-col border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
       <PagePanel.Header
-        title="Novo produto"
-        description="Slug único usado na triagem. Nome e descrições podem ser editados depois."
+        title={products.create.title}
+        description={products.create.description}
       />
       <PagePanel.Body>
         <PageScrollArea contentClassName="p-4 sm:p-6">
@@ -34,7 +37,7 @@ export function ProductCreatePanel({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="product-new-slug" className="text-sm font-semibold">
-                Slug
+                {products.create.slugLabel}
               </Label>
               <Input
                 id="product-new-slug"
@@ -46,7 +49,7 @@ export function ProductCreatePanel({
             </div>
             <div className="space-y-2">
               <Label htmlFor="product-new-name" className="text-sm font-semibold">
-                Nome
+                {products.create.nameLabel}
               </Label>
               <Input
                 id="product-new-name"
@@ -69,7 +72,7 @@ export function ProductCreatePanel({
             ) : (
               <Plus className="size-4" aria-hidden />
             )}
-            Criar produto
+            {products.create.create}
           </Button>
           </div>
         </PageScrollArea>

@@ -17,6 +17,8 @@ import {
   lastInboundMessage,
   messagingWindowLabel,
 } from "@/lib/message-window";
+import { interpolate } from "@/i18n/compose";
+import { useDomainMessages } from "@/i18n/provider";
 import type { ConversationReplyMode, ConversationSummary, Message } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +75,7 @@ export function ConversationDetailPanel({
   onGenerateDraft,
   onManualReply,
 }: ConversationDetailPanelProps) {
+  const detail = useDomainMessages("messages").detail;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const lastInbound = lastInboundMessage(messages);
   const windowOpen = isWithinMessagingWindow(
@@ -109,7 +112,9 @@ export function ConversationDetailPanel({
               </h2>
               {pendingReplyCount > 0 ? (
                 <Badge variant="outline" className="shrink-0 px-1.5 text-xs">
-                  {pendingReplyCount} para responder
+                  {interpolate(detail.pendingBadge, {
+                    count: pendingReplyCount,
+                  })}
                 </Badge>
               ) : null}
             </div>
@@ -132,14 +137,14 @@ export function ConversationDetailPanel({
                 lastInbound?.ig_timestamp ?? lastInbound?.created_at ?? null,
               )}
             >
-              {windowOpen ? "Janela aberta" : "Janela fechada"}
+              {windowOpen ? detail.windowOpen : detail.windowClosed}
             </span>
             <Button
               type="button"
               size="icon"
               variant="ghost"
               className="size-9"
-              aria-label="Configurações da conversa"
+              aria-label={detail.settingsAria}
               onClick={() => setSettingsOpen(true)}
             >
               <Settings2 className="size-4" />
@@ -150,7 +155,7 @@ export function ConversationDetailPanel({
               variant="outline"
               className="size-9"
               disabled={!metaReady || syncing || metaUnsupported}
-              aria-label="Sincronizar conversa"
+              aria-label={detail.syncAria}
               onClick={onSync}
             >
               {syncing ? (
@@ -164,16 +169,14 @@ export function ConversationDetailPanel({
 
         {metaUnsupported ? (
           <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            Conta Meta sem suporte a conversas via API.
+            {detail.metaUnsupported}
           </p>
         ) : null}
       </div>
 
       <PageScrollArea className="min-h-0 flex-1 overflow-x-hidden p-3 sm:p-4">
         {messages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma mensagem nesta conversa. Use sincronizar para importar do Instagram.
-          </p>
+          <p className="text-sm text-muted-foreground">{detail.emptyMessages}</p>
         ) : (
           <MessageThread
             messages={messages}

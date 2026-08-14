@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Bot, BotOff, ClipboardCheck } from "lucide-react";
+import { interpolate } from "@/i18n/compose";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { replyModeOption } from "@/lib/reply-mode-options";
 import type { ReplyMode } from "@/lib/types";
 import { useDemoLocale } from "@/demo/demo-locale-context";
@@ -33,20 +35,22 @@ export function AgentGlobalStatusBadge({
   const routes = useAppRoutes();
   const { isDemoMode } = useDemoMode();
   const { m } = useDemoLocale();
+  const { locale } = useAppLocale();
+  const shell = useDomainMessages("shell");
   const Icon = ICONS[replyMode];
-  const label = isDemoMode
+  const modeLabel = isDemoMode
     ? m.replyModeLabels[replyMode]
-    : replyModeOption(replyMode).label;
+    : replyModeOption(replyMode, locale).label;
   const title = isDemoMode
-    ? m.agentTitle(label)
-    : `Agente global: ${label}. Clique para abrir configurações.`;
+    ? m.agentTitle(modeLabel)
+    : interpolate(shell.agentBadge.title, { mode: modeLabel });
   const badgeText = loading
     ? isDemoMode
       ? m.agentLoading
-      : "Agente…"
+      : shell.agentBadge.loading
     : isDemoMode
-      ? m.agentBadge(label)
-      : `Agente: ${label.toLowerCase()}`;
+      ? m.agentBadge(modeLabel)
+      : interpolate(shell.agentBadge.label, { mode: modeLabel.toLowerCase() });
 
   return (
     <Link

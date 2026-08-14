@@ -26,11 +26,18 @@ import {
   commentTextClassName,
   displayCommentText,
 } from "@/lib/comment-text-display";
+import { interpolate } from "@/i18n/compose";
+import { useDomainMessages } from "@/i18n/provider";
 import {
   ReplyAuditPanel,
   ReplyAuditTrigger,
   useReplyAudit,
 } from "@/components/comments/reply-audit-section";
+
+function formatHandle(username: string | undefined, defaultUser: string): string {
+  const value = username?.trim() || defaultUser;
+  return value.startsWith("@") ? value : `@${value}`;
+}
 
 function shouldShowReplyAudit(comment: Comment): boolean {
   if (comment.draft_text) {
@@ -43,11 +50,6 @@ function shouldShowReplyAudit(comment: Comment): boolean {
 function initials(username: string | undefined): string {
   const value = username?.trim() || "?";
   return value.slice(0, 2).toUpperCase();
-}
-
-function formatHandle(username: string | undefined): string {
-  const value = username?.trim() || "usuário";
-  return value.startsWith("@") ? value : `@${value}`;
 }
 
 function statusVariant(
@@ -72,9 +74,9 @@ function statusBadgeClassName(comment: Comment): string {
   return "";
 }
 
-function previewText(text: string | undefined, max = 140): string {
-  const value = displayCommentText(text);
-  if (value === "(sem texto)") {
+function previewText(text: string | undefined, noText: string, max = 140): string {
+  const value = displayCommentText(text, noText);
+  if (value === noText) {
     return value;
   }
   if (value.length <= max) {
@@ -83,50 +85,60 @@ function previewText(text: string | undefined, max = 140): string {
   return `${value.slice(0, max - 1)}…`;
 }
 
-async function copyToClipboard(value: string, label: string) {
+async function copyToClipboard(
+  value: string,
+  label: string,
+  copiedTemplate: string,
+  copyFailed: string,
+) {
   try {
     await navigator.clipboard.writeText(value);
-    toast.success(`${label} copiado.`);
+    toast.success(interpolate(copiedTemplate, { label }));
   } catch {
-    toast.error("Não foi possível copiar.");
+    toast.error(copyFailed);
   }
 }
 
 function parentHandle(
   comment: Comment,
   byIgId: Map<string, Comment>,
+  defaultUser: string,
 ): string | null {
   const parentId = comment.parent_ig_comment_id;
   if (!parentId) {
     return null;
   }
   const parent = byIgId.get(parentId);
-  return parent?.author_username ? formatHandle(parent.author_username) : null;
+  return parent?.author_username
+    ? formatHandle(parent.author_username, defaultUser)
+    : null;
 }
 
 function replyToHandle(
   replyToIgId: string | null | undefined,
   byIgId: Map<string, Comment>,
   fallbackHandle: string,
+  defaultUser: string,
 ): string {
   if (!replyToIgId) {
     return fallbackHandle;
   }
   const target = byIgId.get(replyToIgId);
   if (target?.author_username) {
-    return formatHandle(target.author_username);
+    return formatHandle(target.author_username, defaultUser);
   }
   return fallbackHandle;
 }
 
 function PinnedPostCommentBadge() {
+  const thread = useDomainMessages("comments").thread;
   return (
     <span
       className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary"
-      title="Comentário fixo no post"
+      title={thread.pinnedTitle}
     >
       <Pin className="size-3 shrink-0" aria-hidden />
-      No post
+      {thread.pinnedBadge}
     </span>
   );
 }
@@ -173,6 +185,7 @@ function CommentDraftPanel({
   onRemoveDraft,
   onSaveDraft,
 }: CommentDraftPanelProps) {
+  const thread = useDomainMessages("comments").thread;
   const [editing, setEditing] = useState(false);
   const [draftValue, setDraftValue] = useState(comment.draft_text ?? "");
 
@@ -199,7 +212,7 @@ function CommentDraftPanel({
     return (
       <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Sugestão da IA
+          {thread.aiSuggestion}
         </p>
         <Textarea
           value={draftValue}
@@ -219,7 +232,7 @@ function CommentDraftPanel({
               setEditing(false);
             }}
           >
-            Cancelar
+            {thread.cancel}
           </Button>
           <Button
             type="button"
@@ -239,7 +252,7 @@ function CommentDraftPanel({
             {savingDraftId === comment.id ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : null}
-            Salvar
+            {thread.save}
           </Button>
         </div>
       </div>
@@ -252,7 +265,7 @@ function CommentDraftPanel({
         Sugestão da IA
       </p>
       <p className="mt-1.5 wrap-break-word text-sm leading-relaxed whitespace-pre-wrap">
-        {displayCommentText(comment.draft_text)}
+        {displayCommentText(comment.draft_text, thread.noText)}
       </p>
       {canAct ? (
         <div className="mt-3 flex flex-row flex-wrap items-center gap-2">
@@ -266,7 +279,7 @@ function CommentDraftPanel({
             {removingDraftId === comment.id ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : null}
-            Deletar
+            {thread.delete}
           </Button>
           <Button
             type="button"
@@ -278,7 +291,7 @@ function CommentDraftPanel({
               setEditing(true);
             }}
           >
-            Editar
+            {thread.edit}
           </Button>
           <Button
             type="button"
@@ -289,7 +302,7 @@ function CommentDraftPanel({
             {approvingId === comment.id ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : null}
-            Publicar
+            {thread.publish}
           </Button>
         </div>
       ) : null}
@@ -318,6 +331,7 @@ function CommentActions({
   generating = false,
   onGenerateDraft,
 }: CommentActionsProps) {
+  const thread = useDomainMessages("comments").thread;
   const showGenerateDraft =
     canRequestManualAiReply(comment, brandUsername) && onGenerateDraft;
 
@@ -333,8 +347,8 @@ function CommentActions({
         <button
           type="button"
           className="shrink-0 rounded-md p-1.5 text-primary/80 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-          aria-label="Gerar rascunho"
-          title="Gerar rascunho com IA"
+          aria-label={thread.generateDraft}
+          title={thread.generateDraftAi}
           disabled={generating}
           onClick={onGenerateDraft}
         >
@@ -351,9 +365,16 @@ function CommentActions({
       <button
         type="button"
         className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-        aria-label="Copiar texto"
-        title="Copiar texto"
-        onClick={() => void copyToClipboard(comment.text ?? "", "Texto")}
+        aria-label={thread.copyTextAria}
+        title={thread.copyTextTitle}
+        onClick={() =>
+          void copyToClipboard(
+            comment.text ?? "",
+            thread.textLabel,
+            thread.copied,
+            thread.copyFailed,
+          )
+        }
       >
         <Copy className="size-3.5" />
       </button>
@@ -411,17 +432,19 @@ function CommentBody({
   isPinnedOnPost = false,
   highlightCommentId = null,
 }: CommentBodyProps) {
-  const handle = formatHandle(comment.author_username);
+  const thread = useDomainMessages("comments").thread;
+  const handle = formatHandle(comment.author_username, thread.defaultUser);
   const isBrandReply = isBrandAuthor(comment.author_username, brandUsername);
   const statusLabel = commentStatusBadgeLabel(comment);
-  const replyTarget = parentHandle(comment, byIgId);
+  const replyTarget = parentHandle(comment, byIgId, thread.defaultUser);
   const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
   const linkedReplyTarget = replyToHandle(
     comment.reply_to_ig_comment_id,
     byIgId,
     handle,
+    thread.defaultUser,
   );
-  const brandHandle = formatHandle(brandUsername ?? "marca");
+  const brandHandle = formatHandle(brandUsername ?? thread.brandDefault, thread.defaultUser);
   const showAudit = shouldShowReplyAudit(comment);
   const auditState = useReplyAudit(comment.id);
   const isDeletedOnInstagram = isCommentDeletedOnInstagram(comment);
@@ -499,7 +522,7 @@ function CommentBody({
               ) : null}
               {replyTarget && showReplyContext ? (
                 <p className="text-xs text-muted-foreground">
-                  Em resposta a{" "}
+                  {thread.inReplyTo}{" "}
                   <span className="font-semibold text-foreground/80">
                     {replyTarget}
                   </span>
@@ -529,7 +552,7 @@ function CommentBody({
                 : "text-foreground",
             )}
           >
-            {displayCommentText(comment.text)}
+            {displayCommentText(comment.text, thread.noText)}
           </p>
 
           {!isDeletedOnInstagram ? (
@@ -560,7 +583,7 @@ function CommentBody({
               <div className="flex gap-2.5">
                 <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
                   <AvatarFallback className="text-xs font-semibold text-primary">
-                    {initials(brandUsername ?? "marca")}
+                    {initials(brandUsername ?? thread.brandDefault)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
@@ -573,10 +596,10 @@ function CommentBody({
                       commentTextClassName,
                     )}
                   >
-                    {displayCommentText(comment.linked_reply_text)}
+                    {displayCommentText(comment.linked_reply_text, thread.noText)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Em resposta a{" "}
+                    {thread.inReplyTo}{" "}
                     <span className="font-semibold text-foreground/80">
                       {linkedReplyTarget}
                     </span>
@@ -620,14 +643,16 @@ function CommentRootExtras({
   onSaveDraft,
   group,
 }: CommentRootExtrasProps) {
-  const handle = formatHandle(comment.author_username);
+  const thread = useDomainMessages("comments").thread;
+  const handle = formatHandle(comment.author_username, thread.defaultUser);
   const showLinkedReply = shouldShowLinkedReply(comment, group, brandUsername);
   const linkedReplyTarget = replyToHandle(
     comment.reply_to_ig_comment_id,
     byIgId,
     handle,
+    thread.defaultUser,
   );
-  const brandHandle = formatHandle(brandUsername ?? "marca");
+  const brandHandle = formatHandle(brandUsername ?? thread.brandDefault, thread.defaultUser);
 
   const hasExtras =
     Boolean(comment.draft_text) ||
@@ -664,7 +689,7 @@ function CommentRootExtras({
           <div className="flex gap-2.5">
             <Avatar className="size-7 shrink-0 border border-primary/35 bg-primary/10">
               <AvatarFallback className="text-xs font-semibold text-primary">
-                {initials(brandUsername ?? "marca")}
+                {initials(brandUsername ?? thread.brandDefault)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
@@ -677,7 +702,7 @@ function CommentRootExtras({
                   commentTextClassName,
                 )}
               >
-                {displayCommentText(comment.linked_reply_text)}
+                {displayCommentText(comment.linked_reply_text, thread.noText)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Em resposta a{" "}
@@ -779,8 +804,9 @@ function ThreadAccordionHeader({
   generatingId: string | null;
   onGenerateDraft: (commentId: string) => void;
 }) {
+  const thread = useDomainMessages("comments").thread;
   const root = group.root;
-  const handle = formatHandle(root.author_username);
+  const handle = formatHandle(root.author_username, thread.defaultUser);
   const statusLabel = commentStatusBadgeLabel(root);
   const replyCount = group.replies.length;
   const needsAttention = threadNeedsAttention(group);
@@ -843,7 +869,7 @@ function ThreadAccordionHeader({
               ) : null}
               {needsAttention && !isDeletedRoot ? (
                 <Badge variant="secondary" className="text-xs">
-                  Atenção
+                  {thread.attention}
                 </Badge>
               ) : null}
             </div>
@@ -856,11 +882,13 @@ function ThreadAccordionHeader({
                   : "text-foreground/90",
               )}
             >
-              {previewText(root.text)}
+              {previewText(root.text, thread.noText)}
             </p>
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
               <MessageCircle className="size-3.5" />
-              {replyCount} resposta{replyCount === 1 ? "" : "s"} na conversa
+              {replyCount === 1
+                ? interpolate(thread.repliesInThreadOne, { count: replyCount })
+                : interpolate(thread.repliesInThreadOther, { count: replyCount })}
             </span>
           </div>
         </AppAccordion.PanelTrigger>
@@ -899,6 +927,7 @@ function ThreadAccordionItem({
   onGenerateDraft,
   highlightCommentId = null,
 }: ThreadAccordionItemProps & { highlightCommentId?: string | null }) {
+  const thread = useDomainMessages("comments").thread;
   const root = group.root;
   const showAudit = shouldShowReplyAudit(root);
   const auditState = useReplyAudit(root.id);
@@ -951,7 +980,7 @@ function ThreadAccordionItem({
 
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Conversa
+            {thread.conversation}
           </p>
           <div className="space-y-3">
             {group.replies.map((reply) => {

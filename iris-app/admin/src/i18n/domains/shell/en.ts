@@ -74,5 +74,11 @@ export const shellEn = {
     delete: "Delete",
     loading: "Loading…",
     close: "Close",
+    verifyingSession: "Verifying session",
+  },
+  agentBadge: {
+    loading: "Agent…",
+    label: "Agent: {mode}",
+    title: "Global agent: {mode}. Click to open settings.",
   },
 } satisfies ShellMessages;

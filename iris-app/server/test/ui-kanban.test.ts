@@ -8,7 +8,7 @@ test("admin includes kanban board", () => {
   const board = readFileSync(`${ADMIN}/components/kanban/kanban-board.tsx`, "utf8");
   assert.match(board, /KanbanBoard/);
   assert.match(board, /onStatusChange/);
-  assert.match(board, /KANBAN_COLUMNS/);
+  assert.match(board, /getKanbanColumns/);
 });
 
 test("kanban card supports status changes", () => {

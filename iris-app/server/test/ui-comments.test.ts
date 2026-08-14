@@ -4,8 +4,8 @@ import { readFileSync } from "node:fs";
 
 test("post dialog includes comments section", () => {
   const dialog = readFileSync("../admin/src/components/posts/post-dialog.tsx", "utf8");
-  assert.match(dialog, /Comentários/);
-  assert.match(dialog, /fetchReplyInspection/);
+  assert.match(dialog, /postsMsg\.dialog\.comments\.title/);
+  assert.match(dialog, /fetchComments/);
   assert.match(dialog, /AppDialog/);
 });
 

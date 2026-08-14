@@ -4,6 +4,7 @@ import {
   countPrimaryFooterActions,
   getPostDialogFooterActions,
 } from "../../admin/src/components/posts/post-dialog-footer-actions.ts";
+import { postsPt } from "../../admin/src/i18n/domains/posts/pt.ts";
 
 const base = {
   metaConnected: true,
@@ -12,6 +13,7 @@ const base = {
   canRetryDraft: true,
   canRetrySchedule: true,
   canDelete: true,
+  labels: postsPt.footer,
 };
 
 test("draft footer: delete + one primary Salvar rascunho", () => {
@@ -74,10 +76,10 @@ test("scheduled footer: delete, Desagendar ghost, Publicar outline, Salvar prima
   assert.deepEqual(
     actions.map((a) => [a.id, a.variant, a.label]),
     [
-      ["delete", "ghost", "Deletar"],
-      ["revert_to_draft", "ghost", "Desagendar"],
-      ["publish_now", "outline", "Publicar agora"],
-      ["save_scheduled", "default", "Salvar"],
+      ["delete", "ghost", postsPt.footer.delete],
+      ["revert_to_draft", "ghost", postsPt.footer.unschedule],
+      ["publish_now", "outline", postsPt.footer.publishNow],
+      ["save_scheduled", "default", postsPt.footer.save],
     ],
   );
   assert.equal(
@@ -124,9 +126,9 @@ test("cancelled shows Restaurar rascunho and permanent delete", () => {
   assert.deepEqual(actions, [
     {
       id: "delete",
-      label: "Deletar permanentemente",
+      label: postsPt.footer.deletePermanent,
       variant: "ghost",
     },
-    { id: "revert_to_draft", label: "Restaurar rascunho", variant: "ghost" },
+    { id: "revert_to_draft", label: postsPt.footer.restoreDraft, variant: "ghost" },
   ]);
 });

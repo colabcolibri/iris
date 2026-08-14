@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { BotOff, ClipboardCheck, Globe2, Zap } from "lucide-react";
+import { getDomainMessages } from "@/i18n/compose";
+import type { AppLocale } from "@/i18n/types";
 import type { PostReplyModeSetting, ReplyMode } from "@/lib/types";
 
 export type ReplyModeOption<T extends string = ReplyMode> = {
@@ -9,72 +11,65 @@ export type ReplyModeOption<T extends string = ReplyMode> = {
   icon: LucideIcon;
 };
 
-export const GLOBAL_REPLY_MODE_OPTIONS: ReplyModeOption<ReplyMode>[] = [
-  {
-    value: "off",
-    label: "Desligado",
-    description:
-      "A Iris não responde comentários em nenhum post que siga o global.",
-    icon: BotOff,
-  },
-  {
-    value: "auto",
-    label: "Automático",
-    description: "A Iris responde e publica no Instagram sem revisão.",
-    icon: Zap,
-  },
-  {
-    value: "draft",
-    label: "Com aprovação",
-    description:
-      "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
-    icon: ClipboardCheck,
-  },
-];
+const GLOBAL_ICONS: Record<ReplyMode, LucideIcon> = {
+  off: BotOff,
+  auto: Zap,
+  draft: ClipboardCheck,
+};
 
-export const POST_REPLY_MODE_OPTIONS: ReplyModeOption<PostReplyModeSetting>[] =
-  [
-    {
-      value: "inherit",
-      label: "Seguir global",
-      description:
-        "Usa o modo definido nas configurações do agente de comentários.",
-      icon: Globe2,
-    },
-    {
-      value: "off",
-      label: "Pausar nesta publicação",
-      description:
-        "A Iris não responde comentários desta publicação (o modo global continua igual).",
-      icon: BotOff,
-    },
-    {
-      value: "auto",
-      label: "Automático",
-      description: "A Iris responde e publica no Instagram sem revisão.",
-      icon: Zap,
-    },
-    {
-      value: "draft",
-      label: "Com aprovação",
-      description:
-        "A Iris sugere a resposta; você revisa e aprova antes de publicar.",
-      icon: ClipboardCheck,
-    },
-  ];
+const POST_ICONS: Record<PostReplyModeSetting, LucideIcon> = {
+  inherit: Globe2,
+  off: BotOff,
+  auto: Zap,
+  draft: ClipboardCheck,
+};
 
-export function replyModeOption(value: ReplyMode): ReplyModeOption<ReplyMode> {
+export function getGlobalReplyModeOptions(
+  locale: AppLocale,
+): ReplyModeOption<ReplyMode>[] {
+  const modes = getDomainMessages("labels", locale).replyModeGlobal;
+  return (["off", "auto", "draft"] as const).map((value) => ({
+    value,
+    label: modes[value].label,
+    description: modes[value].description,
+    icon: GLOBAL_ICONS[value],
+  }));
+}
+
+export function getPostReplyModeOptions(
+  locale: AppLocale,
+): ReplyModeOption<PostReplyModeSetting>[] {
+  const modes = getDomainMessages("labels", locale).replyModePost;
+  return (["inherit", "off", "auto", "draft"] as const).map((value) => ({
+    value,
+    label: modes[value].label,
+    description: modes[value].description,
+    icon: POST_ICONS[value],
+  }));
+}
+
+export function replyModeOption(
+  value: ReplyMode,
+  locale: AppLocale,
+): ReplyModeOption<ReplyMode> {
   return (
-    GLOBAL_REPLY_MODE_OPTIONS.find((option) => option.value === value) ??
-    GLOBAL_REPLY_MODE_OPTIONS[0]
+    getGlobalReplyModeOptions(locale).find((option) => option.value === value) ??
+    getGlobalReplyModeOptions(locale)[0]
   );
 }
 
 export function postReplyModeOption(
   value: PostReplyModeSetting,
+  locale: AppLocale,
 ): ReplyModeOption<PostReplyModeSetting> {
   return (
-    POST_REPLY_MODE_OPTIONS.find((option) => option.value === value) ??
-    POST_REPLY_MODE_OPTIONS[0]
+    getPostReplyModeOptions(locale).find((option) => option.value === value) ??
+    getPostReplyModeOptions(locale)[0]
   );
 }
+
+/** @deprecated Use getGlobalReplyModeOptions(locale) */
+export const GLOBAL_REPLY_MODE_OPTIONS = getGlobalReplyModeOptions("pt");
+
+/** @deprecated Use getPostReplyModeOptions(locale) */
+export const POST_REPLY_MODE_OPTIONS = getPostReplyModeOptions("pt");

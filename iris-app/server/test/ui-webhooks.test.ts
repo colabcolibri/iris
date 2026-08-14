@@ -9,9 +9,9 @@ test("webhooks page uses shadcn table layout, export and fetch helper", () => {
   assert.match(card, /TableHeader/);
   assert.match(card, /TableBody/);
   assert.match(card, /export function WebhookEventsPanel/);
-  assert.match(card, /só assinatura inválida/);
-  assert.match(card, /Exportar JSON/);
-  assert.match(card, /Exportar últimos/);
+  assert.match(card, /webhooks\.filters\.invalidSignatureOnly/);
+  assert.match(card, /webhooks\.filters\.exportJson/);
+  assert.match(card, /webhooks\.filters\.exportLast/);
   assert.match(card, /webhook-field-filter/);
   assert.match(card, /webhook_type/);
 

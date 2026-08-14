@@ -5,6 +5,8 @@ import {
 } from "@/components/calendar/calendar-post-row";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
+import { interpolate } from "@/i18n/compose";
+import { useDomainMessages } from "@/i18n/provider";
 import {
   addMonths,
   formatMonthLabel,
@@ -34,6 +36,7 @@ export function CalendarListView({
   onSelect,
   onCreatePost,
 }: CalendarListViewProps) {
+  const listMsg = useDomainMessages("posts").kanban.calendarList;
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const days = groupPostsByCalendarDay(posts, timeZone);
@@ -43,7 +46,7 @@ export function CalendarListView({
       <header className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            Lista editorial
+            {listMsg.eyebrow}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -52,7 +55,7 @@ export function CalendarListView({
               size="icon"
               className="rounded-full"
               onClick={() => onCursorChange(addMonths(cursor, -1))}
-              aria-label="Mês anterior"
+              aria-label={listMsg.prevMonthAria}
             >
               <ChevronLeft className="size-4" />
             </Button>
@@ -65,7 +68,7 @@ export function CalendarListView({
               size="icon"
               className="rounded-full"
               onClick={() => onCursorChange(addMonths(cursor, 1))}
-              aria-label="Próximo mês"
+              aria-label={listMsg.nextMonthAria}
             >
               <ChevronRight className="size-4" />
             </Button>
@@ -79,7 +82,7 @@ export function CalendarListView({
           className="h-11 sm:px-6"
         >
           <Plus className="mr-2 size-4" />
-          Nova postagem
+          {listMsg.newPost}
         </Button>
       </header>
 
@@ -92,8 +95,9 @@ export function CalendarListView({
               <h3 className="mb-2 text-sm font-semibold tracking-wide text-foreground">
                 {formatCalendarDayHeading(day.sortIso, timeZone)}
                 <span className="ml-2 text-xs font-normal text-muted-foreground">
-                  {day.posts.length}{" "}
-                  {day.posts.length === 1 ? "postagem" : "postagens"}
+                  {day.posts.length === 1
+                    ? interpolate(listMsg.postOne, { count: day.posts.length })
+                    : interpolate(listMsg.postOther, { count: day.posts.length })}
                 </span>
               </h3>
               <div className="flex flex-col gap-2">

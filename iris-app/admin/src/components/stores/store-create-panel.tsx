@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDomainMessages } from "@/i18n/provider";
 import type { YampiMerchantOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -45,33 +46,34 @@ export function StoreCreatePanel({
   onDiscover,
   onSubmit,
 }: StoreCreatePanelProps) {
+  const createMsg = useDomainMessages("products").stores.create;
   const canDiscover = Boolean(userToken.trim() && userSecretKey.trim());
   const showMerchantSelect = merchants.length > 0;
 
   return (
     <PagePanel className="flex min-h-0 flex-1 flex-col border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
       <PagePanel.Header
-        title="Conectar loja Yampi"
-        description="Informe token e secret, busque as lojas da conta e selecione o alias retornado pela Yampi."
+        title={createMsg.sheetTitle}
+        description={createMsg.description}
       />
       <PagePanel.Body>
         <PageScrollArea contentClassName="space-y-5 p-4 sm:p-6">
           <div className="space-y-2">
             <Label htmlFor="store-label" className="text-sm font-semibold">
-              Nome da conexão
+              {createMsg.connectionName}
             </Label>
             <Input
               id="store-label"
               value={label}
               onChange={(event) => onLabelChange(event.target.value)}
-              placeholder="Ex.: Loja principal"
+              placeholder={createMsg.connectionPlaceholder}
               className="h-11"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="store-user-token" className="text-sm font-semibold">
-              User Token
+              {createMsg.userToken}
             </Label>
             <Input
               id="store-user-token"
@@ -85,7 +87,7 @@ export function StoreCreatePanel({
 
           <div className="space-y-2">
             <Label htmlFor="store-user-secret" className="text-sm font-semibold">
-              User Secret Key
+              {createMsg.userSecretKey}
             </Label>
             <Input
               id="store-user-secret"
@@ -105,17 +107,17 @@ export function StoreCreatePanel({
             onClick={onDiscover}
           >
             {discovering ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-            Buscar lojas da conta
+            {createMsg.discover}
           </Button>
 
           {showMerchantSelect ? (
             <div className="space-y-2">
               <Label htmlFor="store-alias" className="text-sm font-semibold">
-                Alias Yampi
+                {createMsg.aliasLabel}
               </Label>
               <Select value={alias} onValueChange={(value) => value && onAliasChange(value)}>
                 <SelectTrigger id="store-alias" className="h-11 w-full bg-background">
-                  <SelectValue placeholder="Selecione a loja" />
+                  <SelectValue placeholder={createMsg.aliasPlaceholder} />
                 </SelectTrigger>
                 <SelectContent align="start">
                   {merchants.map((merchant) => (
@@ -125,20 +127,18 @@ export function StoreCreatePanel({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                O alias vem do `auth/me` da Yampi e é usado em `api.dooki.com.br/v2/{alias}/…`.
-              </p>
+              <p className="text-xs text-muted-foreground">{createMsg.aliasHint}</p>
             </div>
           ) : (
             <div className="space-y-2">
               <Label htmlFor="store-alias-manual" className="text-sm font-semibold">
-                Alias Yampi (opcional)
+                {createMsg.aliasManualLabel}
               </Label>
               <Input
                 id="store-alias-manual"
                 value={alias}
                 onChange={(event) => onAliasChange(event.target.value)}
-                placeholder="Preencha após buscar ou informe manualmente"
+                placeholder={createMsg.aliasManualPlaceholder}
                 className="h-11 font-mono"
               />
             </div>
@@ -148,7 +148,7 @@ export function StoreCreatePanel({
         <div className="flex shrink-0 flex-wrap gap-2 border-t border-border/60 p-4 sm:px-6">
           <Button type="button" disabled={creating} onClick={onSubmit}>
             {creating ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Plus className="size-4" />}
-            Conectar loja
+            {createMsg.submit}
           </Button>
         </div>
       </PagePanel.Body>
@@ -163,6 +163,8 @@ export function StoreInboxNewItem({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const createMsg = useDomainMessages("products").stores.create;
+
   return (
     <button
       type="button"
@@ -176,8 +178,8 @@ export function StoreInboxNewItem({
         <Plus className="size-5" aria-hidden />
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-foreground">Nova conexão Yampi</p>
-        <p className="text-xs text-muted-foreground">Adicionar loja virtual</p>
+        <p className="text-sm font-semibold text-foreground">{createMsg.inboxTitle}</p>
+        <p className="text-xs text-muted-foreground">{createMsg.inboxSubtitle}</p>
       </div>
     </button>
   );
