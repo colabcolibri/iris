@@ -56,12 +56,6 @@ function messageBodyText(message: Message): string | null {
 }
 
 function shouldShowMessageDraft(message: Message): boolean {
-  if (message.linked_reply_text?.trim()) {
-    return false;
-  }
-  if (message.status === "replied") {
-    return false;
-  }
   return Boolean(message.draft_text?.trim());
 }
 
@@ -329,7 +323,10 @@ function MessageSideActions({
 }) {
   const thread = useDomainMessages("messages").thread;
   const showDraftActions =
-    message.status === "pending" && !message.draft_text;
+    message.direction === "inbound" &&
+    canReply &&
+    !message.draft_text &&
+    message.status !== "skipped";
   const showReplyButton = message.direction === "inbound" && canReply;
   const pinSideActionsVisible = showAudit && Boolean(message.draft_text?.trim());
 
