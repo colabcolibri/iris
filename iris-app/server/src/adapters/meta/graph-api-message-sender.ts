@@ -7,6 +7,7 @@ import {
 
 export type GraphApiMessageSenderConfig = {
   resolveIgUserId: () => string | null;
+  resolvePageId?: () => string | null;
   graphApiVersion?: string;
   fetchImpl?: typeof fetch;
 };
@@ -60,12 +61,23 @@ export function createGraphApiMessageSender(
   const fetchFn = deps.config.fetchImpl ?? fetch;
   const version = deps.config.graphApiVersion ?? "v21.0";
   const base = `https://graph.instagram.com/${version}`;
+  const facebookBase = `https://graph.facebook.com/${version}`;
 
   async function takeThreadControl(
     recipientIgUserId: string,
     token: string,
   ): Promise<void> {
-    const url = new URL(`${base}/me/take_thread_control`);
+    const pageId = deps.config.resolvePageId?.();
+    if (!pageId) {
+      console.warn(
+        `[meta] skipping take_thread_control for recipient ${recipientIgUserId}: no pageId configured`,
+      );
+      return;
+    }
+
+    // take_thread_control is a Handover Protocol (Messenger Platform) operation:
+    // it lives under graph.facebook.com/{page-id}, not graph.instagram.com/me.
+    const url = new URL(`${facebookBase}/${pageId}/take_thread_control`);
     try {
       const response = await fetchFn(url.toString(), {
         method: "POST",

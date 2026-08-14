@@ -74,6 +74,7 @@ test("graph api message sender takes thread control before send", async () => {
     },
     config: {
       resolveIgUserId: () => "ig-page-1",
+      resolvePageId: () => "page-1",
       fetchImpl: async (url) => {
         calls.push(String(url));
         return new Response(JSON.stringify({ message_id: "mid-sent-1" }), {
@@ -84,7 +85,13 @@ test("graph api message sender takes thread control before send", async () => {
   });
 
   await sender.sendText("user-42", "olá!");
-  assert.ok(calls.some((url) => url.includes("/me/take_thread_control")));
+  assert.ok(
+    calls.some(
+      (url) =>
+        url.includes("graph.facebook.com") &&
+        url.includes("/page-1/take_thread_control"),
+    ),
+  );
   assert.ok(calls.some((url) => url.includes("/me/messages")));
 });
 
@@ -99,6 +106,7 @@ test("graph api message sender retries after thread owner error", async () => {
     },
     config: {
       resolveIgUserId: () => "ig-page-1",
+      resolvePageId: () => "page-1",
       fetchImpl: async (url) => {
         calls.push(String(url));
         if (String(url).includes("take_thread_control")) {
