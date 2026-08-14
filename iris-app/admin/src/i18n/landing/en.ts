@@ -50,7 +50,7 @@ export const landingEn: LandingMessages = {
       {
         title: "You (or your AI agent) plan the content",
         description:
-          "Write the caption and upload the images right in the dashboard, or ask your AI assistant (Cursor, Claude, or ChatGPT) to prepare the post for you — both paths land on the same calendar.",
+          "Write the caption and upload the images right in the dashboard, or ask your AI assistant (Claude or ChatGPT) to prepare the post for you — both paths land on the same calendar.",
       },
       {
         title: "You review before it goes live",
@@ -79,7 +79,7 @@ export const landingEn: LandingMessages = {
       {
         title: "Your AI agent creates and schedules posts",
         description:
-          'If you already use an AI assistant like Cursor, Claude, or ChatGPT, it can talk directly to Iris — create posts, send images, and check the calendar without you opening the dashboard. (The technical name for this connection is "MCP", in case you\'ve heard the term.)',
+          'If you already use an AI assistant like Claude or ChatGPT, it can talk directly to Iris — create posts, send images, and check the calendar without you opening the dashboard. (The technical name for this connection is "MCP", in case you\'ve heard the term.)',
         highlight: true,
       },
       {
@@ -148,7 +148,7 @@ export const landingEn: LandingMessages = {
       {
         title: "Implementation",
         description:
-          "I set up the technical side: the connection to Instagram, your brand's tone of voice, and, if you'd like, the link to the AI agent you already use (Cursor, Claude, or ChatGPT). And I show you how to use the dashboard day to day, so you get the most out of it.",
+          "I set up the technical side: the connection to Instagram, your brand's tone of voice, and, if you'd like, the link to the AI assistant you already use (Claude or ChatGPT). And I show you how to use the dashboard day to day, so you get the most out of it.",
       },
       {
         title: "Maintenance",
@@ -178,7 +178,7 @@ export const landingEn: LandingMessages = {
       {
         question: "Do I need to know how to code or use AI to have Iris?",
         answer:
-          "No. You can use just the dashboard — write captions, upload photos, and follow comments like normal. Connecting AI agents (Cursor, Claude, ChatGPT) is an extra feature, for people who already use those tools and want to create posts straight from there.",
+          "No. You can use just the dashboard — write captions, upload photos, and follow comments like normal. Connecting AI assistants (Claude, ChatGPT) is an extra feature, for people who already use those tools and want to create posts straight from there.",
       },
       {
         question: "What exactly can my AI agent do in Iris?",

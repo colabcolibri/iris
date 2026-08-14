@@ -50,7 +50,7 @@ export const landingPt: LandingMessages = {
       {
         title: "Você (ou seu agente de IA) planeja o conteúdo",
         description:
-          "Escreva a legenda e suba as imagens direto no painel, ou peça para o seu assistente de IA (Cursor, Claude ou ChatGPT) preparar o post por você — os dois caminhos chegam no mesmo calendário.",
+          "Escreva a legenda e suba as imagens direto no painel, ou peça para o seu assistente de IA (Claude ou ChatGPT) preparar o post por você — os dois caminhos chegam no mesmo calendário.",
       },
       {
         title: "Você revisa antes de ir ao ar",
@@ -79,7 +79,7 @@ export const landingPt: LandingMessages = {
       {
         title: "Seu agente de IA cria e agenda posts",
         description:
-          'Se você já usa um assistente de IA como Cursor, Claude ou ChatGPT, ele pode falar diretamente com a Íris — criar posts, enviar imagens e consultar o calendário sem que você precise abrir o painel. (O nome técnico dessa conexão é "MCP", caso você já tenha ouvido falar.)',
+          'Se você já usa um assistente de IA como Claude ou ChatGPT, ele pode falar diretamente com a Íris — criar posts, enviar imagens e consultar o calendário sem que você precise abrir o painel. (O nome técnico dessa conexão é "MCP", caso você já tenha ouvido falar.)',
         highlight: true,
       },
       {
@@ -149,7 +149,7 @@ export const landingPt: LandingMessages = {
       {
         title: "Implementação",
         description:
-          "Eu configuro a parte técnica: a conexão com o Instagram, o jeito de falar da sua marca e, se você quiser, a ligação com o agente de IA que já usa (Cursor, Claude ou ChatGPT). E te mostro como usar o painel no dia a dia, para você tirar o melhor proveito.",
+          "Eu configuro a parte técnica: a conexão com o Instagram, o jeito de falar da sua marca e, se você quiser, a ligação com o assistente de IA que já usa (Claude ou ChatGPT). E te mostro como usar o painel no dia a dia, para você tirar o melhor proveito.",
       },
       {
         title: "Manutenção",
@@ -179,7 +179,7 @@ export const landingPt: LandingMessages = {
       {
         question: "Preciso saber programar ou usar IA para ter a Íris?",
         answer:
-          "Não. Você pode usar só o painel — escrever legendas, subir fotos e acompanhar comentários normalmente. A conexão com agentes de IA (Cursor, Claude, ChatGPT) é um recurso a mais, para quem já usa essas ferramentas e quer criar posts direto de lá.",
+          "Não. Você pode usar só o painel — escrever legendas, subir fotos e acompanhar comentários normalmente. A conexão com assistentes de IA (Claude, ChatGPT) é um recurso a mais, para quem já usa essas ferramentas e quer criar posts direto de lá.",
       },
       {
         question: "O que exatamente meu agente de IA consegue fazer na Íris?",
