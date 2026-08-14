@@ -29,6 +29,7 @@ type MessageRow = {
   status: string;
   error_message: string | null;
   agent_reply_not_before: string | null;
+  reply_to_ig_message_id: string | null;
   created_at: string;
 };
 
@@ -40,6 +41,7 @@ type MessageReplyRow = {
   status: string;
   agent_run_id: string | null;
   source_ig_message_id: string | null;
+  reply_to_ig_message_id: string | null;
   created_at: string;
 };
 
@@ -101,6 +103,7 @@ export function mapMessageRow(row: MessageRow): Message {
     status: row.status as Message["status"],
     errorMessage: row.error_message,
     agentReplyNotBefore: row.agent_reply_not_before,
+    replyToIgMessageId: row.reply_to_ig_message_id ?? null,
     createdAt: row.created_at,
   };
 }
@@ -114,6 +117,7 @@ export function mapMessageReplyRow(row: MessageReplyRow): MessageReply {
     status: row.status as MessageReply["status"],
     agentRunId: row.agent_run_id,
     sourceIgMessageId: row.source_ig_message_id,
+    replyToIgMessageId: row.reply_to_ig_message_id ?? null,
     createdAt: row.created_at,
   };
 }

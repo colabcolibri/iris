@@ -113,8 +113,16 @@ export function createGraphApiMessageSender(
     recipientIgUserId: string,
     text: string,
     token: string,
+    replyToMid?: string | null,
   ): Promise<{ publishedIgMessageId: string | null }> {
     const url = new URL(`${base}/me/messages`);
+    const payload: Record<string, unknown> = {
+      recipient: { id: recipientIgUserId },
+      message: { text },
+    };
+    if (replyToMid) {
+      payload.reply_to = { mid: replyToMid };
+    }
 
     const response = await fetchFn(url.toString(), {
       method: "POST",
@@ -122,10 +130,7 @@ export function createGraphApiMessageSender(
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        recipient: { id: recipientIgUserId },
-        message: { text },
-      }),
+      body: JSON.stringify(payload),
     });
 
     const json = (await response.json()) as GraphSendResponse;
@@ -138,21 +143,23 @@ export function createGraphApiMessageSender(
   }
 
   return {
-    async sendText(recipientIgUserId, text) {
+    async sendText(recipientIgUserId, text, options = {}) {
       const token = deps.metaTokenStore.getActiveToken();
       if (!token) {
         throw new Error("Meta access token not configured");
       }
 
+      const replyToMid = options.replyToMid ?? null;
+
       try {
-        return await postMessage(recipientIgUserId, text, token);
+        return await postMessage(recipientIgUserId, text, token, replyToMid);
       } catch (error) {
         if (
           error instanceof MetaMessageSendError &&
           error.code === "thread_owner" &&
           (await takeThreadControl(recipientIgUserId))
         ) {
-          return await postMessage(recipientIgUserId, text, token);
+          return await postMessage(recipientIgUserId, text, token, replyToMid);
         }
         throw error;
       }

@@ -23,6 +23,7 @@ export type UpsertOutboundMessageInput = {
   status?: MessageStatus;
   attachmentUrl?: string | null;
   attachmentMediaType?: Message["attachmentMediaType"];
+  replyToIgMessageId?: string | null;
 };
 
 export type PurgeMessageHistoryResult = {
@@ -54,6 +55,7 @@ export type CreateMessageReplyInput = {
   status: MessageReply["status"];
   agentRunId?: string | null;
   sourceIgMessageId?: string | null;
+  replyToIgMessageId?: string | null;
 };
 
 export type UpsertMessageDraftInput = {

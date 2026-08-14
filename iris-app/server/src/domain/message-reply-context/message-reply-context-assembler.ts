@@ -7,6 +7,7 @@ import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
 import { resolveActiveProductCatalog } from "../products/resolve-active-product-catalog.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { MessageReplyContext, MessageThreadEntry } from "./types.ts";
+import type { Message } from "../messages/message.ts";
 
 export type MessageReplyContextAssemblerDeps = {
   conversations: ConversationRepository;
@@ -17,6 +18,86 @@ export type MessageReplyContextAssemblerDeps = {
   personaStore: ReplyPersonaStore;
   resolveBrandUsername?: () => string | null;
 };
+
+function mapThreadEntry(
+  entry: Message,
+  conversationParticipantUsername: string | null,
+  brandUsername: string | null,
+): MessageThreadEntry {
+  return {
+    direction: entry.direction,
+    text: entry.text ?? "",
+    authorUsername:
+      entry.direction === "inbound"
+        ? conversationParticipantUsername
+        : brandUsername,
+  };
+}
+
+function lastInboundMessage(messages: Message[]): Message | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const row = messages[index];
+    if (row?.direction === "inbound") {
+      return row;
+    }
+  }
+  return null;
+}
+
+export async function assembleConversationReplyContext(
+  conversationId: string,
+  deps: MessageReplyContextAssemblerDeps,
+  options: { focusMessageId?: string | null } = {},
+): Promise<MessageReplyContext | null> {
+  const conversation = deps.conversations.findById(conversationId);
+  if (!conversation) {
+    return null;
+  }
+
+  const persona = deps.personaStore.get() ?? defaultReplyPersona();
+  const threadMessages = deps.messages.listByConversationId(conversation.id);
+  const brandUsername = deps.resolveBrandUsername?.() ?? null;
+
+  const focusMessage = options.focusMessageId
+    ? threadMessages.find((item) => item.id === options.focusMessageId) ?? null
+    : null;
+
+  const focusIndex = focusMessage
+    ? threadMessages.findIndex((item) => item.id === focusMessage.id)
+    : -1;
+
+  const scopedMessages =
+    focusIndex >= 0 ? threadMessages.slice(0, focusIndex + 1) : threadMessages;
+
+  const entries = scopedMessages.map((entry) =>
+    mapThreadEntry(entry, conversation.participantUsername, brandUsername),
+  );
+
+  const target = focusMessage ?? lastInboundMessage(threadMessages);
+
+  return {
+    persona,
+    conversation: {
+      participantUsername: conversation.participantUsername,
+      replyPrompt: conversation.replyPrompt,
+    },
+    thread: { entries },
+    products: resolveActiveProductCatalog(
+      {
+        products: deps.products,
+        productStoreLinks: deps.productStoreLinks,
+        productFieldPolicies: deps.productFieldPolicies,
+      },
+      true,
+    ),
+    brandUsername,
+    targetMessage: {
+      text: target?.text ?? null,
+      authorUsername:
+        target?.direction === "inbound" ? conversation.participantUsername : brandUsername,
+    },
+  };
+}
 
 export async function assembleMessageReplyContext(
   messageId: string,
@@ -34,14 +115,10 @@ export async function assembleMessageReplyContext(
 
   const persona = deps.personaStore.get() ?? defaultReplyPersona();
   const threadMessages = deps.messages.listByConversationId(conversation.id);
-  const entries: MessageThreadEntry[] = threadMessages.map((entry) => ({
-    direction: entry.direction,
-    text: entry.text ?? "",
-    authorUsername:
-      entry.direction === "inbound"
-        ? conversation.participantUsername
-        : deps.resolveBrandUsername?.() ?? null,
-  }));
+  const brandUsername = deps.resolveBrandUsername?.() ?? null;
+  const entries = threadMessages.map((entry) =>
+    mapThreadEntry(entry, conversation.participantUsername, brandUsername),
+  );
 
   return {
     persona,
@@ -58,7 +135,7 @@ export async function assembleMessageReplyContext(
       },
       true,
     ),
-    brandUsername: deps.resolveBrandUsername?.() ?? null,
+    brandUsername,
     targetMessage: {
       text: message.text,
       authorUsername: conversation.participantUsername,

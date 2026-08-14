@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { ParticipantAvatar } from "@/components/messages/participant-avatar";
 import { ConversationSettingsSheet } from "@/components/messages/conversation-settings-sheet";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import {
+  ConversationComposer,
+  type ConversationComposerMode,
+} from "@/components/messages/conversation-composer";
+import { quotedMessagePreview } from "@/lib/message-quote";
 import { MessageThread } from "@/components/messages/message-thread";
 import {
   formatParticipantHandle,
@@ -47,7 +52,11 @@ type ConversationDetailPanelProps = {
   onRemoveDraft: (messageId: string) => void;
   onSaveDraft: (messageId: string, draftText: string) => void | Promise<void>;
   onGenerateDraft: (messageId: string) => void;
-  onManualReply: (messageId: string, text: string) => void | Promise<void>;
+  onConversationReply: (
+    text: string,
+    replyToMessageId?: string | null,
+  ) => void | Promise<void>;
+  sendingConversationReply?: boolean;
 };
 
 export function ConversationDetailPanel({
@@ -75,10 +84,14 @@ export function ConversationDetailPanel({
   onRemoveDraft,
   onSaveDraft,
   onGenerateDraft,
-  onManualReply,
+  onConversationReply,
+  sendingConversationReply = false,
 }: ConversationDetailPanelProps) {
   const detail = useDomainMessages("messages").detail;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [composerMode, setComposerMode] = useState<ConversationComposerMode>({
+    kind: "free",
+  });
   const threadViewportRef = useRef<HTMLDivElement>(null);
   const lastInbound = lastInboundMessage(messages);
   const windowOpen = isWithinMessagingWindow(
@@ -96,6 +109,10 @@ export function ConversationDetailPanel({
   const participantHandle = formatParticipantHandle(participant.username);
   const pendingReplyCount = countPendingInboundMessages(messages);
   const replyEnabled = canReply && !metaUnsupported;
+
+  useEffect(() => {
+    setComposerMode({ kind: "free" });
+  }, [conversation.id]);
 
   useEffect(() => {
     const viewport = threadViewportRef.current;
@@ -225,10 +242,28 @@ export function ConversationDetailPanel({
             onRemoveDraft={onRemoveDraft}
             onSaveDraft={onSaveDraft}
             onGenerateDraft={onGenerateDraft}
-            onManualReply={onManualReply}
+            onReplyToMessage={(message) => setComposerMode({ kind: "quote", message })}
           />
         )}
       </PageScrollArea>
+
+      <ConversationComposer
+        canReply={replyEnabled && windowOpen}
+        sending={sendingConversationReply}
+        mode={composerMode}
+        onModeChange={setComposerMode}
+        quotePreview={
+          composerMode.kind === "quote"
+            ? quotedMessagePreview(
+                composerMode.message,
+                participant.username,
+                participant.displayName,
+                brandUsername,
+              )
+            : null
+        }
+        onSend={onConversationReply}
+      />
 
       <ConversationSettingsSheet
         open={settingsOpen}

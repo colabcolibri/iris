@@ -549,6 +549,37 @@ async function handleMutation(
     return noopMutation(message ?? { ok: true });
   }
 
+  const conversationReplyMatch = matchPath(pathname, "/api/conversations/:id/reply");
+  if (conversationReplyMatch && method === "POST") {
+    const conversationId = conversationReplyMatch[0]!;
+    const replyToId =
+      typeof body.reply_to_message_id === "string" ? body.reply_to_message_id : null;
+    const quoted = replyToId ? findDemoMessage(replyToId) : null;
+    const outbound = {
+      id: `demo-out-${Date.now()}`,
+      ig_message_id: `demo-mid-out-${Date.now()}`,
+      conversation_id: conversationId,
+      direction: "outbound" as const,
+      text: String(body.message ?? ""),
+      ig_timestamp: new Date().toISOString(),
+      status: "replied" as const,
+      error_message: null,
+      agent_reply_not_before: null,
+      created_at: new Date().toISOString(),
+      reply_to_ig_message_id: quoted?.ig_message_id ?? null,
+    };
+    state.messages[conversationId] = [
+      ...(state.messages[conversationId] ?? []),
+      outbound,
+    ];
+    const conversation = state.conversations.find((item) => item.id === conversationId);
+    if (conversation) {
+      conversation.last_message_at = outbound.ig_timestamp;
+      conversation.updated_at = outbound.created_at;
+    }
+    return noopMutation(outbound);
+  }
+
   const messageReplyMatch = matchPath(pathname, "/api/messages/:id/reply");
   if (messageReplyMatch && method === "POST") {
     const message = findDemoMessage(messageReplyMatch[0]!);

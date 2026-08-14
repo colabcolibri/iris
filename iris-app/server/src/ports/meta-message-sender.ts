@@ -1,5 +1,13 @@
+export type MetaSendTextOptions = {
+  replyToMid?: string | null;
+};
+
 export type MetaMessageSender = {
-  sendText(recipientIgUserId: string, text: string): Promise<{ publishedIgMessageId: string | null }>;
+  sendText(
+    recipientIgUserId: string,
+    text: string,
+    options?: MetaSendTextOptions,
+  ): Promise<{ publishedIgMessageId: string | null }>;
 };
 
 export class MetaMessageSendError extends Error {

@@ -341,6 +341,7 @@ export type Message = {
   draft_status?: string | null;
   linked_reply_text?: string | null;
   linked_reply_ig_message_id?: string | null;
+  reply_to_ig_message_id?: string | null;
 };
 
 export type MessageActivityKind = "pending_approval" | "recent";

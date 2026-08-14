@@ -17,6 +17,8 @@ import { hydrateConversationParticipantIfNeeded } from "../../../domain/messages
 import { reconcileConversationPendingStatuses } from "../../../domain/messages/reconcile-conversation-pending-statuses.ts";
 import { markConversationReadUpTo } from "../../../domain/messages/mark-conversation-read.ts";
 import { purgeMessageHistory } from "../../../domain/messages/purge-message-history.ts";
+import { sendConversationReply } from "../../../domain/messages/send-conversation-reply.ts";
+import { MAX_MESSAGE_REPLY_LENGTH } from "../messages/shared.ts";
 import { routeParam } from "../../route-resources.ts";
 import type { RouteMatch } from "../../route-types.ts";
 
@@ -68,6 +70,72 @@ export const conversationsDetailRouter = createRouter([
     notifyMessagesChanged({});
     sendJson(match.res, 200, purged);
   }),
+
+  route(
+    "POST",
+    /^\/api\/conversations\/([^/]+)\/reply$/,
+    { admin: true, metaReady: true },
+    async (match) => {
+      const conversationId = routeParam(match, "conversationId");
+      const conversation = requireConversation(match, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const readiness = getMetaReadiness(match.ctx);
+      if (!readiness.ready) {
+        sendMetaReadinessError(match.res, readiness);
+        return;
+      }
+
+      const body = await readJsonBody<{
+        message?: unknown;
+        reply_to_message_id?: unknown;
+      }>(match.req);
+      const text = typeof body.message === "string" ? body.message.trim() : "";
+      if (!text) {
+        throw new ValidationError("message is required");
+      }
+      if (text.length > MAX_MESSAGE_REPLY_LENGTH) {
+        throw new ValidationError(
+          `message must be at most ${MAX_MESSAGE_REPLY_LENGTH} characters`,
+        );
+      }
+
+      const replyToMessageId =
+        typeof body.reply_to_message_id === "string" && body.reply_to_message_id.trim()
+          ? body.reply_to_message_id.trim()
+          : null;
+
+      try {
+        const outbound = await sendConversationReply(
+          {
+            conversationId: conversation.id,
+            text,
+            replyToMessageId,
+          },
+          {
+            conversations: match.ctx.conversations,
+            messages: match.ctx.messages,
+            metaMessageSender: match.ctx.metaMessageSender,
+            metaConversationsReader: match.ctx.metaConversationsReader,
+            ownerIgUserId: match.ctx.metaConnectionStore.get()?.igUserId ?? null,
+            ownerUsername: match.ctx.metaConnectionStore.get()?.igUsername ?? null,
+          },
+        );
+
+        notifyMessagesChanged({ conversation_id: conversation.id });
+        sendJson(match.res, 200, serializeMessageWithDraft(outbound, match.ctx));
+      } catch (error) {
+        console.error(
+          `[messages] conversation reply failed for ${conversation.id}:`,
+          error instanceof Error ? error.message : error,
+        );
+        throw error;
+      }
+    },
+    { paramNames: ["conversationId"], errorOptions: { upstream502: true } },
+  ),
 
   route(
     "GET",

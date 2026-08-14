@@ -13,6 +13,7 @@ export function serializeMessage(message: Message) {
     status: message.status,
     error_message: message.errorMessage,
     agent_reply_not_before: message.agentReplyNotBefore,
+    reply_to_ig_message_id: message.replyToIgMessageId,
     created_at: message.createdAt,
   };
 }

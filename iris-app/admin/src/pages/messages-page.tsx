@@ -39,7 +39,7 @@ import {
   fetchConversationMessages,
   fetchConversations,
   removeMessageDraft,
-  replyToMessage,
+  replyToConversation,
   requestMessageAiReply,
   subscribeRealtimeEvents,
   syncConversationMessages,
@@ -99,7 +99,6 @@ export function MessagesPage() {
   const [listSheetOpen, setListSheetOpen] = useState(false);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [messagesConversationId, setMessagesConversationId] = useState("");
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [refreshingConversations, setRefreshingConversations] = useState(false);
@@ -116,6 +115,7 @@ export function MessagesPage() {
   const [removingDraftId, setRemovingDraftId] = useState<string | null>(null);
   const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [sendingConversationReply, setSendingConversationReply] = useState(false);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedConversation = useMemo(
@@ -180,7 +180,6 @@ export function MessagesPage() {
         setMessages((current) =>
           messagesHaveChanged(current, payload.messages) ? payload.messages : current,
         );
-        setMessagesConversationId(conversationId);
         setReplyMode(conversation.reply_mode ?? "inherit");
         setReplyPrompt(conversation.reply_prompt ?? "");
         setConversations((current) =>
@@ -213,7 +212,6 @@ export function MessagesPage() {
   useEffect(() => {
     if (!selectedConversationId) {
       setMessages([]);
-      setMessagesConversationId("");
       return;
     }
     void loadMessages(selectedConversationId);
@@ -469,17 +467,24 @@ export function MessagesPage() {
     }
   }
 
-  async function handleManualReply(messageId: string, text: string) {
+  async function handleConversationReply(text: string, replyToMessageId?: string | null) {
+    if (!selectedConversationId) {
+      return;
+    }
+    setSendingConversationReply(true);
     try {
-      const updated = await replyToMessage(messageId, text);
-      replaceMessage(updated);
+      const outbound = await replyToConversation(
+        selectedConversationId,
+        text,
+        replyToMessageId,
+      );
+      setMessages((current) => [...current, outbound]);
+      await loadConversations({ silent: true });
       toast.success(messagesMsg.toasts.messageSent);
-      if (selectedConversationId) {
-        await loadMessages(selectedConversationId, { silent: true });
-        await loadConversations({ silent: true });
-      }
     } catch (err) {
       toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.sendFailed);
+    } finally {
+      setSendingConversationReply(false);
     }
   }
 
@@ -716,7 +721,8 @@ export function MessagesPage() {
                       onRemoveDraft={(id) => void handleRemoveDraft(id)}
                       onSaveDraft={handleSaveDraft}
                       onGenerateDraft={(id) => void handleGenerateDraft(id)}
-                      onManualReply={handleManualReply}
+                      onConversationReply={handleConversationReply}
+                      sendingConversationReply={sendingConversationReply}
                     />
                   )
                 ) : (

@@ -49,8 +49,8 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     INSERT INTO messages (
       id, ig_message_id, conversation_id, direction, text, attachment_url,
       attachment_media_type, ig_timestamp, status, error_message,
-      agent_reply_not_before, created_at
-    ) VALUES (?, ?, ?, 'outbound', ?, ?, ?, ?, ?, NULL, NULL, ?)
+      agent_reply_not_before, reply_to_ig_message_id, created_at
+    ) VALUES (?, ?, ?, 'outbound', ?, ?, ?, ?, ?, NULL, NULL, ?, ?)
   `);
 
   const markRepliedStmt = db.prepare(`
@@ -237,6 +237,7 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
         input.attachmentMediaType ?? null,
         igTimestamp ?? createdAt,
         input.status ?? "replied",
+        input.replyToIgMessageId ?? null,
         createdAt,
       );
       const row = selectById.get(id);
@@ -326,8 +327,9 @@ export function createSqliteMessageReplyRepository(
 
   const insertReply = db.prepare(`
     INSERT INTO message_replies (
-      id, message_id, draft_text, sent_text, status, agent_run_id, source_ig_message_id, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      id, message_id, draft_text, sent_text, status, agent_run_id, source_ig_message_id,
+      reply_to_ig_message_id, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertDraft = db.prepare(`
@@ -492,6 +494,7 @@ export function createSqliteMessageReplyRepository(
         input.status,
         input.agentRunId ?? null,
         input.sourceIgMessageId ?? null,
+        input.replyToIgMessageId ?? null,
         createdAt,
       );
       return {
@@ -502,6 +505,7 @@ export function createSqliteMessageReplyRepository(
         status: input.status,
         agentRunId: input.agentRunId ?? null,
         sourceIgMessageId: input.sourceIgMessageId ?? null,
+        replyToIgMessageId: input.replyToIgMessageId ?? null,
         createdAt,
       };
     },

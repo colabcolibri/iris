@@ -14,5 +14,7 @@ export function serializeMessageWithDraft(message: Message, ctx: AppContext) {
     draft_status: draft?.status ?? null,
     linked_reply_text: sent?.sentText ?? null,
     linked_reply_ig_message_id: sent?.sourceIgMessageId ?? null,
+    reply_to_ig_message_id:
+      message.replyToIgMessageId ?? sent?.replyToIgMessageId ?? null,
   };
 }

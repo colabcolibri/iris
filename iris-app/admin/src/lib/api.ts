@@ -671,6 +671,20 @@ export function updateMessageDraft(messageId: string, message: string) {
   });
 }
 
+export function replyToConversation(
+  conversationId: string,
+  message: string,
+  replyToMessageId?: string | null,
+) {
+  return apiFetch<Message>(`/api/conversations/${conversationId}/reply`, {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      reply_to_message_id: replyToMessageId ?? null,
+    }),
+  });
+}
+
 export function replyToMessage(messageId: string, message: string) {
   return apiFetch<Message>(`/api/messages/${messageId}/reply`, {
     method: "POST",

@@ -16,6 +16,7 @@ export type Message = {
   status: MessageStatus;
   errorMessage: string | null;
   agentReplyNotBefore: string | null;
+  replyToIgMessageId: string | null;
   createdAt: string;
 };
 
@@ -29,5 +30,6 @@ export type MessageReply = {
   status: MessageReplyStatus;
   agentRunId: string | null;
   sourceIgMessageId: string | null;
+  replyToIgMessageId: string | null;
   createdAt: string;
 };

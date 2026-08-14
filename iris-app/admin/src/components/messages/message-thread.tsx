@@ -18,6 +18,7 @@ import {
   resolveParticipantForDisplay,
 } from "@/lib/participant-display";
 import { formatMessageDateTime } from "@/lib/message-time";
+import { quotedMessagePreview, resolveQuotedMessageByIgId } from "@/lib/message-quote";
 import { cn } from "@/lib/utils";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import type { Message } from "@/lib/types";
@@ -37,7 +38,7 @@ type MessageThreadProps = {
   onRemoveDraft: (messageId: string) => void;
   onSaveDraft: (messageId: string, draftText: string) => void | Promise<void>;
   onGenerateDraft: (messageId: string) => void;
-  onManualReply: (messageId: string, text: string) => void | Promise<void>;
+  onReplyToMessage: (message: Message) => void;
 };
 
 const iconActionClass =
@@ -81,14 +82,17 @@ function MessageBubble({
   authorLabel,
   authorHandle,
   showPendingBadge,
+  quotedPreview,
 }: {
   message: Message;
   outbound: boolean;
   authorLabel: string;
   authorHandle: string;
   showPendingBadge: boolean;
+  quotedPreview?: string | null;
 }) {
   const { locale } = useAppLocale();
+  const thread = useDomainMessages("messages").thread;
   const bodyText = messageBodyText(message);
   const sentAt = formatMessageDateTime(message, locale);
 
@@ -119,6 +123,13 @@ function MessageBubble({
           {sentAt}
         </time>
       </div>
+
+      {quotedPreview ? (
+        <p className="mb-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-2 text-xs break-words text-muted-foreground">
+          <span className="font-semibold text-foreground/80">{thread.inReplyTo}</span>{" "}
+          {quotedPreview}
+        </p>
+      ) : null}
 
       {bodyText ? (
         <p className="leading-relaxed break-words whitespace-pre-wrap">{bodyText}</p>
@@ -299,30 +310,30 @@ function MessageSideActions({
   message,
   canReply,
   generatingId,
-  manualOpen,
   showAudit,
   auditActive,
   onAuditToggle,
-  onOpenManual,
+  onReplyToMessage,
   onGenerateDraft,
   auditTriggerLabel,
 }: {
   message: Message;
   canReply: boolean;
   generatingId: string | null;
-  manualOpen: boolean;
   showAudit: boolean;
   auditActive: boolean;
   onAuditToggle: () => void;
-  onOpenManual: () => void;
+  onReplyToMessage: (message: Message) => void;
   onGenerateDraft: MessageThreadProps["onGenerateDraft"];
   auditTriggerLabel: string;
 }) {
-  const showReplyActions =
-    message.status === "pending" && !message.draft_text && !manualOpen;
+  const thread = useDomainMessages("messages").thread;
+  const showDraftActions =
+    message.status === "pending" && !message.draft_text;
+  const showReplyButton = message.direction === "inbound" && canReply;
   const pinSideActionsVisible = showAudit && Boolean(message.draft_text?.trim());
 
-  if (!showReplyActions && !showAudit) {
+  if (!showDraftActions && !showReplyButton && !showAudit) {
     return null;
   }
 
@@ -335,33 +346,33 @@ function MessageSideActions({
           : "opacity-100 sm:opacity-0 sm:transition-opacity group-hover/message:opacity-100 group-focus-within/message:opacity-100",
       )}
     >
-      {showReplyActions ? (
-        <>
-          <button
-            type="button"
-            className={cn(iconActionClass, "text-primary/80 hover:bg-primary/10 hover:text-primary")}
-            aria-label="Gerar rascunho com IA"
-            title="Gerar rascunho"
-            disabled={!canReply || generatingId === message.id}
-            onClick={() => onGenerateDraft(message.id)}
-          >
-            {generatingId === message.id ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="size-3.5" />
-            )}
-          </button>
-          <button
-            type="button"
-            className={iconActionClass}
-            aria-label="Responder manualmente"
-            title="Responder"
-            disabled={!canReply}
-            onClick={onOpenManual}
-          >
-            <Send className="size-3.5" />
-          </button>
-        </>
+      {showDraftActions ? (
+        <button
+          type="button"
+          className={cn(iconActionClass, "text-primary/80 hover:bg-primary/10 hover:text-primary")}
+          aria-label={thread.generateDraftAi}
+          title={thread.generateDraft}
+          disabled={!canReply || generatingId === message.id}
+          onClick={() => onGenerateDraft(message.id)}
+        >
+          {generatingId === message.id ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="size-3.5" />
+          )}
+        </button>
+      ) : null}
+      {showReplyButton ? (
+        <button
+          type="button"
+          className={iconActionClass}
+          aria-label={thread.reply}
+          title={thread.reply}
+          disabled={!canReply}
+          onClick={() => onReplyToMessage(message)}
+        >
+          <Send className="size-3.5" />
+        </button>
       ) : null}
       {showAudit ? (
         <ReplyAuditTrigger
@@ -389,14 +400,11 @@ function InboundMessageContent({
   removingDraftId,
   savingDraftId,
   generatingId,
-  manualOpen,
-  onOpenManual,
-  onCloseManual,
   onApproveDraft,
   onRemoveDraft,
   onSaveDraft,
   onGenerateDraft,
-  onManualReply,
+  onReplyToMessage,
   children,
 }: {
   message: Message;
@@ -405,14 +413,11 @@ function InboundMessageContent({
   removingDraftId: string | null;
   savingDraftId: string | null;
   generatingId: string | null;
-  manualOpen: boolean;
-  onOpenManual: () => void;
-  onCloseManual: () => void;
   onApproveDraft: MessageThreadProps["onApproveDraft"];
   onRemoveDraft: MessageThreadProps["onRemoveDraft"];
   onSaveDraft: MessageThreadProps["onSaveDraft"];
   onGenerateDraft: MessageThreadProps["onGenerateDraft"];
-  onManualReply: MessageThreadProps["onManualReply"];
+  onReplyToMessage: MessageThreadProps["onReplyToMessage"];
   children: ReactNode;
 }) {
   const auditState = useMessageReplyAudit(message.id);
@@ -434,23 +439,15 @@ function InboundMessageContent({
           message={message}
           canReply={canReply}
           generatingId={generatingId}
-          manualOpen={manualOpen}
           showAudit={showAudit}
           auditActive={auditState.open}
           onAuditToggle={() => void auditState.toggle()}
-          onOpenManual={onOpenManual}
+          onReplyToMessage={onReplyToMessage}
           onGenerateDraft={onGenerateDraft}
           auditTriggerLabel={auditState.triggerLabel}
         />
       </div>
 
-      <MessageManualReplyPanel
-        message={message}
-        canReply={canReply}
-        manualOpen={manualOpen}
-        onCloseManual={onCloseManual}
-        onManualReply={onManualReply}
-      />
       <MessageDraftPanel
         message={message}
         canReply={canReply}
@@ -481,67 +478,6 @@ function InboundMessageContent({
   );
 }
 
-function MessageManualReplyPanel({
-  message,
-  canReply,
-  manualOpen,
-  onCloseManual,
-  onManualReply,
-}: {
-  message: Message;
-  canReply: boolean;
-  manualOpen: boolean;
-  onCloseManual: () => void;
-  onManualReply: MessageThreadProps["onManualReply"];
-}) {
-  const [manualText, setManualText] = useState("");
-
-  useEffect(() => {
-    if (!manualOpen) {
-      setManualText("");
-    }
-  }, [manualOpen]);
-
-  if (!manualOpen || message.status !== "pending" || message.draft_text) {
-    return null;
-  }
-
-  return (
-    <div className="mt-2 w-full min-w-0 max-w-[min(100%,36rem)] overflow-hidden rounded-md border border-border/50 bg-muted/15">
-      <div className="flex items-center justify-between gap-2 border-b border-border/40 px-3 py-2">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Resposta manual
-        </p>
-        <div className="flex shrink-0 items-center gap-1">
-          <Button type="button" size="sm" variant="ghost" onClick={onCloseManual}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={!manualText.trim() || !canReply}
-            onClick={() => {
-              void Promise.resolve(onManualReply(message.id, manualText.trim())).then(
-                onCloseManual,
-              );
-            }}
-          >
-            Enviar
-          </Button>
-        </div>
-      </div>
-      <Textarea
-        value={manualText}
-        onChange={(event) => setManualText(event.target.value)}
-        rows={2}
-        autoFocus
-        placeholder="Sua resposta…"
-        className="min-h-16 w-full min-w-0 resize-y rounded-none border-0 bg-transparent px-3 py-2 text-base shadow-none focus-visible:ring-0"
-      />
-    </div>
-  );
-}
-
 export function MessageThread({
   messages,
   brandUsername,
@@ -557,9 +493,8 @@ export function MessageThread({
   onRemoveDraft,
   onSaveDraft,
   onGenerateDraft,
-  onManualReply,
+  onReplyToMessage,
 }: MessageThreadProps) {
-  const [manualReplyId, setManualReplyId] = useState<string | null>(null);
   const participant = resolveParticipantForDisplay(
     participantUsername,
     participantDisplayName,
@@ -578,7 +513,18 @@ export function MessageThread({
           : formatParticipantHandle(participant.username);
         const showPendingBadge =
           !outbound && message.status === "pending" && !message.draft_text;
-        const manualOpen = manualReplyId === message.id;
+        const quotedSource = resolveQuotedMessageByIgId(
+          message.reply_to_ig_message_id,
+          messages,
+        );
+        const outboundQuote = outbound
+          ? quotedMessagePreview(
+              quotedSource,
+              participant.username,
+              participant.displayName,
+              brandUsername,
+            )
+          : null;
 
         return (
           <div
@@ -611,14 +557,11 @@ export function MessageThread({
                   removingDraftId={removingDraftId}
                   savingDraftId={savingDraftId}
                   generatingId={generatingId}
-                  manualOpen={manualOpen}
-                  onOpenManual={() => setManualReplyId(message.id)}
-                  onCloseManual={() => setManualReplyId(null)}
                   onApproveDraft={onApproveDraft}
                   onRemoveDraft={onRemoveDraft}
                   onSaveDraft={onSaveDraft}
                   onGenerateDraft={onGenerateDraft}
-                  onManualReply={onManualReply}
+                  onReplyToMessage={onReplyToMessage}
                 >
                   <MessageBubble
                     message={message}
@@ -635,6 +578,7 @@ export function MessageThread({
                   authorLabel={authorLabel}
                   authorHandle={authorHandle}
                   showPendingBadge={false}
+                  quotedPreview={outboundQuote}
                 />
               )}
             </div>

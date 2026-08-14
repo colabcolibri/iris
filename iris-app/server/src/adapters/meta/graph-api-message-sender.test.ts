@@ -37,6 +37,31 @@ test("graph api message sender posts recipient payload", async () => {
   assert.match(capturedBody, /user-42/);
 });
 
+test("graph api message sender includes reply_to when quoting a message", async () => {
+  let capturedBody = "";
+
+  const sender = createGraphApiMessageSender({
+    metaTokenStore: {
+      getActiveToken: () => "token-1",
+      upsertToken: () => {},
+      clear: () => {},
+    },
+    config: {
+      resolveIgUserId: () => "ig-page-1",
+      fetchImpl: async (_url, init) => {
+        capturedBody = String(init?.body ?? "");
+        return new Response(JSON.stringify({ message_id: "mid-sent-quote" }), {
+          status: 200,
+        });
+      },
+    },
+  });
+
+  await sender.sendText("user-42", "citando", { replyToMid: "mid-target-9" });
+  assert.match(capturedBody, /mid-target-9/);
+  assert.match(capturedBody, /reply_to/);
+});
+
 test("graph api message sender maps 24h window error", async () => {
   const sender = createGraphApiMessageSender({
     metaTokenStore: {
