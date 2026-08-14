@@ -9,6 +9,11 @@ import {
   type ReactNode,
 } from "react";
 import { fetchAuthMe, logout } from "@/lib/api";
+import {
+  clearCachedAuthSession,
+  readCachedAuthSession,
+  writeCachedAuthSession,
+} from "@/lib/auth-session-cache";
 import { isDemoPath } from "@/demo/demo-path";
 import { setUnauthorizedListener } from "@/lib/auth-unauthorized";
 
@@ -27,18 +32,34 @@ type AuthSessionContextValue = {
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
 
+function readInitialAuthState(): { status: AuthStatus; email: string | null } {
+  if (typeof window !== "undefined" && isDemoPath()) {
+    return { status: "anonymous", email: null };
+  }
+
+  const cached = readCachedAuthSession();
+  if (cached) {
+    return { status: "authenticated", email: cached.email };
+  }
+
+  return { status: "loading", email: null };
+}
+
 export function AuthSessionProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>("loading");
-  const [email, setEmail] = useState<string | null>(null);
+  const initialAuth = readInitialAuthState();
+  const [status, setStatus] = useState<AuthStatus>(initialAuth.status);
+  const [email, setEmail] = useState<string | null>(initialAuth.email);
   const statusRef = useRef(status);
   statusRef.current = status;
 
   const applyAnonymous = useCallback(() => {
+    clearCachedAuthSession();
     setEmail(null);
     setStatus("anonymous");
   }, []);
 
   const applyAuthenticated = useCallback((nextEmail: string) => {
+    writeCachedAuthSession(nextEmail);
     setEmail(nextEmail);
     setStatus("authenticated");
   }, []);
@@ -57,7 +78,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      if (!options?.silent) {
+      if (!options?.silent && statusRef.current !== "authenticated") {
         setStatus("loading");
       }
 
@@ -91,7 +112,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
       applyAnonymous();
       return;
     }
-    void refresh();
+    void refresh({ silent: true });
   }, [refresh, applyAnonymous]);
 
   useEffect(() => {
