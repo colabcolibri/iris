@@ -13,6 +13,21 @@ import { requireMessage } from "./message-resources.ts";
 import { MAX_MESSAGE_REPLY_LENGTH, serializeMessageWithDraft } from "./shared.ts";
 import { resolveMessageDraftText } from "../../../domain/messages/resolve-message-draft.ts";
 import { resolveMessageRecipientForSend } from "../../../domain/messages/resolve-message-recipient.ts";
+import { MetaMessageSendError } from "../../../ports/meta-message-sender.ts";
+
+function logMessageSendFailure(context: string, messageId: string, error: unknown): void {
+  if (error instanceof MetaMessageSendError) {
+    console.error(
+      `[messages] ${context} failed for message ${messageId}: ${error.message} ` +
+        `(code=${error.code}, metaCode=${error.metaCode ?? "?"}, metaSubcode=${error.metaSubcode ?? "?"})`,
+    );
+    return;
+  }
+  console.error(
+    `[messages] ${context} failed for message ${messageId}:`,
+    error instanceof Error ? error.message : error,
+  );
+}
 
 function messageRecipientDeps(match: RouteMatch) {
   const connection = match.ctx.metaConnectionStore.get();
@@ -187,11 +202,17 @@ export const messagesReplyRouter = createRouter([
 
       assertCanReplyToConversation(match.ctx.messages, conversation.id);
 
-      const { recipientId } = await resolveMessageRecipientForSend(
-        conversation,
-        messageRecipientDeps(match),
-        { replyToMessage: message },
-      );
+      let recipientId: string;
+      try {
+        ({ recipientId } = await resolveMessageRecipientForSend(
+          conversation,
+          messageRecipientDeps(match),
+          { replyToMessage: message },
+        ));
+      } catch (error) {
+        logMessageSendFailure("approve-reply/resolve-recipient", messageId, error);
+        throw error;
+      }
 
       try {
         const publishResult = await match.ctx.metaMessageSender.sendText(
@@ -217,6 +238,7 @@ export const messagesReplyRouter = createRouter([
         notifyMessagesChanged({ conversation_id: message.conversationId });
         sendJson(match.res, 200, serializeMessageWithDraft(updated!, match.ctx));
       } catch (error) {
+        logMessageSendFailure("approve-reply", messageId, error);
         const errorMessage = error instanceof Error ? error.message : "reply failed";
         match.ctx.messageReplies.createReply({
           messageId,
@@ -274,11 +296,17 @@ export const messagesReplyRouter = createRouter([
 
       assertCanReplyToConversation(match.ctx.messages, conversation.id);
 
-      const { recipientId } = await resolveMessageRecipientForSend(
-        conversation,
-        messageRecipientDeps(match),
-        { replyToMessage: message },
-      );
+      let recipientId: string;
+      try {
+        ({ recipientId } = await resolveMessageRecipientForSend(
+          conversation,
+          messageRecipientDeps(match),
+          { replyToMessage: message },
+        ));
+      } catch (error) {
+        logMessageSendFailure("reply/resolve-recipient", messageId, error);
+        throw error;
+      }
 
       try {
         const publishResult = await match.ctx.metaMessageSender.sendText(
@@ -296,6 +324,7 @@ export const messagesReplyRouter = createRouter([
         notifyMessagesChanged({ conversation_id: message.conversationId });
         sendJson(match.res, 200, serializeMessageWithDraft(updated!, match.ctx));
       } catch (error) {
+        logMessageSendFailure("reply", messageId, error);
         const errorMessage = error instanceof Error ? error.message : "reply failed";
         match.ctx.messageReplies.createReply({ messageId, sentText: text, status: "failed" });
         match.ctx.messages.markFailed(messageId, errorMessage);
