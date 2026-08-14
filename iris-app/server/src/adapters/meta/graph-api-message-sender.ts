@@ -7,7 +7,6 @@ import {
 
 export type GraphApiMessageSenderConfig = {
   resolveIgUserId: () => string | null;
-  resolvePageId?: () => string | null;
   graphApiVersion?: string;
   fetchImpl?: typeof fetch;
 };
@@ -61,51 +60,6 @@ export function createGraphApiMessageSender(
   const fetchFn = deps.config.fetchImpl ?? fetch;
   const version = deps.config.graphApiVersion ?? "v21.0";
   const base = `https://graph.instagram.com/${version}`;
-  const facebookBase = `https://graph.facebook.com/${version}`;
-
-  async function takeThreadControl(
-    recipientIgUserId: string,
-    token: string,
-  ): Promise<void> {
-    const pageId = deps.config.resolvePageId?.();
-    if (!pageId) {
-      console.warn(
-        `[meta] skipping take_thread_control for recipient ${recipientIgUserId}: no pageId configured`,
-      );
-      return;
-    }
-
-    // take_thread_control is a Handover Protocol (Messenger Platform) operation:
-    // it lives under graph.facebook.com/{page-id}, not graph.instagram.com/me.
-    const url = new URL(`${facebookBase}/${pageId}/take_thread_control`);
-    try {
-      const response = await fetchFn(url.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          recipient: { id: recipientIgUserId },
-          metadata: "iris",
-        }),
-      });
-      const json = (await response.json()) as GraphSendResponse;
-      if (!response.ok || json.error) {
-        console.warn(
-          `[meta] take_thread_control failed for recipient ${recipientIgUserId}: ` +
-            `${json.error?.message ?? `HTTP ${response.status}`} ` +
-            `(code=${json.error?.code ?? "?"}, subcode=${json.error?.error_subcode ?? "?"})`,
-        );
-      }
-    } catch (error) {
-      // best effort — send may still succeed even if this fails
-      console.warn(
-        `[meta] take_thread_control request errored for recipient ${recipientIgUserId}:`,
-        error instanceof Error ? error.message : error,
-      );
-    }
-  }
 
   async function postMessage(
     recipientIgUserId: string,
@@ -142,20 +96,7 @@ export function createGraphApiMessageSender(
         throw new Error("Meta access token not configured");
       }
 
-      await takeThreadControl(recipientIgUserId, token);
-
-      try {
-        return await postMessage(recipientIgUserId, text, token);
-      } catch (error) {
-        if (
-          error instanceof MetaMessageSendError &&
-          error.code === "thread_owner"
-        ) {
-          await takeThreadControl(recipientIgUserId, token);
-          return await postMessage(recipientIgUserId, text, token);
-        }
-        throw error;
-      }
+      return await postMessage(recipientIgUserId, text, token);
     },
   };
 }

@@ -13,6 +13,8 @@ export const serverErrorsEn = {
   META_SEND_FAILED: "Meta rejected the send: {message}",
   META_PERMISSION_DENIED:
     "No permission to send messages. Reconnect Instagram and authorize messaging ({message}).",
+  META_THREAD_OWNER:
+    "This conversation was replied to from the Instagram app and is temporarily locked for API sends. Ask the customer to send a new message to unlock sending.",
   CONTACT_INVALID: "Fill in all form fields correctly.",
   REQUEST_FAILED: "Request failed ({status}).",
   INTERNAL_ERROR: "Internal error. Try again.",

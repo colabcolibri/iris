@@ -80,7 +80,9 @@ export function mapHttpError(
         ? ErrorCodes.RATE_LIMITED
         : error.code === "permission_denied"
           ? ErrorCodes.META_PERMISSION_DENIED
-          : ErrorCodes.META_SEND_FAILED;
+          : error.code === "thread_owner"
+            ? ErrorCodes.META_THREAD_OWNER
+            : ErrorCodes.META_SEND_FAILED;
     sendCodedError(res, status, code, {
       message: error.message,
       ...(error.metaCode != null ? { meta_code: error.metaCode } : {}),

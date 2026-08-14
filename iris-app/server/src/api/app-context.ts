@@ -266,7 +266,6 @@ export function createAppContext(options: AppContextOptions): AppContext {
     metaTokenStore,
     config: {
       resolveIgUserId,
-      resolvePageId: () => metaConnectionStore.get()?.pageId ?? null,
       graphApiVersion,
     },
   });
