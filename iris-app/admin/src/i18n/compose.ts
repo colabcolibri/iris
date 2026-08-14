@@ -32,6 +32,12 @@ import type { LegalMessages } from "@/i18n/domains/legal/types";
 import { productsEn } from "@/i18n/domains/products/en";
 import { productsPt } from "@/i18n/domains/products/pt";
 import type { ProductsMessages } from "@/i18n/domains/products/types";
+import { marketingEn } from "@/i18n/domains/marketing/en";
+import { marketingPt } from "@/i18n/domains/marketing/pt";
+import type { MarketingMessages } from "@/i18n/domains/marketing/types";
+import { demoContentEn } from "@/i18n/domains/demo-content/en";
+import { demoContentPt } from "@/i18n/domains/demo-content/pt";
+import type { DemoContentMessages } from "@/i18n/domains/demo-content/types";
 
 export type I18nDomainId =
   | "shell"
@@ -44,7 +50,9 @@ export type I18nDomainId =
   | "settings"
   | "agent"
   | "legal"
-  | "products";
+  | "products"
+  | "marketing"
+  | "demoContent";
 
 export type DomainMessagesMap = {
   shell: ShellMessages;
@@ -58,6 +66,8 @@ export type DomainMessagesMap = {
   agent: AgentMessages;
   legal: LegalMessages;
   products: ProductsMessages;
+  marketing: MarketingMessages;
+  demoContent: DemoContentMessages;
 };
 
 const PT_DOMAINS: DomainMessagesMap = {
@@ -72,6 +82,8 @@ const PT_DOMAINS: DomainMessagesMap = {
   agent: agentPt,
   legal: legalPt,
   products: productsPt,
+  marketing: marketingPt,
+  demoContent: demoContentPt,
 };
 
 const EN_DOMAINS: DomainMessagesMap = {
@@ -86,6 +98,8 @@ const EN_DOMAINS: DomainMessagesMap = {
   agent: agentEn,
   legal: legalEn,
   products: productsEn,
+  marketing: marketingEn,
+  demoContent: demoContentEn,
 };
 
 export function getDomainMessages<D extends I18nDomainId>(

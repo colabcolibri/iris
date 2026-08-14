@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/layout/brand-logo";
-import { ROUTES } from "@/lib/routes";
+import { privacyPath } from "@/lib/routes";
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS, landingHomePath } from "@/i18n/routing";
 
@@ -34,7 +34,7 @@ export function LandingFooter() {
             {m.footer.contact}
           </a>
           <Link
-            to={ROUTES.privacy}
+            to={privacyPath(locale)}
             className="text-[color:var(--iris-ink-soft)] transition-colors hover:text-[color:var(--iris-primary)]"
           >
             {m.footer.privacy}

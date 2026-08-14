@@ -17,6 +17,7 @@ import {
   participantDisplayLabel,
   resolveParticipantForDisplay,
 } from "@/lib/participant-display";
+import { useAppLocale } from "@/i18n/provider";
 import type { Message } from "@/lib/types";
 import { formatMessageDateTime } from "@/lib/message-time";
 import { cn } from "@/lib/utils";
@@ -87,8 +88,9 @@ function MessageBubble({
   authorHandle: string;
   showPendingBadge: boolean;
 }) {
+  const { locale } = useAppLocale();
   const bodyText = messageBodyText(message);
-  const sentAt = formatMessageDateTime(message);
+  const sentAt = formatMessageDateTime(message, locale);
 
   return (
     <div

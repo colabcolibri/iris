@@ -23,7 +23,6 @@ import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
 import { UmamiAnalytics } from "@/components/analytics/umami-analytics";
 import { DemoModeProvider } from "@/demo/demo-mode-context";
-import { DemoLocaleProvider } from "@/demo/demo-locale-context";
 import { resetDemoState } from "@/demo/demo-state";
 import { AppI18nProvider } from "@/i18n/provider";
 import type { AppLocale } from "@/i18n/types";
@@ -83,8 +82,9 @@ export function App() {
             <Routes>
               <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
               <Route path="/en" element={<LandingPage locale="en" />} />
-              <Route path={ROUTES.privacy} element={<PrivacyPolicyPage />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path={ROUTES.privacy} element={<PrivacyPolicyPage locale="pt" />} />
+              <Route path={ROUTES.privacyEn} element={<PrivacyPolicyPage locale="en" />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage locale="pt" />} />
 
               {LEGACY_ADMIN_REDIRECTS.map(([from, to]) => (
                 <Route
@@ -120,11 +120,9 @@ export function App() {
               <Route
                 element={
                   <DemoModeProvider>
-                    <DemoLocaleProvider>
-                      <MetaSessionProvider>
-                        <DemoAppLayout />
-                      </MetaSessionProvider>
-                    </DemoLocaleProvider>
+                    <MetaSessionProvider>
+                      <DemoAppLayout />
+                    </MetaSessionProvider>
                   </DemoModeProvider>
                 }
               >

@@ -230,7 +230,9 @@ export function AgentSimulatorPage() {
                       title={t.page.tokenEstimateTitle}
                     >
                       {t.contentStats[field.labelKey as keyof typeof t.contentStats]}:{" "}
-                      {contentLoaded ? formatTokenEstimate(tokens) : "…"}
+                      {contentLoaded
+                        ? formatTokenEstimate(tokens, locale, t.tokenEstimate)
+                        : "…"}
                     </span>
                   );
                 })}

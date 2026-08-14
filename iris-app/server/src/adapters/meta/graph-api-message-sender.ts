@@ -78,9 +78,20 @@ export function createGraphApiMessageSender(
           metadata: "iris",
         }),
       });
-      await response.json();
-    } catch {
-      // best effort — send may still succeed
+      const json = (await response.json()) as GraphSendResponse;
+      if (!response.ok || json.error) {
+        console.warn(
+          `[meta] take_thread_control failed for recipient ${recipientIgUserId}: ` +
+            `${json.error?.message ?? `HTTP ${response.status}`} ` +
+            `(code=${json.error?.code ?? "?"}, subcode=${json.error?.error_subcode ?? "?"})`,
+        );
+      }
+    } catch (error) {
+      // best effort — send may still succeed even if this fails
+      console.warn(
+        `[meta] take_thread_control request errored for recipient ${recipientIgUserId}:`,
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 

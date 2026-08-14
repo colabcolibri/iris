@@ -5,8 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDomainMessages } from "@/i18n/provider";
 import {
-  THREAD_SORT_OPTIONS,
+  THREAD_SORT_MODES,
   type ThreadSortMode,
 } from "@/lib/build-comment-tree";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,17 @@ type ThreadSortSelectProps = {
   fullWidth?: boolean;
 };
 
+const SORT_LABEL_KEY: Record<
+  ThreadSortMode,
+  "sortActivityDesc" | "sortActivityAsc" | "sortRootDesc" | "sortRootAsc" | "sortPendingFirst"
+> = {
+  activity_desc: "sortActivityDesc",
+  activity_asc: "sortActivityAsc",
+  root_desc: "sortRootDesc",
+  root_asc: "sortRootAsc",
+  pending_first: "sortPendingFirst",
+};
+
 export function ThreadSortSelect({
   value,
   onChange,
@@ -27,7 +39,9 @@ export function ThreadSortSelect({
   disabled = false,
   fullWidth = false,
 }: ThreadSortSelectProps) {
-  const selected = THREAD_SORT_OPTIONS.find((option) => option.value === value);
+  const detail = useDomainMessages("comments").detail;
+
+  const selectedLabel = detail[SORT_LABEL_KEY[value]];
 
   return (
     <Select
@@ -49,21 +63,17 @@ export function ThreadSortSelect({
           className="size-3.5 shrink-0 text-muted-foreground"
           aria-hidden
         />
-        <SelectValue placeholder="Ordenar">
-          <span className="truncate">{selected?.label ?? "Ordenar"}</span>
+        <SelectValue placeholder={detail.threadSort}>
+          <span className="truncate">{selectedLabel}</span>
         </SelectValue>
       </SelectTrigger>
       <SelectContent
         align={fullWidth ? "start" : "end"}
         className="min-w-[12.5rem]"
       >
-        {THREAD_SORT_OPTIONS.map((option) => (
-          <SelectItem
-            key={option.value}
-            value={option.value}
-            className="text-sm"
-          >
-            {option.label}
+        {THREAD_SORT_MODES.map((mode) => (
+          <SelectItem key={mode} value={mode} className="text-sm">
+            {detail[SORT_LABEL_KEY[mode]]}
           </SelectItem>
         ))}
       </SelectContent>

@@ -27,7 +27,7 @@ import {
   displayCommentText,
 } from "@/lib/comment-text-display";
 import { interpolate } from "@/i18n/compose";
-import { useDomainMessages } from "@/i18n/provider";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import {
   ReplyAuditPanel,
   ReplyAuditTrigger,
@@ -432,6 +432,7 @@ function CommentBody({
   isPinnedOnPost = false,
   highlightCommentId = null,
 }: CommentBodyProps) {
+  const { locale } = useAppLocale();
   const thread = useDomainMessages("comments").thread;
   const handle = formatHandle(comment.author_username, thread.defaultUser);
   const isBrandReply = isBrandAuthor(comment.author_username, brandUsername);
@@ -502,7 +503,7 @@ function CommentBody({
                   className="text-xs text-muted-foreground"
                   title={commentTimestamp(comment)}
                 >
-                  {formatCommentExactTime(commentTimestamp(comment))}
+                  {formatCommentExactTime(commentTimestamp(comment), locale)}
                 </span>
                 {statusLabel ? (
                   <Badge
@@ -804,6 +805,7 @@ function ThreadAccordionHeader({
   generatingId: string | null;
   onGenerateDraft: (commentId: string) => void;
 }) {
+  const { locale } = useAppLocale();
   const thread = useDomainMessages("comments").thread;
   const root = group.root;
   const handle = formatHandle(root.author_username, thread.defaultUser);
@@ -856,7 +858,7 @@ function ThreadAccordionHeader({
                 className="text-xs text-muted-foreground"
                 title={commentTimestamp(root)}
               >
-                {formatCommentExactTime(commentTimestamp(root))}
+                {formatCommentExactTime(commentTimestamp(root), locale)}
               </span>
               {statusLabel ? (
                 <Badge

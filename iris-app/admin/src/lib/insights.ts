@@ -1,19 +1,15 @@
-const METRIC_LABELS: Record<string, string> = {
-  reach: "Alcance",
-  views: "Visualizações",
-  likes: "Curtidas",
-  comments: "Comentários",
-  saved: "Salvos",
-  impressions: "Impressões",
-  shares: "Compartilhamentos",
-};
+import { formatNumber } from "@/i18n/formatting";
+import type { AppLocale } from "@/i18n/types";
 
-export function formatInsightMetricName(name: string): string {
-  return METRIC_LABELS[name] ?? name;
+export function formatInsightMetricName(
+  name: string,
+  labels: Record<string, string>,
+): string {
+  return labels[name] ?? name;
 }
 
-export function formatInsightValue(value: number): string {
-  return new Intl.NumberFormat("pt-BR").format(value);
+export function formatInsightValue(value: number, locale: AppLocale): string {
+  return formatNumber(value, locale);
 }
 
 export function insightMetricValue(

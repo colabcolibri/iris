@@ -1,3 +1,5 @@
+import { formatExactDateTime } from "@/i18n/formatting";
+import type { AppLocale } from "@/i18n/types";
 import type { Comment } from "./types";
 
 function parseCommentTimestampMs(value: string): number {
@@ -27,16 +29,22 @@ export type CommentThreadGroup = {
   replies: Comment[];
 };
 
-export const THREAD_SORT_OPTIONS: Array<{
-  value: ThreadSortMode;
-  label: string;
-}> = [
-  { value: "activity_desc", label: "Atividade mais recente" },
-  { value: "activity_asc", label: "Atividade mais antiga" },
-  { value: "root_desc", label: "Comentário raiz mais recente" },
-  { value: "root_asc", label: "Comentário raiz mais antigo" },
-  { value: "pending_first", label: "Pendentes primeiro" },
-];
+export const THREAD_SORT_MODES = [
+  "activity_desc",
+  "activity_asc",
+  "root_desc",
+  "root_asc",
+  "pending_first",
+] as const satisfies readonly ThreadSortMode[];
+
+export function formatCommentExactTime(value: string, locale: AppLocale): string {
+  const ms = parseCommentTimestampMs(value);
+  if (!ms) {
+    return value;
+  }
+
+  return formatExactDateTime(ms, locale);
+}
 
 export function commentTimestamp(
   comment: Pick<Comment, "created_at" | "ig_timestamp">,
@@ -48,23 +56,6 @@ export function commentTimeMs(
   comment: Pick<Comment, "created_at" | "ig_timestamp">,
 ): number {
   return parseCommentTimestampMs(commentTimestamp(comment));
-}
-
-export function formatCommentExactTime(value: string): string {
-  const ms = parseCommentTimestampMs(value);
-  if (!ms) {
-    return value;
-  }
-
-  return new Date(ms).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
 }
 
 function normalizeUsername(value: string | null | undefined): string | null {

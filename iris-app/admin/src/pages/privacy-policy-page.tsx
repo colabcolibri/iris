@@ -1,11 +1,18 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { interpolate } from "@/i18n/compose";
-import { useDomainMessages } from "@/i18n/provider";
+import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import type { AppLocale } from "@/i18n/types";
 import { ROUTES } from "@/lib/routes";
 
-export function PrivacyPolicyPage() {
+export function PrivacyPolicyPage({ locale }: { locale: AppLocale }) {
+  const { setLocale } = useAppLocale();
   const legal = useDomainMessages("legal").privacy;
+
+  useEffect(() => {
+    setLocale(locale);
+  }, [locale, setLocale]);
 
   return (
     <div className="min-h-svh bg-background">

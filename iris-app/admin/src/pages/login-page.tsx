@@ -11,7 +11,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { useAuthSession } from "@/contexts/auth-session-context";
 import { interpolate } from "@/i18n/compose";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, privacyPath } from "@/lib/routes";
 
 type Step = "email" | "code";
 
@@ -179,7 +179,7 @@ export function LoginPage() {
 
           <p className="text-center text-xs text-muted-foreground">
             <Link
-              to={ROUTES.privacy}
+              to={privacyPath(locale)}
               className="hover:text-foreground hover:underline"
             >
               {shell.login.privacyLink}

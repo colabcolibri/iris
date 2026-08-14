@@ -163,6 +163,7 @@ function InsightMetricCard({
   accent: string;
   loading: boolean;
 }) {
+  const { locale } = useAppLocale();
   return (
     <div className="flex min-w-0 flex-col gap-3 rounded-(--iris-radius-lg) border border-border/70 bg-card p-4">
       <div className="flex items-center gap-2.5">
@@ -182,7 +183,7 @@ function InsightMetricCard({
         <Skeleton className="h-8 w-20" />
       ) : (
         <p className="font-display text-2xl font-semibold leading-none tracking-tight tabular-nums text-foreground sm:text-3xl">
-          {value === null ? "—" : formatInsightValue(value)}
+          {value === null ? "—" : formatInsightValue(value, locale)}
         </p>
       )}
     </div>

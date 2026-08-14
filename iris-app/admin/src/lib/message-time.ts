@@ -1,3 +1,5 @@
+import { formatDateTime } from "@/i18n/formatting";
+import type { AppLocale } from "@/i18n/types";
 import type { Message } from "@/lib/types";
 
 function parseTimestampMs(value: string): number {
@@ -19,18 +21,12 @@ export function messageTimestamp(
 
 export function formatMessageDateTime(
   message: Pick<Message, "created_at" | "ig_timestamp">,
+  locale: AppLocale,
 ): string {
   const ms = parseTimestampMs(messageTimestamp(message));
   if (!ms) {
     return messageTimestamp(message);
   }
 
-  return new Date(ms).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return formatDateTime(ms, locale);
 }

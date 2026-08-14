@@ -1,11 +1,18 @@
+import type { AppLocale } from "@/i18n/types";
+
 export const ADMIN_BASE = "/admin";
 
 export const adminPath = (segment = "") =>
   segment ? `${ADMIN_BASE}/${segment.replace(/^\//, "")}` : ADMIN_BASE;
 
+export function privacyPath(locale: AppLocale = "pt"): string {
+  return locale === "en" ? "/en/privacy" : "/privacy";
+}
+
 export const ROUTES = {
   home: "/",
   privacy: "/privacy",
+  privacyEn: "/en/privacy",
   demo: {
     root: "/demo",
     comments: "/demo/comments",
