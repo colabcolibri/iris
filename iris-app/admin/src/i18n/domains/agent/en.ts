@@ -129,9 +129,9 @@ export const agentEn = {
   simulator: {
     page: {
       eyebrow: "Lab",
-      title: "Simulator",
+      title: "Comment simulator",
       description:
-        "Build the conversation and run the same production harness — without publishing.",
+        "Build the post and comment thread and run the comment harness — without publishing.",
       resultEyebrow: "Lab",
       resultTitle: "Result",
       resultDescription: "Proposed reply and harness stages on stage.",
@@ -176,6 +176,56 @@ export const agentEn = {
     },
     toasts: {
       targetCommentRequired: "Enter the target comment.",
+      simulateFailed: "Simulation failed.",
+    },
+  },
+  messageSimulator: {
+    page: {
+      eyebrow: "Lab",
+      title: "Message simulator",
+      description:
+        "Build the DM thread and run the production agentic harness — with catalog tools and full audit.",
+      resultEyebrow: "Lab",
+      resultTitle: "Result",
+      resultDescription: "Proposed reply, tool calls, and harness stages on stage.",
+      personaLink: "DM content",
+      tokenEstimateTitle: "Heuristic token estimate (dm_*)",
+    },
+    fields: {
+      scenario: "Scenario",
+      scenarioDefault: "Scenario",
+      language: "Language",
+      brand: "Brand",
+      participant: "Participant",
+      participantPlaceholder: "@user",
+      replyPrompt: "Conversation briefing",
+      replyPromptPlaceholder: "Optional — context for the agent in this thread.",
+      thread: "Thread",
+      addMessage: "Message",
+      authorPlaceholder: "author",
+      brandCheckbox: "brand",
+      targetMessage: "Target message",
+      targetAuthorPlaceholder: "@author",
+      run: "Simulate reply",
+      running: "Simulating…",
+    },
+    contentStats: {
+      dmSoul: "DM soul",
+      dmPage: "DM page",
+      dmKnowledge: "DM knowledge",
+      dmRestrictions: "DM restrictions",
+    },
+    tokenEstimate: {
+      empty: "empty",
+      tokensK: "≈ {value}k tokens",
+      tokens: "≈ {value} tokens",
+    },
+    empty: {
+      title: "Build the thread and run the harness",
+      body: "The stage shows the reply, tool calls, and each step (model, tokens, verdict) after simulation.",
+      noApproved: "No approved reply in this simulation.",
+    },
+    toasts: {
       targetMessageRequired: "Enter the target message.",
       simulateFailed: "Simulation failed.",
     },

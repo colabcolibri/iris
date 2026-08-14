@@ -7,6 +7,7 @@ import {
   MessageCircle,
   MessagesSquare,
   Package,
+  Send,
   Settings,
   Sparkles,
   Store,
@@ -47,6 +48,7 @@ const MAIN_ROUTE_DEFS = [
   { key: "stores" as const, navKey: "stores" as const, icon: Store },
   { key: "webhooks" as const, navKey: "webhooks" as const, icon: Webhook },
   { key: "agentSimulator" as const, navKey: "simulator" as const, icon: FlaskConical },
+  { key: "messageSimulator" as const, navKey: "messageSimulator" as const, icon: Send },
   { key: "agentRuns" as const, navKey: "agentRuns" as const, icon: Bot },
 ];
 

@@ -127,9 +127,9 @@ export const agentPt = {
   simulator: {
     page: {
       eyebrow: "Lab",
-      title: "Simulador",
+      title: "Simulador de comentários",
       description:
-        "Monte a conversa e rode o mesmo harness de produção — sem publicar.",
+        "Monte o post e a thread do comentário e rode o harness de comentários — sem publicar.",
       resultEyebrow: "Lab",
       resultTitle: "Resultado",
       resultDescription: "Resposta proposta e stages do harness no palco.",
@@ -174,6 +174,56 @@ export const agentPt = {
     },
     toasts: {
       targetCommentRequired: "Informe o comentário alvo.",
+      simulateFailed: "Falha na simulação.",
+    },
+  },
+  messageSimulator: {
+    page: {
+      eyebrow: "Lab",
+      title: "Simulador de mensagens",
+      description:
+        "Monte a thread de DM e rode o harness agentic de produção — com tools de catálogo e auditoria completa.",
+      resultEyebrow: "Lab",
+      resultTitle: "Resultado",
+      resultDescription: "Resposta proposta, tool calls e stages do harness no palco.",
+      personaLink: "Conteúdo DM",
+      tokenEstimateTitle: "Estimativa heurística de tokens (dm_*)",
+    },
+    fields: {
+      scenario: "Cenário",
+      scenarioDefault: "Cenário",
+      language: "Idioma",
+      brand: "Marca",
+      participant: "Participante",
+      participantPlaceholder: "@usuario",
+      replyPrompt: "Briefing da conversa",
+      replyPromptPlaceholder: "Opcional — contexto para o agente nesta thread.",
+      thread: "Thread",
+      addMessage: "Mensagem",
+      authorPlaceholder: "autor",
+      brandCheckbox: "marca",
+      targetMessage: "Mensagem alvo",
+      targetAuthorPlaceholder: "@autor",
+      run: "Simular resposta",
+      running: "Simulando…",
+    },
+    contentStats: {
+      dmSoul: "DM soul",
+      dmPage: "DM página",
+      dmKnowledge: "DM knowledge",
+      dmRestrictions: "DM restrições",
+    },
+    tokenEstimate: {
+      empty: "vazio",
+      tokensK: "≈ {value}k tokens",
+      tokens: "≈ {value} tokens",
+    },
+    empty: {
+      title: "Monte a thread e rode o harness",
+      body: "O palco mostra a resposta, tool calls e cada step (modelo, tokens, verdict) após a simulação.",
+      noApproved: "Nenhuma resposta aprovada nesta simulação.",
+    },
+    toasts: {
       targetMessageRequired: "Informe a mensagem alvo.",
       simulateFailed: "Falha na simulação.",
     },

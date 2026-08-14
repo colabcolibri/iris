@@ -1,5 +1,6 @@
 import type { SimulateThreadMessage } from "@/lib/api";
 import { DEMO_BRAND_REPLY_HANDLE } from "@/demo/demo-brand";
+import type { SimulatorThreadRow } from "@/components/agent-simulator/types";
 
 export type SimulatorScenario = {
   id: string;
@@ -85,7 +86,7 @@ export function findSimulatorScenarioByTarget(
   );
 }
 
-export function threadRowsFromScenario(scenario: SimulatorScenario) {
+export function threadRowsFromScenario(scenario: SimulatorScenario): SimulatorThreadRow[] {
   return scenario.thread.map((row) => ({
     id: crypto.randomUUID(),
     author: row.author,

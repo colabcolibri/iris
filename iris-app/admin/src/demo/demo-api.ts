@@ -10,6 +10,7 @@ import {
 } from "@/demo/demo-state";
 import { buildDemoMessageActivity, DEMO_MESSAGE_REPLY_AUDIT } from "@/demo/fixtures/messages";
 import { demoSimulateWithDelay } from "@/demo/fixtures/simulator";
+import { demoMessageSimulateWithDelay } from "@/demo/fixtures/message-simulator";
 import type { SimulateRequestBody } from "@/demo/fixtures/simulator";
 import { demoAssetImageUrl } from "@/demo/demo-images";
 import { buildDemoCommentActivity } from "@/demo/fixtures/build-demo-comments";
@@ -338,6 +339,14 @@ async function handleMutation(
   const body = parseJsonBody(options) as Record<string, unknown>;
 
   if (method === "POST" && pathname === "/api/agent/simulate") {
+    const channel =
+      body.channel === "dm" || body.channel === "message" ? "dm" : "comment";
+    if (channel === "dm") {
+      return demoMessageSimulateWithDelay({
+        channel: "dm",
+        target_message: body.target_message as { author?: string; text?: string } | undefined,
+      });
+    }
     return demoSimulateWithDelay(body as SimulateRequestBody);
   }
 

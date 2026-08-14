@@ -7,12 +7,12 @@ import {
 } from "@/components/agent-simulator/simulator-content-stats";
 import { SimulatorResultPanel } from "@/components/agent-simulator/simulator-result-panel";
 import { SimulatorThreadEditor } from "@/components/agent-simulator/simulator-thread-editor";
+import { emptySimulatorThreadRow } from "@/components/agent-simulator/types";
 import { PageContainer } from "@/components/templates/page-container";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,17 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchAgentContent, fetchReplyPersona, simulateAgentReply } from "@/lib/api";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  fetchMessageAgentContent,
+  fetchReplyPersona,
+  simulateAgentReply,
+} from "@/lib/api";
 import { useAppRoutes } from "@/demo/demo-routes";
 import type { ReplyAudit } from "@/lib/types";
-import type { SimulateThreadMessage } from "@/lib/api";
-import type { SimulatorThreadRow } from "@/components/agent-simulator/types";
 import {
-  DEFAULT_SIMULATOR_SCENARIO_ID,
-  getSimulatorScenario,
-  SIMULATOR_SCENARIOS,
-  threadRowsFromScenario,
-} from "@/lib/agent-simulator-scenarios";
+  DEFAULT_MESSAGE_SIMULATOR_SCENARIO_ID,
+  getMessageSimulatorScenario,
+  MESSAGE_SIMULATOR_SCENARIOS,
+  threadRowsFromMessageScenario,
+} from "@/lib/message-simulator-scenarios";
 import {
   DEFAULT_RESPONSE_LANGUAGE,
   RESPONSE_LANGUAGE_OPTIONS,
@@ -38,52 +41,54 @@ import {
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
 
-function applyCommentScenario(scenario: NonNullable<ReturnType<typeof getSimulatorScenario>>) {
+function applyMessageScenario(scenario: NonNullable<ReturnType<typeof getMessageSimulatorScenario>>) {
   return {
-    caption: scenario.caption,
-    carouselSummary: scenario.carousel_summary,
-    thread: threadRowsFromScenario(scenario),
+    participantUsername: scenario.participant_username,
+    replyPrompt: scenario.reply_prompt ?? "",
+    thread: threadRowsFromMessageScenario(scenario),
     targetAuthor: scenario.target_author,
     targetText: scenario.target_text,
   };
 }
 
-const initialScenario = getSimulatorScenario(DEFAULT_SIMULATOR_SCENARIO_ID)!;
-const initialForm = applyCommentScenario(initialScenario);
+const initialScenario = getMessageSimulatorScenario(DEFAULT_MESSAGE_SIMULATOR_SCENARIO_ID)!;
+const initialForm = applyMessageScenario(initialScenario);
 
-export function AgentSimulatorPage() {
+export function MessageSimulatorPage() {
   const routes = useAppRoutes();
   const { locale } = useAppLocale();
-  const t = useDomainMessages("agent").simulator;
-  const [scenarioId, setScenarioId] = useState(DEFAULT_SIMULATOR_SCENARIO_ID);
-  const [caption, setCaption] = useState(initialForm.caption);
-  const [carouselSummary, setCarouselSummary] = useState(initialForm.carouselSummary);
+  const t = useDomainMessages("agent").messageSimulator;
+  const [scenarioId, setScenarioId] = useState(DEFAULT_MESSAGE_SIMULATOR_SCENARIO_ID);
+  const [participantUsername, setParticipantUsername] = useState(
+    initialForm.participantUsername,
+  );
+  const [replyPrompt, setReplyPrompt] = useState(initialForm.replyPrompt);
   const [responseLanguage, setResponseLanguage] = useState(DEFAULT_RESPONSE_LANGUAGE);
   const [brandName, setBrandName] = useState("");
   const [targetAuthor, setTargetAuthor] = useState(initialForm.targetAuthor);
   const [targetText, setTargetText] = useState(initialForm.targetText);
-  const [thread, setThread] = useState<SimulatorThreadRow[]>(initialForm.thread);
+  const [thread, setThread] = useState(initialForm.thread);
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
   const [finalText, setFinalText] = useState<string | null>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
-  const [agentContent, setAgentContent] = useState({
-    soul: "",
-    page: "",
-    knowledge: "",
-    restrictions: "",
+  const [dmContent, setDmContent] = useState({
+    dmSoul: "",
+    dmPage: "",
+    dmKnowledge: "",
+    dmRestrictions: "",
   });
 
   useEffect(() => {
-    void Promise.all([fetchReplyPersona(), fetchAgentContent()])
+    void Promise.all([fetchReplyPersona(), fetchMessageAgentContent()])
       .then(([persona, content]) => {
         setResponseLanguage(persona.response_language ?? DEFAULT_RESPONSE_LANGUAGE);
         setBrandName(persona.brand_name ?? "");
-        setAgentContent({
-          soul: content.soul ?? "",
-          page: content.page ?? "",
-          knowledge: content.knowledge ?? "",
-          restrictions: content.restrictions ?? "",
+        setDmContent({
+          dmSoul: content.dm_soul ?? "",
+          dmPage: content.dm_page ?? "",
+          dmKnowledge: content.dm_knowledge ?? "",
+          dmRestrictions: content.dm_restrictions ?? "",
         });
         setContentLoaded(true);
       })
@@ -93,13 +98,13 @@ export function AgentSimulatorPage() {
   function handleScenarioChange(id: string | null) {
     if (!id) return;
     setScenarioId(id);
-    const scenario = getSimulatorScenario(id);
+    const scenario = getMessageSimulatorScenario(id);
     if (!scenario) return;
 
-    const form = applyCommentScenario(scenario);
-    setCaption(form.caption);
-    setCarouselSummary(form.carouselSummary);
-    setThread(form.thread);
+    const form = applyMessageScenario(scenario);
+    setParticipantUsername(form.participantUsername);
+    setReplyPrompt(form.replyPrompt);
+    setThread(form.thread.length > 0 ? form.thread : [emptySimulatorThreadRow()]);
     setTargetAuthor(form.targetAuthor);
     setTargetText(form.targetText);
     setAudit(null);
@@ -108,7 +113,7 @@ export function AgentSimulatorPage() {
 
   async function handleRun() {
     if (!targetText.trim()) {
-      toast.error(t.toasts.targetCommentRequired);
+      toast.error(t.toasts.targetMessageRequired);
       return;
     }
 
@@ -117,7 +122,7 @@ export function AgentSimulatorPage() {
     setFinalText(null);
 
     try {
-      const threadPayload: SimulateThreadMessage[] = thread
+      const threadPayload = thread
         .filter((row) => row.text.trim())
         .map((row) => ({
           author: row.author,
@@ -126,14 +131,14 @@ export function AgentSimulatorPage() {
         }));
 
       const result = await simulateAgentReply({
-        channel: "comment",
-        caption,
-        carousel_summary: carouselSummary.trim() || null,
+        channel: "dm",
         response_language: responseLanguage,
         brand_name: brandName.trim() || null,
+        participant_username: participantUsername.trim() || targetAuthor.trim() || "user",
+        reply_prompt: replyPrompt.trim() || null,
         thread: threadPayload,
-        target_comment: {
-          author: targetAuthor.trim() || "user",
+        target_message: {
+          author: targetAuthor.trim() || participantUsername.trim() || "user",
           text: targetText,
         },
       });
@@ -151,8 +156,13 @@ export function AgentSimulatorPage() {
     RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)?.label ??
     responseLanguage;
 
-  const selectedScenario = getSimulatorScenario(scenarioId);
-  const contentFields = buildContentStatFields(t.contentStats, agentContent);
+  const selectedScenario = getMessageSimulatorScenario(scenarioId);
+  const contentFields = buildContentStatFields(t.contentStats, {
+    dmSoul: dmContent.dmSoul,
+    dmPage: dmContent.dmPage,
+    dmKnowledge: dmContent.dmKnowledge,
+    dmRestrictions: dmContent.dmRestrictions,
+  });
 
   return (
     <PageContainer variant="fill">
@@ -176,15 +186,15 @@ export function AgentSimulatorPage() {
               />
 
               <div className="space-y-2">
-                <Label htmlFor="sim-scenario">{t.fields.scenario}</Label>
+                <Label htmlFor="msg-sim-scenario">{t.fields.scenario}</Label>
                 <Select value={scenarioId} onValueChange={handleScenarioChange}>
-                  <SelectTrigger id="sim-scenario" className="w-full bg-card">
+                  <SelectTrigger id="msg-sim-scenario" className="w-full bg-card">
                     <SelectValue>
                       {selectedScenario?.label ?? t.fields.scenarioDefault}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="start">
-                    {SIMULATOR_SCENARIOS.map((scenario) => (
+                    {MESSAGE_SIMULATOR_SCENARIOS.map((scenario) => (
                       <SelectItem key={scenario.id} value={scenario.id}>
                         {scenario.label}
                       </SelectItem>
@@ -198,14 +208,14 @@ export function AgentSimulatorPage() {
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <div className="space-y-2">
-                  <Label htmlFor="sim-language">{t.fields.language}</Label>
+                  <Label htmlFor="msg-sim-language">{t.fields.language}</Label>
                   <Select
                     value={responseLanguage}
                     onValueChange={(value) => {
                       if (value) setResponseLanguage(value);
                     }}
                   >
-                    <SelectTrigger id="sim-language" className="w-full bg-card">
+                    <SelectTrigger id="msg-sim-language" className="w-full bg-card">
                       <SelectValue>{languageLabel}</SelectValue>
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -218,9 +228,9 @@ export function AgentSimulatorPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sim-brand">{t.fields.brand}</Label>
+                  <Label htmlFor="msg-sim-brand">{t.fields.brand}</Label>
                   <Input
-                    id="sim-brand"
+                    id="msg-sim-brand"
                     value={brandName}
                     onChange={(event) => setBrandName(event.target.value)}
                   />
@@ -228,23 +238,23 @@ export function AgentSimulatorPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sim-caption">{t.fields.caption}</Label>
-                <Textarea
-                  id="sim-caption"
-                  rows={2}
-                  value={caption}
-                  onChange={(event) => setCaption(event.target.value)}
+                <Label htmlFor="msg-sim-participant">{t.fields.participant}</Label>
+                <Input
+                  id="msg-sim-participant"
+                  value={participantUsername}
+                  onChange={(event) => setParticipantUsername(event.target.value)}
+                  placeholder={t.fields.participantPlaceholder}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sim-carousel">{t.fields.carouselSummary}</Label>
+                <Label htmlFor="msg-sim-reply-prompt">{t.fields.replyPrompt}</Label>
                 <Textarea
-                  id="sim-carousel"
+                  id="msg-sim-reply-prompt"
                   rows={2}
-                  value={carouselSummary}
-                  onChange={(event) => setCarouselSummary(event.target.value)}
-                  placeholder={t.fields.carouselPlaceholder}
+                  value={replyPrompt}
+                  onChange={(event) => setReplyPrompt(event.target.value)}
+                  placeholder={t.fields.replyPromptPlaceholder}
                 />
               </div>
 
@@ -260,7 +270,7 @@ export function AgentSimulatorPage() {
                   addMessage: t.fields.addMessage,
                   authorPlaceholder: t.fields.authorPlaceholder,
                   brandCheckbox: t.fields.brandCheckbox,
-                  targetTitle: t.fields.targetComment,
+                  targetTitle: t.fields.targetMessage,
                   targetAuthorPlaceholder: t.fields.targetAuthorPlaceholder,
                 }}
               />

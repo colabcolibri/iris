@@ -13,6 +13,7 @@ export type ShellMessages = {
     stores: string;
     webhooks: string;
     simulator: string;
+    messageSimulator: string;
     agentRuns: string;
     settings: string;
     persona: string;
