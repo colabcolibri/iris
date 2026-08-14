@@ -5,7 +5,7 @@ export function createCatalogSearchProductsTool(): HarnessTool {
   return {
     name: "search_products",
     description:
-      "Busca produtos ativos por texto (nome, slug, descrição). Retorna items, totalMatched e suggestions quando vazio.",
+      "Search active products by text (name, slug, description). Returns items, totalMatched, and suggestions when empty.",
     async execute(ctx, args) {
       const query = typeof args.query === "string" ? args.query : "";
       const limit =

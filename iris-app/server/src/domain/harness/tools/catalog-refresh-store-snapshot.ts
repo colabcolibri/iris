@@ -6,7 +6,7 @@ export function createCatalogRefreshStoreSnapshotTool(): HarnessTool {
   return {
     name: "refresh_store_snapshot",
     description:
-      "Atualiza snapshot da loja para um produto linkado e retorna a view resolvida. Rate limit por sessão.",
+      "Refresh the store snapshot for a linked product and return the resolved view. Session rate limit applies.",
     async execute(ctx, args) {
       if (ctx.refreshCount >= ctx.budget.maxRefreshPerSession) {
         return {

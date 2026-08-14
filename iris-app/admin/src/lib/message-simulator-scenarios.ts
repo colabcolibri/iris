@@ -41,6 +41,22 @@ export const MESSAGE_SIMULATOR_SCENARIOS: MessageSimulatorScenario[] = [
     target_text: "Manda o link do Jogo Grok pra eu comprar?",
   },
   {
+    id: "purchase-difficulty",
+    label: "Dificuldade na compra",
+    description: "Cliente relata erro ao finalizar compra — testa modo suporte e escalação.",
+    participant_username: "ana.shop",
+    reply_prompt: null,
+    thread: [
+      {
+        author: DEMO_BRAND_REPLY_HANDLE,
+        text: "Aqui está o link do Jogo Grok: https://loja.example/jogo-grok",
+        is_brand_reply: true,
+      },
+    ],
+    target_author: "ana.shop",
+    target_text: "Não consigo finalizar a compra, dá erro no checkout",
+  },
+  {
     id: "general-thanks",
     label: "Agradecimento",
     description: "Mensagem leve sem consulta de catálogo.",

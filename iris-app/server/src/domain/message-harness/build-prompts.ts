@@ -7,7 +7,7 @@ import { buildProductFactsBlock } from "./product-facts.ts";
 
 function formatProducts(context: MessageReplyContext): string {
   if (context.products.length === 0) {
-    return "(nenhum produto cadastrado)";
+    return "(no active products)";
   }
 
   return context.products.map((product) => formatResolvedProductForPrompt(product)).join("\n");
@@ -15,15 +15,15 @@ function formatProducts(context: MessageReplyContext): string {
 
 function formatThread(context: MessageReplyContext): string {
   if (context.thread.entries.length === 0) {
-    return "(sem histórico)";
+    return "(no thread history)";
   }
 
   return context.thread.entries
     .map((entry) => {
       const author =
         entry.direction === "outbound"
-          ? context.brandUsername ?? "marca"
-          : entry.authorUsername ?? context.conversation.participantUsername ?? "usuário";
+          ? context.brandUsername ?? "brand"
+          : entry.authorUsername ?? context.conversation.participantUsername ?? "user";
       return `[${entry.direction}] ${author}: ${entry.text}`;
     })
     .join("\n");
@@ -34,30 +34,31 @@ export function buildMessageTriagePrompt(
   restrictions: string,
 ): string {
   return [
-    "Você é o estágio de triagem de DMs do Instagram.",
-    "Classifique a última mensagem inbound e indique se deve responder.",
-    "Categorias válidas: product_inquiry, general_unclear, appreciation_sharing, conversation_sharter, harmful, advice_help.",
-    "Em DM a Íris sempre responde, exceto harmful (shouldReply=false).",
-    "Se product_inquiry, preencha productSlug quando identificar um produto da lista.",
-    "Responda APENAS JSON:",
-    '{"messageCategory":"...","productSlug":null,"shouldReply":true,"reason":"...","reasoning":"..."}',
+    "You are the Instagram DM triage stage.",
+    "Classify the latest inbound message and decide whether to reply.",
+    "Valid messageCategory values: product_inquiry, general_unclear, appreciation_sharing, conversation_sharter, harmful, advice_help.",
+    "Also detect support difficulty: supportIntent (none | purchase_difficulty | order_issue | delivery_payment | general_help) and supportUrgency (low | medium | high).",
+    "Examples of purchase_difficulty: cannot checkout, payment error. order_issue: my order, tracking. Raise urgency when the customer repeats the problem or shows frustration.",
+    "In DMs Iris always replies except harmful (shouldReply=false).",
+    "When messageCategory is product_inquiry, set productSlug when you identify a product from the list.",
+    "Reply with JSON only:",
+    '{"messageCategory":"...","productSlug":null,"shouldReply":true,"supportIntent":"none","supportUrgency":"low","reason":"...","reasoning":"..."}',
     "",
-    `Persona marca: ${context.persona.brandName ?? "(sem nome)"}`,
-    `Idioma: ${context.persona.responseLanguage}`,
+    `Brand persona: ${context.persona.brandName ?? "(unnamed)"}`,
     "",
-    "Produtos ativos:",
+    "Active products:",
     formatProducts(context),
     "",
     "Thread:",
     formatThread(context),
     "",
-    "Mensagem alvo:",
-    context.targetMessage.text ?? "(vazio)",
+    "Target message:",
+    context.targetMessage.text ?? "(empty)",
     "",
-    "Restrições:",
-    restrictions || "(nenhuma)",
+    "Restrictions:",
+    restrictions || "(none)",
     context.conversation.replyPrompt
-      ? `\nBriefing da conversa:\n${context.conversation.replyPrompt}`
+      ? `\nConversation briefing:\n${context.conversation.replyPrompt}`
       : "",
   ].join("\n");
 }
@@ -69,33 +70,33 @@ export function buildMessageDraftPrompt(
   category: MessageCategory,
 ): string {
   return [
-    "Você redige a resposta em DM do Instagram.",
-    `Categoria triada: ${category}`,
-    `Limite: ${maxChars} caracteres.`,
-    "Responda só com o texto final da mensagem, sem JSON.",
+    "You write the Instagram DM reply.",
+    `Triaged category: ${category}`,
+    `Character limit: ${maxChars}.`,
+    "Return only the final message text — no JSON.",
     "",
-    "Alma (dm_soul):",
-    agentContent.dmSoul || "(vazio)",
+    "Soul (dm_soul):",
+    agentContent.dmSoul || "(empty)",
     "",
-    "Página (dm_page):",
-    agentContent.dmPage || "(vazio)",
+    "Page (dm_page):",
+    agentContent.dmPage || "(empty)",
     "",
-    "Conhecimento (dm_knowledge):",
-    agentContent.dmKnowledge || "(vazio)",
+    "Knowledge (dm_knowledge):",
+    agentContent.dmKnowledge || "(empty)",
     "",
-    "Restrições:",
-    agentContent.dmRestrictions || "(nenhuma)",
+    "Restrictions:",
+    agentContent.dmRestrictions || "(none)",
     "",
-    "Produtos:",
+    "Products:",
     formatProducts(context),
     "",
     "Thread:",
     formatThread(context),
     "",
-    "Mensagem a responder:",
-    context.targetMessage.text ?? "(vazio)",
+    "Message to reply to:",
+    context.targetMessage.text ?? "(empty)",
     context.conversation.replyPrompt
-      ? `\nBriefing da conversa:\n${context.conversation.replyPrompt}`
+      ? `\nConversation briefing:\n${context.conversation.replyPrompt}`
       : "",
   ].join("\n");
 }
@@ -113,21 +114,21 @@ export function buildMessageVerifyPrompt(
       : null;
 
   return [
-    "Verifique o rascunho de DM antes do envio.",
-    "Confira se preços, URLs e nomes de produto citados batem com os fatos abaixo.",
-    "Responda APENAS JSON:",
+    "Verify the DM draft before sending.",
+    "Check that prices, URLs, and product names match the facts below.",
+    "Reply with JSON only:",
     '{"approved":true,"harmful":false,"policyViolations":[],"reason":"...","reasoning":"...","finalText":"..."}',
     "",
-    `Limite: ${maxChars} caracteres.`,
+    `Character limit: ${maxChars}.`,
     "",
-    "Restrições:",
-    agentContent.dmRestrictions || "(nenhuma)",
+    "Restrictions:",
+    agentContent.dmRestrictions || "(none)",
     "",
-    factsBlock ? `Fatos de produto (referência):\n${factsBlock}\n` : "",
+    factsBlock ? `Product facts (reference):\n${factsBlock}\n` : "",
     "Thread:",
     formatThread(context),
     "",
-    "Rascunho:",
+    "Draft:",
     draftText,
   ].join("\n");
 }

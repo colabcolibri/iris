@@ -34,6 +34,7 @@ export type AgentLoopTurnAction =
 
 export type AgentLoopTerminalStatus =
   | "finished"
+  | "escalated_operator"
   | "budget_exceeded"
   | "timeout"
   | "invalid_response"

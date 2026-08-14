@@ -61,6 +61,8 @@ function terminalBadgeClass(status: string | null): string {
       return "bg-destructive/15 text-destructive";
     case "budget_exceeded":
       return "bg-amber-500/15 text-amber-800 dark:text-amber-200";
+    case "escalated_operator":
+      return "bg-sky-500/15 text-sky-800 dark:text-sky-200";
     case "skipped_triage":
       return "bg-muted text-muted-foreground";
     default:

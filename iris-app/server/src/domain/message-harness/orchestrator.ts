@@ -73,6 +73,8 @@ export async function runMessageHarness(
       reason: triage.reason,
       productSlug: triage.productSlug,
       messageCategory: triage.messageCategory,
+      supportIntent: triage.supportIntent,
+      supportUrgency: triage.supportUrgency,
     },
     harness: input.harness,
     onLoopStep: async (loopStep) => {
@@ -109,6 +111,15 @@ export async function runMessageHarness(
       messageCategory: triage.messageCategory,
       steps,
       finalText: null,
+    };
+  }
+
+  if (draft.loopTerminalStatus === "escalated_operator") {
+    return {
+      terminalStatus: "escalated_operator",
+      messageCategory: triage.messageCategory,
+      steps,
+      finalText: draft.draftText,
     };
   }
 

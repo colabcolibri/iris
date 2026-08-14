@@ -3,6 +3,7 @@ import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { buildDraftContextSummary, buildDraftPrompt } from "./build-harness-prompt.ts";
 import type { DraftDecisionJson } from "./decision-json.ts";
+import { completeAgentPrompt } from "./agent-prompt.ts";
 import { stageLlmFromCompletion } from "./stage-llm.ts";
 import type { ReplyTier } from "./reply-tier.ts";
 import type { StageResult } from "./types.ts";
@@ -17,13 +18,15 @@ export type DraftStageInput = {
 
 export async function runDraftStage(input: DraftStageInput): Promise<StageResult> {
   const contextSummary = buildDraftContextSummary(input.context, input.tier);
-  const prompt = buildDraftPrompt(
+  const promptBody = buildDraftPrompt(
     input.context,
     input.agentContent,
     input.maxChars,
     input.tier,
   );
-  const completion = await input.llm.complete(prompt);
+  const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+    complement: "publicReplyOnly",
+  });
   const draftText = completion.text.trim().slice(0, input.maxChars);
 
   const structured: DraftDecisionJson = {

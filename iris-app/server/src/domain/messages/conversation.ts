@@ -11,6 +11,9 @@ export type Conversation = {
   replyMode: ConversationReplyMode;
   replyPrompt: string | null;
   operatorReadAt: string | null;
+  aiLockedUntil: string | null;
+  aiLockedAt: string | null;
+  aiLockedReason: string | null;
   createdAt: string;
   updatedAt: string;
 };

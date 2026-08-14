@@ -46,17 +46,19 @@ export function renderLoopTranscriptForPrompt(transcript: AgentLoopTranscript): 
 
   const lines = transcript.entries.map((entry) => {
     if (entry.kind === "action") {
-      return `[turn ${entry.turnIndex}] ação: ${entry.action} ${sanitizeToolJson(entry.payload)}`;
+      return `[turn ${entry.turnIndex}] action: ${entry.action} ${sanitizeToolJson(entry.payload)}`;
     }
     if (entry.kind === "observation") {
-      return `[turn ${entry.turnIndex}] observação (${entry.toolName}): ${sanitizeToolJson(entry.payload)}`;
+      return `[turn ${entry.turnIndex}] observation (${entry.toolName}): ${sanitizeToolJson(entry.payload)}`;
     }
-    return `[turn ${entry.turnIndex}] nota: ${entry.message}`;
+    return `[turn ${entry.turnIndex}] note: ${entry.message}`;
   });
 
-  return ["", "Histórico do loop (ações e observações — use para decidir o próximo passo):", ...lines].join(
-    "\n",
-  );
+  return [
+    "",
+    "Loop history (actions and observations — use to decide the next step):",
+    ...lines,
+  ].join("\n");
 }
 
 export function serializeLoopTranscript(transcript: AgentLoopTranscript): string {

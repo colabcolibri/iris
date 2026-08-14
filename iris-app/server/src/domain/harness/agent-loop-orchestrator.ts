@@ -4,8 +4,18 @@ import type { HarnessToolContext } from "../../ports/harness-tool.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
 import type { HarnessToolRegistry } from "./harness-tool-registry.ts";
 import { parseLlmJson } from "../reply-harness/parse-llm-json.ts";
+import { finalizeAgentPrompt } from "../reply-harness/agent-prompt.ts";
 import { stageLlmFromCompletion } from "../reply-harness/stage-llm.ts";
 import type { MessageCategory } from "../message-harness/message-category.ts";
+import {
+  customerStillReportingDifficulty,
+  findSimilarPriorBrandReply,
+} from "../message-harness/dm-thread-support.ts";
+import {
+  hasActiveSupportIntent,
+  type SupportIntent,
+  type SupportUrgency,
+} from "../message-harness/support-intent.ts";
 import { formatResolvedProductForPrompt } from "../products/product-field-resolver.ts";
 import type { ResolvedProductView } from "../products/resolved-product-view.ts";
 import { resolveProductViewBySlug } from "./resolve-product-view.ts";
@@ -32,6 +42,8 @@ export type AgentLoopTriageHints = {
   reason?: string | null;
   productSlug?: string | null;
   messageCategory?: MessageCategory | null;
+  supportIntent?: SupportIntent | null;
+  supportUrgency?: SupportUrgency | null;
 };
 
 export type RunAgentLoopInput = {
@@ -50,15 +62,15 @@ export type RunAgentLoopInput = {
 
 function formatThread(context: MessageReplyContext): string {
   if (context.thread.entries.length === 0) {
-    return "(sem histórico)";
+    return "(no thread history)";
   }
 
   return context.thread.entries
     .map((entry) => {
       const author =
         entry.direction === "outbound"
-          ? context.brandUsername ?? "marca"
-          : entry.authorUsername ?? context.conversation.participantUsername ?? "usuário";
+          ? context.brandUsername ?? "brand"
+          : entry.authorUsername ?? context.conversation.participantUsername ?? "user";
       return `[${entry.direction}] ${author}: ${entry.text}`;
     })
     .join("\n");
@@ -70,51 +82,78 @@ export function buildAgentLoopPrompt(
   transcript: AgentLoopTranscript,
 ): string {
   const focusBlock = focusProduct
-    ? `Produto em foco (triagem):\n${formatResolvedProductForPrompt(focusProduct)}`
-    : "Nenhum produto em foco — use search_products se precisar.";
+    ? `Focus product (from triage):\n${formatResolvedProductForPrompt(focusProduct)}`
+    : "No focus product — use search_products if needed.";
 
   const triageBlock = input.triageHints?.reason
     ? [
-        "Contexto da triagem:",
-        `- categoria: ${input.triageHints.messageCategory ?? input.messageCategory}`,
-        `- productSlug: ${input.triageHints.productSlug ?? "(nenhum)"}`,
-        `- raciocínio: ${input.triageHints.reason}`,
-        "- Se search_products retornar vazio e o produto não existir, responda com finish explicando educadamente.",
-        "- Não repita a mesma tool com os mesmos argumentos.",
+        "Triage context:",
+        `- category: ${input.triageHints.messageCategory ?? input.messageCategory}`,
+        `- productSlug: ${input.triageHints.productSlug ?? "(none)"}`,
+        `- reasoning: ${input.triageHints.reason}`,
+        input.triageHints.supportIntent && input.triageHints.supportIntent !== "none"
+          ? `- supportIntent: ${input.triageHints.supportIntent} (urgency ${input.triageHints.supportUrgency ?? "medium"})`
+          : null,
+        "- If search_products returns empty and the product does not exist, finish with a polite explanation.",
+        "- Do not repeat the same tool with identical arguments.",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
+
+  const supportBlock =
+    input.triageHints?.supportIntent && input.triageHints.supportIntent !== "none"
+      ? [
+          "Support mode active:",
+          "- Prioritize empathy and clarifying the customer's real problem.",
+          "- Do not resend catalog links or prices when the customer reports purchase/order difficulty.",
+          "- If you cannot resolve safely, call notify_operator with an honest customerMessage.",
+          "- Avoid repeating standardized replies already sent in the thread.",
+        ].join("\n")
+      : "";
+
+  const operatorToolBlock = input.toolContext.operatorNotification
+    ? [
+        "Human escalation:",
+        "- notify_operator is available for unresolved doubts, order issues, or frustrated customers.",
+        "- Always include customerMessage (text the customer will receive) stating the case will be reviewed internally.",
       ].join("\n")
     : "";
 
   const base = [
-    "Você redige resposta em DM do Instagram usando tools de catálogo.",
-    `Categoria triada: ${input.messageCategory}`,
-    `Limite final: ${input.maxChars} caracteres.`,
+    "You write Instagram DM replies using catalog tools.",
+    `Triaged category: ${input.messageCategory}`,
+    `Final character limit: ${input.maxChars}.`,
     "",
-    "Responda APENAS JSON por turno:",
-    '{"action":"call_tool","tool":"nome","arguments":{...}}',
-    'ou {"action":"finish","text":"resposta final"}',
+    "Reply with JSON only on each turn:",
+    '{"action":"call_tool","tool":"name","arguments":{...}}',
+    'or {"action":"notify_operator","arguments":{"reason":"...","customerSummary":"...","customerMessage":"...","urgency":"low|medium|high"}}',
+    'or {"action":"finish","text":"final reply"}',
     "",
-    "Tools disponíveis:",
+    "Available tools:",
     input.registry.describeForPrompt(),
     "",
     focusBlock,
     triageBlock,
+    supportBlock,
+    operatorToolBlock,
     "",
-    "Alma (dm_soul):",
-    input.agentContent.dmSoul || "(vazio)",
+    "Soul (dm_soul):",
+    input.agentContent.dmSoul || "(empty)",
     "",
-    "Conhecimento (dm_knowledge):",
-    input.agentContent.dmKnowledge || "(vazio)",
+    "Knowledge (dm_knowledge):",
+    input.agentContent.dmKnowledge || "(empty)",
     "",
-    "Restrições:",
-    input.agentContent.dmRestrictions || "(nenhuma)",
+    "Restrictions:",
+    input.agentContent.dmRestrictions || "(none)",
     "",
     "Thread:",
     formatThread(input.context),
     "",
-    "Mensagem a responder:",
-    input.context.targetMessage.text ?? "(vazio)",
+    "Message to reply to:",
+    input.context.targetMessage.text ?? "(empty)",
     input.context.conversation.replyPrompt
-      ? `\nBriefing:\n${input.context.conversation.replyPrompt}`
+      ? `\nConversation briefing:\n${input.context.conversation.replyPrompt}`
       : "",
   ]
     .filter(Boolean)
@@ -123,7 +162,15 @@ export function buildAgentLoopPrompt(
   return base + renderLoopTranscriptForPrompt(transcript);
 }
 
-function parseTurnAction(raw: string): AgentLoopTurnAction | null {
+function readTurnArguments(parsed: Record<string, unknown>): Record<string, unknown> {
+  return parsed.arguments &&
+    typeof parsed.arguments === "object" &&
+    !Array.isArray(parsed.arguments)
+    ? (parsed.arguments as Record<string, unknown>)
+    : {};
+}
+
+export function parseAgentLoopTurnAction(raw: string): AgentLoopTurnAction | null {
   const parsed = parseLlmJson<Record<string, unknown>>(raw);
   if (!parsed || typeof parsed.action !== "string") {
     return null;
@@ -136,17 +183,18 @@ function parseTurnAction(raw: string): AgentLoopTurnAction | null {
 
   if (parsed.action === "call_tool") {
     const tool = typeof parsed.tool === "string" ? parsed.tool : "";
-    const args =
-      parsed.arguments && typeof parsed.arguments === "object" && !Array.isArray(parsed.arguments)
-        ? (parsed.arguments as Record<string, unknown>)
-        : {};
     if (!tool) {
       return null;
     }
-    return { action: "call_tool", tool, arguments: args };
+    return { action: "call_tool", tool, arguments: readTurnArguments(parsed) };
   }
 
-  return null;
+  // Atalho comum do modelo: {"action":"notify_operator","arguments":{...}}
+  return {
+    action: "call_tool",
+    tool: parsed.action,
+    arguments: readTurnArguments(parsed),
+  };
 }
 
 function isResolvedProductView(value: unknown): value is ResolvedProductView {
@@ -186,7 +234,11 @@ function buildPromptForTurn(
   focusProduct: ResolvedProductView | null,
   transcript: AgentLoopTranscript,
 ): string {
-  return buildAgentLoopPrompt(input, focusProduct, transcript);
+  return finalizeAgentPrompt(
+    buildAgentLoopPrompt(input, focusProduct, transcript),
+    input.context.persona,
+    "agentLoopPublic",
+  );
 }
 
 export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopRunResult> {
@@ -208,6 +260,24 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
         input.focusProductSlug,
       )
     : null;
+
+  const supportHints = input.triageHints;
+  if (
+    supportHints?.supportIntent &&
+    supportHints.supportIntent !== "none" &&
+    customerStillReportingDifficulty(input.context)
+  ) {
+    const priorReply = input.context.thread.entries
+      .filter((entry) => entry.direction === "outbound")
+      .at(-1)?.text;
+    if (priorReply && findSimilarPriorBrandReply(input.context, priorReply)) {
+      appendLoopSystemNote(
+        transcript,
+        0,
+        "customer still reports difficulty after a similar brand reply — change approach or call notify_operator",
+      );
+    }
+  }
 
   for (let turn = 0; turn < input.budget.maxTurns; turn += 1) {
     if (Date.now() - startedAt > input.budget.timeoutMs) {
@@ -235,7 +305,7 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
       await input.onStep(turnStep);
     }
 
-    const action = parseTurnAction(completion.text);
+    const action = parseAgentLoopTurnAction(completion.text);
     if (!action) {
       terminalStatus = "invalid_response";
       break;
@@ -243,6 +313,21 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
 
     if (action.action === "finish") {
       finalText = action.text.trim().slice(0, input.maxChars) || null;
+      if (
+        finalText &&
+        hasActiveSupportIntent({
+          supportIntent: input.triageHints?.supportIntent ?? "none",
+          supportUrgency: input.triageHints?.supportUrgency ?? "low",
+        }) &&
+        findSimilarPriorBrandReply(input.context, finalText)
+      ) {
+        appendLoopSystemNote(
+          transcript,
+          turn,
+          "reply too similar to the previous one — rewrite with empathy or escalate with notify_operator",
+        );
+        continue;
+      }
       terminalStatus = finalText ? "finished" : "invalid_response";
       break;
     }
@@ -257,7 +342,7 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
       appendLoopSystemNote(
         transcript,
         turn,
-        "tool duplicada bloqueada — use finish ou altere a estratégia",
+        "duplicate tool call blocked — use finish or change strategy",
       );
       continue;
     }
@@ -338,6 +423,16 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
           : "";
       finalText = text.trim().slice(0, input.maxChars) || null;
       terminalStatus = finalText ? "finished" : "invalid_response";
+      break;
+    }
+
+    if (action.tool === "notify_operator" && result.success) {
+      const text =
+        result.output && typeof result.output === "object" && "text" in result.output
+          ? String((result.output as { text: unknown }).text)
+          : "";
+      finalText = text.trim().slice(0, input.maxChars) || null;
+      terminalStatus = finalText ? "escalated_operator" : "invalid_response";
       break;
     }
 

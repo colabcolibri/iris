@@ -20,6 +20,12 @@ import {
 } from "./message-reply-mode.ts";
 import { assertCanReplyToConversation } from "./assert-can-reply-to-conversation.ts";
 import { resolveMessageRecipientForSend } from "./resolve-message-recipient.ts";
+import {
+  readAiLockDaysFromSettings,
+  resolveConversationForAgentReply,
+  shouldSkipAgentReplyForConversation,
+} from "./conversation-agent-reply-guard.ts";
+import { lockConversationAfterOperatorEscalation } from "./conversation-ai-lock.ts";
 
 export type ProcessMessageReplyOptions = {
   trigger: "worker" | "webhook" | "manual";
@@ -80,7 +86,13 @@ async function processMessageReplyCore(
           agentContent,
           llm,
           maxChars: context.persona.maxChars,
-          harness: createMessageHarnessDeps(ctx),
+          harness: createMessageHarnessDeps(ctx, {
+            conversationId: conversation.id,
+            participantUsername: conversation.participantUsername,
+            participantDisplayName: conversation.participantDisplayName,
+            inboundMessageText: message.text,
+            inboundMessageTimestamp: message.igTimestamp ?? message.createdAt,
+          }),
         },
       },
     );
@@ -107,6 +119,14 @@ async function processMessageReplyCore(
 
     const replyText = harnessResult.finalText;
     harnessApproved = true;
+
+    if (harnessResult.terminalStatus === "escalated_operator") {
+      lockConversationAfterOperatorEscalation(
+        ctx.conversations,
+        conversation.id,
+        readAiLockDaysFromSettings(ctx),
+      );
+    }
 
     if (effectiveReplyMode === "draft") {
       ctx.messageReplies.upsertDraft({
@@ -224,6 +244,11 @@ export async function processMessageReply(
 
   const conversation = ctx.conversations.findById(message.conversationId);
   if (!conversation) {
+    return false;
+  }
+
+  const resolvedConversation = resolveConversationForAgentReply(ctx, conversation);
+  if (!isManual && shouldSkipAgentReplyForConversation(ctx, resolvedConversation)) {
     return false;
   }
 

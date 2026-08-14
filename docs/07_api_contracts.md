@@ -281,6 +281,7 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | GET | `/api/conversations/:id/messages` | admin | Thread + metadados da conversa |
 | POST | `/api/conversations/:id/sync` | admin + Meta | Importa mensagens da Graph API |
 | PATCH | `/api/conversations/:id` | admin | `reply_mode`, `reply_prompt` |
+| POST | `/api/conversations/:id/unlock-ai` | admin | Destrava IA após escalação (`ai_locked_until` limpo) |
 | GET | `/api/conversations/activity` | admin | Fila transversal (`kind=pending_approval` \| `recent`) |
 | GET | `/api/messages/:id/reply-context` | admin, agent | Contexto completo para resposta DM |
 | GET | `/api/messages/:id/reply-audit` | admin | Trilha do message-harness |
@@ -340,7 +341,7 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | POST | `/api/agent/simulator-scenarios` | admin | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
 | PUT | `/api/agent/simulator-scenarios/:id` | admin | Atualiza cenário (campos parciais permitidos) |
 | DELETE | `/api/agent/simulator-scenarios/:id` | admin | Remove cenário |
-| POST | `/api/agent/simulate` | admin | Simula resposta comentário ou DM (`channel=comment` \| `dm`). DM: `terminal_status` pode ser `approved`, `draft_failed`, `budget_exceeded`, `rejected_verify`, `blocked_harmful`. Sandbox — não publica na Meta. |
+| POST | `/api/agent/simulate` | admin | Simula resposta comentário ou DM (`channel=comment` \| `dm`). DM: `terminal_status` pode ser `approved`, `draft_failed`, `budget_exceeded`, `escalated_operator`, `rejected_verify`, `blocked_harmful`. Sandbox — não publica na Meta. |
 
 ## Settings
 
@@ -354,6 +355,9 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | PUT | `/api/settings/message-agent-content` | admin | Atualiza blocos DM |
 | GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `message_reply_mode`, delays, auto-monitor) |
 | PUT | `/api/settings/app` | admin | Atualiza app settings (parcial; mesmas validações) |
+| GET | `/api/settings/operator-notifications` | admin | Canais de alerta (`email`) e `ai_lock_days` (default 5) |
+| PUT | `/api/settings/operator-notifications` | admin | Atualiza email enabled/destination e dias de trava da IA |
+| POST | `/api/settings/operator-notifications/test` | admin | Dispara email HTML de teste |
 | GET | `/api/settings/llm` | admin | Status LLM (`configured`, `model`, `key_hint`, …) |
 | PUT | `/api/settings/llm` | admin | Configura LLM |
 | GET | `/api/settings/webhook-events` | admin | Eventos webhook (`limit`, `status`, `field`, `signature_valid`) |

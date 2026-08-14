@@ -2,6 +2,7 @@ import type { LlmCompleter } from "../ports/llm-completer.ts";
 import type { ReplyContextAssemblerDeps } from "../domain/reply-context/reply-context-assembler.ts";
 import { assembleReplyContext } from "../domain/reply-context/reply-context-assembler.ts";
 import { buildReplyPrompt } from "../domain/reply-context/build-reply-prompt.ts";
+import { completeAgentPrompt } from "../domain/reply-harness/agent-prompt.ts";
 import type { ReplyContext } from "../domain/reply-context/types.ts";
 import { defaultReplyPersona } from "../domain/settings/reply-persona-defaults.ts";
 import { DEFAULT_RESPONSE_LANGUAGE } from "../domain/reply-language/response-languages.ts";
@@ -23,8 +24,13 @@ export async function generateReply(
   input: ReplyAgentInput | { commentId: string } | { prebuiltContext: ReplyContext },
 ): Promise<string> {
   if ("prebuiltContext" in input) {
-    const prompt = buildReplyPrompt(input.prebuiltContext);
-    return options.llm.complete(prompt).then((result) => result.text);
+    const completion = await completeAgentPrompt(
+      options.llm,
+      input.prebuiltContext.persona,
+      buildReplyPrompt(input.prebuiltContext),
+      { complement: "publicReplyOnly" },
+    );
+    return completion.text;
   }
 
   if ("commentId" in input && options.assembler) {
@@ -33,8 +39,13 @@ export async function generateReply(
       throw new Error("comment not found for reply context");
     }
 
-    const prompt = buildReplyPrompt(context);
-    return options.llm.complete(prompt).then((result) => result.text);
+    const completion = await completeAgentPrompt(
+      options.llm,
+      context.persona,
+      buildReplyPrompt(context),
+      { complement: "publicReplyOnly" },
+    );
+    return completion.text;
   }
 
   const legacy = input as ReplyAgentInput;
@@ -63,5 +74,11 @@ export async function generateReply(
     },
   };
 
-  return options.llm.complete(buildReplyPrompt(context)).then((result) => result.text);
+  const completion = await completeAgentPrompt(
+    options.llm,
+    context.persona,
+    buildReplyPrompt(context),
+    { complement: "publicReplyOnly" },
+  );
+  return completion.text;
 }

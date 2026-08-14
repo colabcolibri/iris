@@ -152,6 +152,10 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
       )
       AND m.agent_reply_not_before IS NOT NULL
       AND datetime(m.agent_reply_not_before) <= datetime('now')
+      AND (
+        c.ai_locked_until IS NULL
+        OR datetime(c.ai_locked_until) <= datetime('now')
+      )
     ORDER BY datetime(COALESCE(m.ig_timestamp, m.created_at)) ASC
   `);
 

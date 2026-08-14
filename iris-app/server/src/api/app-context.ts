@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { AuthConfig } from "./auth.ts";
+import { MEDIA_ROOT } from "../paths.ts";
 import { createSqliteAssetRepository } from "../adapters/sqlite/asset-repository.ts";
 import { createSqliteCommentRepository } from "../adapters/sqlite/comment-repository.ts";
 import { createSqlitePostRepository } from "../adapters/sqlite/post-repository.ts";
@@ -38,6 +39,8 @@ import {
   type AdminLoginChallengeRepository,
 } from "../adapters/sqlite/admin-login-challenge-repository.ts";
 import type { EmailSender } from "../ports/email-sender.ts";
+import type { OperatorNotificationLogRepository } from "../domain/notifications/operator-notification-service.ts";
+import type { OperatorNotificationSettingsStore } from "../domain/notifications/operator-notification-service.ts";
 import type { AgentRunRepository } from "../ports/agent-run-repository.ts";
 import type { LlmCompleter } from "../ports/llm-completer.ts";
 import type { AssetRepository } from "../ports/asset-repository.ts";
@@ -97,7 +100,10 @@ import {
   createMcpConnectionVerifier,
   type McpConnectionVerifier,
 } from "../domain/mcp/mcp-connection-verifier.ts";
-import { MEDIA_ROOT } from "../paths.ts";
+import { createSqliteOperatorNotificationLogRepository } from "../adapters/sqlite/operator-notification-log-repository.ts";
+import {
+  createSqliteOperatorNotificationSettingsStore,
+} from "../adapters/sqlite/operator-notification-settings-repository.ts";
 
 export type AppContext = {
   db: DatabaseSync;
@@ -151,6 +157,8 @@ export type AppContext = {
   imageContextProvider: ImageContextProvider;
   replyContextAssembler: ReplyContextAssemblerDeps;
   messageReplyContextAssembler: MessageReplyContextAssemblerDeps;
+  operatorNotificationSettingsStore: OperatorNotificationSettingsStore;
+  operatorNotificationLogRepository: OperatorNotificationLogRepository;
 };
 
 export type AppContextOptions = {
@@ -301,6 +309,10 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const messageAgentContentStore = createSqliteMessageAgentContentStore(options.db);
   const agentRunSteps = createSqliteAgentRunStepRepository(options.db);
   const appSettingsStore = createSqliteAppSettingsStore(options.db);
+  const operatorNotificationSettingsStore =
+    createSqliteOperatorNotificationSettingsStore(options.db);
+  const operatorNotificationLogRepository =
+    createSqliteOperatorNotificationLogRepository(options.db);
   const simulatorScenarioStore = createSqliteSimulatorScenarioStore(options.db);
   const mcpConnectionStore = createSqliteMcpConnectionStore(options.db);
   const mcpPermissionStore = createSqliteMcpPermissionStore(options.db);
@@ -394,6 +406,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     messageAgentContentStore,
     agentRunSteps,
     appSettingsStore,
+    operatorNotificationSettingsStore,
+    operatorNotificationLogRepository,
     simulatorScenarioStore,
     imageContextProvider,
     replyContextAssembler,

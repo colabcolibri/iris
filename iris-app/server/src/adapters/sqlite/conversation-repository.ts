@@ -66,6 +66,18 @@ export function createSqliteConversationRepository(
     UPDATE conversations SET operator_read_at = ?, updated_at = ? WHERE id = ?
   `);
 
+  const lockAiStmt = db.prepare(`
+    UPDATE conversations
+    SET ai_locked_until = ?, ai_locked_at = ?, ai_locked_reason = ?, updated_at = ?
+    WHERE id = ?
+  `);
+
+  const unlockAiStmt = db.prepare(`
+    UPDATE conversations
+    SET ai_locked_until = NULL, ai_locked_at = NULL, ai_locked_reason = NULL, updated_at = ?
+    WHERE id = ?
+  `);
+
   const updateParticipantIgUserIdStmt = db.prepare(`
     UPDATE conversations SET participant_ig_user_id = ?, updated_at = ? WHERE id = ?
   `);
@@ -204,6 +216,24 @@ export function createSqliteConversationRepository(
 
     updateOperatorReadAt(conversationId: string, iso: string) {
       updateOperatorReadAtStmt.run(iso, nowIso(), conversationId);
+      const row = selectById.get(conversationId);
+      return row ? mapConversationRow(row as never) : null;
+    },
+
+    lockAi(conversationId, input) {
+      lockAiStmt.run(
+        input.lockedUntil,
+        input.lockedAt,
+        input.reason,
+        nowIso(),
+        conversationId,
+      );
+      const row = selectById.get(conversationId);
+      return row ? mapConversationRow(row as never) : null;
+    },
+
+    unlockAi(conversationId) {
+      unlockAiStmt.run(nowIso(), conversationId);
       const row = selectById.get(conversationId);
       return row ? mapConversationRow(row as never) : null;
     },

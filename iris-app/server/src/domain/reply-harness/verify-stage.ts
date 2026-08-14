@@ -3,6 +3,7 @@ import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { buildVerifyPrompt } from "./build-harness-prompt.ts";
 import type { VerifyDecisionJson } from "./decision-json.ts";
+import { completeAgentPrompt } from "./agent-prompt.ts";
 import { parseLlmJson } from "./parse-llm-json.ts";
 import { stageLlmFromCompletion } from "./stage-llm.ts";
 import type { StageResult, VerifyStageOutput } from "./types.ts";
@@ -16,13 +17,15 @@ export type VerifyStageInput = {
 };
 
 export async function runVerifyStage(input: VerifyStageInput): Promise<StageResult> {
-  const prompt = buildVerifyPrompt(
+  const promptBody = buildVerifyPrompt(
     input.context,
     input.agentContent,
     input.draftText,
     input.maxChars,
   );
-  const completion = await input.llm.complete(prompt);
+  const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+    complement: ["triageJsonNote", "verifyFinalText"],
+  });
   const raw = completion.text;
   const parsed = parseLlmJson<VerifyStageOutput>(raw);
 

@@ -9,6 +9,10 @@ import { createSqliteAgentRunRepository } from "../../adapters/sqlite/agent-run-
 import { createSqliteAgentRunStepRepository } from "../../adapters/sqlite/agent-run-step-repository.ts";
 import { createSqliteReplyPersonaStore } from "../../adapters/sqlite/reply-persona-repository.ts";
 import { createSqliteMessageAgentContentStore } from "../../adapters/sqlite/message-agent-content-repository.ts";
+import { createLoggingEmailSender } from "../../adapters/email/logging-email-sender.ts";
+import { createSqliteOperatorNotificationLogRepository } from "../../adapters/sqlite/operator-notification-log-repository.ts";
+import { createSqliteOperatorNotificationSettingsStore } from "../../adapters/sqlite/operator-notification-settings-repository.ts";
+import { createSqliteAppSettingsStore } from "../../adapters/sqlite/app-settings-repository.ts";
 import { createTestLlmCompletion } from "../../ports/llm-completer.ts";
 import { simulateMessageReply } from "./simulate-message-reply.ts";
 
@@ -18,7 +22,7 @@ describe("simulateMessageReply", () => {
     const llm = {
       async complete(prompt: string) {
         call += 1;
-        if (prompt.includes("triagem de DMs")) {
+        if (prompt.includes("Instagram DM triage stage")) {
           return createTestLlmCompletion(
             JSON.stringify({
               messageCategory: "product_inquiry",
@@ -29,7 +33,7 @@ describe("simulateMessageReply", () => {
             }),
           );
         }
-        if (prompt.includes("tools de catálogo")) {
+        if (prompt.includes("Instagram DM replies using catalog tools")) {
           return createTestLlmCompletion(
             JSON.stringify({ action: "finish", text: "O vestido custa R$ 99." }),
           );
@@ -75,6 +79,11 @@ describe("simulateMessageReply", () => {
             getCredentials: () => null,
           },
           storeProviders: { get: () => { throw new Error("n/a"); } },
+          emailSender: createLoggingEmailSender(),
+          appSettingsStore: createSqliteAppSettingsStore(db),
+          operatorNotificationSettingsStore: createSqliteOperatorNotificationSettingsStore(db),
+          operatorNotificationLogRepository: createSqliteOperatorNotificationLogRepository(db),
+          publicBaseUrl: null,
           llm,
           agentRuns: createSqliteAgentRunRepository(db),
           agentRunSteps: createSqliteAgentRunStepRepository(db),

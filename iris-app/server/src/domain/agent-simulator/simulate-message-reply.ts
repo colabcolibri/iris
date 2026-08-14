@@ -17,6 +17,8 @@ import { getMessageAgentContentOrDefault } from "../settings/message-agent-conte
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../reply-language/response-languages.ts";
 import { createMessageHarnessDeps } from "../message-harness/create-message-harness-deps.ts";
+import { collectOperatorNotificationsFromHarnessSteps } from "../notifications/serialize-operator-notification-log.ts";
+import type { OperatorNotificationLogApi } from "../notifications/serialize-operator-notification-log.ts";
 import { serializeMessageHarnessAudit } from "../reply-audit/serialize-message-harness-audit.ts";
 import {
   normalizeSimulateTargetComment,
@@ -46,6 +48,11 @@ export type SimulateMessageReplyDeps = {
   productFieldPolicies: ProductFieldPolicyRepository;
   storeConnections: StoreConnectionRepository;
   storeProviders: StoreProviderRegistry;
+  emailSender: import("../../ports/email-sender.ts").EmailSender;
+  appSettingsStore: import("../../ports/app-settings-store.ts").AppSettingsStore;
+  operatorNotificationSettingsStore: import("../notifications/operator-notification-service.ts").OperatorNotificationSettingsStore;
+  operatorNotificationLogRepository: import("../notifications/operator-notification-service.ts").OperatorNotificationLogRepository;
+  publicBaseUrl?: string | null;
   llm: LlmCompleter | null;
   agentRuns: AgentRunRepository;
   agentRunSteps: AgentRunStepRepository;
@@ -57,6 +64,7 @@ export type SimulateMessageReplyResult = {
   terminal_status: MessageHarnessRunResult["terminalStatus"];
   message_category: MessageHarnessRunResult["messageCategory"];
   response_language: string;
+  operator_notifications: OperatorNotificationLogApi[];
 };
 
 export function resolveSimulateMessageReplyInput(
@@ -249,5 +257,8 @@ export async function simulateMessageReply(
     terminal_status: recorded.harness.terminalStatus,
     message_category: recorded.harness.messageCategory,
     response_language: context.persona.responseLanguage,
+    operator_notifications: collectOperatorNotificationsFromHarnessSteps(
+      recorded.harness.steps,
+    ),
   };
 }

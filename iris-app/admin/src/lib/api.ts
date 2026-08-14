@@ -638,6 +638,12 @@ export function updateConversation(
   });
 }
 
+export function unlockConversationAi(conversationId: string) {
+  return apiFetch<ConversationSummary>(`/api/conversations/${conversationId}/unlock-ai`, {
+    method: "POST",
+  });
+}
+
 export function fetchMessageActivity(kind: MessageActivityKind, limit = 20) {
   return apiFetch<{ kind: MessageActivityKind; items: MessageActivityItem[] }>(
     `/api/conversations/activity?kind=${encodeURIComponent(kind)}&limit=${limit}`,
@@ -925,8 +931,46 @@ export function fetchAppSettings() {
   return apiFetch<AppSettings>("/api/settings/app");
 }
 
+export type OperatorNotificationSettings = {
+  channels: {
+    email: {
+      enabled: boolean;
+      destination: string;
+    };
+  };
+  ai_lock_days: number;
+  updated_at: string;
+};
+
+export function fetchOperatorNotificationSettings() {
+  return apiFetch<OperatorNotificationSettings>("/api/settings/operator-notifications");
+}
+
+export function updateOperatorNotificationSettings(body: {
+  channels: {
+    email: {
+      enabled: boolean;
+      destination: string;
+    };
+  };
+  ai_lock_days?: number;
+}) {
+  return apiFetch<OperatorNotificationSettings>("/api/settings/operator-notifications", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export function testOperatorNotificationSettings() {
+  return apiFetch<{ ok: boolean; status: string }>(
+    "/api/settings/operator-notifications/test",
+    { method: "POST" },
+  );
+}
+
 export function updateAppSettings(body: {
   timezone?: string;
+  admin_locale?: AppLocale;
   reply_mode?: ReplyMode;
   auto_reply_enabled?: boolean;
   reply_delay_seconds?: number;
@@ -1151,12 +1195,24 @@ export type SimulateThreadMessage = {
   at?: string;
 };
 
+export type OperatorNotificationLog = {
+  id: string;
+  event_type: string;
+  channel: string;
+  status: "sent" | "skipped" | "failed";
+  payload_summary: string;
+  recipient: string | null;
+  error_message: string | null;
+  created_at: string;
+};
+
 export type SimulateReplyResult = {
   audit: ReplyAudit;
   final_text: string | null;
   terminal_status: ReplyAudit["terminal_status"];
   reply_tier: ReplyAudit["reply_tier"];
   response_language: string;
+  operator_notifications?: OperatorNotificationLog[];
 };
 
 export function simulateAgentReply(body: {

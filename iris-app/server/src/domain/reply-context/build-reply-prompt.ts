@@ -1,12 +1,10 @@
 import type { ReplyContext } from "./types.ts";
-import { buildResponseLanguageDirective, buildBrandLine } from "../reply-harness/prompt-language.ts";
+import { buildBrandLine } from "../reply-harness/prompt-language.ts";
 import { buildContextSection } from "../reply-harness/prompt-sections.ts";
 
 export function buildReplyPrompt(context: ReplyContext): string {
   const sections: string[] = [
     "Write an Instagram comment reply on behalf of the brand.",
-    "",
-    buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     "",
   ];
 
@@ -36,7 +34,6 @@ export function buildReplyPrompt(context: ReplyContext): string {
 
   sections.push(
     `Write a short, useful, on-brand reply. No hashtags. Maximum ${context.persona.maxChars} characters.`,
-    "REMINDER: the reply text MUST be in the configured response language above.",
   );
 
   return sections.filter((line) => line !== "").join("\n").trim();

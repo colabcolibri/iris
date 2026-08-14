@@ -5,6 +5,7 @@ import {
   buildSimpleDraftPrompt,
   buildTriagePrompt,
 } from "./build-harness-prompt.ts";
+import { finalizeAgentPrompt } from "./agent-prompt.ts";
 import { defaultAgentContent } from "../settings/agent-content-defaults.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
@@ -42,8 +43,13 @@ test("harness prompts are written in English", () => {
   assert.doesNotMatch(prompt, /Você classifica/);
 });
 
-test("harness prompts inject mandatory response language", () => {
-  const prompt = buildTriagePrompt(mockContext("fr"), defaultAgentContent().restrictions);
+test("harness prompts inject mandatory response language at send time", () => {
+  const context = mockContext("fr");
+  const prompt = finalizeAgentPrompt(
+    buildTriagePrompt(context, defaultAgentContent().restrictions),
+    context.persona,
+    "triageJsonNote",
+  );
   assert.match(prompt, /Response language \(MANDATORY\)/);
   assert.match(prompt, /French/);
 });

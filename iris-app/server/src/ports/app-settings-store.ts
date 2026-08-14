@@ -1,7 +1,9 @@
 import type { ReplyMode } from "../domain/posts/reply-mode.ts";
+import type { ServerAppLocale } from "../i18n/locale.ts";
 
 export type AppSettings = {
   timezone: string;
+  adminLocale: ServerAppLocale;
   replyMode: ReplyMode;
   /** Derivado de replyMode para compatibilidade com API legada. */
   autoReplyEnabled: boolean;

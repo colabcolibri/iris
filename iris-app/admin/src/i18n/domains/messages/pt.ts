@@ -66,6 +66,9 @@ export const messagesPt = {
     briefingPlaceholder:
       "Contexto específico desta conversa para a Iris…",
     pendingBadge: "{count} para responder",
+    aiLockedBadge: "IA pausada",
+    unlockAi: "Retomar IA",
+    unlockAiAria: "Destravar respostas automáticas da IA nesta conversa",
     windowOpen: "Janela aberta",
     windowClosed: "Janela fechada",
     pendingBadgeShort: "Pendente",
@@ -119,6 +122,8 @@ export const messagesPt = {
     inboxEmpty: "Nenhuma conversa nova encontrada no Instagram.",
     importFailed: "Falha ao importar conversas do Instagram.",
     conversationSynced: "Conversa sincronizada.",
+    aiUnlocked: "IA retomada nesta conversa.",
+    aiUnlockFailed: "Falha ao retomar a IA.",
     syncFailed: "Falha ao sincronizar.",
     replyModeUpdated: "Modo de resposta atualizado.",
     replyModeFailed: "Falha ao salvar modo.",

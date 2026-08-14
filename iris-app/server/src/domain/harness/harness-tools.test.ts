@@ -52,6 +52,7 @@ describe("harness tool registry", () => {
     assert.ok(registry.get("search_products"));
     assert.ok(registry.get("get_resolved_product"));
     assert.ok(registry.get("finish_draft"));
+    assert.ok(registry.get("notify_operator"));
   });
 });
 

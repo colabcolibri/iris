@@ -27,6 +27,8 @@ flowchart TB
   V -->|fail| RV[rejected_verify]
   L -->|no final text| DF[draft_failed]
   L -->|budget exhausted| BE[budget_exceeded]
+  L -->|notify_operator| EO[escalated_operator]
+  EO --> N[operator email]
   T -->|harmful| BH[blocked_harmful]
 
   loop -.->|persist per turn| S[(agent_run_steps.llm_context_json)]
@@ -47,5 +49,6 @@ flowchart TB
 | `approved` | verify passou com texto final |
 | `draft_failed` | loop não produziu texto (sem verify) |
 | `budget_exceeded` | turnos/tools/timeout esgotados |
+| `escalated_operator` | tool `notify_operator` — handoff ao operador |
 | `rejected_verify` | verify rodou e barrou |
 | `blocked_harmful` | triagem bloqueou |

@@ -2,6 +2,7 @@ import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { buildLightVerifyPrompt } from "./build-harness-prompt.ts";
 import type { VerifyDecisionJson } from "./decision-json.ts";
+import { completeAgentPrompt } from "./agent-prompt.ts";
 import { parseLlmJson } from "./parse-llm-json.ts";
 import { stageLlmFromCompletion } from "./stage-llm.ts";
 import type { StageResult } from "./types.ts";
@@ -87,8 +88,10 @@ export async function runLightVerifyStage(input: LightVerifyStageInput): Promise
   }
 
   if (input.llm) {
-    const prompt = buildLightVerifyPrompt(input.context, trimmed, input.maxChars);
-    const completion = await input.llm.complete(prompt);
+    const promptBody = buildLightVerifyPrompt(input.context, trimmed, input.maxChars);
+    const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+      complement: ["triageJsonNote", "verifyFinalText"],
+    });
     const raw = completion.text;
     const parsed = parseLlmJson<VerifyDecisionJson>(raw);
 

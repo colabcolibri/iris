@@ -38,6 +38,11 @@ export const settingsEn = {
       title: "DM agent",
       description: "Global mode and private inbox queue.",
     },
+    operatorNotifications: {
+      id: "operator-notifications",
+      title: "Operator alerts",
+      description: "Email when the DM agent escalates a case for human review.",
+    },
     mcpConnection: {
       id: "mcp",
       title: "MCP connection",
@@ -286,6 +291,28 @@ export const settingsEn = {
       testFailed: "Failed to test connection.",
       disconnected: "Instagram disconnected.",
       disconnectFailed: "Could not disconnect Instagram.",
+    },
+  },
+  operatorNotifications: {
+    title: "Operator alerts",
+    description:
+      "When the DM agent calls notify_operator, you receive an email with case context.",
+    help:
+      "The agent tells the customer the case will be reviewed internally. Enable email to get automatic alerts.",
+    emailEnabled: "Send email alerts",
+    emailDestination: "Operator email",
+    emailPlaceholder: "you@company.com",
+    aiLockDays: "Resume AI automatically after (days)",
+    aiLockDaysHelp:
+      "After escalation, AI stays silent in that thread until you unlock or this period passes (checked on the next inbound message).",
+    save: "Save",
+    sendTest: "Send test",
+    toasts: {
+      loadFailed: "Failed to load alerts.",
+      saved: "Alerts saved.",
+      saveFailed: "Failed to save alerts.",
+      testSent: "Test email sent.",
+      testFailed: "Failed to send test — check SMTP and destination.",
     },
   },
 } satisfies SettingsMessages;

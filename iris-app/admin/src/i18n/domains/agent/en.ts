@@ -122,6 +122,7 @@ export const agentEn = {
       rejectedVerify: "rejected at verification",
       draftFailed: "draft failed",
       budgetExceeded: "budget exceeded",
+      escalatedOperator: "escalated to operator",
     },
     toasts: {
       loadFailed: "Failed to load runs.",
@@ -230,6 +231,16 @@ export const agentEn = {
     toasts: {
       targetMessageRequired: "Enter the target message.",
       simulateFailed: "Simulation failed.",
+    },
+    operatorNotifications: {
+      title: "Operator notification",
+      none: "No operator notification was triggered in this simulation.",
+      channel: "Channel",
+      recipient: "Recipient",
+      statusSent: "Sent",
+      statusSkipped: "Skipped (channel off)",
+      statusFailed: "Failed",
+      error: "Error",
     },
   },
 } satisfies AgentMessages;

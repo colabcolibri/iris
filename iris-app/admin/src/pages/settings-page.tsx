@@ -11,6 +11,7 @@ import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { McpPermissionsCard } from "@/components/settings/mcp-permissions-card";
 import { AgentAutoReplyCard } from "@/components/settings/agent-auto-reply-card";
 import { MessageAgentAutoReplyCard } from "@/components/settings/message-agent-auto-reply-card";
+import { OperatorNotificationSettingsCard } from "@/components/settings/operator-notification-settings-card";
 import { AutoMonitorCard } from "@/components/settings/auto-monitor-card";
 import { InsightsRefreshCard } from "@/components/settings/insights-refresh-card";
 import { LlmSettingsCard } from "@/components/settings/llm-settings-card";
@@ -133,6 +134,12 @@ export function SettingsPage() {
         title: settings.sections.messageAgent.title,
         description: settings.sections.messageAgent.description,
         content: <MessageAgentAutoReplyCard embedded />,
+      },
+      {
+        id: settings.sections.operatorNotifications.id,
+        title: settings.sections.operatorNotifications.title,
+        description: settings.sections.operatorNotifications.description,
+        content: <OperatorNotificationSettingsCard embedded />,
       },
       {
         id: settings.sections.mcpConnection.id,

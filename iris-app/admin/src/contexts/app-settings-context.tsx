@@ -9,6 +9,7 @@ import { DEFAULT_TIMEZONE } from "@iris/domain/timezone";
 import { useAuthSession } from "@/contexts/auth-session-context";
 import { getDemoMode } from "@/demo/demo-mode-context";
 import { fetchAppSettings, updateAppSettings } from "@/lib/api";
+import { readStoredAppLocale } from "@/i18n/storage";
 import type { ReplyMode } from "@/lib/types";
 
 type AppSettingsContextValue = {
@@ -87,6 +88,13 @@ export function AppSettingsProvider({
     try {
       const settings = await fetchAppSettings();
       applySettings(settings);
+      if (!getDemoMode()) {
+        const storedLocale = readStoredAppLocale();
+        if (settings.admin_locale !== storedLocale) {
+          const saved = await updateAppSettings({ admin_locale: storedLocale });
+          applySettings(saved);
+        }
+      }
     } catch {
       // mantém default — 401 já invalida sessão autenticada via barramento
     } finally {

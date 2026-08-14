@@ -14,11 +14,13 @@ import {
   REPLY_MAX_AGE_DAYS_DEFAULT,
   normalizeReplyMaxAgeDays,
 } from "../../domain/settings/reply-max-age-settings.ts";
+import { parseServerLocale } from "../../i18n/locale.ts";
 
 const PRIMARY_ID = "primary";
 
 type AppSettingsRow = {
   timezone: string;
+  admin_locale: string | null;
   auto_reply_enabled: number;
   reply_mode: string | null;
   reply_delay_seconds: number;
@@ -54,6 +56,7 @@ function mapRow(row: AppSettingsRow): AppSettings {
 
   return {
     timezone: row.timezone,
+    adminLocale: parseServerLocale(row.admin_locale),
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
     replyDelaySeconds: Number(row.reply_delay_seconds ?? 0),
@@ -80,6 +83,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
   const selectOne = db.prepare(`
     SELECT
       timezone,
+      admin_locale,
       auto_reply_enabled,
       reply_mode,
       reply_delay_seconds,
@@ -99,6 +103,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
     INSERT INTO app_settings (
       id,
       timezone,
+      admin_locale,
       auto_reply_enabled,
       reply_mode,
       reply_delay_seconds,
@@ -111,9 +116,10 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       auto_monitor_interval_seconds,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       timezone = excluded.timezone,
+      admin_locale = excluded.admin_locale,
       auto_reply_enabled = excluded.auto_reply_enabled,
       reply_mode = excluded.reply_mode,
       reply_delay_seconds = excluded.reply_delay_seconds,
@@ -154,6 +160,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       upsertStmt.run(
         PRIMARY_ID,
         merged.timezone,
+        merged.adminLocale,
         autoReplyEnabled ? 1 : 0,
         replyMode,
         merged.replyDelaySeconds,

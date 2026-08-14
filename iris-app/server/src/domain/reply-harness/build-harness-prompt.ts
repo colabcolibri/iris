@@ -5,7 +5,6 @@ import {
   buildBrandBlock,
   buildMentionDirective,
   buildMentionVerifyNote,
-  buildResponseLanguageDirective,
   buildSignatureVerificationBlock,
 } from "./prompt-language.ts";
 import {
@@ -110,8 +109,6 @@ export function buildTriagePrompt(context: ReplyContext, restrictions: string): 
     "## Context",
     buildTriageContextSection(context),
     "",
-    buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
-    "",
     "Reply with valid JSON only:",
     '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"crisis"|"hate_violence"|"harmful"|"spam"|"off_topic"|"not_for_brand"|"conversation_stalled"|"thread_reply_limit"|"other","reason":"short label","reasoning":"brief explanation"}',
   ].join("\n");
@@ -136,7 +133,6 @@ export function buildSimpleDraftPrompt(
     "- Do NOT invent feelings, motives, or \"what is behind\" their short reaction.",
     "- Low evidence → low inference. Engaging is fine; pretending you understood unspoken meaning is not.",
     "",
-    buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     ...(brandBlock ? ["", brandBlock] : []),
     ...(mentionBlock ? ["", mentionBlock] : []),
     "",
@@ -147,7 +143,6 @@ export function buildSimpleDraftPrompt(
     buildContextSection(context, "simple"),
     "",
     `Character limit: ${maxChars}.`,
-    "REMINDER: the reply text MUST be in the configured response language above.",
   ].join("\n");
 }
 
@@ -163,7 +158,6 @@ export function buildFullDraftPrompt(
   return [
     "Write an Instagram comment reply on behalf of the brand.",
     "",
-    buildResponseLanguageDirective(context.persona, { forPublicReply: true }),
     ...(brandBlock ? ["", brandBlock] : []),
     ...(mentionBlock ? ["", mentionBlock] : []),
     "",
@@ -177,7 +171,6 @@ export function buildFullDraftPrompt(
     "",
     `Write a helpful on-brand reply. No hashtags. Maximum ${maxChars} characters.`,
     "Return only the reply text — no JSON.",
-    "REMINDER: the reply text MUST be in the configured response language above.",
   ].join("\n");
 }
 
@@ -199,7 +192,6 @@ export function buildVerifyPrompt(
   draftText: string,
   maxChars: number,
 ): string {
-  const language = buildResponseLanguageDirective(context.persona);
   const signatureBlock = buildSignatureVerificationBlock(context.persona);
   const mentionNote = buildMentionVerifyNote(context);
   const hasSignature = Boolean(signatureBlock);
@@ -208,11 +200,10 @@ export function buildVerifyPrompt(
     "You are the final auditor for automated Instagram replies.",
     "Validate whether the draft can be published.",
     "Set harmful=true for insults, harassment, or discriminatory content — in that case set approved=false.",
-    "Reject the draft if it is not written in the mandatory response language.",
+    "Reject the draft if it is not written in the configured response language.",
     'Reject with policyViolations including "over_inference" when the draft invents meaning, feelings, or interpretations the user did not express — especially on short acks, emojis, or laughter.',
     "Engaging warmly with a short reaction is OK; analyzing the reaction as if it were the post topic is not.",
     "",
-    language,
     ...(mentionNote ? ["", mentionNote] : []),
     ...(signatureBlock ? ["", signatureBlock] : []),
     "",
@@ -244,7 +235,6 @@ export function buildVerifyPrompt(
     hasSignature
       ? `When adding a closing, use body + ${JSON.stringify(SIGNATURE_SEPARATOR)} + sign-off (period on its own line). Skip the sign-off when identity is already clear in the body.`
       : "If approved=true and finalText is empty, the original draft will be used.",
-    "finalText MUST respect the mandatory response language.",
   ].join("\n");
 }
 
@@ -260,8 +250,7 @@ export function buildLightVerifyPrompt(
   return [
     "Audit this short Instagram reply draft.",
     "Set harmful=true for insults, harassment, or discriminatory content — in that case set approved=false.",
-    buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
-    "Reject if the draft is not in the mandatory response language.",
+    "Reject if the draft is not in the configured response language.",
     'Reject with policyViolations including "over_inference" if the draft invents what a short ack/emoji/laughter meant or projects the post theme onto it.',
     "Warm brief engagement is OK; interpretive essays about their short text are not.",
     ...(mentionNote ? ["", mentionNote] : []),

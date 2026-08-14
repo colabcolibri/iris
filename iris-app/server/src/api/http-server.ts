@@ -31,6 +31,10 @@ import {
 import { handleAppSettingsRoute } from "./routes/app-settings.ts";
 import { handleAgentContentSettingsRoute } from "./routes/settings-agent-content.ts";
 import { handleMessageAgentContentSettingsRoute } from "./routes/settings-message-agent-content.ts";
+import {
+  handleOperatorNotificationSettingsRoute,
+  handleOperatorNotificationTestRoute,
+} from "./routes/operator-notification-settings.ts";
 import { handleProductsRoute } from "./routes/products.ts";
 import { handleStoreConnectionsRoute } from "./routes/store-connections.ts";
 import { handleProductStoreRoute } from "./routes/product-store.ts";
@@ -316,6 +320,14 @@ async function handleRequest(
     }
 
     if (await handleMessageAgentContentSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleOperatorNotificationSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleOperatorNotificationTestRoute(routeRequest)) {
       return;
     }
 

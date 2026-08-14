@@ -1,11 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildReplyPrompt } from "./build-reply-prompt.ts";
+import { finalizeAgentPrompt } from "../reply-harness/agent-prompt.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 
-test("buildReplyPrompt includes context and mandatory language", () => {
-  const prompt = buildReplyPrompt({
-    persona: { ...defaultReplyPersona(), brandName: "Iris", responseLanguage: "en-US" },
+test("buildReplyPrompt includes context and mandatory language at send time", () => {
+  const persona = { ...defaultReplyPersona(), brandName: "Iris", responseLanguage: "en-US" };
+  const context = {
+    persona,
     post: {
       channel: "instagram",
       status: "published",
@@ -31,7 +33,8 @@ test("buildReplyPrompt includes context and mandatory language", () => {
     },
     brandUsername: null,
     targetComment: { authorUsername: "fan", text: "Hi", igCommentId: null },
-  });
+  };
+  const prompt = finalizeAgentPrompt(buildReplyPrompt(context), persona, "publicReplyOnly");
 
   assert.match(prompt, /Response language \(MANDATORY\)/);
   assert.match(prompt, /American English/);

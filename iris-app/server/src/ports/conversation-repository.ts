@@ -22,5 +22,10 @@ export type ConversationRepository = {
   updateReplyMode(conversationId: string, replyMode: ConversationReplyMode): Conversation | null;
   updateReplyPrompt(conversationId: string, replyPrompt: string | null): Conversation | null;
   updateOperatorReadAt(conversationId: string, iso: string): Conversation | null;
+  lockAi(
+    conversationId: string,
+    input: { lockedUntil: string; lockedAt: string; reason: string },
+  ): Conversation | null;
+  unlockAi(conversationId: string): Conversation | null;
   listRecent(limit: number): Conversation[];
 };

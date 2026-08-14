@@ -3,6 +3,7 @@ import type { AgentContent } from "../../ports/agent-content-store.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { buildTriagePrompt } from "./build-harness-prompt.ts";
 import type { TriageDecisionJson } from "./decision-json.ts";
+import { completeAgentPrompt } from "./agent-prompt.ts";
 import { parseLlmJson } from "./parse-llm-json.ts";
 import { stageLlmFromCompletion } from "./stage-llm.ts";
 import {
@@ -52,8 +53,10 @@ export async function runTriageStage(input: TriageStageInput): Promise<TriageSta
     return triageResultFromThreadBrake(threadBrake);
   }
 
-  const prompt = buildTriagePrompt(input.context, input.agentContent.restrictions);
-  const completion = await input.llm.complete(prompt);
+  const promptBody = buildTriagePrompt(input.context, input.agentContent.restrictions);
+  const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+    complement: "triageJsonNote",
+  });
   const raw = completion.text;
   const parsed = parseLlmJson<TriageStageOutput>(raw);
 

@@ -120,6 +120,7 @@ export const agentPt = {
       rejectedVerify: "rejeitado na verificação",
       draftFailed: "falha no rascunho",
       budgetExceeded: "budget esgotado",
+      escalatedOperator: "escalado ao operador",
     },
     toasts: {
       loadFailed: "Falha ao carregar execuções.",
@@ -228,6 +229,16 @@ export const agentPt = {
     toasts: {
       targetMessageRequired: "Informe a mensagem alvo.",
       simulateFailed: "Falha na simulação.",
+    },
+    operatorNotifications: {
+      title: "Notificação do operador",
+      none: "Nenhuma notificação disparada nesta simulação.",
+      channel: "Canal",
+      recipient: "Destinatário",
+      statusSent: "Enviada",
+      statusSkipped: "Ignorada (canal desligado)",
+      statusFailed: "Falhou",
+      error: "Erro",
     },
   },
 };

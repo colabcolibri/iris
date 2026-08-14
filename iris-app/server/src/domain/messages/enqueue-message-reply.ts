@@ -2,6 +2,10 @@ import type { AppContext } from "../../api/app-context.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { computeAgentReplyNotBefore } from "../comments/compute-agent-reply-not-before.ts";
 import {
+  resolveConversationForAgentReply,
+  shouldSkipAgentReplyForConversation,
+} from "./conversation-agent-reply-guard.ts";
+import {
   resolveEffectiveMessageReplyMode,
   shouldScheduleMessageReply,
 } from "./message-reply-mode.ts";
@@ -18,6 +22,11 @@ export function enqueueMessageReply(ctx: AppContext, messageId: string): boolean
 
   const conversation = ctx.conversations.findById(message.conversationId);
   if (!conversation) {
+    return false;
+  }
+
+  const resolvedConversation = resolveConversationForAgentReply(ctx, conversation);
+  if (shouldSkipAgentReplyForConversation(ctx, resolvedConversation)) {
     return false;
   }
 

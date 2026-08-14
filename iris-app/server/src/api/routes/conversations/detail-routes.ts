@@ -18,6 +18,7 @@ import { reconcileConversationPendingStatuses } from "../../../domain/messages/r
 import { markConversationReadUpTo } from "../../../domain/messages/mark-conversation-read.ts";
 import { purgeMessageHistory } from "../../../domain/messages/purge-message-history.ts";
 import { sendConversationReply } from "../../../domain/messages/send-conversation-reply.ts";
+import { refreshConversationAiLock } from "../../../domain/messages/conversation-ai-lock.ts";
 import { MAX_MESSAGE_REPLY_LENGTH } from "../messages/shared.ts";
 import { routeParam } from "../../route-resources.ts";
 import type { RouteMatch } from "../../route-types.ts";
@@ -150,7 +151,8 @@ export const conversationsDetailRouter = createRouter([
 
       reconcileConversationPendingStatuses(conversationId, match.ctx.messages);
 
-      let hydrated = conversation;
+      let hydrated = refreshConversationAiLock(match.ctx.conversations, conversation);
+
       const readiness = getMetaReadiness(match.ctx);
       if (readiness.ready) {
         hydrated = await hydrateConversationParticipantIfNeeded(conversation, {
@@ -265,6 +267,29 @@ export const conversationsDetailRouter = createRouter([
       }
 
       sendJson(match.res, 200, serializeConversation(updated));
+    },
+    { paramNames: ["conversationId"] },
+  ),
+
+  route(
+    "POST",
+    /^\/api\/conversations\/([^/]+)\/unlock-ai$/,
+    { admin: true },
+    async (match) => {
+      const conversationId = routeParam(match, "conversationId");
+      const conversation = requireConversation(match, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const unlocked = match.ctx.conversations.unlockAi(conversationId);
+      if (!unlocked) {
+        sendError(match.res, 404, "conversation not found");
+        return;
+      }
+
+      notifyMessagesChanged({ conversation_id: conversationId });
+      sendJson(match.res, 200, serializeConversation(unlocked));
     },
     { paramNames: ["conversationId"] },
   ),

@@ -1,5 +1,7 @@
 import { ReplyAuditTimeline } from "@/components/comments/reply-audit-timeline";
+import { OperatorNotificationResultCard } from "@/components/agent-simulator/operator-notification-result-card";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import type { OperatorNotificationLog } from "@/lib/api";
 import type { ReplyAudit } from "@/lib/types";
 
 type SimulatorResultPanelProps = {
@@ -14,6 +16,17 @@ type SimulatorResultPanelProps = {
   emptyTitle: string;
   emptyBody: string;
   noApprovedLabel: string;
+  operatorNotifications?: OperatorNotificationLog[] | null;
+  operatorNotificationLabels?: {
+    title: string;
+    none: string;
+    channel: string;
+    recipient: string;
+    statusSent: string;
+    statusSkipped: string;
+    statusFailed: string;
+    error: string;
+  };
 };
 
 export function SimulatorResultPanel({
@@ -28,6 +41,8 @@ export function SimulatorResultPanel({
   emptyTitle,
   emptyBody,
   noApprovedLabel,
+  operatorNotifications = null,
+  operatorNotificationLabels,
 }: SimulatorResultPanelProps) {
   const hasResult = Boolean(audit);
 
@@ -56,7 +71,14 @@ export function SimulatorResultPanel({
           ) : null}
 
           {audit ? (
-            <ReplyAuditTimeline
+            <>
+              {operatorNotificationLabels ? (
+                <OperatorNotificationResultCard
+                  notifications={operatorNotifications ?? []}
+                  labels={operatorNotificationLabels}
+                />
+              ) : null}
+              <ReplyAuditTimeline
               audit={audit}
               proposedReply={finalText}
               proposedReplyLanguageLabel={languageLabel}
@@ -69,6 +91,7 @@ export function SimulatorResultPanel({
                 durationMs: audit.session_summary?.durationMs ?? null,
               }}
             />
+            </>
           ) : null}
 
           {audit && !finalText ? (

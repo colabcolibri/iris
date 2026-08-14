@@ -6,6 +6,8 @@ export type TriageDecisionJson = {
   blockCategory: BlockCategory;
   reason: string;
   reasoning: string;
+  supportIntent?: string;
+  supportUrgency?: string;
 };
 
 export type DraftDecisionJson = {

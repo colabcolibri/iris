@@ -71,6 +71,9 @@ export function MessageSimulatorPage() {
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<ReplyAudit | null>(null);
   const [finalText, setFinalText] = useState<string | null>(null);
+  const [operatorNotifications, setOperatorNotifications] = useState<
+    import("@/lib/api").OperatorNotificationLog[]
+  >([]);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [dmContent, setDmContent] = useState({
     dmSoul: "",
@@ -109,6 +112,7 @@ export function MessageSimulatorPage() {
     setTargetText(form.targetText);
     setAudit(null);
     setFinalText(null);
+    setOperatorNotifications([]);
   }
 
   async function handleRun() {
@@ -120,6 +124,7 @@ export function MessageSimulatorPage() {
     setRunning(true);
     setAudit(null);
     setFinalText(null);
+    setOperatorNotifications([]);
 
     try {
       const threadPayload = thread
@@ -145,6 +150,7 @@ export function MessageSimulatorPage() {
 
       setAudit(result.audit);
       setFinalText(result.final_text);
+      setOperatorNotifications(result.operator_notifications ?? []);
     } catch (err) {
       toast.error(getApiErrorMessage(err, locale) || t.toasts.simulateFailed);
     } finally {
@@ -303,6 +309,8 @@ export function MessageSimulatorPage() {
             emptyTitle={t.empty.title}
             emptyBody={t.empty.body}
             noApprovedLabel={t.empty.noApproved}
+            operatorNotifications={operatorNotifications}
+            operatorNotificationLabels={t.operatorNotifications}
           />
         </div>
       </PageContainer.Content>

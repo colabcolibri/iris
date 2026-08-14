@@ -6,11 +6,13 @@ import type {
   VerifyStageOutput,
 } from "../reply-harness/types.ts";
 import type { MessageCategory } from "./message-category.ts";
+import type { SupportIntent, SupportUrgency } from "./support-intent.ts";
 
 export type MessageHarnessTerminalStatus =
   | "blocked_harmful"
   | "draft_failed"
   | "budget_exceeded"
+  | "escalated_operator"
   | "rejected_verify"
   | "approved";
 
@@ -40,6 +42,8 @@ export type MessageTriageStageOutput = {
   shouldReply?: boolean;
   reason?: string;
   reasoning?: string;
+  supportIntent?: string;
+  supportUrgency?: string;
 };
 
 export type MessageVerifyStageOutput = VerifyStageOutput;

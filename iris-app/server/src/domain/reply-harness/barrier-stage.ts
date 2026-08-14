@@ -1,7 +1,7 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { ReplyContext } from "../reply-context/types.ts";
 import { parseLlmJson } from "./parse-llm-json.ts";
-import { buildResponseLanguageDirective } from "./prompt-language.ts";
+import { completeAgentPrompt } from "./agent-prompt.ts";
 import { targetCommentLine } from "./prompt-sections.ts";
 import {
   barrierReplyMeetsRequirements,
@@ -91,8 +91,6 @@ function buildBarrierPrompt(
     "Understand the comment in any language; reply ONLY in the brand response language from config.",
     "No brand SOUL, product pitch, or playful persona.",
     "",
-    buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
-    "",
     `Barrier kind: ${kind}`,
     ...styleRules,
     "",
@@ -117,8 +115,11 @@ async function completeBarrierDraft(
   maxChars: number,
   attempt: number,
 ): Promise<{ text: string; reasoning: string; llm: StageResult["llm"] }> {
-  const prompt = buildBarrierPrompt(input.context, input.kind, maxChars, attempt);
-  const completion = await input.llm.complete(prompt, { maxOutputChars: maxChars + 200 });
+  const promptBody = buildBarrierPrompt(input.context, input.kind, maxChars, attempt);
+  const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+    complement: "barrierFinalText",
+    maxOutputChars: maxChars + 200,
+  });
   const parsed = parseLlmJson<BarrierLlmJson>(completion.text);
   const body = parsed?.finalText?.trim() ?? "";
   const text = ensureAuthorMention(body, input.context.targetComment.authorUsername);

@@ -18,7 +18,7 @@ test("loop transcript renders observations for next LLM turn", () => {
   appendLoopObservation(transcript, 0, "search_products", { items: [], totalMatched: 0 });
 
   const rendered = renderLoopTranscriptForPrompt(transcript);
-  assert.match(rendered, /observação \(search_products\)/);
+  assert.match(rendered, /observation \(search_products\)/);
   assert.match(rendered, /totalMatched/);
 
   const fingerprint = toolCallFingerprint("search_products", { query: "bolsa" });

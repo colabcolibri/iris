@@ -1,6 +1,8 @@
 import { Fragment } from "react";
 import { APP_LOCALES } from "@/i18n/types";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
+import { updateAppSettings } from "@/lib/api";
+import { getDemoMode } from "@/demo/demo-mode-context";
 import { cn } from "@/lib/utils";
 
 const LOCALE_SHORT = {
@@ -33,7 +35,12 @@ export function LanguageSwitcher({ className }: { className?: string }) {
           ) : null}
           <button
             type="button"
-            onClick={() => setLocale(item)}
+            onClick={() => {
+              setLocale(item);
+              if (!getDemoMode()) {
+                void updateAppSettings({ admin_locale: item }).catch(() => {});
+              }
+            }}
             className={cn(
               "rounded px-1.5 py-0.5 transition-colors",
               item === locale

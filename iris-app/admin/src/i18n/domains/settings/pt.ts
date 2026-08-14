@@ -36,6 +36,11 @@ export const settingsPt = {
       title: "Agente de DMs",
       description: "Modo global e fila no inbox privado.",
     },
+    operatorNotifications: {
+      id: "operator-notifications",
+      title: "Alertas do operador",
+      description: "Email quando o agente DM escala um caso para revisão humana.",
+    },
     mcpConnection: {
       id: "mcp",
       title: "Conexão MCP",
@@ -287,6 +292,28 @@ export const settingsPt = {
       testFailed: "Falha ao testar conexão.",
       disconnected: "Instagram desconectado.",
       disconnectFailed: "Não foi possível desconectar o Instagram.",
+    },
+  },
+  operatorNotifications: {
+    title: "Alertas do operador",
+    description:
+      "Quando o agente DM usa notify_operator, você recebe um email com o contexto do caso.",
+    help:
+      "O agente informa ao cliente que o caso será verificado internamente. Ative o email para ser avisado automaticamente.",
+    emailEnabled: "Enviar alertas por email",
+    emailDestination: "Email do operador",
+    emailPlaceholder: "voce@empresa.com",
+    aiLockDays: "Retomar IA automaticamente após (dias)",
+    aiLockDaysHelp:
+      "Após escalação, a IA fica em silêncio nesta conversa até você destravar ou passar esse prazo (avaliado na próxima mensagem).",
+    save: "Salvar",
+    sendTest: "Enviar teste",
+    toasts: {
+      loadFailed: "Falha ao carregar alertas.",
+      saved: "Alertas salvos.",
+      saveFailed: "Falha ao salvar alertas.",
+      testSent: "Email de teste enviado.",
+      testFailed: "Falha ao enviar teste — verifique SMTP e destino.",
     },
   },
 };

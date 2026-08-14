@@ -1,6 +1,7 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { MessageAgentContent } from "../../ports/message-agent-content-store.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
+import { completeAgentPrompt } from "../reply-harness/agent-prompt.ts";
 import { stageLlmFromCompletion } from "../reply-harness/stage-llm.ts";
 import { buildMessageDraftPrompt } from "./build-prompts.ts";
 import type { MessageCategory } from "./message-category.ts";
@@ -17,13 +18,15 @@ export type MessageDraftStageInput = {
 export async function runMessageDraftStage(
   input: MessageDraftStageInput,
 ): Promise<MessageStageResult> {
-  const prompt = buildMessageDraftPrompt(
+  const promptBody = buildMessageDraftPrompt(
     input.context,
     input.agentContent,
     input.maxChars,
     input.messageCategory,
   );
-  const completion = await input.llm.complete(prompt);
+  const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+    complement: "publicReplyOnly",
+  });
   const draftText = completion.text.trim().slice(0, input.maxChars);
 
   return {

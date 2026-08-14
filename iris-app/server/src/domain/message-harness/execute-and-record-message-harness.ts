@@ -15,7 +15,7 @@ import type { MessageHarnessRunResult, MessageStageResult } from "./types.ts";
 export function runStatusFromMessageHarnessTerminal(
   terminalStatus: string,
 ): AgentRunStatus {
-  if (terminalStatus === "approved") {
+  if (terminalStatus === "approved" || terminalStatus === "escalated_operator") {
     return "ok";
   }
   if (terminalStatus === "blocked_harmful") {

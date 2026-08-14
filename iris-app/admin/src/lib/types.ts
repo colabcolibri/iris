@@ -320,6 +320,10 @@ export type ConversationSummary = {
   pending_count: number;
   unread_count: number;
   can_reply?: boolean;
+  ai_locked?: boolean;
+  ai_locked_until?: string | null;
+  ai_locked_at?: string | null;
+  ai_locked_reason?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -570,6 +574,7 @@ export type AgentRunDetail = {
 
 export type AppSettings = {
   timezone: string;
+  admin_locale: "pt" | "en";
   reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
   reply_delay_seconds: number;

@@ -56,6 +56,8 @@ type ConversationDetailPanelProps = {
     text: string,
     replyToMessageId?: string | null,
   ) => void | Promise<void>;
+  onUnlockAi?: () => void | Promise<void>;
+  unlockingAi?: boolean;
   sendingConversationReply?: boolean;
 };
 
@@ -85,6 +87,8 @@ export function ConversationDetailPanel({
   onSaveDraft,
   onGenerateDraft,
   onConversationReply,
+  onUnlockAi,
+  unlockingAi = false,
   sendingConversationReply = false,
 }: ConversationDetailPanelProps) {
   const detail = useDomainMessages("messages").detail;
@@ -162,6 +166,11 @@ export function ConversationDetailPanel({
                   })}
                 </Badge>
               ) : null}
+              {conversation.ai_locked ? (
+                <Badge variant="secondary" className="shrink-0 px-1.5 text-xs">
+                  {detail.aiLockedBadge}
+                </Badge>
+              ) : null}
             </div>
             <p className="truncate text-xs text-muted-foreground">
               {participant.username
@@ -184,6 +193,22 @@ export function ConversationDetailPanel({
             >
               {windowOpen ? detail.windowOpen : detail.windowClosed}
             </span>
+            {conversation.ai_locked && onUnlockAi ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="hidden h-8 shrink-0 sm:inline-flex"
+                aria-label={detail.unlockAiAria}
+                disabled={unlockingAi}
+                onClick={() => void onUnlockAi()}
+              >
+                {unlockingAi ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : null}
+                {detail.unlockAi}
+              </Button>
+            ) : null}
             <Button
               type="button"
               size="icon"

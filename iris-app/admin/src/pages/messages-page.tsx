@@ -45,6 +45,7 @@ import {
   syncConversationMessages,
   syncConversationsFromMeta,
   updateConversation,
+  unlockConversationAi,
   updateMessageDraft,
 } from "@/lib/api";
 import type {
@@ -116,6 +117,7 @@ export function MessagesPage() {
   const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [sendingConversationReply, setSendingConversationReply] = useState(false);
+  const [unlockingAi, setUnlockingAi] = useState(false);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedConversation = useMemo(
@@ -357,6 +359,24 @@ export function MessagesPage() {
       toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.briefingFailed);
     } finally {
       setSavingBriefing(false);
+    }
+  }
+
+  async function handleUnlockAi() {
+    if (!selectedConversationId) {
+      return;
+    }
+    setUnlockingAi(true);
+    try {
+      const saved = await unlockConversationAi(selectedConversationId);
+      setConversations((current) =>
+        current.map((item) => (item.id === saved.id ? { ...item, ...saved } : item)),
+      );
+      toast.success(messagesMsg.toasts.aiUnlocked);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, locale) || messagesMsg.toasts.aiUnlockFailed);
+    } finally {
+      setUnlockingAi(false);
     }
   }
 
@@ -722,6 +742,8 @@ export function MessagesPage() {
                       onSaveDraft={handleSaveDraft}
                       onGenerateDraft={(id) => void handleGenerateDraft(id)}
                       onConversationReply={handleConversationReply}
+                      onUnlockAi={() => void handleUnlockAi()}
+                      unlockingAi={unlockingAi}
                       sendingConversationReply={sendingConversationReply}
                     />
                   )

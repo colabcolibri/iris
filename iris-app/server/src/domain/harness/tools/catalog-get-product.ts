@@ -5,7 +5,7 @@ export function createCatalogGetProductTool(): HarnessTool {
   return {
     name: "get_resolved_product",
     description:
-      "Retorna um produto resolvido por product_id ou slug, com campos efetivos (Iris/loja).",
+      "Return a resolved product by product_id or slug with effective fields (Iris/store).",
     async execute(ctx, args) {
       const productId = typeof args.product_id === "string" ? args.product_id.trim() : "";
       const slug = typeof args.slug === "string" ? args.slug.trim() : "";

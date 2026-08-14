@@ -28,6 +28,7 @@ export const DEMO_META_STATUS: MetaStatus = {
 
 export const DEMO_APP_SETTINGS: AppSettings = {
   timezone: "America/Sao_Paulo",
+  admin_locale: "pt",
   reply_mode: "draft",
   auto_reply_enabled: true,
   reply_delay_seconds: 120,

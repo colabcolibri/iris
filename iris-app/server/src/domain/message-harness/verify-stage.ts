@@ -1,6 +1,7 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { MessageAgentContent } from "../../ports/message-agent-content-store.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
+import { completeAgentPrompt } from "../reply-harness/agent-prompt.ts";
 import { parseLlmJson } from "../reply-harness/parse-llm-json.ts";
 import { stageLlmFromCompletion } from "../reply-harness/stage-llm.ts";
 import { buildMessageVerifyPrompt } from "./build-prompts.ts";
@@ -20,14 +21,16 @@ export type MessageVerifyStageInput = {
 export async function runMessageVerifyStage(
   input: MessageVerifyStageInput,
 ): Promise<MessageStageResult> {
-  const prompt = buildMessageVerifyPrompt(
+  const promptBody = buildMessageVerifyPrompt(
     input.context,
     input.agentContent,
     input.draftText,
     input.maxChars,
     input.productFacts,
   );
-  const completion = await input.llm.complete(prompt);
+  const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
+    complement: ["triageJsonNote", "verifyFinalText"],
+  });
   const raw = completion.text;
   const parsed = parseLlmJson<MessageVerifyStageOutput>(raw);
 
