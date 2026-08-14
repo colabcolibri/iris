@@ -14,6 +14,7 @@ import type {
   MessageActivityKind,
   MessageActivityRow,
 } from "../../domain/messages/list-message-activity.ts";
+import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { mapMessageReplyRow, mapMessageRow } from "./message-mappers.ts";
 
 export function createSqliteMessageRepository(db: DatabaseSync): MessageRepository {
@@ -175,13 +176,14 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     },
 
     upsertInbound(input: UpsertInboundMessageInput) {
+      const igTimestamp = normalizeCommentTimestamp(input.igTimestamp);
       const existing = selectByIgMessageId.get(input.igMessageId);
       if (existing) {
         updateInbound.run(
           input.text,
           input.attachmentUrl ?? null,
           input.attachmentMediaType ?? null,
-          input.igTimestamp,
+          igTimestamp,
           (existing as { id: string }).id,
         );
         const row = selectById.get((existing as { id: string }).id);
@@ -200,7 +202,7 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
         input.text,
         input.attachmentUrl ?? null,
         input.attachmentMediaType ?? null,
-        input.igTimestamp,
+        igTimestamp,
         createdAt,
       );
       const row = selectById.get(id);
@@ -211,13 +213,14 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     },
 
     upsertOutbound(input: UpsertOutboundMessageInput) {
+      const igTimestamp = normalizeCommentTimestamp(input.igTimestamp);
       const existing = selectByIgMessageId.get(input.igMessageId);
       if (existing) {
         updateInbound.run(
           input.text,
           input.attachmentUrl ?? null,
           input.attachmentMediaType ?? null,
-          input.igTimestamp ?? null,
+          igTimestamp,
           (existing as { id: string }).id,
         );
         return mapMessageRow(selectById.get((existing as { id: string }).id) as never);
@@ -232,7 +235,7 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
         input.text,
         input.attachmentUrl ?? null,
         input.attachmentMediaType ?? null,
-        input.igTimestamp ?? createdAt,
+        igTimestamp ?? createdAt,
         input.status ?? "replied",
         createdAt,
       );
