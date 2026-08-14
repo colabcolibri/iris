@@ -669,7 +669,7 @@ export function MessagesPage() {
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <aside
             className={cn(
-              "flex min-h-0 flex-col border-border/60 md:w-[30%] md:min-w-[17.5rem] md:max-w-sm md:shrink-0 md:border-r",
+              "flex min-h-0 flex-col border-border/60 md:w-[30%] md:min-w-70 md:max-w-sm md:shrink-0 md:border-r",
               inStage ? "hidden md:flex" : "flex w-full flex-1",
             )}
           >

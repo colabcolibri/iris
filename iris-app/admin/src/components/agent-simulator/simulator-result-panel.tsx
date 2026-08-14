@@ -60,7 +60,7 @@ export function SimulatorResultPanel({
       <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
         <div className="w-full">
           {!hasResult && !running ? (
-            <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-(--iris-radius-lg) border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
+            <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
               <p className="font-display text-xl font-semibold text-foreground">{emptyTitle}</p>
               <p className="mt-2 max-w-sm text-base text-muted-foreground">{emptyBody}</p>
             </div>

@@ -95,7 +95,7 @@ function PreviewRow({
         <span className="font-semibold text-foreground">{label}</span>
         <span className="text-xs text-muted-foreground">{sourceLabel}</span>
       </div>
-      <p className="mt-1 break-words text-muted-foreground">
+      <p className="mt-1 wrap-break-word text-muted-foreground">
         {value || "—"}
       </p>
     </div>

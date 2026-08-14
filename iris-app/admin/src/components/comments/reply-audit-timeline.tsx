@@ -79,7 +79,7 @@ function ReplyTextBlock({
         {label}
         {languageLabel ? ` · ${languageLabel}` : ""}
       </p>
-      <p className="mt-2 text-base leading-relaxed break-words whitespace-pre-wrap text-foreground">
+      <p className="mt-2 text-base leading-relaxed wrap-break-word whitespace-pre-wrap text-foreground">
         {text}
       </p>
     </div>
@@ -254,12 +254,12 @@ function ToolStepDetail({ step }: { step: ReplyAuditStep }) {
         </p>
       ) : null}
       {step.tool_input ? (
-        <pre className="max-w-full overflow-x-auto font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+        <pre className="max-w-full overflow-x-auto font-mono text-xs leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground">
           {JSON.stringify(step.tool_input, null, 2)}
         </pre>
       ) : null}
       {step.tool_output !== undefined ? (
-        <pre className="max-w-full overflow-x-auto font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+        <pre className="max-w-full overflow-x-auto font-mono text-xs leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground">
           {JSON.stringify(step.tool_output, null, 2)}
         </pre>
       ) : null}
@@ -292,7 +292,7 @@ function StageStepContent({ step }: { step: ReplyAuditStep }) {
       ) : null}
 
       {step.reasoning ? (
-        <p className="text-base leading-relaxed break-words text-foreground">
+        <p className="text-base leading-relaxed wrap-break-word text-foreground">
           {step.reasoning}
         </p>
       ) : null}
@@ -364,13 +364,13 @@ function StageStepContent({ step }: { step: ReplyAuditStep }) {
       ) : null}
 
       {detailTab === "reasoning" && step.reasoning ? (
-        <pre className="max-w-full overflow-x-auto rounded-md bg-muted/35 p-3 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+        <pre className="max-w-full overflow-x-auto rounded-md bg-muted/35 p-3 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground">
           {step.reasoning}
         </pre>
       ) : null}
 
       {detailTab === "json" && step.structured ? (
-        <pre className="max-w-full overflow-x-auto rounded-md bg-muted/35 p-3 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+        <pre className="max-w-full overflow-x-auto rounded-md bg-muted/35 p-3 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap text-muted-foreground">
           {JSON.stringify(step.structured, null, 2)}
         </pre>
       ) : null}
@@ -415,7 +415,7 @@ function ReplyAuditStagesTimeline({ steps }: { steps: ReplyAuditStep[] }) {
               {index < steps.length - 1 ? (
                 <span
                   aria-hidden
-                  className="absolute top-5 left-[4px] h-[calc(100%-0.5rem)] w-px bg-border/70"
+                  className="absolute top-5 left-1 h-[calc(100%-0.5rem)] w-px bg-border/70"
                 />
               ) : null}
 
@@ -470,7 +470,7 @@ function ReplyAuditStagesTimeline({ steps }: { steps: ReplyAuditStep[] }) {
                   </div>
 
                   {!isOpen && previewText ? (
-                    <p className="line-clamp-2 text-sm leading-relaxed break-words text-muted-foreground">
+                    <p className="line-clamp-2 text-sm leading-relaxed wrap-break-word text-muted-foreground">
                       {previewText}
                     </p>
                   ) : null}
@@ -552,7 +552,7 @@ export function ReplyAuditTimeline({
       <ReplyAuditStagesTimeline steps={audit.steps} />
 
       {suggestEdit ? (
-        <p className="text-base break-words text-muted-foreground">
+        <p className="text-base wrap-break-word text-muted-foreground">
           {auditMessages.suggestEditPrefix}{" "}
           <Link
             to={routes.persona}

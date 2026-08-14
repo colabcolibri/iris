@@ -70,7 +70,7 @@ export function LlmSettingsCard({ embedded = false }: LlmSettingsCardProps) {
   return (
     <SettingsCardShell embedded={embedded} title={t.title} description={t.description}>
       {settings?.env_override && (
-        <p className="rounded-[var(--iris-radius-sm)] border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+        <p className="rounded-(--iris-radius-sm) border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
           {interpolate(t.envOverride, { envVars: "LLM_*" })}
         </p>
       )}

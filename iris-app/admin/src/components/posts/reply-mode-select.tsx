@@ -77,7 +77,7 @@ export function ReplyModeSelect(props: ReplyModeSelectProps) {
           </SelectValue>
         </SelectTrigger>
       </div>
-      <SelectContent align="start" className="min-w-[var(--anchor-width)]">
+      <SelectContent align="start" className="min-w-(--anchor-width)">
         {options.map((option) => {
           const Icon = option.icon;
           return (

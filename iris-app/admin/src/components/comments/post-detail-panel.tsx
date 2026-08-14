@@ -165,7 +165,7 @@ function InsightMetricCard({
 }) {
   const { locale } = useAppLocale();
   return (
-    <div className="flex min-w-0 flex-col gap-3 rounded-(--iris-radius-lg) border border-border/70 bg-card p-4">
+    <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border/70 bg-card p-4">
       <div className="flex items-center gap-2.5">
         <div
           className={cn(
@@ -522,7 +522,7 @@ export function PostDetailPanel({
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <div className="shrink-0 border-b border-border bg-muted/20 px-4 pt-3 sm:px-5">
-          <div className="-mx-1 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
+          <div className="-mx-1 overflow-x-auto overscroll-x-contain scrollbar-thin">
             <div
               role="tablist"
               aria-label={detail.tabsAria}

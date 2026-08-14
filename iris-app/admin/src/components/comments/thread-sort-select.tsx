@@ -55,7 +55,7 @@ export function ThreadSortSelect({
           "gap-1.5 border-border/60 bg-muted/40 px-2.5 text-xs shadow-none",
           fullWidth
             ? "h-9 w-full max-w-none"
-            : "h-8 w-auto max-w-[11.5rem] shrink-0",
+            : "h-8 w-auto max-w-46 shrink-0",
           className,
         )}
       >
@@ -69,7 +69,7 @@ export function ThreadSortSelect({
       </SelectTrigger>
       <SelectContent
         align={fullWidth ? "start" : "end"}
-        className="min-w-[12.5rem]"
+        className="min-w-50"
       >
         {THREAD_SORT_MODES.map((mode) => (
           <SelectItem key={mode} value={mode} className="text-sm">

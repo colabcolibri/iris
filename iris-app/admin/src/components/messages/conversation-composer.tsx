@@ -55,7 +55,7 @@ export function ConversationComposer({
             <p className="text-xs font-semibold tracking-wide text-primary uppercase">
               {thread.replyingTo}
             </p>
-            <p className="mt-1 line-clamp-3 text-sm break-words text-foreground">
+            <p className="mt-1 line-clamp-3 text-sm wrap-break-word text-foreground">
               {quotePreview || thread.noText}
             </p>
           </div>

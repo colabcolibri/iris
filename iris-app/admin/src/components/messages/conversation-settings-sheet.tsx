@@ -71,7 +71,7 @@ export function ConversationSettingsSheet({
               onChange={(event) => onReplyPromptChange(event.target.value)}
               rows={6}
               placeholder={detail.briefingPlaceholder}
-              className="min-h-[8rem] resize-y"
+              className="min-h-32 resize-y"
             />
             <Button
               type="button"

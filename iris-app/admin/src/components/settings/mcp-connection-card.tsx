@@ -160,7 +160,7 @@ export function McpConnectionCard({ embedded = false }: McpConnectionCardProps) 
           )}
 
           {displayCode && (
-            <div className="space-y-3 rounded-[var(--iris-radius-sm)] border border-primary/20 bg-primary/5 p-4">
+            <div className="space-y-3 rounded-(--iris-radius-sm) border border-primary/20 bg-primary/5 p-4">
               <p className="text-xs font-semibold tracking-wide text-primary uppercase">
                 {t.codeOneTimeTitle}
               </p>

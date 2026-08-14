@@ -73,7 +73,7 @@ export function SimulatorThreadEditor({
               >
                 <div
                   className={cn(
-                    "w-full max-w-[95%] rounded-(--iris-radius-lg) border p-3",
+                    "w-full max-w-[95%] rounded-lg border p-3",
                     isBrand
                       ? "border-primary/25 bg-primary/5"
                       : "border-border/70 bg-muted/20",
@@ -140,7 +140,7 @@ export function SimulatorThreadEditor({
         </div>
       </div>
 
-      <div className="space-y-2 rounded-(--iris-radius-lg) border border-primary/30 bg-primary/5 p-3">
+      <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
         <p className="text-xs font-semibold tracking-wide text-primary uppercase">
           {labels.targetTitle}
         </p>

@@ -183,7 +183,7 @@ export function MessageSimulatorPage() {
     <PageContainer variant="fill">
       <PageContainer.Content width="full">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-          <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-(--iris-radius-lg) border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-105">
+          <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-105">
             <PageScrollArea contentClassName="space-y-5 p-4 sm:p-5">
               <PageContainer.Header
                 eyebrow={t.page.eyebrow}

@@ -99,7 +99,7 @@ function MessageBubble({
   return (
     <div
       className={cn(
-        "min-w-0 flex-1 overflow-hidden rounded-[var(--iris-radius-lg)] px-3 py-2 text-base",
+        "min-w-0 flex-1 overflow-hidden rounded-lg px-3 py-2 text-base",
         outbound
           ? "bg-primary/15 text-foreground"
           : showAiDraftBadge
@@ -136,14 +136,14 @@ function MessageBubble({
       </div>
 
       {quotedPreview ? (
-        <p className="mb-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-2 text-xs break-words text-muted-foreground">
+        <p className="mb-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-2 text-xs wrap-break-word text-muted-foreground">
           <span className="font-semibold text-foreground/80">{thread.inReplyTo}</span>{" "}
           {quotedPreview}
         </p>
       ) : null}
 
       {bodyText ? (
-        <p className="leading-relaxed break-words whitespace-pre-wrap">{bodyText}</p>
+        <p className="leading-relaxed wrap-break-word whitespace-pre-wrap">{bodyText}</p>
       ) : null}
 
       {message.attachment_url ? (
@@ -154,7 +154,7 @@ function MessageBubble({
       ) : null}
 
       {message.linked_reply_text ? (
-        <p className="mt-2 border-t border-border/40 pt-2 text-sm break-words text-muted-foreground">
+        <p className="mt-2 border-t border-border/40 pt-2 text-sm wrap-break-word text-muted-foreground">
           Resposta enviada: {message.linked_reply_text}
         </p>
       ) : null}
@@ -309,7 +309,7 @@ function MessageDraftPanel({
           className="min-h-20 w-full min-w-0 resize-y rounded-none border-0 bg-background/80 px-3 py-2 text-base shadow-none focus-visible:ring-0"
         />
       ) : (
-        <p className="max-w-full px-3 py-2 text-base leading-relaxed break-words whitespace-pre-wrap">
+        <p className="max-w-full px-3 py-2 text-base leading-relaxed wrap-break-word whitespace-pre-wrap">
           {message.draft_text}
         </p>
       )}

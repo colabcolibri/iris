@@ -167,7 +167,7 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
                   type="button"
                   onClick={() => void handlePresetChange(option.id)}
                   disabled={saving}
-                  className={`rounded-[var(--iris-radius-sm)] border px-4 py-3 text-left transition-colors ${
+                  className={`rounded-(--iris-radius-sm) border px-4 py-3 text-left transition-colors ${
                     active
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/40"
@@ -184,7 +184,7 @@ export function McpPermissionsCard({ embedded = false }: McpPermissionsCardProps
             })}
           </div>
 
-          <div className="overflow-x-auto rounded-[var(--iris-radius-sm)] border border-border">
+          <div className="overflow-x-auto rounded-(--iris-radius-sm) border border-border">
             <table className="min-w-full text-sm">
               <thead className="bg-muted/40 text-left">
                 <tr>

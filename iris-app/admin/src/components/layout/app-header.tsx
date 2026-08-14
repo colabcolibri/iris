@@ -114,7 +114,7 @@ export function AppHeader() {
           <a
             href="/auth/meta"
             className={cn(
-              "inline-flex min-h-11 items-center gap-2 rounded-full px-[22px] py-[11px] text-base font-normal leading-none transition-transform active:scale-95",
+              "inline-flex min-h-11 items-center gap-2 rounded-full px-5.5 py-2.75 text-base font-normal leading-none transition-transform active:scale-95",
               tokenExpired
                 ? "bg-amber-500 text-amber-950 hover:bg-amber-400"
                 : "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -131,7 +131,7 @@ export function AppHeader() {
         ) : isDemoMode && connected && handle ? (
           <div className="inline-flex h-11 items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 text-sm text-sidebar-foreground">
             <InstagramIcon className="size-4 text-emerald-300" />
-            <span className="max-w-[9rem] truncate sm:max-w-none">{handle}</span>
+            <span className="max-w-36 truncate sm:max-w-none">{handle}</span>
             <span className="text-xs text-sidebar-foreground/60">
               {demoMessages.instagramDemo}
             </span>
@@ -151,7 +151,7 @@ export function AppHeader() {
                 }
               >
                 <InstagramIcon className="size-4 text-emerald-300" />
-                <span className="max-w-[9rem] truncate text-sm font-normal sm:max-w-none">
+                <span className="max-w-36 truncate text-sm font-normal sm:max-w-none">
                   {handle}
                 </span>
                 <span

@@ -37,7 +37,7 @@ export function OperatorNotificationResultCard({
   labels,
 }: OperatorNotificationResultCardProps) {
   return (
-    <section className="mb-6 rounded-(--iris-radius-lg) border border-border bg-card p-4 sm:p-5">
+    <section className="mb-6 rounded-lg border border-border bg-card p-4 sm:p-5">
       <h3 className="font-display text-lg font-semibold text-foreground">{labels.title}</h3>
 
       {notifications.length === 0 ? (
@@ -47,7 +47,7 @@ export function OperatorNotificationResultCard({
           {notifications.map((item) => (
             <li
               key={item.id}
-              className="rounded-(--iris-radius-md) border border-border/80 bg-muted/20 px-3 py-3 text-sm"
+              className="rounded-md border border-border/80 bg-muted/20 px-3 py-3 text-sm"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={statusVariant(item.status)}>{statusLabel(item.status, labels)}</Badge>
@@ -61,7 +61,7 @@ export function OperatorNotificationResultCard({
                 </p>
               ) : null}
               {item.error_message ? (
-                <p className="mt-2 break-words text-destructive">
+                <p className="mt-2 wrap-break-word text-destructive">
                   {labels.error}: {item.error_message}
                 </p>
               ) : null}

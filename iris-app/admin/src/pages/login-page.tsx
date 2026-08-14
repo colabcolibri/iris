@@ -87,7 +87,7 @@ export function LoginPage() {
         <LanguageSwitcher />
       </div>
       <main className="w-full max-w-md">
-        <div className="flex flex-col gap-6 rounded-[var(--iris-radius-lg)] border border-border bg-card p-8 shadow-none">
+        <div className="flex flex-col gap-6 rounded-lg border border-border bg-card p-8 shadow-none">
           <div className="flex flex-col items-center gap-4 text-center">
             <BrandLogo size="lg" className="ring-0" />
             <div className="space-y-1">

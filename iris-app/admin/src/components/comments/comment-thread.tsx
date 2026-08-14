@@ -210,7 +210,7 @@ function CommentDraftPanel({
 
   if (editing) {
     return (
-      <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
+      <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">
           {thread.aiSuggestion}
         </p>
@@ -260,7 +260,7 @@ function CommentDraftPanel({
   }
 
   return (
-    <div className="mt-3 rounded-[var(--iris-radius-lg)] border border-primary/20 bg-primary/5 px-3 py-3">
+    <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">
         Sugestão da IA
       </p>
@@ -577,7 +577,7 @@ function CommentBody({
           {showLinkedReply ? (
             <div
               className={cn(
-                "mt-3 rounded-[var(--iris-radius-lg)] px-3 py-2.5",
+                "mt-3 rounded-lg px-3 py-2.5",
                 brandReplyLinkedSurfaceClass,
               )}
             >
@@ -683,7 +683,7 @@ function CommentRootExtras({
       {showLinkedReply ? (
         <div
           className={cn(
-            "rounded-[var(--iris-radius-lg)] px-3 py-2.5",
+            "rounded-lg px-3 py-2.5",
             brandReplyLinkedSurfaceClass,
           )}
         >
@@ -754,7 +754,7 @@ function ThreadCard({
     <article
       id={`comment-focus-${group.root.id}`}
       className={cn(
-        "scroll-mt-24 rounded-[var(--iris-radius-lg)] border p-4",
+        "scroll-mt-24 rounded-lg border p-4",
         highlightCommentId === group.root.id &&
           "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
         isDeletedRoot
@@ -940,7 +940,7 @@ function ThreadAccordionItem({
       value={root.id}
       id={`comment-focus-${root.id}`}
       className={cn(
-        "scroll-mt-24 overflow-hidden rounded-[var(--iris-radius-lg)] border",
+        "scroll-mt-24 overflow-hidden rounded-lg border",
         highlightCommentId === root.id &&
           "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
         isDeletedRoot ? deletedCommentSurfaceClass : "border-border/60 bg-card",

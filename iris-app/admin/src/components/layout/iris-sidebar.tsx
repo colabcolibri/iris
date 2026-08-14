@@ -54,9 +54,9 @@ export function IrisSidebar({ children, className }: IrisSidebarProps) {
         className={cn(
           "gap-2 p-4",
           "group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-4",
-          "group-data-[collapsible=icon]:[&_[data-sidebar=group]]:p-0",
-          "group-data-[collapsible=icon]:[&_[data-sidebar=menu-item]]:flex group-data-[collapsible=icon]:[&_[data-sidebar=menu-item]]:justify-center",
-          "group-data-[collapsible=icon]:[&_[data-sidebar=menu-button]]:justify-center group-data-[collapsible=icon]:[&_[data-sidebar=menu-button]]:gap-0",
+          "group-data-[collapsible=icon]:**:data-[sidebar=group]:p-0",
+          "group-data-[collapsible=icon]:**:data-[sidebar=menu-item]:flex group-data-[collapsible=icon]:**:data-[sidebar=menu-item]:justify-center",
+          "group-data-[collapsible=icon]:**:data-[sidebar=menu-button]:justify-center group-data-[collapsible=icon]:**:data-[sidebar=menu-button]:gap-0",
           "group-data-[collapsible=icon]:[&_[data-sidebar=menu-button]>span]:hidden",
         )}
       >

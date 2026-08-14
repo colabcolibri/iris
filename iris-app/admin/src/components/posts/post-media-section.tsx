@@ -253,7 +253,7 @@ export function PostMediaSection({
       ) : gridItems.length === 0 ? (
         <div
           className={cn(
-            "rounded-(--iris-radius-lg) border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground shadow-none",
+            "rounded-lg border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground shadow-none",
             showAddButton && "sm:py-14",
           )}
         >

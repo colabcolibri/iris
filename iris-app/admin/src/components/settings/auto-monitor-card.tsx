@@ -144,7 +144,7 @@ export function AutoMonitorCard({ embedded = false }: AutoMonitorCardProps) {
                   disabled={saving}
                   onChange={(event) => setIntervalInput(event.target.value)}
                   onBlur={() => void persistInterval(intervalInput)}
-                  className="max-w-[10rem]"
+                  className="max-w-40"
                 />
               </div>
             </div>

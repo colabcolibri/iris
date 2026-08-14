@@ -167,7 +167,7 @@ export function MessageAgentAutoReplyCard({
                 disabled={savingDebounce}
                 onChange={(event) => setDebounceInput(event.target.value)}
                 onBlur={() => void persistDebounce(debounceInput)}
-                className="max-w-[10rem]"
+                className="max-w-40"
               />
             </div>
           </div>

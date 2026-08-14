@@ -227,7 +227,7 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
                 disabled={savingMaxAge}
                 onChange={(event) => setMaxAgeInput(event.target.value)}
                 onBlur={() => void persistMaxAgeDays(maxAgeInput)}
-                className="max-w-[10rem]"
+                className="max-w-40"
               />
             </div>
           </div>
@@ -301,7 +301,7 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
                 disabled={savingDebounce}
                 onChange={(event) => setDebounceInput(event.target.value)}
                 onBlur={() => void persistDebounce(debounceInput)}
-                className="max-w-[10rem]"
+                className="max-w-40"
               />
             </div>
           </div>
