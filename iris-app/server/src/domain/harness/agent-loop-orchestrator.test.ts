@@ -27,9 +27,12 @@ import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
 import { createStoreProviderRegistry } from "../stores/store-provider-registry.ts";
 
-function baseContext(): MessageReplyContext {
+const TEST_RESPONSE_LANGUAGE = "pt-BR";
+
+function baseContext(options: { responseLanguage?: string } = {}): MessageReplyContext {
+  const responseLanguage = options.responseLanguage ?? TEST_RESPONSE_LANGUAGE;
   return {
-    persona: defaultReplyPersona(),
+    persona: { ...defaultReplyPersona(), responseLanguage },
     conversation: { participantUsername: "user", replyPrompt: null },
     thread: {
       entries: [
@@ -61,11 +64,9 @@ describe("parseAgentLoopTurnAction", () => {
 
 describe("buildAgentLoopPrompt", () => {
   test("uses English instructions and explicit response language from persona", () => {
+    const responseLanguage = "pt-BR";
     const input: RunAgentLoopInput = {
-      context: {
-        ...baseContext(),
-        persona: { ...defaultReplyPersona(), responseLanguage: "pt-BR" },
-      },
+      context: baseContext({ responseLanguage }),
       agentContent: {
         dmSoul: "",
         dmPage: "",
@@ -94,14 +95,47 @@ describe("buildAgentLoopPrompt", () => {
     assert.match(prompt, /finish\.text or notify_operator\.customerMessage/);
     assert.doesNotMatch(prompt, /Você redige/);
   });
+
+  test("injects en-US response language when persona requests it", () => {
+    const prompt = finalizeAgentPrompt(
+      buildAgentLoopPrompt(
+        {
+          context: baseContext({ responseLanguage: "en-US" }),
+          agentContent: {
+            dmSoul: "",
+            dmPage: "",
+            dmKnowledge: "",
+            dmRestrictions: "",
+            updatedAt: new Date().toISOString(),
+          },
+          llm: { async complete() { return createTestLlmCompletion("{}"); } },
+          registry: createDefaultHarnessToolRegistry(),
+          toolContext: { budget: DEFAULT_HARNESS_BUDGET, refreshCount: 0 } as RunAgentLoopInput["toolContext"],
+          budget: DEFAULT_HARNESS_BUDGET,
+          maxChars: 200,
+          messageCategory: "product_inquiry",
+          focusProductSlug: null,
+        },
+        null,
+        createAgentLoopTranscript(),
+      ),
+      { ...defaultReplyPersona(), responseLanguage: "en-US" },
+      "agentLoopPublic",
+    );
+
+    assert.match(prompt, /American English \(en-US\)/);
+    assert.doesNotMatch(prompt, /Brazilian Portuguese/);
+  });
 });
 
 describe("agent loop orchestrator", () => {
   test("finishes on first turn with action finish", async () => {
+    const responseLanguage = TEST_RESPONSE_LANGUAGE;
     let calls = 0;
     const llm = {
-      async complete() {
+      async complete(prompt: string) {
         calls += 1;
+        assert.match(prompt, /Brazilian Portuguese \(pt-BR\)/);
         return createTestLlmCompletion(
           JSON.stringify({ action: "finish", text: "A camiseta custa R$ 99." }),
         );
@@ -134,7 +168,7 @@ describe("agent loop orchestrator", () => {
     );
 
     const result = await runAgentLoop({
-      context: baseContext(),
+      context: baseContext({ responseLanguage }),
       agentContent: {
         dmSoul: "",
         dmPage: "",
@@ -204,7 +238,7 @@ describe("agent loop orchestrator", () => {
     );
 
     const result = await runAgentLoop({
-      context: baseContext(),
+      context: baseContext({ responseLanguage: TEST_RESPONSE_LANGUAGE }),
       agentContent: {
         dmSoul: "",
         dmPage: "",
@@ -287,7 +321,7 @@ describe("agent loop orchestrator", () => {
     );
 
     const result = await runAgentLoop({
-      context: baseContext(),
+      context: baseContext({ responseLanguage: TEST_RESPONSE_LANGUAGE }),
       agentContent: {
         dmSoul: "",
         dmPage: "",

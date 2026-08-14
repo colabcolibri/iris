@@ -22,6 +22,9 @@ describe("simulateMessageReply", () => {
     const llm = {
       async complete(prompt: string) {
         call += 1;
+        if (prompt.includes("American English (en-US)")) {
+          assert.match(prompt, /Response language \(MANDATORY\)/);
+        }
         if (prompt.includes("Instagram DM triage stage")) {
           return createTestLlmCompletion(
             JSON.stringify({
@@ -35,7 +38,7 @@ describe("simulateMessageReply", () => {
         }
         if (prompt.includes("Instagram DM replies using catalog tools")) {
           return createTestLlmCompletion(
-            JSON.stringify({ action: "finish", text: "O vestido custa R$ 99." }),
+            JSON.stringify({ action: "finish", text: "The dress costs $99." }),
           );
         }
         return createTestLlmCompletion(
@@ -45,7 +48,7 @@ describe("simulateMessageReply", () => {
             policyViolations: [],
             reason: "ok",
             reasoning: "ok",
-            finalText: "O vestido custa R$ 99.",
+            finalText: "The dress costs $99.",
           }),
         );
       },
@@ -61,6 +64,7 @@ describe("simulateMessageReply", () => {
         {
           target_message: { author: "user", text: "Quanto custa o vestido?" },
           thread: [],
+          response_language: "en-US",
         },
         {
           personaStore: createSqliteReplyPersonaStore(db),
@@ -92,7 +96,9 @@ describe("simulateMessageReply", () => {
 
       assert.ok(call >= 3);
       assert.equal(result.terminal_status, "approved");
-      assert.equal(result.final_text, "O vestido custa R$ 99.");
+      assert.equal(result.final_text, "The dress costs $99.");
+      assert.equal(result.response_language, "en-US");
+      assert.equal(result.audit.response_language, "en-US");
       assert.ok(result.audit.steps.some((step) => step.stage === "message_triage"));
       assert.ok(result.audit.steps.some((step) => step.stage === "message_verify"));
     } finally {

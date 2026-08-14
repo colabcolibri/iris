@@ -8,10 +8,12 @@ import {
 } from "@/lib/message-simulator-scenarios";
 import { DEMO_BRAND_NAME, DEMO_STORE_URL } from "@/demo/demo-brand";
 import { getActiveDemoLocale } from "@/demo/demo-state";
+import { DEFAULT_RESPONSE_LANGUAGE } from "@iris/domain/reply-language/response-languages";
 
 export type DemoMessageSimulateRequestBody = {
   channel?: "dm" | "comment";
   target_message?: { author?: string; text?: string };
+  response_language?: string;
 };
 
 type DemoMessageCanned = {
@@ -123,6 +125,14 @@ ${DEMO_BRAND_NAME}`,
     draft_reasoning: "Consultou catálogo e retornou URL da loja.",
     verify_reasoning: "Link válido para demo.",
   },
+  "purchase-difficulty": {
+    summary: "Escalação por dificuldade no checkout.",
+    final_text:
+      "Entendo a frustração — vou pedir para nossa equipe verificar o checkout e te retorno em breve por aqui.",
+    triage_reasoning: "purchase_difficulty detectado na triagem.",
+    draft_reasoning: "notify_operator com customerMessage em português.",
+    verify_reasoning: "Escalação registrada; resposta ao cliente aprovada.",
+  },
   "general-thanks": {
     summary: "Agradecimento caloroso sem CTA de venda.",
     final_text: `Que mensagem linda — obrigada de coração! Ficamos muito felizes que a coleção tenha chegado aí 💛`,
@@ -132,24 +142,76 @@ ${DEMO_BRAND_NAME}`,
   },
 };
 
+const CANNED_BY_SCENARIO_EN: Record<string, DemoMessageCanned> = {
+  "product-price": {
+    summary: "Linen dress price and shipping.",
+    final_text: `Hi! The sand linen dress is $189 in size M 💛 We ship to the South region in 5–8 business days. You can buy here: ${DEMO_STORE_URL} — message us if you need sizing help!
+${DEMO_BRAND_NAME}`,
+    triage_reasoning: "Product and shipping question — product_inquiry.",
+    draft_reasoning: "Used search_products before replying.",
+    verify_reasoning: "Price and timeline match product_facts.",
+  },
+  "product-link": {
+    summary: "Direct Grok Game link.",
+    final_text: `Sure! Here is the Grok Game: ${DEMO_STORE_URL}/jogo-grok — let us know if you need help with shipping 💛`,
+    triage_reasoning: "Direct product link request.",
+    draft_reasoning: "Catalog lookup returned store URL.",
+    verify_reasoning: "Valid demo link.",
+  },
+  "purchase-difficulty": {
+    summary: "Escalation after checkout difficulty.",
+    final_text:
+      "I understand how frustrating that is — I'll ask our team to review checkout and get back to you here shortly.",
+    triage_reasoning: "purchase_difficulty detected in triage.",
+    draft_reasoning: "notify_operator with English customerMessage.",
+    verify_reasoning: "Escalation logged; customer reply approved.",
+  },
+  "general-thanks": {
+    summary: "Warm thank-you without sales CTA.",
+    final_text: `What a lovely message — thank you so much! We're thrilled the collection reached you 💛`,
+    triage_reasoning: "Appreciation without catalog lookup.",
+    draft_reasoning: "Warm tone, no tools.",
+    verify_reasoning: "No product facts to validate.",
+  },
+};
+
+function resolveSimulateResponseLanguage(
+  body: DemoMessageSimulateRequestBody,
+  fallbackLocale: DemoLocale,
+): string {
+  const requested = body.response_language?.trim();
+  if (requested) {
+    return requested;
+  }
+  return fallbackLocale === "en" ? "en-US" : DEFAULT_RESPONSE_LANGUAGE;
+}
+
+function isEnglishResponseLanguage(code: string): boolean {
+  return code.toLowerCase().startsWith("en");
+}
+
 export function resolveDemoMessageSimulateResult(
   body: DemoMessageSimulateRequestBody,
   locale?: DemoLocale,
 ): SimulateReplyResult {
   const activeLocale = locale ?? getActiveDemoLocale();
+  const responseLanguage = resolveSimulateResponseLanguage(body, activeLocale);
   const author = body.target_message?.author ?? "";
   const text = body.target_message?.text ?? "";
 
   const byTarget = findMessageSimulatorScenarioByTarget(author, text);
   const scenario = byTarget ?? getMessageSimulatorScenario("product-price")!;
-  const canned = CANNED_BY_SCENARIO_PT[scenario.id] ?? CANNED_BY_SCENARIO_PT["product-price"]!;
+  const cannedByLanguage = isEnglishResponseLanguage(responseLanguage)
+    ? CANNED_BY_SCENARIO_EN
+    : CANNED_BY_SCENARIO_PT;
+  const canned = cannedByLanguage[scenario.id] ?? cannedByLanguage["product-price"]!;
 
   return {
     audit: auditForMessageScenario(scenario, canned.summary, canned),
     final_text: canned.final_text,
     terminal_status: "approved",
     reply_tier: "full",
-    response_language: activeLocale === "en" ? "en" : "pt-BR",
+    response_language: responseLanguage,
   };
 }
 

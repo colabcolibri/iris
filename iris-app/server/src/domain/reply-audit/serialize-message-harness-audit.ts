@@ -6,6 +6,7 @@ export function serializeMessageHarnessAudit(
   trigger = "simulate",
   agentRunId = "simulate",
   flowId = agentRunId,
+  responseLanguage?: string | null,
 ) {
   return {
     agent_run_id: agentRunId,
@@ -15,6 +16,7 @@ export function serializeMessageHarnessAudit(
     reply_tier: result.finalText ? "full" : "none",
     output_summary: result.finalText,
     message_category: result.messageCategory,
+    response_language: responseLanguage ?? null,
     steps: result.steps.map((step) => mapMessageStageResultToAuditStep(step)),
   };
 }

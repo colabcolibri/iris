@@ -151,6 +151,9 @@ export function MessageSimulatorPage() {
       setAudit(result.audit);
       setFinalText(result.final_text);
       setOperatorNotifications(result.operator_notifications ?? []);
+      if (result.response_language) {
+        setResponseLanguage(result.response_language);
+      }
     } catch (err) {
       toast.error(getApiErrorMessage(err, locale) || t.toasts.simulateFailed);
     } finally {
@@ -161,6 +164,12 @@ export function MessageSimulatorPage() {
   const languageLabel =
     RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === responseLanguage)?.label ??
     responseLanguage;
+
+  const appliedLanguageLabel =
+    audit?.response_language != null
+      ? RESPONSE_LANGUAGE_OPTIONS.find((option) => option.code === audit.response_language)
+          ?.label ?? audit.response_language
+      : languageLabel;
 
   const selectedScenario = getMessageSimulatorScenario(scenarioId);
   const contentFields = buildContentStatFields(t.contentStats, {
@@ -305,7 +314,7 @@ export function MessageSimulatorPage() {
             runningLabel={t.fields.running}
             audit={audit}
             finalText={finalText}
-            languageLabel={languageLabel}
+            languageLabel={appliedLanguageLabel}
             emptyTitle={t.empty.title}
             emptyBody={t.empty.body}
             noApprovedLabel={t.empty.noApproved}

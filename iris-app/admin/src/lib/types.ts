@@ -529,6 +529,7 @@ export type ReplyAudit = {
     | string;
   reply_tier?: "none" | "simple" | "full" | null;
   output_summary: string | null;
+  response_language?: string | null;
   session_summary?: HarnessSessionSummary | null;
   steps: ReplyAuditStep[];
 };

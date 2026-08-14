@@ -345,6 +345,8 @@ async function handleMutation(
       return demoMessageSimulateWithDelay({
         channel: "dm",
         target_message: body.target_message as { author?: string; text?: string } | undefined,
+        response_language:
+          typeof body.response_language === "string" ? body.response_language : undefined,
       });
     }
     return demoSimulateWithDelay(body as SimulateRequestBody);

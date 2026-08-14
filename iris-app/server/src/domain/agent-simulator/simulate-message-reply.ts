@@ -252,6 +252,7 @@ export async function simulateMessageReply(
       "manual_simulate",
       recorded.run.id,
       recorded.flowId,
+      context.persona.responseLanguage,
     ),
     final_text: recorded.harness.finalText,
     terminal_status: recorded.harness.terminalStatus,
