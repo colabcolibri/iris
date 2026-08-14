@@ -145,7 +145,7 @@ test("GET app settings returns default timezone", async () => {
     };
     assert.equal(body.timezone, "America/Sao_Paulo");
     assert.equal(body.auto_reply_enabled, true);
-    assert.equal(body.reply_delay_seconds, 0);
+    assert.equal(body.reply_delay_seconds, 60);
     assert.equal(body.agent_reply_tick_interval_seconds, 300);
     assert.equal(body.auto_monitor_enabled, true);
     assert.equal(body.auto_monitor_interval_seconds, 300);
@@ -202,7 +202,7 @@ test("PUT app settings persists reply_delay_seconds", async () => {
         Cookie: adminCookie,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ reply_delay_seconds: 30 }),
+      body: JSON.stringify({ reply_delay_seconds: 45 }),
     });
     assert.equal(invalid.status, 422);
   });

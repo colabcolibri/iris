@@ -29,7 +29,7 @@ test("enqueueMessageReply schedules pending inbound message when draft mode enab
       ...defaultAppSettings(),
       messageReplyMode: "draft",
       messageAutoReplyEnabled: true,
-      messageReplyDelaySeconds: 30,
+      messageReplyDelaySeconds: 60,
     });
 
     withMockLlm(ctx);
@@ -71,7 +71,7 @@ test("enqueueMessageReply supersedes older pending inbound in same conversation"
     ctx.appSettingsStore.upsert({
       ...defaultAppSettings(),
       messageReplyMode: "draft",
-      messageReplyDelaySeconds: 30,
+      messageReplyDelaySeconds: 60,
     });
 
     withMockLlm(ctx);

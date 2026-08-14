@@ -13,7 +13,7 @@ test("agent auto reply card exposes debounce, max age, and tick interval control
   assert.match(card, /t\.workerIntervalLabel/);
   assert.match(card, /t\.maxAgeLabel/);
   assert.match(card, /t\.replyDebounceLabel/);
-  assert.match(card, /t\.debounceSecondsLabel/);
+  assert.match(card, /t\.debounceMinutesLabel/);
 });
 
 test("message agent card shows shared tick interval and debounce controls", () => {
@@ -22,7 +22,7 @@ test("message agent card shows shared tick interval and debounce controls", () =
     "utf8",
   );
   assert.match(card, /agentReplyTickIntervalSeconds/);
-  assert.match(card, /t\.debounceSecondsLabel/);
+  assert.match(card, /t\.debounceMinutesLabel/);
   assert.match(card, /t\.replyDebounceLabel/);
   assert.match(card, /t\.workerIntervalHint/);
 });

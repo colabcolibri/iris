@@ -78,7 +78,7 @@ export const settingsEn = {
     replyDebounceLabel: "Debounce window",
     replyDebounceHint:
       "Waits {debounce} after the same author's latest comment on the post before generating a reply. If they comment again within that window, the timer resets and only their newest comment is answered. Actual cadence: debounce + up to {tick} min until the next worker cycle.",
-    debounceSecondsLabel: "Debounce seconds ({min}–{max})",
+    debounceMinutesLabel: "Debounce minutes ({min}–{max})",
     replyDelayLabel: "Time before replying",
     replyDelayHint:
       "Default: immediate on the next cycle. With a queue, the agent waits before the harness — the queue persists in the database across restarts.",
@@ -119,7 +119,7 @@ export const settingsEn = {
     replyDebounceLabel: "Debounce window",
     replyDebounceHint:
       "Waits {debounce} after the customer's latest message in the same conversation before generating a reply. If another message arrives within that window, the timer resets and only the newest one is answered. Actual cadence: debounce + up to {tick} min until the next worker cycle.",
-    debounceSecondsLabel: "Debounce seconds ({min}–{max})",
+    debounceMinutesLabel: "Debounce minutes ({min}–{max})",
     replyDelayLabel: "Time before replying",
     replyDelayHint:
       "Same persistent queue used for comments, with DM-specific settings.",

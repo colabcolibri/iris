@@ -11,17 +11,17 @@ import {
   pickLatestPendingMessagePerConversation,
 } from "./agent-reply-debounce.ts";
 
-test("normalizeAgentReplyDebounceSeconds enforces 30s floor and 180s ceiling", () => {
-  assert.equal(normalizeAgentReplyDebounceSeconds(0), 30);
-  assert.equal(normalizeAgentReplyDebounceSeconds(15), 30);
+test("normalizeAgentReplyDebounceSeconds enforces 1 min floor and 60 min ceiling", () => {
+  assert.equal(normalizeAgentReplyDebounceSeconds(0), 60);
+  assert.equal(normalizeAgentReplyDebounceSeconds(30), 60);
   assert.equal(normalizeAgentReplyDebounceSeconds(90), 90);
-  assert.equal(normalizeAgentReplyDebounceSeconds(500), 180);
+  assert.equal(normalizeAgentReplyDebounceSeconds(5000), 3600);
 });
 
-test("computeAgentReplyDebounceNotBefore always waits at least debounce window", () => {
+test("computeAgentReplyDebounceNotBefore waits debounce window in seconds", () => {
   const now = new Date("2026-08-14T12:00:00.000Z");
-  const notBefore = computeAgentReplyDebounceNotBefore(now, AGENT_REPLY_DEBOUNCE_MIN_SECONDS);
-  assert.equal(notBefore, "2026-08-14T12:00:30.000Z");
+  const notBefore = computeAgentReplyDebounceNotBefore(now, 120);
+  assert.equal(notBefore, "2026-08-14T12:02:00.000Z");
 });
 
 test("pickLatestPendingMessagePerConversation keeps newest inbound per conversation", () => {

@@ -1,11 +1,11 @@
 import type { Comment } from "../comments/comment.ts";
 import type { Message } from "../messages/message.ts";
 
-/** Piso fixo — sempre aplicado, mesmo com setting menor. */
-export const AGENT_REPLY_DEBOUNCE_MIN_SECONDS = 30;
-/** Teto configurável (3 minutos). */
-export const AGENT_REPLY_DEBOUNCE_MAX_SECONDS = 180;
-export const AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS = 30;
+/** Piso configurável (1 minuto). */
+export const AGENT_REPLY_DEBOUNCE_MIN_SECONDS = 60;
+/** Teto configurável (60 minutos). */
+export const AGENT_REPLY_DEBOUNCE_MAX_SECONDS = 3600;
+export const AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS = 60;
 
 export const AGENT_REPLY_SUPERSEDED_REASON =
   "[debounce] superseded by newer inbound";

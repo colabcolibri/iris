@@ -9,25 +9,17 @@ import { interpolate } from "@/i18n/compose";
 import { getGlobalReplyModeOptions } from "@/i18n/domains/labels/helpers";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
+import {
+  clampDebounceMinutes,
+  DEBOUNCE_DEFAULT_MINUTES,
+  DEBOUNCE_MAX_MINUTES,
+  DEBOUNCE_MIN_MINUTES,
+  DEBOUNCE_PRESET_MINUTES,
+  debounceSecondsToMinutes,
+  formatDebounceMinutesLabel,
+  minutesToDebounceSeconds,
+} from "@/lib/agent-reply-debounce-settings";
 import type { ReplyMode } from "@/lib/types";
-
-const DEBOUNCE_PRESETS = [
-  { label: "30s", seconds: 30 },
-  { label: "1 min", seconds: 60 },
-  { label: "2 min", seconds: 120 },
-  { label: "3 min", seconds: 180 },
-] as const;
-
-const DEBOUNCE_MIN_SECONDS = 30;
-const DEBOUNCE_MAX_SECONDS = 180;
-const DEBOUNCE_DEFAULT_SECONDS = 30;
-
-function formatDebounceLabel(seconds: number): string {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  return `${Math.round(seconds / 60)} min`;
-}
 
 type MessageAgentAutoReplyCardProps = {
   embedded?: boolean;
@@ -49,15 +41,16 @@ export function MessageAgentAutoReplyCard({
   } = useAppSettings();
   const [saving, setSaving] = useState(false);
   const [savingDebounce, setSavingDebounce] = useState(false);
-  const [debounceInput, setDebounceInput] = useState(String(DEBOUNCE_DEFAULT_SECONDS));
+  const [debounceInput, setDebounceInput] = useState(String(DEBOUNCE_DEFAULT_MINUTES));
+
+  const debounceMinutes = debounceSecondsToMinutes(messageReplyDelaySeconds);
 
   useEffect(() => {
-    setDebounceInput(String(messageReplyDelaySeconds || DEBOUNCE_DEFAULT_SECONDS));
-  }, [messageReplyDelaySeconds]);
+    setDebounceInput(String(debounceMinutes));
+  }, [debounceMinutes]);
 
   const tickMinutes = Math.round((agentReplyTickIntervalSeconds || 300) / 60);
-  const debounceSeconds = messageReplyDelaySeconds || DEBOUNCE_DEFAULT_SECONDS;
-  const debounceLabel = formatDebounceLabel(debounceSeconds);
+  const debounceLabel = formatDebounceMinutesLabel(debounceMinutes);
 
   const replyDebounceHint = interpolate(t.replyDebounceHint, {
     debounce: debounceLabel,
@@ -82,18 +75,16 @@ export function MessageAgentAutoReplyCard({
   }
 
   const persistDebounce = useCallback(
-    async (rawSeconds: string) => {
+    async (rawMinutes: string) => {
       setSavingDebounce(true);
       try {
-        const seconds = Math.min(
-          DEBOUNCE_MAX_SECONDS,
-          Math.max(
-            DEBOUNCE_MIN_SECONDS,
-            Number.parseInt(rawSeconds, 10) || DEBOUNCE_DEFAULT_SECONDS,
-          ),
+        const minutes = clampDebounceMinutes(Number.parseInt(rawMinutes, 10));
+        await saveMessageReplyDelaySeconds(minutesToDebounceSeconds(minutes));
+        toast.success(
+          interpolate(t.toasts.debounceUpdated, {
+            debounce: formatDebounceMinutesLabel(minutes),
+          }),
         );
-        await saveMessageReplyDelaySeconds(seconds);
-        toast.success(interpolate(t.toasts.debounceUpdated, { debounce: formatDebounceLabel(seconds) }));
       } catch (err) {
         toast.error(getApiErrorMessage(err, locale) || t.toasts.debounceFailed);
       } finally {
@@ -136,41 +127,41 @@ export function MessageAgentAutoReplyCard({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {DEBOUNCE_PRESETS.map((preset) => (
+              {DEBOUNCE_PRESET_MINUTES.map((minutes) => (
                 <button
-                  key={preset.seconds}
+                  key={minutes}
                   type="button"
                   disabled={savingDebounce}
                   onClick={() => {
-                    setDebounceInput(String(preset.seconds));
-                    void persistDebounce(String(preset.seconds));
+                    setDebounceInput(String(minutes));
+                    void persistDebounce(String(minutes));
                   }}
                   className={`rounded-md border px-3 py-1.5 text-xs ${
-                    debounceSeconds === preset.seconds
+                    debounceMinutes === minutes
                       ? "border-foreground bg-foreground text-background"
                       : "border-border bg-background text-foreground"
                   }`}
                 >
-                  {preset.label}
+                  {formatDebounceMinutesLabel(minutes)}
                 </button>
               ))}
             </div>
 
             <div className="space-y-2">
               <Label
-                htmlFor="message-reply-debounce-seconds"
+                htmlFor="message-reply-debounce-minutes"
                 className="text-sm font-semibold"
               >
-                {interpolate(t.debounceSecondsLabel, {
-                  min: DEBOUNCE_MIN_SECONDS,
-                  max: DEBOUNCE_MAX_SECONDS,
+                {interpolate(t.debounceMinutesLabel, {
+                  min: DEBOUNCE_MIN_MINUTES,
+                  max: DEBOUNCE_MAX_MINUTES,
                 })}
               </Label>
               <Input
-                id="message-reply-debounce-seconds"
+                id="message-reply-debounce-minutes"
                 type="number"
-                min={DEBOUNCE_MIN_SECONDS}
-                max={DEBOUNCE_MAX_SECONDS}
+                min={DEBOUNCE_MIN_MINUTES}
+                max={DEBOUNCE_MAX_MINUTES}
                 step={1}
                 value={debounceInput}
                 disabled={savingDebounce}

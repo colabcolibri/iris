@@ -62,7 +62,7 @@ test("enqueueMessageReply sliding debounce resets timer on newer inbound", async
     ctx.appSettingsStore.upsert({
       ...defaultAppSettings(),
       messageReplyMode: "draft",
-      messageReplyDelaySeconds: 30,
+      messageReplyDelaySeconds: 60,
     });
 
     const llm = createHarnessLlmMock({ draftText: "ok" });

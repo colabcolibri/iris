@@ -76,7 +76,7 @@ export const settingsPt = {
     replyDebounceLabel: "Janela de debounce",
     replyDebounceHint:
       "Aguarda {debounce} após o último comentário do mesmo autor no post antes de gerar a resposta. Se o autor comentar de novo nesse intervalo, o timer reinicia e só o comentário mais recente dele é respondido. Cadência real: debounce + até {tick} min até o próximo ciclo do worker.",
-    debounceSecondsLabel: "Segundos de debounce ({min}–{max})",
+    debounceMinutesLabel: "Minutos de debounce ({min}–{max})",
     replyDelayLabel: "Tempo antes de responder",
     replyDelayHint:
       "Padrão: imediato no próximo ciclo. Com fila, o agente aguarda o intervalo antes do harness — a fila fica no banco e sobrevive a reinícios.",
@@ -117,7 +117,7 @@ export const settingsPt = {
     replyDebounceLabel: "Janela de debounce",
     replyDebounceHint:
       "Aguarda {debounce} após a última mensagem do cliente na mesma conversa antes de gerar a resposta. Se chegar outra mensagem nesse intervalo, o timer reinicia e só a mais recente é respondida. Cadência real: debounce + até {tick} min até o próximo ciclo do worker.",
-    debounceSecondsLabel: "Segundos de debounce ({min}–{max})",
+    debounceMinutesLabel: "Minutos de debounce ({min}–{max})",
     replyDelayLabel: "Tempo antes de responder",
     replyDelayHint:
       "Mesma fila persistente usada nos comentários, com settings próprios para DM.",

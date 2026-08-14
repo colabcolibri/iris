@@ -9,6 +9,16 @@ import { interpolate } from "@/i18n/compose";
 import { getGlobalReplyModeOptions } from "@/i18n/domains/labels/helpers";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
+import {
+  clampDebounceMinutes,
+  DEBOUNCE_DEFAULT_MINUTES,
+  DEBOUNCE_MAX_MINUTES,
+  DEBOUNCE_MIN_MINUTES,
+  DEBOUNCE_PRESET_MINUTES,
+  debounceSecondsToMinutes,
+  formatDebounceMinutesLabel,
+  minutesToDebounceSeconds,
+} from "@/lib/agent-reply-debounce-settings";
 import type { ReplyMode } from "@/lib/types";
 
 const TICK_PRESETS = [
@@ -19,16 +29,10 @@ const TICK_PRESETS = [
   { label: "20 min", seconds: 1200 },
 ] as const;
 
-const DEBOUNCE_PRESETS = [
-  { label: "30s", seconds: 30 },
-  { label: "1 min", seconds: 60 },
-  { label: "2 min", seconds: 120 },
-  { label: "3 min", seconds: 180 },
-] as const;
-
-const DEBOUNCE_MIN_SECONDS = 30;
-const DEBOUNCE_MAX_SECONDS = 180;
-const DEBOUNCE_DEFAULT_SECONDS = 30;
+const DEBOUNCE_PRESETS = DEBOUNCE_PRESET_MINUTES.map((minutes) => ({
+  label: formatDebounceMinutesLabel(minutes),
+  minutes,
+}));
 
 const MAX_AGE_PRESETS = [
   { label: "7 dias", days: 7 },
@@ -39,13 +43,6 @@ const MAX_AGE_PRESETS = [
 const MAX_AGE_MIN_DAYS = 1;
 const MAX_AGE_MAX_DAYS = 365;
 const MAX_AGE_DEFAULT_DAYS = 15;
-
-function formatDebounceLabel(seconds: number): string {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  return `${Math.round(seconds / 60)} min`;
-}
 
 function formatTickMinutes(seconds: number): number {
   return Math.round(seconds / 60);
@@ -74,20 +71,21 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
   const [savingDebounce, setSavingDebounce] = useState(false);
   const [savingMaxAge, setSavingMaxAge] = useState(false);
   const [savingTick, setSavingTick] = useState(false);
-  const [debounceInput, setDebounceInput] = useState(String(DEBOUNCE_DEFAULT_SECONDS));
+  const [debounceInput, setDebounceInput] = useState(String(DEBOUNCE_DEFAULT_MINUTES));
   const [maxAgeInput, setMaxAgeInput] = useState(String(MAX_AGE_DEFAULT_DAYS));
 
+  const debounceMinutes = debounceSecondsToMinutes(replyDelaySeconds);
+
   useEffect(() => {
-    setDebounceInput(String(replyDelaySeconds || DEBOUNCE_DEFAULT_SECONDS));
-  }, [replyDelaySeconds]);
+    setDebounceInput(String(debounceMinutes));
+  }, [debounceMinutes]);
 
   useEffect(() => {
     setMaxAgeInput(String(replyMaxAgeDays || MAX_AGE_DEFAULT_DAYS));
   }, [replyMaxAgeDays]);
 
   const tickMinutes = formatTickMinutes(agentReplyTickIntervalSeconds || 300);
-  const debounceSeconds = replyDelaySeconds || DEBOUNCE_DEFAULT_SECONDS;
-  const debounceLabel = formatDebounceLabel(debounceSeconds);
+  const debounceLabel = formatDebounceMinutesLabel(debounceMinutes);
 
   const replyDebounceHint = interpolate(t.replyDebounceHint, {
     debounce: debounceLabel,
@@ -112,18 +110,16 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
   }
 
   const persistDebounce = useCallback(
-    async (rawSeconds: string) => {
+    async (rawMinutes: string) => {
       setSavingDebounce(true);
       try {
-        const seconds = Math.min(
-          DEBOUNCE_MAX_SECONDS,
-          Math.max(
-            DEBOUNCE_MIN_SECONDS,
-            Number.parseInt(rawSeconds, 10) || DEBOUNCE_DEFAULT_SECONDS,
-          ),
+        const minutes = clampDebounceMinutes(Number.parseInt(rawMinutes, 10));
+        await saveReplyDelaySeconds(minutesToDebounceSeconds(minutes));
+        toast.success(
+          interpolate(t.toasts.debounceUpdated, {
+            debounce: formatDebounceMinutesLabel(minutes),
+          }),
         );
-        await saveReplyDelaySeconds(seconds);
-        toast.success(interpolate(t.toasts.debounceUpdated, { debounce: formatDebounceLabel(seconds) }));
       } catch (err) {
         toast.error(getApiErrorMessage(err, locale) || t.toasts.debounceFailed);
       } finally {
@@ -270,15 +266,15 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
             <div className="flex flex-wrap gap-2">
               {DEBOUNCE_PRESETS.map((preset) => (
                 <button
-                  key={preset.seconds}
+                  key={preset.minutes}
                   type="button"
                   disabled={savingDebounce}
                   onClick={() => {
-                    setDebounceInput(String(preset.seconds));
-                    void persistDebounce(String(preset.seconds));
+                    setDebounceInput(String(preset.minutes));
+                    void persistDebounce(String(preset.minutes));
                   }}
                   className={`rounded-md border px-3 py-1.5 text-xs ${
-                    debounceSeconds === preset.seconds
+                    debounceMinutes === preset.minutes
                       ? "border-foreground bg-foreground text-background"
                       : "border-border bg-background text-foreground"
                   }`}
@@ -289,17 +285,17 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reply-debounce-seconds" className="text-sm font-semibold">
-                {interpolate(t.debounceSecondsLabel, {
-                  min: DEBOUNCE_MIN_SECONDS,
-                  max: DEBOUNCE_MAX_SECONDS,
+              <Label htmlFor="reply-debounce-minutes" className="text-sm font-semibold">
+                {interpolate(t.debounceMinutesLabel, {
+                  min: DEBOUNCE_MIN_MINUTES,
+                  max: DEBOUNCE_MAX_MINUTES,
                 })}
               </Label>
               <Input
-                id="reply-debounce-seconds"
+                id="reply-debounce-minutes"
                 type="number"
-                min={DEBOUNCE_MIN_SECONDS}
-                max={DEBOUNCE_MAX_SECONDS}
+                min={DEBOUNCE_MIN_MINUTES}
+                max={DEBOUNCE_MAX_MINUTES}
                 step={1}
                 value={debounceInput}
                 disabled={savingDebounce}

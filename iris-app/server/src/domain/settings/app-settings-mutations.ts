@@ -111,7 +111,7 @@ export function normalizeAppSettingsBody(
     }
     if (!isValidReplyDelaySeconds(body.reply_delay_seconds)) {
       throw new ValidationError(
-        "reply_delay_seconds must be between 30 and 180",
+        "reply_delay_seconds must be between 60 and 3600 (1 to 60 minutes)",
       );
     }
     replyDelaySeconds = Math.round(body.reply_delay_seconds);
@@ -148,7 +148,7 @@ export function normalizeAppSettingsBody(
     }
     if (!isValidReplyDelaySeconds(body.message_reply_delay_seconds)) {
       throw new ValidationError(
-        "message_reply_delay_seconds must be between 30 and 180",
+        "message_reply_delay_seconds must be between 60 and 3600 (1 to 60 minutes)",
       );
     }
     messageReplyDelaySeconds = Math.round(body.message_reply_delay_seconds);
