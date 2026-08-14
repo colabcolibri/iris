@@ -38,7 +38,7 @@ export const MESSAGE_SIMULATOR_SCENARIOS: MessageSimulatorScenario[] = [
     reply_prompt: "Priorizar link da loja virtual quando citar produto.",
     thread: [],
     target_author: "camila.fit",
-    target_text: "Manda o link da bolsa Nômade pra eu comprar?",
+    target_text: "Manda o link do Jogo Grok pra eu comprar?",
   },
   {
     id: "general-thanks",

@@ -37,6 +37,19 @@ import { cn } from "@/lib/utils";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
 
+function terminalStatusLabel(
+  status: string | null,
+  labels: Record<string, string>,
+): string {
+  if (!status) {
+    return "—";
+  }
+  const camelKey = status.replace(/_([a-z])/g, (_, char: string) =>
+    char.toUpperCase(),
+  );
+  return labels[status] ?? labels[camelKey] ?? status;
+}
+
 function terminalBadgeClass(status: string | null): string {
   switch (status) {
     case "approved":
@@ -44,7 +57,10 @@ function terminalBadgeClass(status: string | null): string {
       return "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200";
     case "blocked_harmful":
     case "rejected_verify":
+    case "draft_failed":
       return "bg-destructive/15 text-destructive";
+    case "budget_exceeded":
+      return "bg-amber-500/15 text-amber-800 dark:text-amber-200";
     case "skipped_triage":
       return "bg-muted text-muted-foreground";
     default:
@@ -228,9 +244,7 @@ export function AgentRunsPage() {
                     terminalBadgeClass(row.terminal_status),
                   )}
                 >
-                  {t.terminal[row.terminal_status as keyof typeof t.terminal] ??
-                    row.terminal_status ??
-                    "—"}
+                  {terminalStatusLabel(row.terminal_status, t.terminal)}
                 </span>
               </TableCell>
               <TableCell>

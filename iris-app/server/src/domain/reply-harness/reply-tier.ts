@@ -8,6 +8,8 @@ export type BlockCategory =
   | "spam"
   | "off_topic"
   | "not_for_brand"
+  | "conversation_stalled"
+  | "thread_reply_limit"
   | "other";
 
 export const SIMPLE_REPLY_MAX_CHARS = 180;
@@ -36,6 +38,8 @@ const BLOCK_CATEGORIES: BlockCategory[] = [
   "spam",
   "off_topic",
   "not_for_brand",
+  "conversation_stalled",
+  "thread_reply_limit",
   "other",
 ];
 

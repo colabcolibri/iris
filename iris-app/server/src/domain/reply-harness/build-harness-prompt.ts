@@ -17,6 +17,7 @@ import {
   threadForTier,
 } from "./prompt-sections.ts";
 import type { ReplyTier } from "./reply-tier.ts";
+import { MAX_BRAND_REPLIES_PER_THREAD } from "./thread-reply-brakes.ts";
 import { SIGNATURE_SEPARATOR } from "./reply-signature-format.ts";
 
 const POST_BRIEFING_PRECEDENCE =
@@ -75,7 +76,10 @@ const TRIAGE_TIER_GUIDE = [
   '- blockCategory "spam": irrelevant promos or bots.',
   '- blockCategory "off_topic": no link to the post or brand.',
   '- blockCategory "not_for_brand": users talking to each other; target is not directed at the brand (see Reply audience).',
+  '- blockCategory "conversation_stalled": exchange resolved or going in circles — thanks/emoji/laughter after the brand answered, ping-pong without a new question, or repeating the same point.',
+  `- blockCategory "thread_reply_limit": thread already has ${MAX_BRAND_REPLIES_PER_THREAD} brand replies (see Thread reply brakes).`,
   '- replyTier "none": do not use brand draft (includes any blockCategory other than none).',
+  "- When the thread is not evolving, set shouldReply=false even if the comment is polite.",
   '- replyTier "simple": a short reply is enough (thanks, praise, simple question, light ack/emoji/laughter).',
   '- replyTier "full": needs explanation, product context, conflict handling, or sensitive tone.',
   "- Short laughter like Brazilian \"kkk\" is NOT hate_violence.",
@@ -109,7 +113,7 @@ export function buildTriagePrompt(context: ReplyContext, restrictions: string): 
     buildResponseLanguageDirective(context.persona, { includeJsonNote: true }),
     "",
     "Reply with valid JSON only:",
-    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"crisis"|"hate_violence"|"harmful"|"spam"|"off_topic"|"not_for_brand"|"other","reason":"short label","reasoning":"brief explanation"}',
+    '{"shouldReply":true|false,"replyTier":"none"|"simple"|"full","blockCategory":"none"|"crisis"|"hate_violence"|"harmful"|"spam"|"off_topic"|"not_for_brand"|"conversation_stalled"|"thread_reply_limit"|"other","reason":"short label","reasoning":"brief explanation"}',
   ].join("\n");
 }
 

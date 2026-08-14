@@ -9,6 +9,8 @@ import type { MessageCategory } from "./message-category.ts";
 
 export type MessageHarnessTerminalStatus =
   | "blocked_harmful"
+  | "draft_failed"
+  | "budget_exceeded"
   | "rejected_verify"
   | "approved";
 

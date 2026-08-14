@@ -1,11 +1,11 @@
 import type { HarnessTool } from "../../../ports/harness-tool.ts";
-import { searchResolvedProducts } from "../resolve-product-view.ts";
+import { searchProductCatalog } from "../../products/product-catalog-search.ts";
 
 export function createCatalogSearchProductsTool(): HarnessTool {
   return {
     name: "search_products",
     description:
-      "Busca produtos ativos por texto (nome, slug, descrição, sku). Retorna lista resolvida com preço/url conforme políticas.",
+      "Busca produtos ativos por texto (nome, slug, descrição). Retorna items, totalMatched e suggestions quando vazio.",
     async execute(ctx, args) {
       const query = typeof args.query === "string" ? args.query : "";
       const limit =
@@ -14,7 +14,7 @@ export function createCatalogSearchProductsTool(): HarnessTool {
           : ctx.budget.maxCatalogResults;
       const activeOnly = args.active_only !== false;
 
-      const items = searchResolvedProducts(
+      const result = searchProductCatalog(
         {
           products: ctx.products,
           productStoreLinks: ctx.productStoreLinks,
@@ -24,7 +24,7 @@ export function createCatalogSearchProductsTool(): HarnessTool {
         { limit, activeOnly },
       );
 
-      return { success: true, output: { items } };
+      return { success: true, output: result };
     },
   };
 }

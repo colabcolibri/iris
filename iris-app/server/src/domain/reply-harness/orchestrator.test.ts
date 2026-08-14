@@ -466,3 +466,58 @@ test("runReplyHarness skips triage when comment is not for the brand", async () 
   assert.equal(result.replyTier, "none");
   assert.equal(result.steps[0]?.blockCategory, "not_for_brand");
 });
+
+test("runReplyHarness skips stalled exchange without calling LLM", async () => {
+  let calls = 0;
+  const llm: LlmCompleter = {
+    async complete() {
+      calls += 1;
+      return createTestLlmCompletion("{}");
+    },
+  };
+
+  const context = mockContext();
+  context.thread = {
+    entries: [
+      {
+        author: "fan",
+        text: "qual o prazo?",
+        isBrandReply: false,
+        at: "2026-08-10T10:00:00.000Z",
+        depth: 0,
+        igCommentId: "c1",
+      },
+      {
+        author: "marca",
+        text: "5 a 7 dias úteis",
+        isBrandReply: true,
+        at: "2026-08-10T10:01:00.000Z",
+        depth: 0,
+        igCommentId: "c2",
+      },
+      {
+        author: "fan",
+        text: "obrigado!",
+        isBrandReply: false,
+        at: "2026-08-10T10:02:00.000Z",
+        depth: 1,
+        igCommentId: "target",
+      },
+    ],
+  };
+  context.targetComment = {
+    authorUsername: "fan",
+    text: "obrigado!",
+    igCommentId: "target",
+  };
+
+  const result = await runReplyHarness({
+    context,
+    agentContent: defaultAgentContent(),
+    llm,
+  });
+
+  assert.equal(calls, 0);
+  assert.equal(result.terminalStatus, "skipped_triage");
+  assert.equal(result.steps[0]?.blockCategory, "conversation_stalled");
+});

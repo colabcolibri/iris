@@ -2,10 +2,10 @@ import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { MessageAgentContent } from "../../ports/message-agent-content-store.ts";
 import type { HarnessToolContext } from "../../ports/harness-tool.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
-import { runAgentLoop } from "../harness/agent-loop-orchestrator.ts";
+import { runAgentLoop, type AgentLoopTriageHints } from "../harness/agent-loop-orchestrator.ts";
 import type { HarnessToolRegistry } from "../harness/harness-tool-registry.ts";
 import { DEFAULT_HARNESS_BUDGET } from "../harness/types.ts";
-import type { AgentLoopStepResult } from "../harness/types.ts";
+import type { AgentLoopStepResult, AgentLoopTerminalStatus } from "../harness/types.ts";
 import type { ResolvedProductView } from "../products/resolved-product-view.ts";
 import type { MessageCategory } from "./message-category.ts";
 import type { MessageStageResult } from "./types.ts";
@@ -22,6 +22,7 @@ export type MessageAgenticDraftInput = {
   maxChars: number;
   messageCategory: MessageCategory;
   productSlug?: string | null;
+  triageHints?: AgentLoopTriageHints;
   harness: MessageAgenticDraftDeps;
   onLoopStep?: (step: AgentLoopStepResult) => void | Promise<void>;
 };
@@ -30,6 +31,7 @@ export type MessageAgenticDraftResult = {
   stages: MessageStageResult[];
   draftText: string | null;
   resolvedProducts: ResolvedProductView[];
+  loopTerminalStatus: AgentLoopTerminalStatus;
 };
 
 function mapLoopStepToMessageStage(step: AgentLoopStepResult): MessageStageResult {
@@ -41,11 +43,15 @@ function mapLoopStepToMessageStage(step: AgentLoopStepResult): MessageStageResul
     llm: step.llm,
     structured: step.toolName
       ? {
+          turnIndex: step.turnIndex,
           toolName: step.toolName,
           toolInput: step.toolInput ?? undefined,
           toolOutput: step.toolOutput,
         }
-      : undefined,
+      : {
+          turnIndex: step.turnIndex,
+          llmContextJson: step.llmContextJson ?? undefined,
+        },
   };
 }
 
@@ -62,6 +68,7 @@ export async function runMessageAgenticDraftStage(
     maxChars: input.maxChars,
     messageCategory: input.messageCategory,
     focusProductSlug: input.productSlug,
+    triageHints: input.triageHints,
     onStep: input.onLoopStep,
   });
 
@@ -71,5 +78,6 @@ export async function runMessageAgenticDraftStage(
     stages,
     draftText: loop.finalText,
     resolvedProducts: loop.resolvedProducts,
+    loopTerminalStatus: loop.terminalStatus,
   };
 }

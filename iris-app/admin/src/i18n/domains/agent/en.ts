@@ -120,6 +120,8 @@ export const agentEn = {
       skippedTriage: "skipped at triage",
       blockedHarmful: "blocked (harmful)",
       rejectedVerify: "rejected at verification",
+      draftFailed: "draft failed",
+      budgetExceeded: "budget exceeded",
     },
     toasts: {
       loadFailed: "Failed to load runs.",

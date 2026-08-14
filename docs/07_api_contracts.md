@@ -335,12 +335,12 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | Method | Path | Auth | Description |
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/agent-runs` | admin | Lista runs (`limit`, `cursor`, `terminal_status`, `reply_tier`); inclui `llm_call_count`, `tool_call_count`, `session_summary` |
-| GET | `/api/agent-runs/:id` | admin | Detalhe + audit steps com `step_kind`, `tool_name`, `tool_input`/`tool_output`, `session_summary` |
+| GET | `/api/agent-runs/:id` | admin | Detalhe + audit steps com `step_kind`, `tool_name`, `tool_input`/`tool_output`, `llm_context_json` (turnos LLM), `session_summary` |
 | GET | `/api/agent/simulator-scenarios` | admin | Lista cenários editoriais persistidos |
 | POST | `/api/agent/simulator-scenarios` | admin | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
 | PUT | `/api/agent/simulator-scenarios/:id` | admin | Atualiza cenário (campos parciais permitidos) |
 | DELETE | `/api/agent/simulator-scenarios/:id` | admin | Remove cenário |
-| POST | `/api/agent/simulate` | admin | Simula resposta comentário ou DM (`channel=comment` \| `dm`). Sandbox — não publica na Meta. |
+| POST | `/api/agent/simulate` | admin | Simula resposta comentário ou DM (`channel=comment` \| `dm`). DM: `terminal_status` pode ser `approved`, `draft_failed`, `budget_exceeded`, `rejected_verify`, `blocked_harmful`. Sandbox — não publica na Meta. |
 
 ## Settings
 

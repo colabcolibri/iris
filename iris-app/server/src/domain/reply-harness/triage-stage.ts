@@ -11,6 +11,7 @@ import {
   type ReplyTier,
   type TriageStageOutput,
 } from "./reply-tier.ts";
+import { evaluateThreadReplyBrakes } from "./thread-reply-brakes.ts";
 import type { StageResult } from "./types.ts";
 
 export type TriageStageInput = {
@@ -23,7 +24,34 @@ export type TriageStageResult = StageResult & {
   replyTier: ReplyTier;
 };
 
+function triageResultFromThreadBrake(
+  brake: NonNullable<ReturnType<typeof evaluateThreadReplyBrakes>>,
+): TriageStageResult {
+  const structured = {
+    shouldReply: false,
+    replyTier: "none" as const,
+    blockCategory: brake.blockCategory,
+    reason: brake.reason,
+    reasoning: brake.reasoning,
+  };
+
+  return {
+    stage: "triage",
+    verdict: "fail",
+    replyTier: "none",
+    blockCategory: brake.blockCategory,
+    reason: formatTriageReason(structured),
+    reasoning: brake.reasoning,
+    structured,
+  };
+}
+
 export async function runTriageStage(input: TriageStageInput): Promise<TriageStageResult> {
+  const threadBrake = evaluateThreadReplyBrakes(input.context);
+  if (threadBrake) {
+    return triageResultFromThreadBrake(threadBrake);
+  }
+
   const prompt = buildTriagePrompt(input.context, input.agentContent.restrictions);
   const completion = await input.llm.complete(prompt);
   const raw = completion.text;

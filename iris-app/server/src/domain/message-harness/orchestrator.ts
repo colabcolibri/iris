@@ -69,6 +69,11 @@ export async function runMessageHarness(
     maxChars: personaMax,
     messageCategory: triage.messageCategory,
     productSlug: triage.productSlug,
+    triageHints: {
+      reason: triage.reason,
+      productSlug: triage.productSlug,
+      messageCategory: triage.messageCategory,
+    },
     harness: input.harness,
     onLoopStep: async (loopStep) => {
       const stage: MessageStageResult = {
@@ -84,7 +89,10 @@ export async function runMessageHarness(
               toolInput: loopStep.toolInput ?? undefined,
               toolOutput: loopStep.toolOutput,
             }
-          : { turnIndex: loopStep.turnIndex },
+          : {
+              turnIndex: loopStep.turnIndex,
+              llmContextJson: loopStep.llmContextJson ?? undefined,
+            },
       };
       steps.push(stage);
       await emitStep(input.onStepComplete, stage);
@@ -92,8 +100,12 @@ export async function runMessageHarness(
   });
 
   if (!draft.draftText) {
+    const terminalStatus =
+      draft.loopTerminalStatus === "budget_exceeded"
+        ? "budget_exceeded"
+        : "draft_failed";
     return {
-      terminalStatus: "rejected_verify",
+      terminalStatus,
       messageCategory: triage.messageCategory,
       steps,
       finalText: null,

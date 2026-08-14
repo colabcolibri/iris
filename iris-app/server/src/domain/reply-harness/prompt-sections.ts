@@ -8,6 +8,7 @@ import {
 } from "./comment-signal.ts";
 import type { ReplyTier } from "./reply-tier.ts";
 import { buildBrandLine, buildTriageAudienceDirective } from "./prompt-language.ts";
+import { buildThreadBrakeContextBlock } from "./thread-reply-brakes.ts";
 
 const THREAD_CONTEXT_MAX = 16;
 const SIMPLE_CAPTION_MAX = 500;
@@ -118,6 +119,8 @@ export function buildTriageContextSection(context: ReplyContext): string {
     carouselLine,
     "",
     buildCommentSignalBlock(context),
+    "",
+    buildThreadBrakeContextBlock(context),
     "",
     buildTriageAudienceDirective(context),
     "",

@@ -3,6 +3,7 @@ import type { ProductRepository } from "../../ports/product-repository.ts";
 import type { ProductStoreLinkRepository } from "../../ports/product-store-link-repository.ts";
 import { resolveProductFields } from "../products/product-field-resolver.ts";
 import type { ResolvedProductView } from "../products/resolved-product-view.ts";
+import { searchProductCatalog } from "../products/product-catalog-search.ts";
 
 export type ResolveProductViewDeps = {
   products: ProductRepository;
@@ -52,37 +53,5 @@ export function searchResolvedProducts(
   query: string,
   options: { limit?: number; activeOnly?: boolean } = {},
 ): ResolvedProductView[] {
-  const limit = options.limit ?? 10;
-  const activeOnly = options.activeOnly !== false;
-  const normalized = query.trim().toLowerCase();
-  const products = deps.products.list(activeOnly);
-
-  const scored = products
-    .map((product) => {
-      const view = resolveProductView(deps, product.id);
-      if (!view) {
-        return null;
-      }
-      if (!normalized) {
-        return { view, score: 0 };
-      }
-
-      const haystack = [
-        view.name,
-        view.slug,
-        view.shortDescription,
-        view.longDescription,
-        view.sku ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      const score = haystack.includes(normalized) ? 1 : 0;
-      return { view, score };
-    })
-    .filter((entry): entry is { view: ResolvedProductView; score: number } => entry !== null)
-    .filter((entry) => (normalized ? entry.score > 0 : true))
-    .slice(0, limit);
-
-  return scored.map((entry) => entry.view);
+  return searchProductCatalog(deps, query, options).items;
 }

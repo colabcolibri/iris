@@ -117,10 +117,10 @@ ${DEMO_BRAND_NAME}`,
     verify_reasoning: "Preço e prazo coerentes com product_facts.",
   },
   "product-link": {
-    summary: "Link direto da bolsa Nômade.",
-    final_text: `Claro! A bolsa Nômade está aqui: ${DEMO_STORE_URL}/bolsa-nomade — se precisar de ajuda com frete, é só falar 💛`,
+    summary: "Link direto do Jogo Grok.",
+    final_text: `Claro! O Jogo Grok está aqui: ${DEMO_STORE_URL}/jogo-grok — se precisar de ajuda com frete, é só falar 💛`,
     triage_reasoning: "Pedido de link de produto.",
-    draft_reasoning: "Resposta curta com URL da loja.",
+    draft_reasoning: "Consultou catálogo e retornou URL da loja.",
     verify_reasoning: "Link válido para demo.",
   },
   "general-thanks": {

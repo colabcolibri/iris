@@ -25,6 +25,7 @@ type AgentRunStepRow = {
   reason: string | null;
   reasoning: string | null;
   output_json: string | null;
+  llm_context_json: string | null;
   model: string | null;
   prompt_tokens: number | null;
   completion_tokens: number | null;
@@ -65,6 +66,7 @@ function mapRow(row: AgentRunStepRow): AgentRunStep {
     reason: row.reason,
     reasoning: row.reasoning,
     outputJson: row.output_json,
+    llmContextJson: row.llm_context_json,
     llm: mapLlm(row),
     createdAt: row.created_at,
   };
@@ -102,13 +104,14 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
       reason,
       reasoning,
       output_json,
+      llm_context_json,
       model,
       prompt_tokens,
       completion_tokens,
       total_tokens,
       latency_ms,
       created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const listByComment = db.prepare(`
@@ -157,6 +160,7 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
           step.toolOutput !== undefined && step.toolOutput !== null
             ? sanitizeToolJson(step.toolOutput)
             : null;
+        const llmContextJson = step.llmContextJson ?? null;
 
         insert.run(
           id,
@@ -175,6 +179,7 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
           step.reason ?? null,
           step.reasoning ?? null,
           outputJson,
+          llmContextJson,
           llm?.model ?? null,
           llm?.promptTokens ?? null,
           llm?.completionTokens ?? null,
@@ -199,6 +204,7 @@ export function createSqliteAgentRunStepRepository(db: DatabaseSync): AgentRunSt
           reason: step.reason ?? null,
           reasoning: step.reasoning ?? null,
           outputJson,
+          llmContextJson,
           llm,
           createdAt,
         });

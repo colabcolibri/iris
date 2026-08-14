@@ -65,6 +65,10 @@ function mapStageToStepInput(
     structured && typeof structured.toolName === "string" ? structured.toolName : null;
   const turnIndex =
     structured && typeof structured.turnIndex === "number" ? structured.turnIndex : null;
+  const llmContextJson =
+    structured && typeof structured.llmContextJson === "string"
+      ? structured.llmContextJson
+      : null;
 
   return {
     agentRunId: runId,
@@ -82,6 +86,7 @@ function mapStageToStepInput(
     reason: step.reason,
     reasoning: step.reasoning,
     outputJson: step.structured ?? null,
+    llmContextJson,
     llm: step.llm ?? null,
   };
 }

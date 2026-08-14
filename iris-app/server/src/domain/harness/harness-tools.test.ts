@@ -61,9 +61,10 @@ describe("catalog tools", () => {
     const tool = createCatalogSearchProductsTool();
     const result = await tool.execute(ctx, { query: "camiseta" });
     assert.equal(result.success, true);
-    const output = result.output as { items: Array<{ slug: string }> };
+    const output = result.output as { items: Array<{ slug: string }>; totalMatched: number };
     assert.equal(output.items.length, 1);
     assert.equal(output.items[0]?.slug, "camiseta-preta");
+    assert.equal(output.totalMatched, 1);
   });
 
   test("finish_draft rejects empty text", async () => {

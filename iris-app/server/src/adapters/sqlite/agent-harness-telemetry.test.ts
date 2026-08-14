@@ -23,6 +23,7 @@ test("agent harness telemetry migration adds session and tool columns", () => {
     .map((row) => (row as { name: string }).name);
   assert.ok(stepColumns.includes("step_kind"));
   assert.ok(stepColumns.includes("tool_name"));
+  assert.ok(stepColumns.includes("llm_context_json"));
 
   const runs = createSqliteAgentRunRepository(db);
   const steps = createSqliteAgentRunStepRepository(db);

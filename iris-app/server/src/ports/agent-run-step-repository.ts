@@ -25,6 +25,7 @@ export type AgentRunStep = {
   reason: string | null;
   reasoning: string | null;
   outputJson: string | null;
+  llmContextJson: string | null;
   llm: StageLlmTelemetry | null;
   createdAt: string;
 };
@@ -45,6 +46,7 @@ export type CreateAgentRunStepInput = {
   reason?: string | null;
   reasoning?: string | null;
   outputJson?: AgentDecisionJson | null;
+  llmContextJson?: string | null;
   llm?: StageLlmTelemetry | null;
 };
 

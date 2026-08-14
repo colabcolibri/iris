@@ -9,6 +9,17 @@ import type { MessageCategory } from "../message-harness/message-category.ts";
 import { formatResolvedProductForPrompt } from "../products/product-field-resolver.ts";
 import type { ResolvedProductView } from "../products/resolved-product-view.ts";
 import { resolveProductViewBySlug } from "./resolve-product-view.ts";
+import {
+  appendLoopAction,
+  appendLoopObservation,
+  appendLoopSystemNote,
+  createAgentLoopTranscript,
+  hasToolCallFingerprint,
+  renderLoopTranscriptForPrompt,
+  serializeLoopTranscript,
+  toolCallFingerprint,
+  type AgentLoopTranscript,
+} from "./agent-loop-transcript.ts";
 import type {
   AgentLoopRunResult,
   AgentLoopStepResult,
@@ -16,6 +27,12 @@ import type {
   AgentLoopTurnAction,
   HarnessBudget,
 } from "./types.ts";
+
+export type AgentLoopTriageHints = {
+  reason?: string | null;
+  productSlug?: string | null;
+  messageCategory?: MessageCategory | null;
+};
 
 export type RunAgentLoopInput = {
   context: MessageReplyContext;
@@ -27,6 +44,7 @@ export type RunAgentLoopInput = {
   maxChars: number;
   messageCategory: MessageCategory;
   focusProductSlug?: string | null;
+  triageHints?: AgentLoopTriageHints;
   onStep?: (step: AgentLoopStepResult) => void | Promise<void>;
 };
 
@@ -46,15 +64,27 @@ function formatThread(context: MessageReplyContext): string {
     .join("\n");
 }
 
-function buildAgentLoopPrompt(
+export function buildAgentLoopPrompt(
   input: RunAgentLoopInput,
   focusProduct: ResolvedProductView | null,
+  transcript: AgentLoopTranscript,
 ): string {
   const focusBlock = focusProduct
     ? `Produto em foco (triagem):\n${formatResolvedProductForPrompt(focusProduct)}`
     : "Nenhum produto em foco — use search_products se precisar.";
 
-  return [
+  const triageBlock = input.triageHints?.reason
+    ? [
+        "Contexto da triagem:",
+        `- categoria: ${input.triageHints.messageCategory ?? input.messageCategory}`,
+        `- productSlug: ${input.triageHints.productSlug ?? "(nenhum)"}`,
+        `- raciocínio: ${input.triageHints.reason}`,
+        "- Se search_products retornar vazio e o produto não existir, responda com finish explicando educadamente.",
+        "- Não repita a mesma tool com os mesmos argumentos.",
+      ].join("\n")
+    : "";
+
+  const base = [
     "Você redige resposta em DM do Instagram usando tools de catálogo.",
     `Categoria triada: ${input.messageCategory}`,
     `Limite final: ${input.maxChars} caracteres.`,
@@ -67,6 +97,7 @@ function buildAgentLoopPrompt(
     input.registry.describeForPrompt(),
     "",
     focusBlock,
+    triageBlock,
     "",
     "Alma (dm_soul):",
     input.agentContent.dmSoul || "(vazio)",
@@ -85,7 +116,11 @@ function buildAgentLoopPrompt(
     input.context.conversation.replyPrompt
       ? `\nBriefing:\n${input.context.conversation.replyPrompt}`
       : "",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return base + renderLoopTranscriptForPrompt(transcript);
 }
 
 function parseTurnAction(raw: string): AgentLoopTurnAction | null {
@@ -146,8 +181,17 @@ function collectProductsFromToolOutput(
   }
 }
 
+function buildPromptForTurn(
+  input: RunAgentLoopInput,
+  focusProduct: ResolvedProductView | null,
+  transcript: AgentLoopTranscript,
+): string {
+  return buildAgentLoopPrompt(input, focusProduct, transcript);
+}
+
 export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopRunResult> {
   const steps: AgentLoopStepResult[] = [];
+  const transcript = createAgentLoopTranscript();
   const resolvedProducts: ResolvedProductView[] = [];
   const startedAt = Date.now();
   let toolCalls = 0;
@@ -165,14 +209,13 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
       )
     : null;
 
-  const prompt = buildAgentLoopPrompt(input, focusProduct);
-
   for (let turn = 0; turn < input.budget.maxTurns; turn += 1) {
     if (Date.now() - startedAt > input.budget.timeoutMs) {
       terminalStatus = "timeout";
       break;
     }
 
+    const prompt = buildPromptForTurn(input, focusProduct, transcript);
     const completion = await input.llm.complete(prompt);
     const turnStep: AgentLoopStepResult = {
       stage: "message_draft_turn",
@@ -181,6 +224,10 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
       verdict: "pass",
       reason: `draft_turn:${turn}`,
       reasoning: completion.text.slice(0, 2000),
+      llmContextJson: JSON.stringify({
+        prompt,
+        transcript: JSON.parse(serializeLoopTranscript(transcript)),
+      }),
       llm: stageLlmFromCompletion(completion),
     };
     steps.push(turnStep);
@@ -205,6 +252,16 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
       break;
     }
 
+    const fingerprint = toolCallFingerprint(action.tool, action.arguments);
+    if (hasToolCallFingerprint(transcript, fingerprint)) {
+      appendLoopSystemNote(
+        transcript,
+        turn,
+        "tool duplicada bloqueada — use finish ou altere a estratégia",
+      );
+      continue;
+    }
+
     const tool = input.registry.get(action.tool);
     if (!tool) {
       const failStep: AgentLoopStepResult = {
@@ -227,6 +284,11 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
       break;
     }
 
+    appendLoopAction(transcript, turn, "call_tool", {
+      tool: action.tool,
+      arguments: action.arguments,
+    });
+
     const toolStarted = Date.now();
     const callStep: AgentLoopStepResult = {
       stage: "tool_call",
@@ -246,6 +308,8 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
     toolCalls += 1;
     const result = await tool.execute(input.toolContext, action.arguments);
     const toolLatencyMs = Date.now() - toolStarted;
+
+    appendLoopObservation(transcript, turn, action.tool, result.output);
 
     const resultStep: AgentLoopStepResult = {
       stage: "tool_result",
@@ -288,13 +352,9 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
   }
 
   if (!finalText && terminalStatus === "invalid_response" && steps.length > 0) {
-    const lastTurn = steps.filter((s) => s.stage === "message_draft_turn").at(-1);
-    if (lastTurn?.reasoning) {
-      const fallback = lastTurn.reasoning.trim().slice(0, input.maxChars);
-      if (fallback && !fallback.startsWith("{")) {
-        finalText = fallback;
-        terminalStatus = "finished";
-      }
+    const exhaustedTurns = steps.filter((s) => s.stage === "message_draft_turn").length;
+    if (exhaustedTurns >= input.budget.maxTurns) {
+      terminalStatus = "budget_exceeded";
     }
   }
 

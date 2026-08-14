@@ -118,6 +118,8 @@ export const agentPt = {
       skippedTriage: "ignorado na triagem",
       blockedHarmful: "bloqueado (harmful)",
       rejectedVerify: "rejeitado na verificação",
+      draftFailed: "falha no rascunho",
+      budgetExceeded: "budget esgotado",
     },
     toasts: {
       loadFailed: "Falha ao carregar execuções.",

@@ -8,6 +8,8 @@ test("message simulator page and routes are wired", () => {
   assert.match(page, /channel: "dm"/);
   assert.match(page, /fetchMessageAgentContent/);
   assert.match(page, /MESSAGE_SIMULATOR_SCENARIOS/);
+  const scenarios = readFileSync("../admin/src/lib/message-simulator-scenarios.ts", "utf8");
+  assert.match(scenarios, /Jogo Grok/);
   assert.match(page, /SimulatorResultPanel/);
 
   const app = readFileSync("../admin/src/App.tsx", "utf8");

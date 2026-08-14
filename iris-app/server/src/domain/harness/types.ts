@@ -54,6 +54,7 @@ export type AgentLoopStepResult = {
   toolOutput?: unknown;
   toolLatencyMs?: number;
   parentStepId?: string | null;
+  llmContextJson?: string | null;
   llm?: import("../reply-harness/types.ts").StageLlmTelemetry;
 };
 

@@ -67,6 +67,19 @@ test("normalizeTriageOutput accepts not_for_brand", () => {
   assert.equal(triage.replyTier, "none");
 });
 
+test("normalizeTriageOutput accepts conversation_stalled", () => {
+  const triage = normalizeTriageOutput({
+    shouldReply: false,
+    replyTier: "none",
+    blockCategory: "conversation_stalled",
+    reason: "conversation_stalled",
+    reasoning: "Thanks after brand already answered.",
+  });
+
+  assert.equal(triage.blockCategory, "conversation_stalled");
+  assert.equal(triage.shouldReply, false);
+});
+
 test("formatTriageReason includes block and tier prefixes", () => {
   const formatted = formatTriageReason({
     shouldReply: false,

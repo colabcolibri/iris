@@ -89,4 +89,75 @@ describe("agent loop orchestrator", () => {
     assert.equal(result.terminalStatus, "finished");
     assert.equal(result.finalText, "A camiseta custa R$ 99.");
   });
+
+  test("feeds tool observations into the next LLM turn", async () => {
+    const prompts: string[] = [];
+    let calls = 0;
+    const llm = {
+      async complete(prompt: string) {
+        prompts.push(prompt);
+        calls += 1;
+        if (calls === 1) {
+          return createTestLlmCompletion(
+            JSON.stringify({
+              action: "call_tool",
+              tool: "search_products",
+              arguments: { query: "bolsa" },
+            }),
+          );
+        }
+        return createTestLlmCompletion(
+          JSON.stringify({ action: "finish", text: "Não temos essa bolsa no catálogo." }),
+        );
+      },
+    };
+
+    const db = new DatabaseSync(":memory:");
+    runMigrations(db);
+    const products = createSqliteProductRepository(db);
+    products.create({ slug: "jogo-grok", name: "Jogo Grok", active: true });
+
+    const toolContext = createHarnessToolContext(
+      {
+        products,
+        productStoreLinks: createSqliteProductStoreLinkRepository(db),
+        productFieldPolicies: createSqliteProductFieldPolicyRepository(db),
+        storeConnections: {
+          findById: () => null,
+          list: () => [],
+          create: () => {
+            throw new Error("n/a");
+          },
+          update: () => null,
+          remove: () => false,
+          getCredentials: () => null,
+        },
+        storeProviders: { get: () => { throw new Error("n/a"); } },
+      },
+      DEFAULT_HARNESS_BUDGET,
+    );
+
+    const result = await runAgentLoop({
+      context: baseContext(),
+      agentContent: {
+        dmSoul: "",
+        dmPage: "",
+        dmKnowledge: "",
+        dmRestrictions: "",
+        updatedAt: new Date().toISOString(),
+      },
+      llm,
+      registry: createDefaultHarnessToolRegistry(),
+      toolContext,
+      budget: DEFAULT_HARNESS_BUDGET,
+      maxChars: 200,
+      messageCategory: "product_inquiry",
+      focusProductSlug: null,
+    });
+
+    assert.equal(calls, 2);
+    assert.match(prompts[1] ?? "", /observação \(search_products\)/);
+    assert.equal(result.terminalStatus, "finished");
+    assert.equal(result.finalText, "Não temos essa bolsa no catálogo.");
+  });
 });
