@@ -65,6 +65,10 @@ export function createSqliteConversationRepository(
     UPDATE conversations SET operator_read_at = ?, updated_at = ? WHERE id = ?
   `);
 
+  const updateParticipantIgUserIdStmt = db.prepare(`
+    UPDATE conversations SET participant_ig_user_id = ?, updated_at = ? WHERE id = ?
+  `);
+
   const listRecentStmt = db.prepare(`
     SELECT * FROM conversations
     ORDER BY datetime(COALESCE(last_message_at, updated_at)) DESC
@@ -172,6 +176,12 @@ export function createSqliteConversationRepository(
 
     updateOperatorReadAt(conversationId: string, iso: string) {
       updateOperatorReadAtStmt.run(iso, nowIso(), conversationId);
+      const row = selectById.get(conversationId);
+      return row ? mapConversationRow(row as never) : null;
+    },
+
+    updateParticipantIgUserId(conversationId: string, participantIgUserId: string) {
+      updateParticipantIgUserIdStmt.run(participantIgUserId, nowIso(), conversationId);
       const row = selectById.get(conversationId);
       return row ? mapConversationRow(row as never) : null;
     },

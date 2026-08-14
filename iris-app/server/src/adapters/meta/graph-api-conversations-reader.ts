@@ -1,5 +1,6 @@
 import type { MetaTokenStore } from "../../ports/meta-token-store.ts";
 import { ErrorCodes } from "../../domain/errors/error-codes.ts";
+import { isConversationOwnerParticipant } from "../../domain/messages/remote-message-utils.ts";
 import type {
   MetaConversationsReader,
   RemoteConversationParticipant,
@@ -60,6 +61,48 @@ type GraphProfileResponse = {
   profile_pic?: string;
   error?: { message?: string; code?: number };
 };
+
+type GraphMessageDetailResponse = {
+  from?: { id?: string; username?: string };
+  to?: { data?: Array<{ id?: string; username?: string }> };
+  error?: { message?: string; code?: number };
+};
+
+function readCustomerIdFromMessageDetail(
+  json: GraphMessageDetailResponse,
+  ownerIgUserId: string | null,
+  ownerUsername: string | null,
+): string | null {
+  const fromId = json.from?.id ?? null;
+  const fromUsername = json.from?.username ?? null;
+  if (
+    fromId &&
+    !isConversationOwnerParticipant(
+      { id: fromId, username: fromUsername, name: null, profilePicUrl: null },
+      ownerIgUserId,
+      ownerUsername,
+    )
+  ) {
+    return fromId;
+  }
+
+  for (const row of json.to?.data ?? []) {
+    const id = row?.id ?? null;
+    const username = row?.username ?? null;
+    if (
+      id &&
+      !isConversationOwnerParticipant(
+        { id, username, name: null, profilePicUrl: null },
+        ownerIgUserId,
+        ownerUsername,
+      )
+    ) {
+      return id;
+    }
+  }
+
+  return null;
+}
 
 export class MetaConversationsUnsupportedError extends Error {
   constructor(message: string) {
@@ -302,6 +345,30 @@ export function createGraphApiConversationsReader(
         name: typeof json.name === "string" ? json.name : null,
         profilePicUrl: typeof json.profile_pic === "string" ? json.profile_pic : null,
       };
+    },
+
+    async resolveMessagingRecipientFromIgMessage(
+      igMessageId,
+      ownerIgUserId,
+      ownerUsername,
+    ) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token || !igMessageId) {
+        return null;
+      }
+
+      const url = new URL(`${base}/${igMessageId}`);
+      url.searchParams.set("fields", "from,to");
+
+      const response = await fetchFn(url.toString(), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = (await response.json()) as GraphMessageDetailResponse;
+      if (!response.ok || json.error) {
+        return null;
+      }
+
+      return readCustomerIdFromMessageDetail(json, ownerIgUserId, ownerUsername);
     },
   };
 }

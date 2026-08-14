@@ -14,6 +14,10 @@ export type ConversationRepository = {
   findByIgConversationId(igConversationId: string): Conversation | null;
   findByParticipantIgUserId(participantIgUserId: string): Conversation | null;
   upsert(input: UpsertConversationInput): { conversation: Conversation; created: boolean };
+  updateParticipantIgUserId(
+    conversationId: string,
+    participantIgUserId: string,
+  ): Conversation | null;
   updateLastMessageAt(conversationId: string, iso: string): void;
   updateReplyMode(conversationId: string, replyMode: ConversationReplyMode): Conversation | null;
   updateReplyPrompt(conversationId: string, replyPrompt: string | null): Conversation | null;

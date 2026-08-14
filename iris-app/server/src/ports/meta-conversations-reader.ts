@@ -56,4 +56,10 @@ export type MetaConversationsReader = {
   resolveParticipantProfile(
     participantIgUserId: string,
   ): Promise<RemoteParticipantProfile | null>;
+  /** IGSID do cliente a partir de uma mensagem inbound (webhook mid / Graph message id). */
+  resolveMessagingRecipientFromIgMessage(
+    igMessageId: string,
+    ownerIgUserId: string | null,
+    ownerUsername: string | null,
+  ): Promise<string | null>;
 };

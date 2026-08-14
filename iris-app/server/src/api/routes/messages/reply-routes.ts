@@ -190,6 +190,7 @@ export const messagesReplyRouter = createRouter([
       const { recipientId } = await resolveMessageRecipientForSend(
         conversation,
         messageRecipientDeps(match),
+        { replyToMessage: message },
       );
 
       try {
@@ -276,6 +277,7 @@ export const messagesReplyRouter = createRouter([
       const { recipientId } = await resolveMessageRecipientForSend(
         conversation,
         messageRecipientDeps(match),
+        { replyToMessage: message },
       );
 
       try {

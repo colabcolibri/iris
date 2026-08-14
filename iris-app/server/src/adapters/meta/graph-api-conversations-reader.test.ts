@@ -214,3 +214,35 @@ test("graph api conversations reader resolves participant profile", async () => 
   assert.equal(profile?.username, "cliente");
   assert.equal(profile?.profilePicUrl, "https://cdn.example/avatar.jpg");
 });
+
+test("graph api conversations reader resolves customer igsid from inbound message", async () => {
+  const fetchImpl = async (input: string | URL | Request) => {
+    const url = new URL(typeof input === "string" ? input : input.toString());
+    assert.match(url.pathname, /\/mid-inbound-1$/);
+    assert.match(url.search, /fields=from%2Cto/);
+
+    return new Response(
+      JSON.stringify({
+        from: { id: "customer-igsid", username: "cliente" },
+        to: { data: [{ id: "ig-1", username: "marca" }] },
+      }),
+      { status: 200 },
+    );
+  };
+
+  const reader = createGraphApiConversationsReader({
+    metaTokenStore: { getActiveToken: () => "token" },
+    config: {
+      resolveIgUserId: () => "ig-1",
+      resolveOwnerUsername: () => "marca",
+      fetchImpl: fetchImpl as typeof fetch,
+    },
+  });
+
+  const recipient = await reader.resolveMessagingRecipientFromIgMessage(
+    "mid-inbound-1",
+    "ig-1",
+    "marca",
+  );
+  assert.equal(recipient, "customer-igsid");
+});

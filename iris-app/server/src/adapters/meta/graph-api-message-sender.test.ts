@@ -29,7 +29,7 @@ test("graph api message sender posts recipient payload", async () => {
 
   const result = await sender.sendText("user-42", "olá!");
   assert.equal(result.publishedIgMessageId, "mid-sent-1");
-  assert.match(capturedUrl, /\/ig-page-1\/messages$/);
+  assert.match(capturedUrl, /\/me\/messages$/);
   assert.doesNotMatch(capturedUrl, /access_token=/);
   assert.match(capturedBody, /user-42/);
 });
@@ -63,7 +63,32 @@ test("graph api message sender maps 24h window error", async () => {
   );
 });
 
-test("graph api message sender retries after take_thread_control on thread owner error", async () => {
+test("graph api message sender takes thread control before send", async () => {
+  const calls: string[] = [];
+
+  const sender = createGraphApiMessageSender({
+    metaTokenStore: {
+      getActiveToken: () => "token-1",
+      upsertToken: () => {},
+      clear: () => {},
+    },
+    config: {
+      resolveIgUserId: () => "ig-page-1",
+      fetchImpl: async (url) => {
+        calls.push(String(url));
+        return new Response(JSON.stringify({ message_id: "mid-sent-1" }), {
+          status: 200,
+        });
+      },
+    },
+  });
+
+  await sender.sendText("user-42", "olá!");
+  assert.ok(calls.some((url) => url.includes("/me/take_thread_control")));
+  assert.ok(calls.some((url) => url.includes("/me/messages")));
+});
+
+test("graph api message sender retries after thread owner error", async () => {
   const calls: string[] = [];
 
   const sender = createGraphApiMessageSender({
@@ -101,5 +126,5 @@ test("graph api message sender retries after take_thread_control on thread owner
   const result = await sender.sendText("user-42", "tentativa");
   assert.equal(result.publishedIgMessageId, "mid-sent-2");
   assert.ok(calls.some((url) => url.includes("take_thread_control")));
-  assert.equal(calls.filter((url) => url.includes("/messages")).length, 2);
+  assert.equal(calls.filter((url) => url.includes("/me/messages")).length, 2);
 });

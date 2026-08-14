@@ -62,11 +62,10 @@ export function createGraphApiMessageSender(
   const base = `https://graph.instagram.com/${version}`;
 
   async function takeThreadControl(
-    igUserId: string,
     recipientIgUserId: string,
     token: string,
   ): Promise<void> {
-    const url = new URL(`${base}/${igUserId}/take_thread_control`);
+    const url = new URL(`${base}/me/take_thread_control`);
     try {
       const response = await fetchFn(url.toString(), {
         method: "POST",
@@ -81,17 +80,16 @@ export function createGraphApiMessageSender(
       });
       await response.json();
     } catch {
-      // best effort — send retry may still succeed
+      // best effort — send may still succeed
     }
   }
 
   async function postMessage(
-    igUserId: string,
     recipientIgUserId: string,
     text: string,
     token: string,
   ): Promise<{ publishedIgMessageId: string | null }> {
-    const url = new URL(`${base}/${igUserId}/messages`);
+    const url = new URL(`${base}/me/messages`);
 
     const response = await fetchFn(url.toString(), {
       method: "POST",
@@ -121,20 +119,17 @@ export function createGraphApiMessageSender(
         throw new Error("Meta access token not configured");
       }
 
-      const igUserId = deps.config.resolveIgUserId();
-      if (!igUserId) {
-        throw new Error("IG user id not configured");
-      }
+      await takeThreadControl(recipientIgUserId, token);
 
       try {
-        return await postMessage(igUserId, recipientIgUserId, text, token);
+        return await postMessage(recipientIgUserId, text, token);
       } catch (error) {
         if (
           error instanceof MetaMessageSendError &&
           error.code === "thread_owner"
         ) {
-          await takeThreadControl(igUserId, recipientIgUserId, token);
-          return await postMessage(igUserId, recipientIgUserId, text, token);
+          await takeThreadControl(recipientIgUserId, token);
+          return await postMessage(recipientIgUserId, text, token);
         }
         throw error;
       }

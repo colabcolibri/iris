@@ -132,7 +132,7 @@ async function processMessageReplyCore(
       metaConversationsReader: ctx.metaConversationsReader,
       ownerIgUserId: connection?.igUserId ?? null,
       ownerUsername: connection?.igUsername ?? null,
-    });
+    }, { replyToMessage: message });
 
     const publishResult = await sender.sendText(recipientId, replyText);
 
