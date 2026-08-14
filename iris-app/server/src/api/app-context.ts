@@ -267,6 +267,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
     config: {
       resolveIgUserId,
       graphApiVersion,
+      resolvePageId: () => process.env.META_PAGE_ID?.trim() || null,
+      resolvePageAccessToken: () => process.env.META_PAGE_ACCESS_TOKEN?.trim() || null,
     },
   });
 

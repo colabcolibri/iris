@@ -95,3 +95,84 @@ test("graph api message sender maps thread owner error", async () => {
       error instanceof MetaMessageSendError && error.code === "thread_owner",
   );
 });
+
+test("graph api message sender recovers via page token after thread owner error", async () => {
+  const calls: string[] = [];
+
+  const sender = createGraphApiMessageSender({
+    metaTokenStore: {
+      getActiveToken: () => "token-1",
+      upsertToken: () => {},
+      clear: () => {},
+    },
+    config: {
+      resolveIgUserId: () => "ig-page-1",
+      resolvePageId: () => "page-1",
+      resolvePageAccessToken: () => "page-token-1",
+      fetchImpl: async (url, init) => {
+        calls.push(String(url));
+        if (String(url).includes("take_thread_control")) {
+          const headers = new Headers(init?.headers);
+          assert.equal(headers.get("Authorization"), "Bearer page-token-1");
+          return new Response(JSON.stringify({ success: true }), { status: 200 });
+        }
+        if (calls.filter((item) => item.includes("/messages")).length === 1) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message: "The action is invalid since it's not the thread owner.",
+                code: 100,
+                error_subcode: 2534037,
+              },
+            }),
+            { status: 400 },
+          );
+        }
+        return new Response(JSON.stringify({ message_id: "mid-sent-2" }), {
+          status: 200,
+        });
+      },
+    },
+  });
+
+  const result = await sender.sendText("user-42", "tentativa");
+  assert.equal(result.publishedIgMessageId, "mid-sent-2");
+  assert.ok(
+    calls.some(
+      (url) => url.includes("graph.facebook.com") && url.includes("/page-1/take_thread_control"),
+    ),
+  );
+  assert.equal(calls.filter((url) => url.includes("/me/messages")).length, 2);
+});
+
+test("graph api message sender skips take_thread_control without page credentials", async () => {
+  const calls: string[] = [];
+
+  const sender = createGraphApiMessageSender({
+    metaTokenStore: {
+      getActiveToken: () => "token-1",
+      upsertToken: () => {},
+      clear: () => {},
+    },
+    config: {
+      resolveIgUserId: () => "ig-page-1",
+      fetchImpl: async (url) => {
+        calls.push(String(url));
+        return new Response(
+          JSON.stringify({
+            error: {
+              message: "The action is invalid since it's not the thread owner.",
+              code: 100,
+              error_subcode: 2534037,
+            },
+          }),
+          { status: 400 },
+        );
+      },
+    },
+  });
+
+  await assert.rejects(() => sender.sendText("user-42", "tentativa"));
+  assert.ok(!calls.some((url) => url.includes("take_thread_control")));
+  assert.equal(calls.filter((url) => url.includes("/me/messages")).length, 1);
+});
