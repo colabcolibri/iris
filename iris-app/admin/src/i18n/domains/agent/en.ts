@@ -129,6 +129,54 @@ export const agentEn = {
       detailFailed: "Failed to load detail.",
     },
   },
+  queue: {
+    page: {
+      eyebrow: "Operations",
+      title: "Agent queue",
+      description:
+        "Items waiting for debounce or ready for the worker — updates in real time.",
+      refresh: "Refresh",
+      loading: "Loading queue…",
+      live: "Live",
+      offline: "Reconnecting…",
+      debounceNote:
+        "Debounce: DMs {messageMinutes} min · comments {commentMinutes} min · worker every {tickSeconds}s",
+      openInbox: "Open in inbox",
+    },
+    filters: {
+      allPhases: "all phases",
+      debouncing: "debouncing",
+      due: "ready",
+      allChannels: "all channels",
+      dm: "DM",
+      comment: "comment",
+    },
+    table: {
+      phase: "Phase",
+      channel: "Channel",
+      author: "Author",
+      preview: "Preview",
+      context: "Context",
+      processAt: "Process at",
+      occurredAt: "Received",
+    },
+    phase: {
+      debouncing: "debouncing",
+      due: "ready",
+    },
+    channel: {
+      dm: "DM",
+      comment: "Comment",
+    },
+    empty: {
+      title: "Queue empty",
+      body: "No items waiting for auto-reply right now.",
+    },
+    aiLocked: "AI paused on conversation",
+    toasts: {
+      loadFailed: "Failed to load queue.",
+    },
+  },
   simulator: {
     page: {
       eyebrow: "Lab",

@@ -5,6 +5,11 @@ export type PendingAgentReplyMessage = Message & {
   conversationReplyMode: string;
 };
 
+export type ScheduledAgentReplyMessage = PendingAgentReplyMessage & {
+  participantUsername: string | null;
+  conversationAiLockedUntil: string | null;
+};
+
 export type UpsertInboundMessageInput = {
   igMessageId: string;
   conversationId: string;
@@ -44,6 +49,7 @@ export type MessageRepository = {
   scheduleAgentReply(messageId: string, notBeforeIso: string): boolean;
   clearAgentReplySchedule(messageId: string): void;
   listPendingForAgentReply(): PendingAgentReplyMessage[];
+  listScheduledForAgentReply(): ScheduledAgentReplyMessage[];
   countPendingByConversation(conversationId: string): number;
   countUnreadByConversation(conversationId: string, readAtIso: string | null): number;
   purgeOlderThan(cutoffIso: string): PurgeMessageHistoryResult;

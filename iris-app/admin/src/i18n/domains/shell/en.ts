@@ -17,6 +17,7 @@ export const shellEn = {
     simulator: "Comment simulator",
     messageSimulator: "DM simulator",
     agentRuns: "Runs",
+    agentQueue: "Agent queue",
     settings: "Settings",
     persona: "Persona",
   },

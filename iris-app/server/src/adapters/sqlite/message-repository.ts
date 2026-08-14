@@ -6,6 +6,7 @@ import type {
   MessageRepository,
   PendingAgentReplyMessage,
   PurgeMessageHistoryResult,
+  ScheduledAgentReplyMessage,
   UpsertInboundMessageInput,
   UpsertMessageDraftInput,
   UpsertOutboundMessageInput,
@@ -165,6 +166,28 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
     ORDER BY datetime(COALESCE(m.ig_timestamp, m.created_at)) ASC
   `);
 
+  const listScheduledForAgentReplyStmt = db.prepare(`
+    SELECT m.*, c.reply_mode AS conversation_reply_mode,
+           c.participant_username AS participant_username,
+           c.ai_locked_until AS conversation_ai_locked_until
+    FROM messages m
+    INNER JOIN conversations c ON c.id = m.conversation_id
+    LEFT JOIN app_settings s ON s.id = 'primary'
+    WHERE m.status = 'pending'
+      AND m.direction = 'inbound'
+      AND (
+        CASE
+          WHEN c.reply_mode = 'inherit' THEN COALESCE(s.message_reply_mode, 'draft')
+          ELSE c.reply_mode
+        END
+      ) IN ('auto', 'draft')
+      AND NOT EXISTS (
+        SELECT 1 FROM message_replies mr WHERE mr.message_id = m.id
+      )
+      AND m.agent_reply_not_before IS NOT NULL
+    ORDER BY datetime(m.agent_reply_not_before) ASC
+  `);
+
   function nowIso(): string {
     return new Date().toISOString();
   }
@@ -321,6 +344,31 @@ export function createSqliteMessageRepository(db: DatabaseSync): MessageReposito
           ...message,
           conversationReplyMode: String(row.conversation_reply_mode),
         } satisfies PendingAgentReplyMessage;
+      });
+    },
+
+    listScheduledForAgentReply() {
+      const rows = listScheduledForAgentReplyStmt.all() as Array<
+        Record<string, unknown> & {
+          conversation_reply_mode: string;
+          participant_username: string | null;
+          conversation_ai_locked_until: string | null;
+        }
+      >;
+      return rows.map((row) => {
+        const message = mapMessageRow(row as never);
+        return {
+          ...message,
+          conversationReplyMode: String(row.conversation_reply_mode),
+          participantUsername:
+            typeof row.participant_username === "string"
+              ? row.participant_username
+              : null,
+          conversationAiLockedUntil:
+            typeof row.conversation_ai_locked_until === "string"
+              ? row.conversation_ai_locked_until
+              : null,
+        } satisfies ScheduledAgentReplyMessage;
       });
     },
 

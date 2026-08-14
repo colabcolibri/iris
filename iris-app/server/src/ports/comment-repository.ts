@@ -56,6 +56,7 @@ export type CommentRepository = {
   countByPostId(postId: string): { total: number; pending: number };
   listSentRepliesByPostId(postId: string): SentCommentReply[];
   listPendingForAgentReply(): PendingAgentReplyComment[];
+  listScheduledForAgentReply(): PendingAgentReplyComment[];
   hasReplyRecord(commentId: string): boolean;
   promoteDraftToSent(
     commentId: string,

@@ -127,6 +127,54 @@ export const agentPt = {
       detailFailed: "Falha ao carregar detalhe.",
     },
   },
+  queue: {
+    page: {
+      eyebrow: "Operação",
+      title: "Fila do agente",
+      description:
+        "Itens aguardando debounce ou prontos para o worker processar — atualiza em tempo real.",
+      refresh: "Atualizar",
+      loading: "Carregando fila…",
+      live: "Ao vivo",
+      offline: "Reconectando…",
+      debounceNote:
+        "Debounce: DMs {messageMinutes} min · comentários {commentMinutes} min · worker a cada {tickSeconds}s",
+      openInbox: "Abrir no inbox",
+    },
+    filters: {
+      allPhases: "todas as fases",
+      debouncing: "em debounce",
+      due: "prontos",
+      allChannels: "todos os canais",
+      dm: "DM",
+      comment: "comentário",
+    },
+    table: {
+      phase: "Fase",
+      channel: "Canal",
+      author: "Autor",
+      preview: "Prévia",
+      context: "Contexto",
+      processAt: "Processar",
+      occurredAt: "Recebido",
+    },
+    phase: {
+      debouncing: "debounce",
+      due: "pronto",
+    },
+    channel: {
+      dm: "DM",
+      comment: "Comentário",
+    },
+    empty: {
+      title: "Fila vazia",
+      body: "Nenhum item aguardando resposta automática no momento.",
+    },
+    aiLocked: "IA pausada na conversa",
+    toasts: {
+      loadFailed: "Falha ao carregar fila.",
+    },
+  },
   simulator: {
     page: {
       eyebrow: "Lab",

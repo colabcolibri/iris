@@ -158,6 +158,35 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     ORDER BY datetime(COALESCE(c.ig_timestamp, c.created_at)) ASC
   `);
 
+  const listScheduledForAgentReplyStmt = db.prepare(`
+    SELECT c.*, p.caption AS post_caption, p.reply_mode AS reply_mode
+    FROM comments c
+    INNER JOIN posts p ON p.id = c.post_id
+    LEFT JOIN app_settings s ON s.id = 'primary'
+    WHERE c.status = 'pending'
+      AND (
+        CASE
+          WHEN p.reply_mode = 'inherit' THEN COALESCE(s.reply_mode, 'auto')
+          ELSE p.reply_mode
+        END
+      ) IN ('auto', 'draft')
+      AND NOT EXISTS (
+        SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
+      )
+      AND c.agent_reply_not_before IS NOT NULL
+      AND c.deleted_at IS NULL
+      AND (
+        c.author_username IS NULL
+        OR NOT EXISTS (
+          SELECT 1 FROM meta_connection mc
+          WHERE mc.id = 'primary'
+            AND mc.ig_username IS NOT NULL
+            AND lower(trim(c.author_username)) = lower(trim(mc.ig_username))
+        )
+      )
+    ORDER BY datetime(c.agent_reply_not_before) ASC
+  `);
+
   const listSentRepliesByPostIdStmt = db.prepare(`
     SELECT cr.comment_id, cr.sent_text
     FROM comment_replies cr
@@ -438,6 +467,17 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
     listPendingForAgentReply() {
       return listPendingForAgentReplyStmt.all().map((row) => {
+        const record = row as Record<string, unknown>;
+        return {
+          ...mapCommentRow(row as never),
+          postCaption: typeof record.post_caption === "string" ? record.post_caption : null,
+          replyMode: typeof record.reply_mode === "string" ? record.reply_mode : "off",
+        };
+      });
+    },
+
+    listScheduledForAgentReply() {
+      return listScheduledForAgentReplyStmt.all().map((row) => {
         const record = row as Record<string, unknown>;
         return {
           ...mapCommentRow(row as never),

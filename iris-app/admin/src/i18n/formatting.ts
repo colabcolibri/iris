@@ -46,6 +46,52 @@ export function formatRelativeTime(
   return rtf.format(-diffDay, "day");
 }
 
+export function formatCountdownTo(
+  value: string | number | Date | null | undefined,
+  locale: AppLocale,
+  now = Date.now(),
+): string | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const ms =
+    typeof value === "number"
+      ? value
+      : value instanceof Date
+        ? value.getTime()
+        : Date.parse(value);
+
+  if (Number.isNaN(ms)) {
+    return null;
+  }
+
+  const diffSec = Math.ceil((ms - now) / 1000);
+  if (diffSec <= 0) {
+    return locale === "en" ? "now" : "agora";
+  }
+
+  const bcp47 = localeToBcp47(locale);
+  const rtf = new Intl.RelativeTimeFormat(bcp47, { numeric: "auto" });
+
+  if (diffSec < 60) {
+    return rtf.format(diffSec, "second");
+  }
+
+  const diffMin = Math.ceil(diffSec / 60);
+  if (diffMin < 60) {
+    return rtf.format(diffMin, "minute");
+  }
+
+  const diffHour = Math.ceil(diffMin / 60);
+  if (diffHour < 24) {
+    return rtf.format(diffHour, "hour");
+  }
+
+  const diffDay = Math.ceil(diffHour / 24);
+  return rtf.format(diffDay, "day");
+}
+
 export function formatShortDate(
   value: string | number | Date,
   locale: AppLocale,

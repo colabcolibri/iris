@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Bot,
+  Clock,
   FlaskConical,
   LayoutGrid,
   List,
@@ -50,6 +51,7 @@ const MAIN_ROUTE_DEFS = [
   { key: "agentSimulator" as const, navKey: "simulator" as const, icon: FlaskConical },
   { key: "messageSimulator" as const, navKey: "messageSimulator" as const, icon: Send },
   { key: "agentRuns" as const, navKey: "agentRuns" as const, icon: Bot },
+  { key: "agentQueue" as const, navKey: "agentQueue" as const, icon: Clock },
 ];
 
 const FOOTER_ROUTE_DEFS = [

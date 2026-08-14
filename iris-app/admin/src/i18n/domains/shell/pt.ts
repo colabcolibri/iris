@@ -17,6 +17,7 @@ export const shellPt = {
     simulator: "Simulador comentários",
     messageSimulator: "Simulador DM",
     agentRuns: "Execuções",
+    agentQueue: "Fila do agente",
     settings: "Configurações",
     persona: "Persona",
   },

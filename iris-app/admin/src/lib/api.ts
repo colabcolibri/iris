@@ -1,4 +1,5 @@
 import type {
+  AgentReplyQueueSnapshot,
   AgentRunDetail,
   AgentRunListItem,
   AppSettings,
@@ -1186,6 +1187,10 @@ export function fetchAgentRuns(
 
 export function fetchAgentRunDetail(runId: string) {
   return apiFetch<AgentRunDetail>(`/api/agent-runs/${runId}`);
+}
+
+export function fetchAgentReplyQueue() {
+  return apiFetch<AgentReplyQueueSnapshot>("/api/agent-reply-queue");
 }
 
 export type SimulateThreadMessage = {

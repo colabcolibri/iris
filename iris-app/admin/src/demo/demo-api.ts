@@ -299,6 +299,10 @@ async function handleGet(pathname: string, searchParams: URLSearchParams) {
     return { items: state.agentRuns, next_cursor: null };
   }
 
+  if (pathname === "/api/agent-reply-queue") {
+    return state.agentReplyQueue;
+  }
+
   const historyMatch = matchPath(pathname, "/api/posts/:id/insights/history");
   if (historyMatch) {
     return {

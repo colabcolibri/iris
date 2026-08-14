@@ -28,7 +28,7 @@ Inventário alinhado ao código em `iris-app/server/src/api/` (router declarativ
 | Comments | `/api/posts/:id/comments`, `/api/comments/*` |
 | Meta | `/auth/meta`, `/api/meta/*` |
 | Settings | `/api/settings/*` |
-| Agent | `/api/agent-runs`, `/api/agent/simulate`, `/api/agent/simulator-scenarios` |
+| Agent | `/api/agent-runs`, `/api/agent-reply-queue`, `/api/agent/simulate`, `/api/agent/simulator-scenarios` |
 | Events | `/api/events` (SSE) |
 | Webhooks Meta | `/webhooks/meta` |
 | Publish (IG) | `/publish/media/*` (URL assinada, sem Bearer) |
@@ -337,6 +337,7 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | ------ | ---- | ---- | ----------- |
 | GET | `/api/agent-runs` | admin | Lista runs (`limit`, `cursor`, `terminal_status`, `reply_tier`); inclui `llm_call_count`, `tool_call_count`, `session_summary` |
 | GET | `/api/agent-runs/:id` | admin | Detalhe + audit steps com `step_kind`, `tool_name`, `tool_input`/`tool_output`, `llm_context_json` (turnos LLM), `session_summary` |
+| GET | `/api/agent-reply-queue` | admin | Fila ativa do agente (DM + comentário): `phase` (`debouncing` \| `due`), `agent_reply_not_before`, previews, ids de navegação; inclui `worker_tick_interval_seconds` e debounces configurados |
 | GET | `/api/agent/simulator-scenarios` | admin | Lista cenários editoriais persistidos |
 | POST | `/api/agent/simulator-scenarios` | admin | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
 | PUT | `/api/agent/simulator-scenarios/:id` | admin | Atualiza cenário (campos parciais permitidos) |

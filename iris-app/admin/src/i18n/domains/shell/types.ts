@@ -15,6 +15,7 @@ export type ShellMessages = {
     simulator: string;
     messageSimulator: string;
     agentRuns: string;
+    agentQueue: string;
     settings: string;
     persona: string;
   };

@@ -19,6 +19,7 @@ import { StoresPage } from "@/pages/stores-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { WebhooksPage } from "@/pages/webhooks-page";
 import { AgentRunsPage } from "@/pages/agent-runs-page";
+import { AgentQueuePage } from "@/pages/agent-queue-page";
 import { AgentSimulatorPage } from "@/pages/agent-simulator-page";
 import { MessageSimulatorPage } from "@/pages/message-simulator-page";
 import { PrivacyPolicyPage } from "@/pages/privacy-policy-page";
@@ -36,6 +37,7 @@ const ADMIN_APP_ROUTES = [
   { path: ROUTES.admin.stores, element: <StoresPage /> },
   { path: ROUTES.admin.webhooks, element: <WebhooksPage /> },
   { path: ROUTES.admin.agentRuns, element: <AgentRunsPage /> },
+  { path: ROUTES.admin.agentQueue, element: <AgentQueuePage /> },
   { path: ROUTES.admin.agentSimulator, element: <AgentSimulatorPage /> },
   { path: ROUTES.admin.messageSimulator, element: <MessageSimulatorPage /> },
   { path: ROUTES.admin.settings, element: <SettingsPage /> },
@@ -50,6 +52,7 @@ const DEMO_APP_ROUTES = [
   { path: ROUTES.demo.stores, element: <StoresPage /> },
   { path: ROUTES.demo.webhooks, element: <WebhooksPage /> },
   { path: ROUTES.demo.agentRuns, element: <AgentRunsPage /> },
+  { path: ROUTES.demo.agentQueue, element: <AgentQueuePage /> },
   { path: ROUTES.demo.agentSimulator, element: <AgentSimulatorPage /> },
   { path: ROUTES.demo.messageSimulator, element: <MessageSimulatorPage /> },
   { path: ROUTES.demo.settings, element: <SettingsPage /> },
@@ -67,6 +70,7 @@ const LEGACY_ADMIN_REDIRECTS = [
   ["/persona", ROUTES.admin.persona],
   ["/webhooks", ROUTES.admin.webhooks],
   ["/agent-runs", ROUTES.admin.agentRuns],
+  ["/agent-queue", ROUTES.admin.agentQueue],
   ["/agent-simulator", ROUTES.admin.agentSimulator],
   ["/message-simulator", ROUTES.admin.messageSimulator],
 ] as const;

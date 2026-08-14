@@ -15,6 +15,7 @@ export type AppRouteSet = {
   stores: string;
   webhooks: string;
   agentRuns: string;
+  agentQueue: string;
   agentSimulator: string;
   messageSimulator: string;
   settings: string;

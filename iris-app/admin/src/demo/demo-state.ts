@@ -30,6 +30,7 @@ import {
 } from "@/demo/fixtures/settings";
 import { listDemoCommentPosts } from "@/demo/domain/managed-posts";
 import type { CommentPostSummary } from "@/lib/types";
+import { getDemoAgentReplyQueue } from "@/demo/fixtures/agent-queue";
 import {
   DEFAULT_DEMO_LOCALE,
   readStoredDemoLocale,
@@ -58,6 +59,7 @@ type DemoState = {
   metaStatus: typeof DEMO_META_STATUS;
   webhooks: ReturnType<typeof getDemoWebhookEvents>;
   agentRuns: ReturnType<typeof getDemoAgentRuns>;
+  agentReplyQueue: ReturnType<typeof getDemoAgentReplyQueue>;
   agentRunDetails: ReturnType<typeof getDemoAgentRunDetails>;
   postInsights: ReturnType<typeof getDemoPostInsights>;
 };
@@ -103,6 +105,7 @@ function createInitialState(locale: DemoLocale): DemoState {
     metaStatus: clone(DEMO_META_STATUS),
     webhooks: clone(getDemoWebhookEvents(locale)),
     agentRuns: clone(getDemoAgentRuns(locale)),
+    agentReplyQueue: clone(getDemoAgentReplyQueue()),
     agentRunDetails: clone(getDemoAgentRunDetails(locale)),
     postInsights: clone(getDemoPostInsights(referenceDate, locale)),
   };

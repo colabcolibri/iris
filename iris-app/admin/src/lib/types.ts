@@ -558,6 +558,37 @@ export type AgentRunListItem = {
   session_summary?: HarnessSessionSummary | null;
 };
 
+export type AgentReplyQueuePhase = "debouncing" | "due";
+
+export type AgentReplyQueueItem = {
+  id: string;
+  channel: "dm" | "comment";
+  phase: AgentReplyQueuePhase;
+  agent_reply_not_before: string;
+  text_preview: string;
+  author_label: string;
+  context_label: string;
+  occurred_at: string;
+  conversation_id: string | null;
+  post_id: string | null;
+  message_id: string | null;
+  comment_id: string | null;
+  ai_locked: boolean;
+};
+
+export type AgentReplyQueueSnapshot = {
+  generated_at: string;
+  worker_tick_interval_seconds: number;
+  message_debounce_seconds: number;
+  comment_debounce_seconds: number;
+  counts: {
+    debouncing: number;
+    due: number;
+    total: number;
+  };
+  items: AgentReplyQueueItem[];
+};
+
 export type AgentRunDetail = {
   run: {
     id: string;

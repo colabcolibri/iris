@@ -41,6 +41,7 @@ import { handleProductStoreRoute } from "./routes/product-store.ts";
 import { handleConversationsRoute } from "./routes/conversations/index.ts";
 import { handleMessagesRoute } from "./routes/messages/index.ts";
 import { handleAgentRunsRoute } from "./routes/agent-runs.ts";
+import { handleAgentReplyQueueRoute } from "./routes/agent-reply-queue.ts";
 import { handleAgentSimulatorRoute } from "./routes/agent-simulator.ts";
 import { applyCorsIfNeeded } from "./cors.ts";
 import type { ViteDevServer } from "vite";
@@ -292,6 +293,10 @@ async function handleRequest(
     }
 
     if (await handleAgentRunsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleAgentReplyQueueRoute(routeRequest)) {
       return;
     }
 
