@@ -80,6 +80,10 @@ export const settingsEn = {
     delayImmediate: "Immediate reply",
     delayQueued: "Delayed queue",
     delayMinutesLabel: "Wait minutes ({min}–{max})",
+    maxAgeLabel: "Reply window",
+    maxAgeHint:
+      "Iris only replies to comments from the last X days — on import, webhook, and the automatic queue. Older comments are ignored.",
+    maxAgeDaysLabel: "History days ({min}–{max})",
     loading: "Loading…",
     toasts: {
       modeUpdated: "Global agent mode: {mode}.",
@@ -89,6 +93,8 @@ export const settingsEn = {
       saveFailed: "Failed to save.",
       delayFailed: "Failed to save delay.",
       intervalFailed: "Failed to save interval.",
+      maxAgeUpdated: "Reply window: {days} days.",
+      maxAgeFailed: "Failed to save reply window.",
     },
   },
   messageAgent: {

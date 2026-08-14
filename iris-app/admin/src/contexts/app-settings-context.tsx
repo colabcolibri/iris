@@ -15,6 +15,7 @@ type AppSettingsContextValue = {
   timezone: string;
   replyMode: ReplyMode;
   replyDelaySeconds: number;
+  replyMaxAgeDays: number;
   agentReplyTickIntervalSeconds: number;
   messageReplyMode: ReplyMode;
   messageReplyDelaySeconds: number;
@@ -28,6 +29,7 @@ type AppSettingsContextValue = {
   saveTimezone: (timezone: string) => Promise<void>;
   saveReplyMode: (mode: ReplyMode) => Promise<void>;
   saveReplyDelaySeconds: (seconds: number) => Promise<void>;
+  saveReplyMaxAgeDays: (days: number) => Promise<void>;
   saveAgentReplyTickIntervalSeconds: (seconds: number) => Promise<void>;
   saveMessageReplyMode: (mode: ReplyMode) => Promise<void>;
   saveMessageReplyDelaySeconds: (seconds: number) => Promise<void>;
@@ -46,6 +48,7 @@ export function AppSettingsProvider({
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
   const [replyMode, setReplyMode] = useState<ReplyMode>("auto");
   const [replyDelaySeconds, setReplyDelaySeconds] = useState(0);
+  const [replyMaxAgeDays, setReplyMaxAgeDays] = useState(15);
   const [agentReplyTickIntervalSeconds, setAgentReplyTickIntervalSeconds] =
     useState(300);
   const [messageReplyMode, setMessageReplyMode] = useState<ReplyMode>("draft");
@@ -62,6 +65,7 @@ export function AppSettingsProvider({
         settings.reply_mode ?? (settings.auto_reply_enabled ? "auto" : "off"),
       );
       setReplyDelaySeconds(settings.reply_delay_seconds ?? 0);
+      setReplyMaxAgeDays(settings.reply_max_age_days ?? 15);
       setAgentReplyTickIntervalSeconds(
         settings.agent_reply_tick_interval_seconds ?? 300,
       );
@@ -121,6 +125,14 @@ export function AppSettingsProvider({
     [applySettings],
   );
 
+  const saveReplyMaxAgeDays = useCallback(
+    async (days: number) => {
+      const saved = await updateAppSettings({ reply_max_age_days: days });
+      applySettings(saved);
+    },
+    [applySettings],
+  );
+
   const saveAutoMonitorEnabled = useCallback(
     async (enabled: boolean) => {
       const saved = await updateAppSettings({ auto_monitor_enabled: enabled });
@@ -171,6 +183,7 @@ export function AppSettingsProvider({
         timezone,
         replyMode,
         replyDelaySeconds,
+        replyMaxAgeDays,
         agentReplyTickIntervalSeconds,
         messageReplyMode,
         messageReplyDelaySeconds,
@@ -183,6 +196,7 @@ export function AppSettingsProvider({
         saveTimezone,
         saveReplyMode,
         saveReplyDelaySeconds,
+        saveReplyMaxAgeDays,
         saveAgentReplyTickIntervalSeconds,
         saveMessageReplyMode,
         saveMessageReplyDelaySeconds,

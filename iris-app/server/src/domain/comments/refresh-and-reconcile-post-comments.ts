@@ -9,11 +9,13 @@ import {
   type SyncPostCommentsDeps,
   type SyncPostCommentsResult,
 } from "./sync-post-comments.ts";
+import { skipStalePendingCommentsForPost } from "./skip-stale-pending-comments.ts";
 
 export type RefreshAndReconcilePostCommentsInput = {
   postId: string;
   igMediaId: string;
   brandUsername: string | null | undefined;
+  replyMaxAgeDays: number;
   syncDeps: SyncPostCommentsDeps;
   reconcileDeps: ReconcileCommentThreadStatusesDeps;
 };
@@ -21,6 +23,7 @@ export type RefreshAndReconcilePostCommentsInput = {
 export type RefreshAndReconcilePostCommentsResult = {
   sync: SyncPostCommentsResult;
   reconcile: ReconcileCommentThreadResult;
+  skippedStaleCount: number;
   comments: Comment[];
 };
 
@@ -39,7 +42,17 @@ export async function refreshAndReconcilePostComments(
     input.reconcileDeps,
   );
 
+  const skippedStaleCount = skipStalePendingCommentsForPost(
+    input.postId,
+    input.brandUsername,
+    {
+      listByPostId: input.reconcileDeps.listByPostId,
+      markSkipped: input.reconcileDeps.markSkipped,
+      replyMaxAgeDays: input.replyMaxAgeDays,
+    },
+  );
+
   const comments = input.syncDeps.listByPostId(input.postId);
 
-  return { sync, reconcile, comments };
+  return { sync, reconcile, skippedStaleCount, comments };
 }

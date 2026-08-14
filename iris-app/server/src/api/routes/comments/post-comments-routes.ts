@@ -1,6 +1,7 @@
 import { sendError, sendJson } from "../../json.ts";
 import { createRouter, route } from "../../router.ts";
 import { notifyCommentsChanged } from "../../../adapters/sse/event-bus.ts";
+import { getAppSettingsOrDefault } from "../../../adapters/sqlite/app-settings-repository.ts";
 import { refreshAndReconcilePostComments } from "../../../domain/comments/refresh-and-reconcile-post-comments.ts";
 import { refreshPostIgMediaStatus } from "../../../domain/meta/refresh-post-ig-media-status.ts";
 import {
@@ -106,6 +107,8 @@ export const commentsPostCommentsRouter = createRouter([
           postId,
           igMediaId: post.igMediaId,
           brandUsername: brand,
+          replyMaxAgeDays: getAppSettingsOrDefault(match.ctx.appSettingsStore)
+            .replyMaxAgeDays,
           syncDeps: postCommentSyncDeps(match.ctx),
           reconcileDeps: commentReconcileDeps(match.ctx),
         });
@@ -122,6 +125,7 @@ export const commentsPostCommentsRouter = createRouter([
           brand_username: brand,
           linked_count: result.reconcile.linkedCount,
           skipped_brand_count: result.reconcile.skippedBrandCount,
+          skipped_stale_count: result.skippedStaleCount,
           linkable_count: result.reconcile.plan.links.length,
           ...reconcileSyncPayload(result.sync),
           comments: result.comments.map((comment) =>
@@ -157,6 +161,8 @@ export const commentsPostCommentsRouter = createRouter([
           postId,
           igMediaId: post.igMediaId,
           brandUsername: brandUsername(match.ctx),
+          replyMaxAgeDays: getAppSettingsOrDefault(match.ctx.appSettingsStore)
+            .replyMaxAgeDays,
           syncDeps: postCommentSyncDeps(match.ctx),
           reconcileDeps: commentReconcileDeps(match.ctx),
         });
@@ -174,6 +180,7 @@ export const commentsPostCommentsRouter = createRouter([
           marked_deleted: result.sync.markedDeleted,
           restored: result.sync.restored,
           linked_count: result.reconcile.linkedCount,
+          skipped_stale_count: result.skippedStaleCount,
           comments: result.comments.map((comment) =>
             serializeCommentWithDraft(comment, match.ctx),
           ),

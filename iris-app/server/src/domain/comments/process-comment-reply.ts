@@ -24,6 +24,10 @@ import {
   type ReplyMode,
 } from "../posts/reply-mode.ts";
 import { commentReplyLimiter } from "./comment-reply-limiter.ts";
+import {
+  buildCommentTooOldMessage,
+  isCommentWithinReplyMaxAge,
+} from "./comment-reply-max-age.ts";
 
 export type ProcessCommentReplyOptions = {
   trigger: "worker" | "webhook" | "manual";
@@ -211,6 +215,18 @@ export async function processCommentReply(
     resolveEffectiveReplyMode(appSettings.replyMode, post.replyMode);
 
   if (!isManual && !shouldScheduleCommentReply(effectiveReplyMode)) {
+    return false;
+  }
+
+  if (
+    !isManual &&
+    !isCommentWithinReplyMaxAge(comment, appSettings.replyMaxAgeDays)
+  ) {
+    ctx.comments.markSkipped(
+      commentId,
+      buildCommentTooOldMessage(appSettings.replyMaxAgeDays),
+    );
+    notifyCommentsChanged({ post_id: comment.postId });
     return false;
   }
 

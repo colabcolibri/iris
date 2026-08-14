@@ -12,6 +12,7 @@ test("refreshAndReconcilePostComments sincroniza antes de vincular", async () =>
     postId,
     igMediaId,
     brandUsername: "colabcolibri",
+    replyMaxAgeDays: 15,
     syncDeps: {
       posts: { update: () => null } as never,
       metaCommentReader: {

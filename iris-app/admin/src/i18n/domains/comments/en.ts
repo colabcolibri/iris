@@ -222,6 +222,9 @@ export const commentsEn = {
     aiDraftFailed: "AI could not generate the draft.",
     synced: "Post synced with Instagram.",
     syncFailed: "Failed to sync post.",
+    skippedStaleOne: "{count} comment ignored because it is outside the reply window.",
+    skippedStaleOther:
+      "{count} comments ignored because they are outside the reply window.",
     markedDeleted: "{count} comment(s) marked as removed on Instagram.",
     reconcileNothingPending:
       "No pending comments to link to existing Instagram replies.",

@@ -10,6 +10,10 @@ import {
   AUTO_MONITOR_INTERVAL_DEFAULT_SECONDS,
   normalizeAutoMonitorIntervalSeconds,
 } from "../../domain/settings/auto-monitor-settings.ts";
+import {
+  REPLY_MAX_AGE_DAYS_DEFAULT,
+  normalizeReplyMaxAgeDays,
+} from "../../domain/settings/reply-max-age-settings.ts";
 
 const PRIMARY_ID = "primary";
 
@@ -18,6 +22,7 @@ type AppSettingsRow = {
   auto_reply_enabled: number;
   reply_mode: string | null;
   reply_delay_seconds: number;
+  reply_max_age_days: number | null;
   message_auto_reply_enabled: number | null;
   message_reply_mode: string | null;
   message_reply_delay_seconds: number | null;
@@ -52,6 +57,9 @@ function mapRow(row: AppSettingsRow): AppSettings {
     replyMode,
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
     replyDelaySeconds: Number(row.reply_delay_seconds ?? 0),
+    replyMaxAgeDays: normalizeReplyMaxAgeDays(
+      Number(row.reply_max_age_days ?? REPLY_MAX_AGE_DAYS_DEFAULT),
+    ),
     messageReplyMode,
     messageAutoReplyEnabled: autoReplyEnabledFromReplyMode(messageReplyMode),
     messageReplyDelaySeconds: Number(row.message_reply_delay_seconds ?? 0),
@@ -75,6 +83,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       auto_reply_enabled,
       reply_mode,
       reply_delay_seconds,
+      reply_max_age_days,
       message_auto_reply_enabled,
       message_reply_mode,
       message_reply_delay_seconds,
@@ -93,6 +102,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       auto_reply_enabled,
       reply_mode,
       reply_delay_seconds,
+      reply_max_age_days,
       message_auto_reply_enabled,
       message_reply_mode,
       message_reply_delay_seconds,
@@ -101,12 +111,13 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       auto_monitor_interval_seconds,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       timezone = excluded.timezone,
       auto_reply_enabled = excluded.auto_reply_enabled,
       reply_mode = excluded.reply_mode,
       reply_delay_seconds = excluded.reply_delay_seconds,
+      reply_max_age_days = excluded.reply_max_age_days,
       message_auto_reply_enabled = excluded.message_auto_reply_enabled,
       message_reply_mode = excluded.message_reply_mode,
       message_reply_delay_seconds = excluded.message_reply_delay_seconds,
@@ -146,6 +157,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
         autoReplyEnabled ? 1 : 0,
         replyMode,
         merged.replyDelaySeconds,
+        normalizeReplyMaxAgeDays(merged.replyMaxAgeDays),
         messageAutoReplyEnabled ? 1 : 0,
         messageReplyMode,
         merged.messageReplyDelaySeconds,

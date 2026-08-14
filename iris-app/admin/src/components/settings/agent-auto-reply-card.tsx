@@ -30,6 +30,16 @@ const DELAY_MIN_MINUTES = 1;
 const DELAY_MAX_MINUTES = 60;
 const DELAY_SUGGESTED_MINUTES = 2;
 
+const MAX_AGE_PRESETS = [
+  { label: "7 dias", days: 7 },
+  { label: "15 dias", days: 15 },
+  { label: "30 dias", days: 30 },
+] as const;
+
+const MAX_AGE_MIN_DAYS = 1;
+const MAX_AGE_MAX_DAYS = 365;
+const MAX_AGE_DEFAULT_DAYS = 15;
+
 function minutesFromDelaySeconds(seconds: number): number {
   if (seconds <= 0) {
     return 0;
@@ -52,17 +62,21 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
   const {
     replyMode,
     replyDelaySeconds,
+    replyMaxAgeDays,
     agentReplyTickIntervalSeconds,
     loading,
     saveReplyMode,
     saveReplyDelaySeconds,
+    saveReplyMaxAgeDays,
     saveAgentReplyTickIntervalSeconds,
   } = useAppSettings();
   const [saving, setSaving] = useState(false);
   const [savingDelay, setSavingDelay] = useState(false);
+  const [savingMaxAge, setSavingMaxAge] = useState(false);
   const [savingTick, setSavingTick] = useState(false);
   const [delayEnabled, setDelayEnabled] = useState(false);
   const [delayInput, setDelayInput] = useState(String(DELAY_SUGGESTED_MINUTES));
+  const [maxAgeInput, setMaxAgeInput] = useState(String(MAX_AGE_DEFAULT_DAYS));
 
   useEffect(() => {
     setDelayEnabled(replyDelaySeconds > 0);
@@ -70,6 +84,10 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
       setDelayInput(String(minutesFromDelaySeconds(replyDelaySeconds)));
     }
   }, [replyDelaySeconds]);
+
+  useEffect(() => {
+    setMaxAgeInput(String(replyMaxAgeDays || MAX_AGE_DEFAULT_DAYS));
+  }, [replyMaxAgeDays]);
 
   const tickMinutes = formatTickMinutes(agentReplyTickIntervalSeconds || 300);
   const delayMinutes = delayEnabled ? minutesFromDelaySeconds(replyDelaySeconds) : 0;
@@ -128,6 +146,25 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
     [locale, saveReplyDelaySeconds, t.toasts],
   );
 
+  async function persistMaxAgeDays(rawDays: string) {
+    setSavingMaxAge(true);
+    try {
+      const days = Math.min(
+        MAX_AGE_MAX_DAYS,
+        Math.max(
+          MAX_AGE_MIN_DAYS,
+          Number.parseInt(rawDays, 10) || MAX_AGE_DEFAULT_DAYS,
+        ),
+      );
+      await saveReplyMaxAgeDays(days);
+      toast.success(interpolate(t.toasts.maxAgeUpdated, { days }));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, locale) || t.toasts.maxAgeFailed);
+    } finally {
+      setSavingMaxAge(false);
+    }
+  }
+
   async function persistTickInterval(seconds: number) {
     setSavingTick(true);
     try {
@@ -161,6 +198,55 @@ export function AgentAutoReplyCard({ embedded = false }: AgentAutoReplyCardProps
               onChange={(value) => void handleChange(value)}
               disabled={saving}
             />
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold">{t.maxAgeLabel}</Label>
+              <p className="text-sm text-muted-foreground">{t.maxAgeHint}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {MAX_AGE_PRESETS.map((preset) => (
+                <button
+                  key={preset.days}
+                  type="button"
+                  disabled={savingMaxAge}
+                  onClick={() => {
+                    setMaxAgeInput(String(preset.days));
+                    void persistMaxAgeDays(String(preset.days));
+                  }}
+                  className={`rounded-md border px-3 py-1.5 text-xs ${
+                    replyMaxAgeDays === preset.days
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-foreground"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reply-max-age-days" className="text-sm font-semibold">
+                {interpolate(t.maxAgeDaysLabel, {
+                  min: MAX_AGE_MIN_DAYS,
+                  max: MAX_AGE_MAX_DAYS,
+                })}
+              </Label>
+              <Input
+                id="reply-max-age-days"
+                type="number"
+                min={MAX_AGE_MIN_DAYS}
+                max={MAX_AGE_MAX_DAYS}
+                step={1}
+                value={maxAgeInput}
+                disabled={savingMaxAge}
+                onChange={(event) => setMaxAgeInput(event.target.value)}
+                onBlur={() => void persistMaxAgeDays(maxAgeInput)}
+                className="max-w-[10rem]"
+              />
+            </div>
           </div>
 
           <div className="space-y-3 border-t border-border/60 pt-4">

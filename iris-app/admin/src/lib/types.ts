@@ -203,6 +203,7 @@ export type SyncPostCommentsResult = {
   warning: string | null;
   marked_deleted?: number;
   restored?: number;
+  skipped_stale_count?: number;
   comments: Comment[];
 };
 
@@ -222,6 +223,7 @@ export type ReconcileCommentsPreview = {
   warning: string | null;
   marked_deleted: number;
   restored: number;
+  skipped_stale_count?: number;
   comments: Comment[];
 };
 
@@ -237,6 +239,7 @@ export type ReconcileCommentsResult = {
   warning: string | null;
   marked_deleted: number;
   restored: number;
+  skipped_stale_count?: number;
   comments: Comment[];
 };
 
@@ -542,6 +545,7 @@ export type AppSettings = {
   reply_mode: ReplyMode;
   auto_reply_enabled: boolean;
   reply_delay_seconds: number;
+  reply_max_age_days: number;
   agent_reply_tick_interval_seconds: number;
   message_reply_mode: ReplyMode;
   message_auto_reply_enabled: boolean;

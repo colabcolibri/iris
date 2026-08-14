@@ -222,6 +222,9 @@ export const commentsPt = {
     aiDraftFailed: "A IA não conseguiu gerar o rascunho.",
     synced: "Publicação sincronizada com o Instagram.",
     syncFailed: "Falha ao sincronizar publicação.",
+    skippedStaleOne: "{count} comentário ignorado por estar fora da janela de resposta.",
+    skippedStaleOther:
+      "{count} comentários ignorados por estarem fora da janela de resposta.",
     markedDeleted:
       "{count} comentário(s) marcado(s) como removido(s) no Instagram.",
     reconcileNothingPending:

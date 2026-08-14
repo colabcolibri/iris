@@ -31,6 +31,7 @@ export const DEMO_APP_SETTINGS: AppSettings = {
   reply_mode: "draft",
   auto_reply_enabled: true,
   reply_delay_seconds: 120,
+  reply_max_age_days: 15,
   agent_reply_tick_interval_seconds: 300,
   message_reply_mode: "draft",
   message_auto_reply_enabled: true,

@@ -5,6 +5,10 @@ import {
   shouldScheduleCommentReply,
 } from "../posts/reply-mode.ts";
 import { computeAgentReplyNotBefore } from "./compute-agent-reply-not-before.ts";
+import {
+  buildCommentTooOldMessage,
+  isCommentWithinReplyMaxAge,
+} from "./comment-reply-max-age.ts";
 
 export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean {
   const comment = ctx.comments.findById(commentId);
@@ -32,6 +36,14 @@ export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean
   }
 
   if (!ctx.resolveLlmCompleter()) {
+    return false;
+  }
+
+  if (!isCommentWithinReplyMaxAge(comment, appSettings.replyMaxAgeDays)) {
+    ctx.comments.markSkipped(
+      commentId,
+      buildCommentTooOldMessage(appSettings.replyMaxAgeDays),
+    );
     return false;
   }
 

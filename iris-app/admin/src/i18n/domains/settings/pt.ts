@@ -78,6 +78,10 @@ export const settingsPt = {
     delayImmediate: "Resposta imediata",
     delayQueued: "Fila com delay",
     delayMinutesLabel: "Minutos de espera ({min}–{max})",
+    maxAgeLabel: "Janela de resposta",
+    maxAgeHint:
+      "A Iris só responde comentários dos últimos X dias — no import, no webhook e na fila automática. Comentários mais antigos são ignorados.",
+    maxAgeDaysLabel: "Dias de histórico ({min}–{max})",
     loading: "Carregando…",
     toasts: {
       modeUpdated: "Modo global do agente: {mode}.",
@@ -87,6 +91,8 @@ export const settingsPt = {
       saveFailed: "Falha ao salvar.",
       delayFailed: "Falha ao salvar delay.",
       intervalFailed: "Falha ao salvar intervalo.",
+      maxAgeUpdated: "Janela de resposta: {days} dias.",
+      maxAgeFailed: "Falha ao salvar janela de resposta.",
     },
   },
   messageAgent: {

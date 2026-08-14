@@ -7,6 +7,8 @@ export type AppSettings = {
   autoReplyEnabled: boolean;
   /** 0 = resposta imediata no próximo tick; 60–3600 = fila com delay (1–60 min em segundos). */
   replyDelaySeconds: number;
+  /** Comentários mais antigos que este limite não entram na fila do agente. */
+  replyMaxAgeDays: number;
   messageReplyMode: ReplyMode;
   messageAutoReplyEnabled: boolean;
   messageReplyDelaySeconds: number;

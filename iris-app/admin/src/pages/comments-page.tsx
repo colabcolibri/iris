@@ -268,6 +268,21 @@ export function CommentsPage() {
     [],
   );
 
+  const showSkippedStaleToast = useCallback(
+    (count: number | undefined) => {
+      if (!count || count <= 0) {
+        return;
+      }
+
+      toast.message(
+        count === 1
+          ? interpolate(commentsMsg.toasts.skippedStaleOne, { count })
+          : interpolate(commentsMsg.toasts.skippedStaleOther, { count }),
+      );
+    },
+    [commentsMsg.toasts.skippedStaleOne, commentsMsg.toasts.skippedStaleOther],
+  );
+
   const loadComments = useCallback(
     async (
       postId: string,
@@ -642,6 +657,7 @@ export function CommentsPage() {
       postCacheRef.current.setLastSyncedAt(selectedPostId, syncedAt);
       setLastSyncedAt(syncedAt);
       toast.success(commentsMsg.toasts.synced);
+      showSkippedStaleToast(result.skipped_stale_count);
     } catch (err) {
       const message =
         getApiErrorMessage(err, locale) || commentsMsg.toasts.syncFailed;
@@ -650,7 +666,7 @@ export function CommentsPage() {
     } finally {
       setSyncing(false);
     }
-  }, [loadInsights, selectedPostId, syncPostCountsFromComments]);
+  }, [commentsMsg.toasts.syncFailed, commentsMsg.toasts.synced, loadInsights, selectedPostId, showSkippedStaleToast, syncPostCountsFromComments, locale]);
 
   const handleReconcile = useCallback(async () => {
     if (!selectedPostId) {
@@ -739,6 +755,7 @@ export function CommentsPage() {
             })
           : interpolate(commentsMsg.toasts.linkedNone, { deletedNote }),
       );
+      showSkippedStaleToast(result.skipped_stale_count);
     } catch (err) {
       const message =
         getApiErrorMessage(err, locale) || commentsMsg.toasts.reconcileFailed;
@@ -747,7 +764,7 @@ export function CommentsPage() {
     } finally {
       setReconciling(false);
     }
-  }, [confirm, selectedPostId, syncPostCountsFromComments]);
+  }, [commentsMsg, confirm, locale, selectedPostId, showSkippedStaleToast, syncPostCountsFromComments]);
 
   const handleSelectPost = useCallback(
     (postId: string) => {
