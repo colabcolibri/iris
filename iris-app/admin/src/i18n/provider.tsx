@@ -12,6 +12,7 @@ import {
   type DomainMessagesMap,
   type I18nDomainId,
 } from "@/i18n/compose";
+import { parseRouteLocaleFromPath } from "@/i18n/routing";
 import { readStoredAppLocale, writeStoredAppLocale } from "@/i18n/storage";
 import {
   DEFAULT_APP_LOCALE,
@@ -52,6 +53,10 @@ export function AppI18nProvider({
   const [locale, setLocaleState] = useState<AppLocale>(() => {
     if (initialLocale) return initialLocale;
     if (disablePersistence) return DEFAULT_APP_LOCALE;
+    if (typeof window !== "undefined") {
+      const routeLocale = parseRouteLocaleFromPath(window.location.pathname);
+      if (routeLocale) return routeLocale;
+    }
     return readStoredAppLocale();
   });
 

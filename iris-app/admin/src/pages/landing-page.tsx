@@ -8,7 +8,6 @@ import { LandingPricing } from "@/components/landing/landing-pricing";
 import { LandingTrust } from "@/components/landing/landing-trust";
 import { LandingWorkflow } from "@/components/landing/landing-workflow";
 import { LandingI18nProvider } from "@/i18n/landing-context";
-import type { LandingLocale } from "@/i18n/types";
 import "@/landing.css";
 
 function LandingPageContent() {
@@ -29,13 +28,9 @@ function LandingPageContent() {
   );
 }
 
-type LandingPageProps = {
-  locale: LandingLocale;
-};
-
-export function LandingPage({ locale }: LandingPageProps) {
+export function LandingPage() {
   return (
-    <LandingI18nProvider locale={locale}>
+    <LandingI18nProvider>
       <LandingPageContent />
     </LandingI18nProvider>
   );

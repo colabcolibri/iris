@@ -27,6 +27,7 @@ import { UmamiAnalytics } from "@/components/analytics/umami-analytics";
 import { DemoModeProvider } from "@/demo/demo-mode-context";
 import { resetDemoState } from "@/demo/demo-state";
 import { AppI18nProvider } from "@/i18n/provider";
+import { RouteLocaleSync } from "@/i18n/route-locale-sync";
 import type { AppLocale } from "@/i18n/types";
 
 const ADMIN_APP_ROUTES = [
@@ -86,13 +87,14 @@ export function App() {
         <AppSettingsProvider>
           <AppI18nProvider onLocaleChange={handleLocaleChange}>
             <BrowserRouter>
+            <RouteLocaleSync />
             <UmamiAnalytics />
             <Routes>
-              <Route path={ROUTES.home} element={<LandingPage locale="pt" />} />
-              <Route path="/en" element={<LandingPage locale="en" />} />
-              <Route path={ROUTES.privacy} element={<PrivacyPolicyPage locale="pt" />} />
-              <Route path={ROUTES.privacyEn} element={<PrivacyPolicyPage locale="en" />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage locale="pt" />} />
+              <Route path={ROUTES.home} element={<LandingPage />} />
+              <Route path="/en" element={<LandingPage />} />
+              <Route path={ROUTES.privacy} element={<PrivacyPolicyPage />} />
+              <Route path={ROUTES.privacyEn} element={<PrivacyPolicyPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
               {LEGACY_ADMIN_REDIRECTS.map(([from, to]) => (
                 <Route
