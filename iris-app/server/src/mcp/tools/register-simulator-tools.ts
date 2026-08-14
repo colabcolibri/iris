@@ -117,6 +117,8 @@ export function registerSimulatorTools(server: McpServer, ctx: AppContext): void
             products: ctx.products,
             productStoreLinks: ctx.productStoreLinks,
             productFieldPolicies: ctx.productFieldPolicies,
+            storeConnections: ctx.storeConnections,
+            storeProviders: ctx.storeProviders,
             llm: ctx.resolveLlmCompleter(),
             agentRuns: ctx.agentRuns,
             agentRunSteps: ctx.agentRunSteps,

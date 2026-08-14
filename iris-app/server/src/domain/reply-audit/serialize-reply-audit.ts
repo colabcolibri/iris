@@ -17,6 +17,7 @@ export function serializeReplyAudit(run: AgentRun, steps: AgentRunStep[]) {
     terminal_status: meta.terminalStatus,
     reply_tier: meta.replyTier,
     output_summary: run.outputSummary,
+    session_summary: run.sessionSummary,
     steps: steps.map(mapAgentRunStepToAuditStep),
   };
 }

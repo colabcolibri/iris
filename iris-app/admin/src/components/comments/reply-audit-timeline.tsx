@@ -22,6 +22,7 @@ export type ReplyAuditSummaryMeta = {
   totalPromptTokens?: number | null;
   totalCompletionTokens?: number | null;
   totalTokens?: number | null;
+  toolCallCount?: number | null;
   commentHref?: string | null;
 };
 
@@ -272,6 +273,7 @@ function ReplyAuditStagesAccordion({ steps }: { steps: ReplyAuditStep[] }) {
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-base font-semibold text-foreground">
                       {getReplyAuditStageLabel(step.stage, locale)}
+                      {step.tool_name ? ` · ${step.tool_name}` : ""}
                     </span>
                     <span
                       className={cn(
@@ -304,9 +306,9 @@ function ReplyAuditStagesAccordion({ steps }: { steps: ReplyAuditStep[] }) {
                   <time
                     className="text-xs text-muted-foreground"
                     dateTime={step.created_at}
-                    title={formatCommentExactTime(step.created_at)}
+                    title={formatCommentExactTime(step.created_at, locale)}
                   >
-                    {formatCommentExactTime(step.created_at)}
+                    {formatCommentExactTime(step.created_at, locale)}
                   </time>
                   <ChevronDown
                     className={cn(

@@ -81,6 +81,9 @@ export const labelsEn = {
       verify: "Verification",
       message_triage: "DM triage",
       message_draft: "DM draft",
+      message_draft_turn: "DM draft turn",
+      tool_call: "Tool",
+      tool_result: "Tool result",
       message_verify: "DM verification",
     },
     verdicts: {

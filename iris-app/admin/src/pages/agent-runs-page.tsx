@@ -239,6 +239,9 @@ export function AgentRunsPage() {
                   {row.step_count === 1
                     ? t.table.callsOne
                     : interpolate(t.table.callsMany, { count: row.step_count })}
+                  {row.tool_call_count != null && row.tool_call_count > 0
+                    ? ` · ${row.tool_call_count} ${t.table.tools.toLowerCase()}`
+                    : ""}
                 </p>
               </TableCell>
               <TableCell className="hidden md:table-cell text-muted-foreground">
@@ -323,12 +326,26 @@ export function AgentRunsPage() {
                     <ReplyAuditTimeline
                       audit={detail.audit}
                       summary={{
-                        durationMs: selectedListItem?.duration_ms ?? null,
+                        durationMs:
+                          detail.audit.session_summary?.durationMs ??
+                          selectedListItem?.duration_ms ??
+                          null,
                         totalPromptTokens:
-                          selectedListItem?.total_prompt_tokens ?? null,
+                          detail.audit.session_summary?.totalPromptTokens ??
+                          selectedListItem?.total_prompt_tokens ??
+                          null,
                         totalCompletionTokens:
-                          selectedListItem?.total_completion_tokens ?? null,
-                        totalTokens: selectedListItem?.total_tokens ?? null,
+                          detail.audit.session_summary?.totalCompletionTokens ??
+                          selectedListItem?.total_completion_tokens ??
+                          null,
+                        totalTokens:
+                          detail.audit.session_summary?.totalTokens ??
+                          selectedListItem?.total_tokens ??
+                          null,
+                        toolCallCount:
+                          detail.audit.session_summary?.toolCallCount ??
+                          selectedListItem?.tool_call_count ??
+                          null,
                         commentHref: threadHref,
                       }}
                     />

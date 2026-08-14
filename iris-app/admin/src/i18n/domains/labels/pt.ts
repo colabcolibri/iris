@@ -86,6 +86,9 @@ export const labelsPt = {
       verify: "Verificação",
       message_triage: "Triagem DM",
       message_draft: "Rascunho DM",
+      message_draft_turn: "Turno do draft DM",
+      tool_call: "Tool",
+      tool_result: "Resultado da tool",
       message_verify: "Verificação DM",
     },
     verdicts: {

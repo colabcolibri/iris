@@ -1,7 +1,10 @@
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { MessageAgentContent } from "../../ports/message-agent-content-store.ts";
 import type { MessageReplyContext } from "../message-reply-context/types.ts";
-import { runMessageDraftStage } from "./draft-stage.ts";
+import {
+  runMessageAgenticDraftStage,
+  type MessageAgenticDraftDeps,
+} from "./agentic-draft-stage.ts";
 import { runMessageTriageStage } from "./triage-stage.ts";
 import type { MessageHarnessRunResult, MessageStageResult } from "./types.ts";
 import { runMessageVerifyStage } from "./verify-stage.ts";
@@ -11,6 +14,7 @@ export type RunMessageHarnessInput = {
   agentContent: MessageAgentContent;
   llm: LlmCompleter;
   maxChars?: number;
+  harness?: MessageAgenticDraftDeps;
   onStepComplete?: (step: MessageStageResult) => void | Promise<void>;
 };
 
@@ -46,17 +50,48 @@ export async function runMessageHarness(
     };
   }
 
-  const draft = await runMessageDraftStage({
-    context: input.context,
+  if (!input.harness) {
+    throw new Error("message harness requires agentic harness deps");
+  }
+
+  const focusedContext: MessageReplyContext = {
+    ...input.context,
+    products:
+      triage.productSlug && input.context.products.length > 0
+        ? input.context.products.filter((product) => product.slug === triage.productSlug)
+        : input.context.products.slice(0, 1),
+  };
+
+  const draft = await runMessageAgenticDraftStage({
+    context: focusedContext,
     agentContent: input.agentContent,
     llm: input.llm,
     maxChars: personaMax,
     messageCategory: triage.messageCategory,
+    productSlug: triage.productSlug,
+    harness: input.harness,
+    onLoopStep: async (loopStep) => {
+      const stage: MessageStageResult = {
+        stage: loopStep.stage,
+        verdict: loopStep.verdict,
+        reason: loopStep.reason,
+        reasoning: loopStep.reasoning,
+        llm: loopStep.llm,
+        structured: loopStep.toolName
+          ? {
+              turnIndex: loopStep.turnIndex,
+              toolName: loopStep.toolName,
+              toolInput: loopStep.toolInput ?? undefined,
+              toolOutput: loopStep.toolOutput,
+            }
+          : { turnIndex: loopStep.turnIndex },
+      };
+      steps.push(stage);
+      await emitStep(input.onStepComplete, stage);
+    },
   });
-  steps.push(draft);
-  await emitStep(input.onStepComplete, draft);
 
-  if (draft.verdict !== "pass" || !draft.draftText) {
+  if (!draft.draftText) {
     return {
       terminalStatus: "rejected_verify",
       messageCategory: triage.messageCategory,
@@ -71,6 +106,7 @@ export async function runMessageHarness(
     llm: input.llm,
     draftText: draft.draftText,
     maxChars: personaMax,
+    productFacts: draft.resolvedProducts,
   });
   steps.push(verify);
   await emitStep(input.onStepComplete, verify);

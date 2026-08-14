@@ -1,3 +1,5 @@
+import type { HarnessSessionSummary } from "../domain/harness/types.ts";
+
 export type AgentRunStatus = "ok" | "failed" | "skipped";
 
 export type AgentRun = {
@@ -7,6 +9,9 @@ export type AgentRun = {
   inputSummary: string | null;
   outputSummary: string | null;
   status: AgentRunStatus;
+  startedAt: string | null;
+  endedAt: string | null;
+  sessionSummary: HarnessSessionSummary | null;
   createdAt: string;
 };
 
@@ -21,6 +26,8 @@ export type CreateAgentRunInput = {
 export type UpdateAgentRunOutcomeInput = {
   outputSummary: string | null;
   status: AgentRunStatus;
+  endedAt?: string | null;
+  sessionSummary?: HarnessSessionSummary | null;
 };
 
 export type AgentRunListItem = {
@@ -30,9 +37,13 @@ export type AgentRunListItem = {
   status: AgentRunStatus;
   outputSummary: string | null;
   createdAt: string;
+  startedAt: string | null;
+  endedAt: string | null;
   commentId: string | null;
   postId: string | null;
   stepCount: number;
+  llmCallCount: number;
+  toolCallCount: number;
   replyTier: string | null;
   terminalStatus: string | null;
   durationMs: number | null;
@@ -40,6 +51,7 @@ export type AgentRunListItem = {
   totalCompletionTokens: number | null;
   totalTokens: number | null;
   models: string[];
+  sessionSummary: HarnessSessionSummary | null;
 };
 
 export type ListAgentRunsOptions = {

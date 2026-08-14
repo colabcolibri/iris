@@ -8,6 +8,7 @@ import type {
   AgentRunStepRepository,
   CreateAgentRunStepInput,
 } from "../../ports/agent-run-step-repository.ts";
+import { summarizeHarnessSession } from "../harness/summarize-harness-session.ts";
 import { runMessageHarness, type RunMessageHarnessInput } from "./orchestrator.ts";
 import type { MessageHarnessRunResult, MessageStageResult } from "./types.ts";
 
@@ -59,10 +60,24 @@ function mapStageToStepInput(
   messageId: string | null | undefined,
   step: MessageStageResult,
 ): CreateAgentRunStepInput {
+  const structured = step.structured as Record<string, unknown> | undefined;
+  const toolName =
+    structured && typeof structured.toolName === "string" ? structured.toolName : null;
+  const turnIndex =
+    structured && typeof structured.turnIndex === "number" ? structured.turnIndex : null;
+
   return {
     agentRunId: runId,
     messageId: messageId ?? null,
     stage: step.stage,
+    stepKind: toolName ? "tool" : step.llm ? "llm" : "system",
+    turnIndex,
+    toolName,
+    toolInput:
+      structured && structured.toolInput && typeof structured.toolInput === "object"
+        ? (structured.toolInput as Record<string, unknown>)
+        : null,
+    toolOutput: structured?.toolOutput,
     verdict: step.verdict,
     reason: step.reason,
     reasoning: step.reasoning,
@@ -76,6 +91,7 @@ export async function executeAndRecordMessageHarness(
   input: ExecuteAndRecordMessageHarnessInput,
 ): Promise<ExecuteAndRecordMessageHarnessResult> {
   const flowId = input.flowId ?? randomUUID();
+  const startedAt = new Date().toISOString();
   const run = repos.agentRuns.create({
     trigger: input.trigger,
     inputSummary: input.inputSummary,
@@ -94,18 +110,29 @@ export async function executeAndRecordMessageHarness(
       },
     });
 
+    const endedAt = new Date().toISOString();
+    const steps = repos.agentRunSteps.listByAgentRunId(run.id);
+    const sessionSummary = summarizeHarnessSession(steps, run.startedAt ?? startedAt, endedAt);
+
     const updatedRun = repos.agentRuns.updateOutcome(run.id, {
       outputSummary: harness.finalText?.slice(0, 500) ?? harness.terminalStatus,
       status: runStatusFromMessageHarnessTerminal(harness.terminalStatus),
+      endedAt,
+      sessionSummary,
     });
 
     return { harness, run: updatedRun, flowId };
   } catch (error) {
+    const endedAt = new Date().toISOString();
     const errorMessage =
       error instanceof Error ? error.message.slice(0, 500) : "message harness failed";
+    const steps = repos.agentRunSteps.listByAgentRunId(run.id);
+    const sessionSummary = summarizeHarnessSession(steps, run.startedAt ?? startedAt, endedAt);
     const failedRun = repos.agentRuns.updateOutcome(run.id, {
       outputSummary: errorMessage,
       status: "failed",
+      endedAt,
+      sessionSummary,
     });
     throw new MessageHarnessExecutionError(errorMessage, failedRun, flowId);
   }

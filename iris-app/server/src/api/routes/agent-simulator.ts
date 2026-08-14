@@ -78,6 +78,8 @@ export const handleAgentSimulatorRoute = createRouter([
         products: match.ctx.products,
         productStoreLinks: match.ctx.productStoreLinks,
         productFieldPolicies: match.ctx.productFieldPolicies,
+        storeConnections: match.ctx.storeConnections,
+        storeProviders: match.ctx.storeProviders,
         llm: match.ctx.resolveLlmCompleter(),
         agentRuns: match.ctx.agentRuns,
         agentRunSteps: match.ctx.agentRunSteps,

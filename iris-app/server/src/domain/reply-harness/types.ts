@@ -1,7 +1,15 @@
 import type { AgentDecisionJson } from "./decision-json.ts";
 import type { BlockCategory, ReplyTier } from "./reply-tier.ts";
 
-export type MessageHarnessStageName = "message_triage" | "message_draft" | "message_verify";
+export type HarnessStepKind = "llm" | "tool" | "system";
+
+export type MessageHarnessStageName =
+  | "message_triage"
+  | "message_draft"
+  | "message_draft_turn"
+  | "tool_call"
+  | "tool_result"
+  | "message_verify";
 
 export type HarnessStageName =
   | "triage"

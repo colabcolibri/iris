@@ -6,6 +6,7 @@ import type {
   UpdateAgentRunOutcomeInput,
 } from "../../ports/agent-run-repository.ts";
 import type { AgentRun } from "../../ports/agent-run-repository.ts";
+import type { HarnessSessionSummary } from "../../domain/harness/types.ts";
 import { deriveHarnessAuditMeta } from "../../domain/reply-audit/derive-harness-audit-meta.ts";
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
@@ -17,6 +18,9 @@ type AgentRunRow = {
   input_summary: string | null;
   output_summary: string | null;
   status: string;
+  started_at: string | null;
+  ended_at: string | null;
+  session_summary_json: string | null;
   created_at: string;
 };
 
@@ -27,9 +31,14 @@ type AgentRunListRow = {
   status: string;
   output_summary: string | null;
   created_at: string;
+  started_at: string | null;
+  ended_at: string | null;
+  session_summary_json: string | null;
   comment_id: string | null;
   post_id: string | null;
   step_count: number;
+  llm_call_count: number;
+  tool_call_count: number;
   triage_reason: string | null;
   triage_output_json: string | null;
   first_step_at: string | null;
@@ -40,6 +49,17 @@ type AgentRunListRow = {
   models_csv: string | null;
 };
 
+function parseSessionSummary(raw: string | null): HarnessSessionSummary | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as HarnessSessionSummary;
+  } catch {
+    return null;
+  }
+}
+
 function mapRow(row: AgentRunRow): AgentRun {
   return {
     id: row.id,
@@ -48,11 +68,27 @@ function mapRow(row: AgentRunRow): AgentRun {
     inputSummary: row.input_summary,
     outputSummary: row.output_summary,
     status: row.status as AgentRun["status"],
+    startedAt: row.started_at ?? row.created_at,
+    endedAt: row.ended_at,
+    sessionSummary: parseSessionSummary(row.session_summary_json),
     createdAt: row.created_at,
   };
 }
 
 function durationMs(row: AgentRunListRow): number | null {
+  const summary = parseSessionSummary(row.session_summary_json);
+  if (summary?.durationMs != null) {
+    return summary.durationMs;
+  }
+
+  if (row.started_at && row.ended_at) {
+    const start = Date.parse(row.started_at);
+    const end = Date.parse(row.ended_at);
+    if (!Number.isNaN(start) && !Number.isNaN(end)) {
+      return Math.max(0, end - start);
+    }
+  }
+
   if (!row.first_step_at || !row.last_step_at) {
     return null;
   }
@@ -65,6 +101,7 @@ function durationMs(row: AgentRunListRow): number | null {
 }
 
 function mapListRow(row: AgentRunListRow): AgentRunListItem {
+  const sessionSummary = parseSessionSummary(row.session_summary_json);
   const meta = deriveHarnessAuditMeta({
     status: row.status as AgentRunStatus,
     outputSummary: row.output_summary,
@@ -79,16 +116,24 @@ function mapListRow(row: AgentRunListRow): AgentRunListItem {
     status: row.status as AgentRun["status"],
     outputSummary: row.output_summary,
     createdAt: row.created_at,
+    startedAt: row.started_at ?? row.created_at,
+    endedAt: row.ended_at,
     commentId: row.comment_id,
     postId: row.post_id,
-    stepCount: row.step_count,
+    stepCount: sessionSummary?.stepCount ?? row.step_count,
+    llmCallCount: sessionSummary?.llmCallCount ?? row.llm_call_count,
+    toolCallCount: sessionSummary?.toolCallCount ?? row.tool_call_count,
     replyTier: meta.replyTier,
     terminalStatus: meta.terminalStatus,
     durationMs: durationMs(row),
-    totalPromptTokens: row.total_prompt_tokens,
-    totalCompletionTokens: row.total_completion_tokens,
-    totalTokens: row.total_tokens,
-    models: parseModelsCsv(row.models_csv),
+    totalPromptTokens: sessionSummary?.totalPromptTokens ?? row.total_prompt_tokens,
+    totalCompletionTokens:
+      sessionSummary?.totalCompletionTokens ?? row.total_completion_tokens,
+    totalTokens: sessionSummary?.totalTokens ?? row.total_tokens,
+    models: sessionSummary?.models?.length
+      ? sessionSummary.models
+      : parseModelsCsv(row.models_csv),
+    sessionSummary,
   };
 }
 
@@ -111,13 +156,15 @@ function parseModelsCsv(csv: string | null): string[] {
 
 export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunRepository {
   const insert = db.prepare(`
-    INSERT INTO agent_runs (id, flow_id, trigger, input_summary, output_summary, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO agent_runs (
+      id, flow_id, trigger, input_summary, output_summary, status, started_at, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const updateOutcomeStmt = db.prepare(`
     UPDATE agent_runs
-    SET output_summary = ?, status = ?
+    SET output_summary = ?, status = ?, ended_at = ?, session_summary_json = ?
     WHERE id = ?
   `);
 
@@ -131,6 +178,9 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
       ar.status,
       ar.output_summary,
       ar.created_at,
+      ar.started_at,
+      ar.ended_at,
+      ar.session_summary_json,
       (
         SELECT s.comment_id FROM agent_run_steps s
         WHERE s.agent_run_id = ar.id
@@ -147,6 +197,14 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
       (
         SELECT COUNT(*) FROM agent_run_steps s WHERE s.agent_run_id = ar.id
       ) AS step_count,
+      (
+        SELECT COUNT(*) FROM agent_run_steps s
+        WHERE s.agent_run_id = ar.id AND s.step_kind = 'llm'
+      ) AS llm_call_count,
+      (
+        SELECT COUNT(*) FROM agent_run_steps s
+        WHERE s.agent_run_id = ar.id AND s.stage = 'tool_call'
+      ) AS tool_call_count,
       (
         SELECT s.reason FROM agent_run_steps s
         WHERE s.agent_run_id = ar.id AND s.stage = 'triage'
@@ -201,13 +259,21 @@ export function createSqliteAgentRunRepository(db: DatabaseSync): AgentRunReposi
         input.outputSummary ?? null,
         input.status,
         createdAt,
+        createdAt,
       );
 
       return mapRow(findByIdStmt.get(id) as AgentRunRow);
     },
 
     updateOutcome(id: string, input: UpdateAgentRunOutcomeInput) {
-      updateOutcomeStmt.run(input.outputSummary, input.status, id);
+      const sessionJson = input.sessionSummary ? JSON.stringify(input.sessionSummary) : null;
+      updateOutcomeStmt.run(
+        input.outputSummary,
+        input.status,
+        input.endedAt ?? new Date().toISOString(),
+        sessionJson,
+        id,
+      );
       return mapRow(findByIdStmt.get(id) as AgentRunRow);
     },
 

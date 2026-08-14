@@ -102,6 +102,7 @@ export const agentEn = {
       model: "Model",
       duration: "Duration",
       tokens: "Tokens",
+      tools: "Tools",
       callsOne: "1 call",
       callsMany: "{count} calls",
     },
@@ -162,6 +163,11 @@ export const agentEn = {
       page: "Page",
       knowledge: "Knowledge",
       restrictions: "Restrictions",
+    },
+    tokenEstimate: {
+      empty: "empty",
+      tokensK: "≈ {value}k tokens",
+      tokens: "≈ {value} tokens",
     },
     empty: {
       title: "Build the thread and run the harness",

@@ -6,12 +6,15 @@ import { stageLlmFromCompletion } from "../reply-harness/stage-llm.ts";
 import { buildMessageVerifyPrompt } from "./build-prompts.ts";
 import type { MessageStageResult, MessageVerifyStageOutput } from "./types.ts";
 
+import type { ResolvedProductView } from "../products/resolved-product-view.ts";
+
 export type MessageVerifyStageInput = {
   context: MessageReplyContext;
   agentContent: MessageAgentContent;
   llm: LlmCompleter;
   draftText: string;
   maxChars: number;
+  productFacts?: ResolvedProductView[];
 };
 
 export async function runMessageVerifyStage(
@@ -22,6 +25,7 @@ export async function runMessageVerifyStage(
     input.agentContent,
     input.draftText,
     input.maxChars,
+    input.productFacts,
   );
   const completion = await input.llm.complete(prompt);
   const raw = completion.text;

@@ -11,6 +11,7 @@ import {
   MessageHarnessExecutionError,
 } from "../message-harness/execute-and-record-message-harness.ts";
 import { assembleMessageReplyContext } from "../message-reply-context/message-reply-context-assembler.ts";
+import { createMessageHarnessDeps } from "../message-harness/create-message-harness-deps.ts";
 import { getMessageAgentContentOrDefault } from "../settings/message-agent-content-defaults.ts";
 import type { ReplyMode } from "../posts/reply-mode.ts";
 import {
@@ -79,6 +80,7 @@ async function processMessageReplyCore(
           agentContent,
           llm,
           maxChars: context.persona.maxChars,
+          harness: createMessageHarnessDeps(ctx),
         },
       },
     );

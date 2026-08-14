@@ -5,6 +5,8 @@ import type { MessageAgentContentStore } from "../../ports/message-agent-content
 import type { ProductRepository } from "../../ports/product-repository.ts";
 import type { ProductStoreLinkRepository } from "../../ports/product-store-link-repository.ts";
 import type { ProductFieldPolicyRepository } from "../../ports/product-field-policy-repository.ts";
+import type { StoreConnectionRepository } from "../../ports/store-connection-repository.ts";
+import type { StoreProviderRegistry } from "../stores/store-provider-registry.ts";
 import type { ReplyPersonaStore } from "../../ports/reply-persona-store.ts";
 import { resolveActiveProductCatalog } from "../products/resolve-active-product-catalog.ts";
 import { ValidationError } from "../../api/json.ts";
@@ -14,6 +16,7 @@ import type { MessageReplyContext } from "../message-reply-context/types.ts";
 import { getMessageAgentContentOrDefault } from "../settings/message-agent-content-defaults.ts";
 import { defaultReplyPersona } from "../settings/reply-persona-defaults.ts";
 import { isSupportedResponseLanguage } from "../reply-language/response-languages.ts";
+import { createMessageHarnessDeps } from "../message-harness/create-message-harness-deps.ts";
 import { serializeMessageHarnessAudit } from "../reply-audit/serialize-message-harness-audit.ts";
 import {
   normalizeSimulateTargetComment,
@@ -41,6 +44,8 @@ export type SimulateMessageReplyDeps = {
   products: ProductRepository;
   productStoreLinks: ProductStoreLinkRepository;
   productFieldPolicies: ProductFieldPolicyRepository;
+  storeConnections: StoreConnectionRepository;
+  storeProviders: StoreProviderRegistry;
   llm: LlmCompleter | null;
   agentRuns: AgentRunRepository;
   agentRunSteps: AgentRunStepRepository;
@@ -228,6 +233,7 @@ export async function simulateMessageReply(
         agentContent,
         llm: deps.llm,
         maxChars: context.persona.maxChars,
+        harness: createMessageHarnessDeps(deps),
       },
     },
   );

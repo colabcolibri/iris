@@ -100,6 +100,7 @@ export const agentPt = {
       model: "Modelo",
       duration: "Duração",
       tokens: "Tokens",
+      tools: "Tools",
       callsOne: "1 chamada",
       callsMany: "{count} chamadas",
     },
@@ -160,6 +161,11 @@ export const agentPt = {
       page: "Página",
       knowledge: "Knowledge",
       restrictions: "Restrições",
+    },
+    tokenEstimate: {
+      empty: "vazio",
+      tokensK: "≈ {value}k tokens",
+      tokens: "≈ {value} tokens",
     },
     empty: {
       title: "Monte a thread e rode o harness",

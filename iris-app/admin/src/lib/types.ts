@@ -481,13 +481,34 @@ export type ReplyAuditStep = {
     | "verify"
     | "message_triage"
     | "message_draft"
+    | "message_draft_turn"
+    | "tool_call"
+    | "tool_result"
     | "message_verify";
   verdict: "pass" | "fail" | "skip";
   reason: string | null;
   reasoning: string | null;
   created_at: string;
+  step_kind?: string | null;
+  turn_index?: number | null;
+  tool_name?: string | null;
+  tool_input?: Record<string, unknown> | null;
+  tool_output?: unknown;
+  tool_latency_ms?: number | null;
   structured?: Record<string, unknown> | null;
   llm?: ReplyAuditLlm | null;
+};
+
+export type HarnessSessionSummary = {
+  stepCount: number;
+  llmCallCount: number;
+  toolCallCount: number;
+  totalPromptTokens: number;
+  totalCompletionTokens: number;
+  totalTokens: number;
+  totalLatencyMs: number;
+  durationMs: number | null;
+  models: string[];
 };
 
 export type ReplyAudit = {
@@ -503,6 +524,7 @@ export type ReplyAudit = {
     | string;
   reply_tier?: "none" | "simple" | "full" | null;
   output_summary: string | null;
+  session_summary?: HarnessSessionSummary | null;
   steps: ReplyAuditStep[];
 };
 
@@ -513,9 +535,13 @@ export type AgentRunListItem = {
   status: "ok" | "failed" | "skipped";
   output_summary: string | null;
   created_at: string;
+  started_at?: string | null;
+  ended_at?: string | null;
   comment_id: string | null;
   post_id: string | null;
   step_count: number;
+  llm_call_count?: number;
+  tool_call_count?: number;
   reply_tier: string | null;
   terminal_status: string | null;
   duration_ms: number | null;
@@ -523,6 +549,7 @@ export type AgentRunListItem = {
   total_completion_tokens: number | null;
   total_tokens: number | null;
   models: string[];
+  session_summary?: HarnessSessionSummary | null;
 };
 
 export type AgentRunDetail = {
