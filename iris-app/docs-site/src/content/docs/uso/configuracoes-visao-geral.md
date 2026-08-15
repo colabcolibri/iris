@@ -18,9 +18,9 @@ Layout split: navegação lateral de seções + conteúdo.
 | **Agente de comentários** | `#comment-agent` | Modo global, debounce, janela |
 | **Agente de DMs** | `#message-agent` | Modo global DM |
 | **Alertas do operador** | `#operator-notifications` | Email escalação + trava IA |
-| **Conexão MCP** | `#mcp` | Cursor/ChatGPT/Claude (avançado) |
-| **Permissões MCP** | `#mcp-permissions` | Escopo das tools |
-| **Provedor de IA** | `#llm` | API key, modelo, visão |
+| **Conexão MCP** | `#mcp` | Liga ferramentas externas de IA (Cursor, ChatGPT, Claude) ao Iris — [avançado, veja glossário](./glossario.md#termos-técnicos); ignore se você não usa essas ferramentas |
+| **Permissões MCP** | `#mcp-permissions` | O que essas ferramentas externas podem acessar no Iris, quando conectadas |
+| **Provedor de IA** | `#llm` | Chave de API e modelo de IA usados pelo agente |
 
 ![layout split — lista de seções à esquerda e conteúdo da seção à direita](/docs/images/uso/28-configuracoes-nav.png)
 

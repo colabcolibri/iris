@@ -38,7 +38,7 @@ O Iris otimiza imagens no upload — não é necessário redimensionar antes.
 
 - **Resumo** — texto auxiliar para o agente entender o post (carrossel, campanha).
 - **Prompt adicional** / **Briefing desta publicação** — contexto específico da campanha (preço promo, link, etc.).
-- **Silenciar blocos globais** (SOUL, Sobre a página, Base de conhecimento, Restrições) — omite partes da Persona só neste post.
+- **Silenciar blocos globais** ([SOUL](./glossario.md#termos-técnicos), Sobre a página, Base de conhecimento, Restrições) — omite partes da [Persona](./persona-marca.md) só neste post.
 
 ## Passo 4 — Salvar sem publicar
 

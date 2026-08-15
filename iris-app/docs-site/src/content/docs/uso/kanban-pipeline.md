@@ -1,12 +1,12 @@
 ---
-title: "Kanban — pipeline editorial"
-description: "Kanban — pipeline editorial"
+title: "Kanban"
+description: "Kanban"
 tableOfContents:
   minHeadingLevel: 2
   maxHeadingLevel: 3
 ---
 
-**Visão:** menu **Kanban** · título da página **Pipeline editorial**
+**Visão:** menu **Kanban** (a página tem o título interno **Pipeline editorial** — mesma tela)
 
 ## Colunas
 
