@@ -6,9 +6,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveDocsRootFromImportMeta } from "./resolve-docs-root.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, "../../..");
+const docsRoot = resolveDocsRootFromImportMeta(import.meta.url);
 const contentRoot = path.join(__dirname, "../src/content/docs");
 
 const PUBLIC_SECTIONS = ["inicio", "uso"];
@@ -18,9 +19,12 @@ function slugFromFilename(filename) {
   return filename.replace(/\.md$/, "");
 }
 
-function syncFolder(srcRelative, outSubdir) {
-  const srcDir = path.join(repoRoot, srcRelative);
+function syncFolder(section, outSubdir) {
+  const srcDir = path.join(docsRoot, section);
   const outDir = path.join(contentRoot, outSubdir);
+  if (!fs.existsSync(srcDir)) {
+    throw new Error(`Docs source missing: ${srcDir}`);
+  }
   const mdFiles = fs.readdirSync(srcDir).filter((f) => f.endsWith(".md"));
 
   function fixLinks(body) {
@@ -85,7 +89,7 @@ function syncFolder(srcRelative, outSubdir) {
 }
 
 for (const section of PUBLIC_SECTIONS) {
-  syncFolder(`docs/${section}`, section);
+  syncFolder(section, section);
 }
 
 for (const remove of ["configuracao", "dev", "meta", "en/configuracao", "en/dev", "en/meta"]) {
