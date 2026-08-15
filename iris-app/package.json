@@ -3,12 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "license": "PolyForm-Noncommercial-1.0.0",
-  "description": "Iris — workspace: server (API) + admin (React)",
+  "description": "Iris — workspace: server (API) + admin (React) + docs-site (Starlight)",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @iris/server dev",
     "start": "pnpm --filter @iris/server start",
-    "build:admin": "node scripts/clean-vite-assets.mjs && pnpm --filter admin build",
+    "build:admin": "node scripts/clean-vite-assets.mjs && pnpm --filter admin build && pnpm docs:build",
+    "docs:dev": "sh -c 'cd docs-site && ./node_modules/.bin/astro dev'",
+    "docs:build": "sh -c 'node docs-site/scripts/sync-docs-content.mjs && node docs-site/scripts/build-en-content.mjs && cd docs-site && ./node_modules/.bin/astro build && node scripts/fix-docs-routes.mjs'",
+    "docs:preview": "sh -c 'cd docs-site && ./node_modules/.bin/astro preview'",
     "typecheck": "pnpm --filter @iris/server typecheck",
     "test": "pnpm --filter @iris/server test"
   },

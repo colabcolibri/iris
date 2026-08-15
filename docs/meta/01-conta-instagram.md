@@ -2,33 +2,56 @@
 
 **Tempo:** ~5 min · **Quem:** operador da conta Instagram
 
-## Objetivo
+## O que você vai fazer neste guia
 
-O Iris só funciona com contas **Business** ou **Creator**. Conta pessoal não publica nem usa a API de comentários/mensagens.
+Vai converter (ou confirmar) que sua conta Instagram é **profissional** (Business ou Creator). O Iris **não funciona** com conta pessoal — a API da Meta bloqueia publicação, comentários e mensagens.
 
-## Passo a passo
+Ao terminar, você sabe que a conta está no tipo certo para conectar no passo **05**.
 
-1. Abra o **app Instagram** no celular (ou instagram.com logado).
-2. Vá em **Perfil** → menu **☰** → **Configurações e privacidade**.
-3. **Tipo de conta e ferramentas** → **Mudar para conta profissional**.
-4. Escolha **Business** ou **Creator** (ambos funcionam com o Iris).
-5. Siga o assistente (categoria, contato — pode pular o que for opcional).
-6. Confirme: em **Tipo de conta** deve aparecer **Conta profissional**.
+## Antes de começar
 
-## Opcional — vincular Página do Facebook
+- Tenha login e senha da conta Instagram que o Iris vai usar.
+- Use o **app Instagram no celular** (mais fácil) ou instagram.com no navegador.
 
-Não é obrigatório para publicar/comentários via Instagram Login. **É necessário** apenas para os passos **06** e **07** (DMs com Handover).
+## Passo 1 — Abrir configurações da conta
 
-Se for usar DMs com recuperação automática:
+1. Abra o **Instagram** e vá ao seu **Perfil**.
+2. Toque no menu **☰** (três linhas) → **Configurações e privacidade**.
+3. Entre em **Tipo de conta e ferramentas**.
 
-1. Nas configurações da conta profissional → **Página do Facebook** → vincule ou crie uma Página (ex.: Colibri).
-2. Anote o nome da Página — você vai usar nos guias **06** e **07**.
+**Como saber que está no lugar certo:** você vê opções como “Mudar para conta profissional” ou já aparece “Conta profissional”.
 
-## Checklist
+## Passo 2 — Ativar conta profissional
 
-- [ ] Conta é Business ou Creator
-- [ ] (Se usar DMs avançado) Página do Facebook vinculada
+1. Toque em **Mudar para conta profissional** (se ainda for conta pessoal).
+2. Escolha **Business** ou **Creator** — **os dois funcionam** com o Iris.
+3. Siga o assistente da Meta (categoria, telefone, etc.). Pode pular campos opcionais.
+4. Volte em **Tipo de conta** e confirme que está escrito **Conta profissional**.
+
+**Como saber que deu certo:** no perfil ou em configurações, não aparece mais “Conta pessoal”.
+
+## Passo 3 (opcional) — Vincular Página do Facebook
+
+Só necessário se for usar **DMs avançadas** (passos **06** e **07**). Para publicar posts e comentários, **pode pular**.
+
+1. Em configurações da conta profissional → **Página do Facebook**.
+2. Vincule uma Página existente ou crie uma nova.
+3. Anote o **nome da Página** — você usa nos guias 06 e 07.
+
+## Problemas comuns
+
+| O que acontece | O que fazer |
+| -------------- | ----------- |
+| Não aparece “Mudar para conta profissional” | Já é profissional, ou conta vinculada a restrição Meta — confira em “Tipo de conta” |
+| Pedem documentos / verificação | Siga o fluxo da Meta; só continue o roteiro Iris depois de aprovado |
+
+## Checklist final
+
+- [ ] Conta é **Business** ou **Creator** (não pessoal)
+- [ ] (Só se for usar DMs) Página do Facebook vinculada
 
 ## Próximo passo
+
+Quem faz deploy continua no **02** (criar app Meta). Se você só opera a conta, pode pular para o **05** depois que o deploy estiver pronto.
 
 → [02 — Criar app na Meta](02-criar-app-meta.md)

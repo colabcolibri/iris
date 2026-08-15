@@ -22,7 +22,7 @@ export function BrandLogo({ className, size = "md" }: BrandLogoProps) {
       )}
     >
       <img
-        src="/assets/iris-logo.png"
+        src="/assets/iris-logo.svg"
         alt="Iris"
         className="size-full object-contain"
       />

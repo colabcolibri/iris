@@ -10,6 +10,7 @@ Produto e arquitetura: [`../docs/`](../docs/) · README do repositório: [`../RE
 iris-app/
   server/    # API HTTP, workers, MCP, migrations, testes
   admin/     # SPA React (Vite)
+  docs-site/ # Documentação pública Starlight (PT/EN)
   public/    # bundle estático (output do Vite)
   scripts/   # utilitários do workspace (ex.: clean-vite-assets)
 ```
@@ -28,6 +29,8 @@ iris-app/
 | ------- | --------- |
 | `pnpm dev` | Servidor único em `http://127.0.0.1:8792` (API + UI + HMR) |
 | `pnpm build:admin` | Build do admin → `public/` |
+| `pnpm docs:dev` | Site de docs Starlight (http://127.0.0.1:4321) |
+| `pnpm docs:build` | Build docs → `public/docs/` (servido em `/docs/`) |
 | `pnpm start` | Produção (`NODE_ENV=production`) |
 | `pnpm test` | Testes Node (`@iris/server`) |
 | `pnpm typecheck` | TypeScript do server |

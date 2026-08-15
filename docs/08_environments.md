@@ -166,7 +166,25 @@ Production: `https://<your-public-host>/webhooks/meta`
 
 Configure in Meta Developers → Webhooks → Instagram. OAuth callback: `https://<your-public-host>/auth/meta/callback`.
 
-Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `docs/meta/README.md`.
+Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `docs/meta/README.md` or **`/docs/`** no próprio Iris.
+
+## Site de documentação
+
+Pacote fonte **`iris-app/docs-site/`** — Astro Starlight. O build gera HTML em **`iris-app/public/docs/`**, servido na **mesma origem** que o admin:
+
+| URL | Conteúdo |
+| --- | -------- |
+| `https://<host>/docs/` | Home PT |
+| `https://<host>/docs/en/` | Home EN |
+| `https://<host>/docs/meta/…` | Guias Meta |
+
+| Command | Description |
+| ------- | ----------- |
+| `pnpm docs:build` | Gera `public/docs/` (incluído em `pnpm build:admin`) |
+| `pnpm docs:dev` | Preview isolado na porta Astro (opcional) |
+| `pnpm docs:preview` | Preview do build estático |
+
+Content source: `docs/meta/` (PT) via `sync-meta-content.mjs`; EN via `build-en-content.mjs`. Detail: `docs/architecture/docs-site.md`.
 
 ## Ports
 

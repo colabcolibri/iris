@@ -50,6 +50,7 @@ blocks: [02_security.md, 04_principles.md, 08_environments.md]
 | Biome (futuro) | lint/format |
 | `node --test` | testes unitários |
 | Meridian | `docs/`, `.meridian/meridian.db` |
+| Astro + Starlight | Site de docs público bilíngue em `iris-app/docs-site/` |
 
 ## Explicitly not in stack
 

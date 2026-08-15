@@ -196,6 +196,7 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | `docs/architecture/admin-ui-layout.md` | Admin React — shell persistente, `PageContainer`, providers |
 | `docs/architecture/admin-demo-mode.md` | Demo público `/demo` — fixtures client-side, isolamento de sessão |
 | `docs/architecture/i18n.md` | i18n PT/EN — domínios, provider admin, erros API, email |
+| `docs/architecture/docs-site.md` | Site Starlight — guias Meta públicos PT/EN, build e deploy |
 
 ## Internacionalização
 

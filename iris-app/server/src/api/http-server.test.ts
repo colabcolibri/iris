@@ -66,6 +66,44 @@ test("landing page remains accessible without session", async () => {
   });
 });
 
+test("GET /docs/meta redirects to configuracao", async () => {
+  const docsConfig = `${process.cwd()}/../public/docs/configuracao/index.html`;
+  const { existsSync } = await import("node:fs");
+  if (!existsSync(docsConfig)) {
+    return;
+  }
+
+  await withServer(async (port) => {
+    const redirect = await fetch(`http://127.0.0.1:${port}/docs/meta/`, {
+      redirect: "manual",
+    });
+    assert.equal(redirect.status, 302);
+    assert.equal(redirect.headers.get("location"), "/docs/configuracao/");
+  });
+});
+
+test("GET /docs redirects to inicio", async () => {
+  const docsInicio = `${process.cwd()}/../public/docs/inicio/index.html`;
+  const { existsSync } = await import("node:fs");
+  if (!existsSync(docsInicio)) {
+    return;
+  }
+
+  await withServer(async (port) => {
+    const redirect = await fetch(`http://127.0.0.1:${port}/docs`, {
+      redirect: "manual",
+    });
+    assert.equal(redirect.status, 302);
+    assert.equal(redirect.headers.get("location"), "/docs/inicio/");
+
+    const response = await fetch(`http://127.0.0.1:${port}/docs/inicio/`);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /documentação|Iris Docs/i);
+    assert.match(html, /sidebar|sl-sidebar/i);
+  });
+});
+
 test("public spa routes remain accessible without session", async () => {
   await withServer(async (port) => {
     const response = await fetch(`http://127.0.0.1:${port}/admin/login`);

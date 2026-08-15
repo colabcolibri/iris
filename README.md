@@ -230,6 +230,8 @@ Node 22 + TypeScript · `node:http` · SQLite (`node:sqlite`) · React 19 / Vite
 | [`docs/07_api_contracts.md`](docs/07_api_contracts.md) | Contratos REST |
 | [`docs/08_environments.md`](docs/08_environments.md) | Variáveis e ambientes |
 | [`docs/meta/README.md`](docs/meta/README.md) | Instagram / Meta — guias passo a passo (01–08) |
+| [`iris-app/docs-site/`](iris-app/docs-site/) | Fonte Starlight — build → **`/docs/`** no Iris (`pnpm docs:build`) |
+| [`docs/architecture/docs-site.md`](docs/architecture/docs-site.md) | Arquitetura do site de documentação |
 | [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md) | MCP — Cursor, ChatGPT, Claude |
 | [`docs/architecture/diagrams/iris-reply-agent-flow.md`](docs/architecture/diagrams/iris-reply-agent-flow.md) | Fluxo do agente de comentários |
 

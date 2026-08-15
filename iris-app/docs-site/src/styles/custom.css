@@ -1,0 +1,120 @@
+:root {
+  --sl-color-accent-low: #3d1f66;
+  --sl-color-accent: #522587;
+  --sl-color-accent-high: #c9a8f0;
+  --sl-color-text-accent: #522587;
+  --iris-ink: #1a1814;
+  --iris-surface: #f5f2ec;
+
+  /* Tipografia mais compacta e legível */
+  --sl-text-body: 0.9375rem;
+  --sl-text-body-sm: 0.8125rem;
+  --sl-text-h1: 1.375rem;
+  --sl-text-h2: 1.125rem;
+  --sl-text-h3: 1rem;
+  --sl-text-h4: 0.9375rem;
+  --sl-line-height-headings: 1.35;
+  --sl-line-height: 1.65;
+}
+
+:root[data-theme="light"] {
+  --sl-color-bg: #faf9f7;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-bg-sidebar: #f5f2ec;
+  --sl-color-hairline: #e8e4dc;
+}
+
+:root[data-theme="dark"] {
+  --sl-color-accent: #c9a8f0;
+  --sl-color-text-accent: #d4b8f5;
+  --sl-color-bg-sidebar: #141218;
+}
+
+/* Seletor de idioma — mais largo para bandeira + texto */
+starlight-lang-select label {
+  --sl-select-width: 9.5rem !important;
+}
+
+starlight-lang-select select {
+  font-size: 0.8125rem;
+}
+
+/* Conteúdo principal */
+.sl-markdown-content {
+  font-size: var(--sl-text-body);
+  line-height: var(--sl-line-height);
+}
+
+.sl-markdown-content h1 {
+  font-size: var(--sl-text-h1);
+  margin-bottom: 0.75rem;
+}
+
+.sl-markdown-content h2 {
+  font-size: var(--sl-text-h2);
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.sl-markdown-content h3 {
+  font-size: var(--sl-text-h3);
+  margin-top: 1.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.sl-markdown-content p,
+.sl-markdown-content li {
+  font-size: var(--sl-text-body);
+}
+
+.sl-markdown-content strong {
+  font-weight: 600;
+}
+
+/* Tabelas responsivas */
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  font-size: 0.875rem;
+}
+
+/* Paginação anterior / próximo — texto menor */
+.pagination-links a {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.5rem 0.65rem;
+  gap: 0.35rem;
+  line-height: 1.35;
+}
+
+.pagination-links .link-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pagination-links svg {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+/* Sidebar — labels um pouco menores */
+.sidebar-content {
+  font-size: 0.875rem;
+}
+
+/* Esconder link "Editar página" (GitHub) */
+footer.meta a[href*="github.com"] {
+  display: none !important;
+}
+
+footer.meta:has(a[href*="github.com"]) {
+  display: none;
+}
+.sl-markdown-content blockquote {
+  font-size: 0.875rem;
+  border-left: 3px solid var(--sl-color-accent);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--sl-color-gray-2);
+}

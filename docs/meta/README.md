@@ -1,58 +1,50 @@
-# Meta / Instagram — guias passo a passo
+# Guia de configuração — Meta / Instagram
 
-Configuração completa do Iris com a Meta, **na ordem**. Siga do **01** ao **05** na primeira vez. Os passos **06** e **07** são para DMs (mensagens diretas).
+Como **deixar o Iris funcionando** com a Meta/Instagram. **Siga na ordem** na primeira vez: do **01** ao **05**. Os passos **06** e **07** só se você for usar **DMs** (mensagens diretas).
+
+**Já tem o Iris no ar?** Para usar o admin no dia a dia (postagens, comentários, DMs), veja o [guia de uso](../uso/).
 
 ## Quem faz o quê
 
-| Papel | Passos |
-| ----- | ------ |
-| **Quem faz deploy** (devops / dono do servidor) | 02, 03, 04 |
-| **Quem opera o Instagram** (conecta a conta) | 01, 05 |
-| **Quem configura DMs** (uma vez por Página) | 06, 07 |
+| Papel | O que essa pessoa faz | Passos |
+| ----- | --------------------- | ------ |
+| **Operador Instagram** | Converte a conta, conecta no admin | 01, 05 |
+| **Quem faz deploy** | Cria app Meta, `.env`, webhooks | 02, 03, 04 |
+| **Quem configura DMs** | Handover + token de Página (uma vez) | 06, 07 |
 
-Cada deploy precisa do **próprio app Meta** (BYOA) — credenciais não vêm do repositório.
+Cada instalação do Iris usa o **próprio app Meta** (BYOA). Credenciais não vêm do repositório.
 
 ## Roteiro — primeira configuração
 
-| # | Guia | O que você faz | Terminou quando… |
-| - | ---- | -------------- | ---------------- |
-| 01 | [Conta Instagram profissional](01-conta-instagram.md) | Converter conta para Business ou Creator | Conta aparece como profissional no app Instagram |
-| 02 | [Criar app na Meta](02-criar-app-meta.md) | App IGIris (ou seu nome), Instagram API, redirect URI, testers | App criado, Instagram App ID/Secret copiados, redirect cadastrado |
-| 03 | [Variáveis de ambiente](03-variaveis-de-ambiente.md) | `.env` local e painel de produção (Railway, etc.) | Servidor sobe sem erro de config Meta |
-| 04 | [Webhooks](04-webhooks.md) | URL pública, verify token, campo `comments` (e mensagens se usar DMs) | Meta mostra webhook verificado (✓) |
-| 05 | [Conectar no admin do Iris](05-conectar-instagram-admin.md) | OAuth no header do admin | Header mostra @usuario conectado; publicação/comentários funcionam |
+Só avance para o próximo quando o passo atual estiver **verde** no checklist do guia.
+
+| # | Guia | Resumo | Terminou quando… |
+| - | ---- | ------ | ---------------- |
+| 01 | [Conta Instagram profissional](01-conta-instagram.md) | Converter para Business ou Creator | No app, a conta aparece como **profissional** |
+| 02 | [Criar app na Meta](02-criar-app-meta.md) | App + Instagram Login + redirect | App criado, IDs copiados, redirect cadastrado |
+| 03 | [Variáveis de ambiente](03-variaveis-de-ambiente.md) | Colocar secrets no servidor | `pnpm dev` / deploy sobe sem erro de Meta |
+| 04 | [Webhooks](04-webhooks.md) | Meta avisa comentários em tempo real | Painel Meta mostra webhook **verificado (✓)** |
+| 05 | [Conectar no admin](05-conectar-instagram-admin.md) | OAuth pelo header do Iris | Header mostra **@usuario** conectado |
 
 ## Roteiro — mensagens (DMs)
 
-Faça **depois** do roteiro acima, se o Iris responde DMs.
+Opcional. Faça **depois** do roteiro acima.
 
-| # | Guia | O que você faz | Terminou quando… |
-| - | ---- | -------------- | ---------------- |
-| 06 | [Receptor primário (Handover)](06-mensagens-receptor-primario.md) | IGIris como receptor primário na Página Facebook | DM de teste responde pelo Iris sem `thread_owner` |
-| 07 | [Page Access Token](07-page-access-token.md) | Token de Página com `pages_messaging` → `META_PAGE_*` | `debug_token` mostra `pages_messaging`; erro `#210` some dos logs |
+| # | Guia | Resumo | Terminou quando… |
+| - | ---- | ------ | ---------------- |
+| 06 | [Receptor primário](06-mensagens-receptor-primario.md) | App como dono da conversa | DM de teste responde sem erro `thread_owner` |
+| 07 | [Page Access Token](07-page-access-token.md) | Token de Página para recuperar thread | `debug_token` ok; Iris responde após reply no celular |
 
 ## App Review (produção pública)
 
 | # | Guia | Quando |
 | - | ---- | ------ |
-| 08 | [App Review](08-app-review.md) | App em modo Development só serve testers; para usuários externos, submeter revisão |
+| 08 | [App Review](08-app-review.md) | App em Development só serve testers; para clientes externos, submeta revisão |
 
 ## Se algo der errado
 
-→ [Troubleshooting](troubleshooting.md) — sintomas, causa e link para o passo certo.
+→ [Troubleshooting](troubleshooting.md) — sintoma, causa provável e qual guia refazer.
 
-## Referência técnica (desenvolvedores)
+## Referência técnica
 
-→ [Referência de integração](referencia-tecnica.md) — fluxos de publish, comments, insights, códigos de erro no código.
-
-## Exemplo deste repositório
-
-| Item | Valor |
-| ---- | ----- |
-| App Meta | IGIris |
-| Página Facebook | Colibri |
-| `META_PAGE_ID` | `299512127067136` |
-| Produção | `https://iris.sergioluciano.com` |
-| Graph API | `META_GRAPH_API_VERSION=v21.0` (igual no painel Webhooks) |
-
-Substitua pelos seus valores em cada guia.
+→ [Referência de integração](../dev/referencia-tecnica.md) — fluxos de API para desenvolvedores.

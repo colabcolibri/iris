@@ -283,6 +283,43 @@ export function PostDialog({
     [replaceComment, locale, postsMsg],
   );
 
+  const agentActiveCampaignHint = useMemo(() => {
+    if (
+      !post ||
+      (post.status !== "published" && post.status !== "monitored") ||
+      !post.published_at
+    ) {
+      return null;
+    }
+
+    const daysFromInput = agentActiveDays.trim()
+      ? Number(agentActiveDays)
+      : null;
+    const agentActiveDaysValue =
+      post.agent_active_days ?? (Number.isFinite(daysFromInput) ? daysFromInput : null);
+
+    if (agentActiveDaysValue == null || agentActiveDaysValue <= 0) {
+      return null;
+    }
+
+    const domainPost = {
+      agentActiveDays: agentActiveDaysValue,
+      publishedAt: post.published_at,
+      createdAt: post.created_at,
+    } as DomainPost;
+
+    const remaining = resolveAgentActiveDaysRemaining(domainPost);
+    if (remaining === null) {
+      return null;
+    }
+    if (remaining === 0) {
+      return postsMsg.dialog.fields.agentActiveDaysExpired;
+    }
+    return interpolate(postsMsg.dialog.fields.agentActiveDaysRemaining, {
+      count: remaining,
+    });
+  }, [post, agentActiveDays, postsMsg]);
+
   if (!mode) return null;
 
   const title =
@@ -330,43 +367,6 @@ export function PostDialog({
     replyMode,
   );
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
-
-  const agentActiveCampaignHint = useMemo(() => {
-    if (
-      !post ||
-      (post.status !== "published" && post.status !== "monitored") ||
-      !post.published_at
-    ) {
-      return null;
-    }
-
-    const daysFromInput = agentActiveDays.trim()
-      ? Number(agentActiveDays)
-      : null;
-    const agentActiveDaysValue =
-      post.agent_active_days ?? (Number.isFinite(daysFromInput) ? daysFromInput : null);
-
-    if (agentActiveDaysValue == null || agentActiveDaysValue <= 0) {
-      return null;
-    }
-
-    const domainPost = {
-      agentActiveDays: agentActiveDaysValue,
-      publishedAt: post.published_at,
-      createdAt: post.created_at,
-    } as DomainPost;
-
-    const remaining = resolveAgentActiveDaysRemaining(domainPost);
-    if (remaining === null) {
-      return null;
-    }
-    if (remaining === 0) {
-      return postsMsg.dialog.fields.agentActiveDaysExpired;
-    }
-    return interpolate(postsMsg.dialog.fields.agentActiveDaysRemaining, {
-      count: remaining,
-    });
-  }, [post, agentActiveDays, postsMsg]);
 
   const statusHint = (() => {
     if (mode === "create") {

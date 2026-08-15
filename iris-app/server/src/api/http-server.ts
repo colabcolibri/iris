@@ -1,5 +1,5 @@
 import { createServer as createHttpServer, type Server } from "node:http";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, statSync } from "node:fs";
 import { join, extname, normalize } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
@@ -66,6 +66,8 @@ const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
   ".webmanifest": "application/manifest+json",
+  ".wasm": "application/wasm",
+  ".xml": "application/xml",
 };
 
 export type HttpServerOptions = {
@@ -104,10 +106,19 @@ export type HttpServerHandle = {
 function resolvePublicPath(pathname: string): string | null {
   const relativePath = pathname === "/" ? "/index.html" : pathname;
   const safePath = normalize(relativePath).replace(/^(\.\.[/\\])+/, "");
-  const absolutePath = join(PUBLIC_DIR, safePath);
+  let absolutePath = join(PUBLIC_DIR, safePath);
 
   if (!absolutePath.startsWith(PUBLIC_DIR)) {
     return null;
+  }
+
+  if (existsSync(absolutePath) && statSync(absolutePath).isDirectory()) {
+    absolutePath = join(absolutePath, "index.html");
+  } else if (!existsSync(absolutePath) && extname(absolutePath) === "") {
+    const withIndex = join(absolutePath, "index.html");
+    if (existsSync(withIndex)) {
+      absolutePath = withIndex;
+    }
   }
 
   return absolutePath;
@@ -141,7 +152,11 @@ function serveStatic(pathname: string, res: ServerResponse): void {
 }
 
 function reqAcceptsSpa(pathname: string): boolean {
-  return !pathname.startsWith("/api/") && !pathname.startsWith("/auth/meta");
+  return (
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/auth/meta") &&
+    !pathname.startsWith("/docs")
+  );
 }
 
 function delegateToVite(
@@ -380,6 +395,42 @@ async function handleRequest(
       return;
     }
 
+    if (pathname === "/docs" || pathname === "/docs/") {
+      res.writeHead(302, { Location: "/docs/inicio/" });
+      res.end();
+      return;
+    }
+
+    if (pathname === "/docs/en" || pathname === "/docs/en/") {
+      res.writeHead(302, { Location: "/docs/en/inicio/" });
+      res.end();
+      return;
+    }
+
+    // legacy doc URLs (Astro used to emit /meta/ without /docs prefix on redirect)
+    if (pathname === "/docs/meta" || pathname === "/docs/meta/") {
+      res.writeHead(302, { Location: "/docs/configuracao/" });
+      res.end();
+      return;
+    }
+    if (pathname.startsWith("/docs/meta/")) {
+      const suffix = pathname.slice("/docs/meta".length);
+      res.writeHead(302, { Location: `/docs/configuracao${suffix}` });
+      res.end();
+      return;
+    }
+    if (pathname === "/docs/en/meta" || pathname === "/docs/en/meta/") {
+      res.writeHead(302, { Location: "/docs/en/configuracao/" });
+      res.end();
+      return;
+    }
+    if (pathname.startsWith("/docs/en/meta/")) {
+      const suffix = pathname.slice("/docs/en/meta".length);
+      res.writeHead(302, { Location: `/docs/en/configuracao${suffix}` });
+      res.end();
+      return;
+    }
+
     if (shouldGateSpaGet(pathname, req.method)) {
       const session = readAdminSession(req);
       if (!session.ok) {
@@ -389,7 +440,7 @@ async function handleRequest(
       }
     }
 
-    if (adminVite) {
+    if (adminVite && !pathname.startsWith("/docs")) {
       await delegateToVite(adminVite, req, res);
       if (res.writableEnded) {
         return;

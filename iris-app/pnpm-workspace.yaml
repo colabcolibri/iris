@@ -1,3 +1,8 @@
 packages:
   - "server"
   - "admin"
+  - "docs-site"
+
+allowBuilds:
+  esbuild: true
+  sharp: true
