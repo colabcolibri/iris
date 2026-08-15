@@ -40,6 +40,7 @@ RUN pnpm install --frozen-lockfile --prod --filter @iris/server...
 COPY --from=build /app/public ./public
 COPY --from=build /app/server/src ./server/src
 COPY --from=build /app/server/migrations ./server/migrations
+COPY --from=build /app/docs-site/docs-routes.json ./docs-site/docs-routes.json
 
 RUN mkdir -p /app/data/media
 
