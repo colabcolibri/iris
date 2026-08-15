@@ -40,6 +40,7 @@ import { filterPostsByPipelineDate } from "@iris/domain/posts/pipeline-date-filt
 import { interpolate } from "@/i18n/compose";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { parseAgentActiveDaysInput } from "@/lib/parse-agent-active-days";
 
 export function DashboardPage() {
   const { locale } = useAppLocale();
@@ -175,13 +176,6 @@ export function DashboardPage() {
       post.agent_active_days != null ? String(post.agent_active_days) : "",
     );
     setPrivateReplyMode(post.private_reply_mode ?? "inherit");
-  }
-
-  function parseAgentActiveDaysInput(raw: string): number | null {
-    const trimmed = raw.trim();
-    if (!trimmed) return null;
-    const value = Number.parseInt(trimmed, 10);
-    return Number.isFinite(value) && value > 0 ? value : null;
   }
 
   function campaignFieldsForPost() {

@@ -62,6 +62,8 @@ test("listCommentPosts returns published iris posts with local counts", () => {
             silenceKnowledge: post.silenceKnowledge,
             silenceRestrictions: post.silenceRestrictions,
             autoReplyEnabled: post.autoReplyEnabled,
+            agentActiveDays: post.agentActiveDays,
+            privateReplyMode: post.privateReplyMode,
             igMediaStatus: post.igMediaStatus,
             igMediaStatusDetail: post.igMediaStatusDetail,
             igMediaStatusCheckedAt: post.igMediaStatusCheckedAt,

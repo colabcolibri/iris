@@ -123,6 +123,8 @@ export type CommentPostSummary = {
   silence_knowledge?: boolean;
   silence_restrictions?: boolean;
   auto_reply_enabled?: boolean;
+  agent_active_days?: number | null;
+  private_reply_mode?: PostReplyModeSetting;
   ig_media_status?: IgMediaStatus | null;
   ig_media_status_detail?: string | null;
   ig_media_status_checked_at?: string | null;

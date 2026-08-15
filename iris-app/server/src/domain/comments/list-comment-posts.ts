@@ -16,6 +16,8 @@ export type CommentPostSummary = {
   silenceKnowledge: boolean;
   silenceRestrictions: boolean;
   autoReplyEnabled: boolean;
+  agentActiveDays: number | null;
+  privateReplyMode: PostReplyModeSetting;
   igMediaStatus: IgMediaStatus | null;
   igMediaStatusDetail: string | null;
   igMediaStatusCheckedAt: string | null;
@@ -40,6 +42,8 @@ export type ListCommentPostsDeps = {
     silenceKnowledge: boolean;
     silenceRestrictions: boolean;
     autoReplyEnabled: boolean;
+    agentActiveDays: number | null;
+    privateReplyMode: PostReplyModeSetting;
     igMediaStatus: IgMediaStatus | null;
     igMediaStatusDetail: string | null;
     igMediaStatusCheckedAt: string | null;
@@ -75,6 +79,8 @@ export function listCommentPosts(
         silenceKnowledge: post.silenceKnowledge,
         silenceRestrictions: post.silenceRestrictions,
         autoReplyEnabled: post.autoReplyEnabled,
+        agentActiveDays: post.agentActiveDays,
+        privateReplyMode: post.privateReplyMode,
         igMediaStatus: post.igMediaStatus,
         igMediaStatusDetail: post.igMediaStatusDetail,
         igMediaStatusCheckedAt: post.igMediaStatusCheckedAt,

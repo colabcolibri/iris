@@ -68,6 +68,8 @@ export function listDemoCommentPosts(
       silence_knowledge: post.silence_knowledge ?? false,
       silence_restrictions: post.silence_restrictions ?? false,
       auto_reply_enabled: post.auto_reply_enabled,
+      agent_active_days: post.agent_active_days ?? null,
+      private_reply_mode: post.private_reply_mode ?? "inherit",
       like_count: 120 + counts.total * 17,
       reported_comments_count: null,
       comments_count: Math.max(counts.total, reported),

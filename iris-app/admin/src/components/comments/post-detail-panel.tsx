@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Bookmark,
   ExternalLink,
@@ -18,6 +18,7 @@ import { CommentThread } from "@/components/comments/comment-thread";
 import { CarouselSummaryEditor } from "@/components/comments/carousel-summary-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { resolveMediaSlides } from "@/hooks/use-post-preview";
@@ -25,6 +26,7 @@ import {
   formatRelativeTimeAgo,
   useRelativeTimeTick,
 } from "@/lib/format-relative-time";
+import { interpolate } from "@/i18n/compose";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { formatInsightValue, insightMetricValue } from "@/lib/insights";
 import { cn } from "@/lib/utils";
@@ -50,7 +52,8 @@ import {
 import { igMediaStatusPresentation } from "@iris/domain/meta/ig-media-status";
 import type { IgMediaStatus } from "@iris/domain/meta/ig-media-status";
 import type { CommentsMessages } from "@/i18n/domains/comments/types";
-import type { PostReplyModeSetting } from "@/lib/types";
+import { resolveAgentActiveDaysRemaining } from "@iris/domain/posts/post-agent-active";
+import type { Post as DomainPost } from "@iris/domain/posts/post";
 
 type DetailMessages = CommentsMessages["detail"];
 
@@ -83,6 +86,12 @@ type PostDetailPanelProps = {
   replyMode: PostReplyModeSetting;
   savingReplyMode?: boolean;
   onReplyModeChange: (mode: PostReplyModeSetting) => void;
+  agentActiveDays: string;
+  privateReplyMode: PostReplyModeSetting;
+  savingCampaign?: boolean;
+  onAgentActiveDaysChange: (value: string) => void;
+  onAgentActiveDaysCommit: () => void;
+  onPrivateReplyModeChange: (mode: PostReplyModeSetting) => void;
 };
 
 const STAT_ICON_CONFIG: Array<{
@@ -390,9 +399,16 @@ export function PostDetailPanel({
   replyMode,
   savingReplyMode = false,
   onReplyModeChange,
+  agentActiveDays,
+  privateReplyMode,
+  savingCampaign = false,
+  onAgentActiveDaysChange,
+  onAgentActiveDaysCommit,
+  onPrivateReplyModeChange,
 }: PostDetailPanelProps) {
   const { bcp47 } = useAppLocale();
   const commentsMsg = useDomainMessages("comments");
+  const postsMsg = useDomainMessages("posts");
   const detail = commentsMsg.detail;
   const { replyMode: globalReplyMode } = useAppSettings();
   const effectiveReply = resolveEffectivePostReplyStatus(
@@ -400,6 +416,42 @@ export function PostDetailPanel({
     replyMode,
   );
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
+  const agentActiveCampaignHint = useMemo(() => {
+    if (
+      (post.status !== "published" && post.status !== "monitored") ||
+      !post.published_at
+    ) {
+      return null;
+    }
+
+    const daysFromInput = agentActiveDays.trim()
+      ? Number(agentActiveDays)
+      : null;
+    const agentActiveDaysValue =
+      post.agent_active_days ??
+      (Number.isFinite(daysFromInput) ? daysFromInput : null);
+
+    if (agentActiveDaysValue == null || agentActiveDaysValue <= 0) {
+      return null;
+    }
+
+    const domainPost = {
+      agentActiveDays: agentActiveDaysValue,
+      publishedAt: post.published_at,
+      createdAt: post.published_at,
+    } as DomainPost;
+
+    const remaining = resolveAgentActiveDaysRemaining(domainPost);
+    if (remaining === null) {
+      return null;
+    }
+    if (remaining === 0) {
+      return postsMsg.dialog.fields.agentActiveDaysExpired;
+    }
+    return interpolate(postsMsg.dialog.fields.agentActiveDaysRemaining, {
+      count: remaining,
+    });
+  }, [post, agentActiveDays, postsMsg]);
   const [activeTab, setActiveTab] = useState<DetailTab>("performance");
   const slides = resolveMediaSlides(post.post_id, insights?.media);
 
@@ -783,6 +835,51 @@ export function PostDetailPanel({
                 <p className="text-xs leading-snug text-muted-foreground">
                   {detail.config.postReplyModeHint}
                 </p>
+              </div>
+
+              <div className="grid w-full gap-4 sm:grid-cols-2">
+                <div className="min-w-0 space-y-2">
+                  <Label htmlFor="comments-post-agent-active-days">
+                    {postsMsg.dialog.fields.agentActiveDays}
+                  </Label>
+                  {agentActiveCampaignHint ? (
+                    <span
+                      className="inline-flex max-w-full rounded-full border border-amber-500/35 bg-amber-500/12 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:text-amber-100"
+                    >
+                      {agentActiveCampaignHint}
+                    </span>
+                  ) : null}
+                  <Input
+                    id="comments-post-agent-active-days"
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={agentActiveDays}
+                    onChange={(e) => onAgentActiveDaysChange(e.target.value)}
+                    onBlur={() => onAgentActiveDaysCommit()}
+                    placeholder={postsMsg.dialog.fields.agentActiveDaysPlaceholder}
+                    disabled={savingCampaign}
+                    className="w-full max-w-full bg-background"
+                  />
+                  <p className="text-xs leading-snug text-muted-foreground">
+                    {postsMsg.dialog.fields.agentActiveDaysHint}
+                  </p>
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <Label htmlFor="comments-post-private-reply-mode">
+                    {postsMsg.dialog.fields.privateReplyMode}
+                  </Label>
+                  <ReplyModeSelect
+                    id="comments-post-private-reply-mode"
+                    variant="post"
+                    value={privateReplyMode}
+                    onChange={onPrivateReplyModeChange}
+                    disabled={savingCampaign}
+                  />
+                  <p className="text-xs leading-snug text-muted-foreground">
+                    {postsMsg.dialog.fields.privateReplyModeHint}
+                  </p>
+                </div>
               </div>
             </div>
           )}

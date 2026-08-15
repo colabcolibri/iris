@@ -71,6 +71,7 @@ import { interpolate } from "@/i18n/compose";
 import { getPostReplyModeOptions } from "@/i18n/domains/labels/helpers";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { parseAgentActiveDaysInput } from "@/lib/parse-agent-active-days";
 import {
   COMMENTS_CACHE_STALE_MS,
   CommentsPostCache,
@@ -146,6 +147,10 @@ export function CommentsPage() {
   const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [savingReplyMode, setSavingReplyMode] = useState(false);
+  const [agentActiveDays, setAgentActiveDays] = useState("");
+  const [privateReplyMode, setPrivateReplyMode] =
+    useState<PostReplyModeSetting>("inherit");
+  const [savingCampaign, setSavingCampaign] = useState(false);
   const [threadSort, setThreadSort] = useState<ThreadSortMode>("activity_desc");
   const [liveConnected, setLiveConnected] = useState(true);
   const [thumbnailOverrides, setThumbnailOverrides] = useState<
@@ -172,6 +177,24 @@ export function CommentsPage() {
       (selectedPost.auto_reply_enabled ? "auto" : "inherit")
     );
   }, [selectedPost]);
+
+  useEffect(() => {
+    if (!selectedPost) {
+      setAgentActiveDays("");
+      setPrivateReplyMode("inherit");
+      return;
+    }
+    setAgentActiveDays(
+      selectedPost.agent_active_days != null
+        ? String(selectedPost.agent_active_days)
+        : "",
+    );
+    setPrivateReplyMode(selectedPost.private_reply_mode ?? "inherit");
+  }, [
+    selectedPost?.post_id,
+    selectedPost?.agent_active_days,
+    selectedPost?.private_reply_mode,
+  ]);
 
   const filteredPosts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -566,6 +589,94 @@ export function CommentsPage() {
     },
     [selectedPost],
   );
+
+  const patchSelectedPost = useCallback(
+    (patch: Partial<CommentPostSummary>) => {
+      if (!selectedPost) {
+        return;
+      }
+      setPosts((current) => {
+        const next = current.map((post) =>
+          post.post_id === selectedPost.post_id ? { ...post, ...patch } : post,
+        );
+        const postsCache = postCacheRef.current.getPosts();
+        if (postsCache) {
+          postCacheRef.current.setPosts(next, postsCache.fetchedAt);
+        }
+        return next;
+      });
+    },
+    [selectedPost],
+  );
+
+  const handlePrivateReplyModeChange = useCallback(
+    async (next: PostReplyModeSetting) => {
+      if (!selectedPost) {
+        return;
+      }
+
+      setSavingCampaign(true);
+      try {
+        await updatePost(selectedPost.post_id, { private_reply_mode: next });
+        setPrivateReplyMode(next);
+        patchSelectedPost({ private_reply_mode: next });
+        toast.success(
+          interpolate(commentsMsg.toasts.privateReplyModeUpdated, {
+            mode:
+              getPostReplyModeOptions(locale)
+                .find((option) => option.value === next)
+                ?.label.toLowerCase() ?? next,
+          }),
+        );
+      } catch (err) {
+        toast.error(
+          getApiErrorMessage(err, locale) || commentsMsg.toasts.campaignFailed,
+        );
+      } finally {
+        setSavingCampaign(false);
+      }
+    },
+    [selectedPost, patchSelectedPost, commentsMsg, locale],
+  );
+
+  const handleAgentActiveDaysCommit = useCallback(async () => {
+    if (!selectedPost) {
+      return;
+    }
+
+    const parsed = parseAgentActiveDaysInput(agentActiveDays);
+    const current =
+      selectedPost.agent_active_days != null
+        ? selectedPost.agent_active_days
+        : null;
+    if (parsed === current) {
+      return;
+    }
+
+    setSavingCampaign(true);
+    try {
+      await updatePost(selectedPost.post_id, { agent_active_days: parsed });
+      patchSelectedPost({ agent_active_days: parsed });
+      toast.success(commentsMsg.toasts.campaignUpdated);
+    } catch (err) {
+      toast.error(
+        getApiErrorMessage(err, locale) || commentsMsg.toasts.campaignFailed,
+      );
+      setAgentActiveDays(
+        selectedPost.agent_active_days != null
+          ? String(selectedPost.agent_active_days)
+          : "",
+      );
+    } finally {
+      setSavingCampaign(false);
+    }
+  }, [
+    selectedPost,
+    agentActiveDays,
+    patchSelectedPost,
+    commentsMsg,
+    locale,
+  ]);
 
   const handleRemoveDraft = useCallback(
     async (commentId: string) => {
@@ -1142,6 +1253,14 @@ export function CommentsPage() {
               replyMode={selectedReplyMode}
               savingReplyMode={savingReplyMode}
               onReplyModeChange={(mode) => void handleReplyModeChange(mode)}
+              agentActiveDays={agentActiveDays}
+              privateReplyMode={privateReplyMode}
+              savingCampaign={savingCampaign}
+              onAgentActiveDaysChange={setAgentActiveDays}
+              onAgentActiveDaysCommit={() => void handleAgentActiveDaysCommit()}
+              onPrivateReplyModeChange={(mode) =>
+                void handlePrivateReplyModeChange(mode)
+              }
             />
           </section>
 
