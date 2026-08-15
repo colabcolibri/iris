@@ -1,5 +1,5 @@
 # Meta app review (movido)
 
-→ [08 — App Review](../configuracao/08-app-review.md)
+→ [08 — App Review](../../iris-app/docs/configuracao/08-app-review.md)
 
-Índice: [docs/configuracao/README.md](../configuracao/README.md)
+Índice: [iris-app/docs/configuracao/README.md](../../iris-app/docs/configuracao/README.md)

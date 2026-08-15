@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Sync public user guide only (inicio + uso) into Starlight.
- * Internal install docs stay in docs/configuracao/ — not published.
+ * Internal install docs: iris-app/docs/configuracao/ — not published.
  */
 import fs from "node:fs";
 import path from "node:path";

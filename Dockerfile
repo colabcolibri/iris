@@ -9,6 +9,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY iris-app/package.json iris-app/pnpm-workspace.yaml iris-app/pnpm-lock.yaml ./
 COPY iris-app/server/package.json ./server/
 COPY iris-app/admin/package.json ./admin/
+COPY iris-app/docs-site/package.json ./docs-site/
 
 RUN pnpm install --frozen-lockfile
 
@@ -20,7 +21,6 @@ ENV VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID
 ENV VITE_UMAMI_SCRIPT_URL=$VITE_UMAMI_SCRIPT_URL
 
 COPY iris-app/ .
-COPY docs ../docs
 
 RUN pnpm build:admin
 

@@ -1,7 +1,7 @@
 ---
 title: Docs site (Starlight)
 status: approved
-version: 1.1
+version: 1.2
 updated: 2026-08-15
 depends_on: [05_architecture.md, 08_environments.md]
 blocks: []
@@ -17,6 +17,7 @@ Documentação pública para operadores e deployers, **no mesmo host do Iris** e
 
 | Item | Path |
 | ---- | ---- |
+| Fonte markdown (guia) | `iris-app/docs/inicio/`, `iris-app/docs/uso/` |
 | Fonte (Starlight) | `iris-app/docs-site/` |
 | Build output | `iris-app/public/docs/` |
 | URL pública | `{IRIS_PUBLIC_BASE_URL}/docs/` |
@@ -37,8 +38,8 @@ O `http-server` serve `public/docs/` para `/docs/*`. Redirects vêm de `docs-sit
 
 ```mermaid
 flowchart LR
-  ConfigMd["docs/configuracao/*.md"]
-  UsoMd["docs/uso/*.md"]
+  UsoMd["iris-app/docs/uso/*.md"]
+  InicioMd["iris-app/docs/inicio/*.md"]
   Routes["docs-routes.json"]
   Sync["sync-docs-content.mjs"]
   EnBuild["build-en-content.mjs"]
@@ -46,12 +47,14 @@ flowchart LR
   Public["public/docs/"]
   HTTP["GET /docs/*"]
 
-  ConfigMd --> Sync --> Starlight
+  InicioMd --> Sync --> Starlight
   UsoMd --> Sync
   Routes --> HTTP
   EnBuild --> Starlight
   Starlight --> Public --> HTTP
 ```
+
+Setup Meta interno (não publicado): `iris-app/docs/configuracao/`.
 
 ## Commands
 
@@ -66,7 +69,7 @@ Dev: após `pnpm docs:build`, acesse `http://127.0.0.1:8792/docs/` com `pnpm dev
 
 ## Related
 
-- `docs/configuracao/README.md` — configuração Meta
-- `docs/uso/README.md` — guia de uso
+- `iris-app/docs/configuracao/README.md` — configuração Meta (interna)
+- `iris-app/docs/uso/README.md` — guia de uso
 - `docs/08_environments.md` — § Site de documentação
 - EPIC-20 / v1.30

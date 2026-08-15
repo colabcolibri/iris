@@ -3,8 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Monorepo docs live at <repo>/docs while builds run from iris-app/.
- * Docker (repo-root Dockerfile): COPY docs ../docs → /docs when WORKDIR is /app.
+ * Application user guide lives in iris-app/docs/ (inicio + uso).
+ * Meridian product docs stay at repo root docs/ (00_scope, architecture, …).
  */
 export function resolveDocsRoot(scriptDir) {
   const fromEnv = process.env.IRIS_DOCS_ROOT?.trim();
@@ -16,19 +16,14 @@ export function resolveDocsRoot(scriptDir) {
   }
 
   const irisAppRoot = path.resolve(scriptDir, "../../");
-  const candidates = [
-    path.join(irisAppRoot, "..", "docs"),
-    path.join(irisAppRoot, "docs"),
-  ];
+  const appDocs = path.join(irisAppRoot, "docs");
 
-  for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, "inicio"))) {
-      return candidate;
-    }
+  if (fs.existsSync(path.join(appDocs, "inicio"))) {
+    return appDocs;
   }
 
   throw new Error(
-    `Could not find docs/inicio. Run from monorepo root Dockerfile (COPY docs ../docs) or set IRIS_DOCS_ROOT. Tried: ${candidates.join(", ")}`,
+    `Could not find iris-app/docs/inicio. Set IRIS_DOCS_ROOT or run from iris-app workspace. Tried: ${appDocs}`,
   );
 }
 
