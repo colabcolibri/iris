@@ -1,4 +1,5 @@
 import type { PostReplyModeSetting } from "./reply-mode.ts";
+import type { PostPrivateReplyModeSetting } from "./private-reply-mode.ts";
 import type { IgMediaStatus } from "../meta/ig-media-status.ts";
 
 export type PostStatus =
@@ -27,6 +28,9 @@ export type Post = {
   errorMessage: string | null;
   autoReplyEnabled: boolean;
   replyMode: PostReplyModeSetting;
+  /** Dias após publicação (ou criação) em que o agente responde neste post; null = sem limite. */
+  agentActiveDays: number | null;
+  privateReplyMode: PostPrivateReplyModeSetting;
   replyPrompt: string | null;
   silenceSoul: boolean;
   silencePage: boolean;

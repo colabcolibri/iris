@@ -8,6 +8,8 @@ export const AGENT_LANGUAGE_COMPLEMENTS = {
     'JSON fields "reason" and "reasoning" may use brief English operator labels.',
   publicReplyOnly:
     "Return ONLY the reply text in that language. No JSON. No hashtags.",
+  privateDmOnly:
+    "Return ONLY the private DM text in that language. No JSON. No hashtags.",
   verifyFinalText: "finalText MUST follow the response language above.",
   agentLoopPublic:
     "Return ONLY public Instagram text in that language inside finish.text or notify_operator.customerMessage. No JSON wrappers for those fields. No hashtags. Write notify_operator reason and customerSummary in the same language.",

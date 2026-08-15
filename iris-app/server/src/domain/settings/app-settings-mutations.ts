@@ -29,6 +29,7 @@ export function serializeAppSettings(settings: AppSettings) {
     auto_reply_enabled: settings.autoReplyEnabled,
     reply_delay_seconds: settings.replyDelaySeconds,
     reply_max_age_days: settings.replyMaxAgeDays,
+    private_reply_mode: settings.privateReplyMode,
     message_reply_mode: settings.messageReplyMode,
     message_auto_reply_enabled: settings.messageAutoReplyEnabled,
     message_reply_delay_seconds: settings.messageReplyDelaySeconds,
@@ -53,6 +54,7 @@ export function normalizeAppSettingsBody(
   const hasReplyMode = "reply_mode" in body;
   const hasReplyDelay = "reply_delay_seconds" in body;
   const hasReplyMaxAgeDays = "reply_max_age_days" in body;
+  const hasPrivateReplyMode = "private_reply_mode" in body;
   const hasMessageAutoReply = "message_auto_reply_enabled" in body;
   const hasMessageReplyMode = "message_reply_mode" in body;
   const hasMessageReplyDelay = "message_reply_delay_seconds" in body;
@@ -67,6 +69,7 @@ export function normalizeAppSettingsBody(
     !hasReplyMode &&
     !hasReplyDelay &&
     !hasReplyMaxAgeDays &&
+    !hasPrivateReplyMode &&
     !hasMessageAutoReply &&
     !hasMessageReplyMode &&
     !hasMessageReplyDelay &&
@@ -76,7 +79,7 @@ export function normalizeAppSettingsBody(
     !hasAdminLocale
   ) {
     throw new ValidationError(
-      "at least one of timezone, admin_locale, reply_mode, reply_delay_seconds, reply_max_age_days, agent_reply_tick_interval_seconds, auto_reply_enabled, message_reply_mode, message_reply_delay_seconds, message_auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
+      "at least one of timezone, admin_locale, reply_mode, reply_delay_seconds, reply_max_age_days, private_reply_mode, agent_reply_tick_interval_seconds, auto_reply_enabled, message_reply_mode, message_reply_delay_seconds, message_auto_reply_enabled, auto_monitor_enabled, or auto_monitor_interval_seconds is required",
     );
   }
 
@@ -126,6 +129,14 @@ export function normalizeAppSettingsBody(
       throw new ValidationError("reply_max_age_days must be between 1 and 365");
     }
     replyMaxAgeDays = normalizeReplyMaxAgeDays(body.reply_max_age_days);
+  }
+
+  let privateReplyMode = current.privateReplyMode;
+  if (hasPrivateReplyMode) {
+    if (typeof body.private_reply_mode !== "string" || !isReplyMode(body.private_reply_mode)) {
+      throw new ValidationError("private_reply_mode must be off, auto, or draft");
+    }
+    privateReplyMode = body.private_reply_mode;
   }
 
   let messageReplyMode = current.messageReplyMode;
@@ -207,6 +218,7 @@ export function normalizeAppSettingsBody(
     autoReplyEnabled: autoReplyEnabledFromReplyMode(replyMode),
     replyDelaySeconds,
     replyMaxAgeDays,
+    privateReplyMode,
     messageReplyMode,
     messageAutoReplyEnabled: autoReplyEnabledFromReplyMode(messageReplyMode),
     messageReplyDelaySeconds,

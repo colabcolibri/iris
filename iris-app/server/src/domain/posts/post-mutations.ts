@@ -1,6 +1,8 @@
 import type { PostStatus } from "./post.ts";
 import type { PostReplyModeSetting } from "./reply-mode.ts";
 import { isPostReplyModeSetting, replyModeFromAutoReplyEnabled } from "./reply-mode.ts";
+import type { PostPrivateReplyModeSetting } from "./private-reply-mode.ts";
+import { isPostPrivateReplyModeSetting } from "./private-reply-mode.ts";
 import { ValidationError } from "../../api/json.ts";
 import { normalizeCollaborators } from "./collaborators.ts";
 
@@ -140,6 +142,8 @@ export type UpdatePostPayload = {
   status?: unknown;
   auto_reply_enabled?: unknown;
   reply_mode?: unknown;
+  agent_active_days?: unknown;
+  private_reply_mode?: unknown;
   carousel_summary?: unknown;
   reply_prompt?: unknown;
   silence_soul?: unknown;
@@ -157,6 +161,8 @@ export type NormalizedUpdatePost = {
   status?: PostStatus;
   autoReplyEnabled?: boolean;
   replyMode?: PostReplyModeSetting;
+  agentActiveDays?: number | null;
+  privateReplyMode?: PostPrivateReplyModeSetting;
   carouselSummary?: string | null;
   replyPrompt?: string | null;
   silenceSoul?: boolean;
@@ -245,6 +251,32 @@ export function normalizeUpdatePost(body: UpdatePostPayload): NormalizedUpdatePo
       throw new ValidationError("reply_mode must be inherit, off, auto, or draft");
     }
     update.replyMode = body.reply_mode;
+  }
+
+  if ("agent_active_days" in body) {
+    if (body.agent_active_days === null) {
+      update.agentActiveDays = null;
+    } else if (typeof body.agent_active_days === "number") {
+      const days = Math.round(body.agent_active_days);
+      if (days < 1 || days > 365) {
+        throw new ValidationError("agent_active_days must be between 1 and 365");
+      }
+      update.agentActiveDays = days;
+    } else {
+      throw new ValidationError("agent_active_days must be a number or null");
+    }
+  }
+
+  if ("private_reply_mode" in body) {
+    if (
+      typeof body.private_reply_mode !== "string" ||
+      !isPostPrivateReplyModeSetting(body.private_reply_mode)
+    ) {
+      throw new ValidationError(
+        "private_reply_mode must be inherit, off, auto, or draft",
+      );
+    }
+    update.privateReplyMode = body.private_reply_mode;
   }
 
   if ("reply_prompt" in body) {

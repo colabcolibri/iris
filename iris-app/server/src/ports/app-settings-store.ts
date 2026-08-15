@@ -1,4 +1,5 @@
 import type { ReplyMode } from "../domain/posts/reply-mode.ts";
+import type { PrivateReplyMode } from "../domain/posts/private-reply-mode.ts";
 import type { ServerAppLocale } from "../i18n/locale.ts";
 
 export type AppSettings = {
@@ -11,6 +12,8 @@ export type AppSettings = {
   replyDelaySeconds: number;
   /** Comentários mais antigos que este limite não entram na fila do agente. */
   replyMaxAgeDays: number;
+  /** Private reply global (inherit nos posts). */
+  privateReplyMode: PrivateReplyMode;
   messageReplyMode: ReplyMode;
   messageAutoReplyEnabled: boolean;
   messageReplyDelaySeconds: number;

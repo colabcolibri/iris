@@ -30,6 +30,8 @@ import {
   replyStatusPresentation,
   resolveEffectivePostReplyStatus,
 } from "@iris/domain/reply-effective-status";
+import { resolveAgentActiveDaysRemaining } from "@iris/domain/posts/post-agent-active";
+import type { Post as DomainPost } from "@iris/domain/posts/post";
 import { buildCommentThreadGroups } from "@/lib/build-comment-tree";
 import {
   approveCommentReply,
@@ -59,6 +61,8 @@ type PostDialogProps = {
   collaboratorsText: string;
   scheduledAt: string;
   replyMode: PostReplyModeSetting;
+  privateReplyMode: PostReplyModeSetting;
+  agentActiveDays: string;
   carouselSummary: string;
   replyPrompt: string;
   silenceSoul: boolean;
@@ -70,6 +74,8 @@ type PostDialogProps = {
   onCollaboratorsTextChange: (value: string) => void;
   onScheduledAtChange: (value: string) => void;
   onReplyModeChange: (value: PostReplyModeSetting) => void;
+  onPrivateReplyModeChange: (value: PostReplyModeSetting) => void;
+  onAgentActiveDaysChange: (value: string) => void;
   onCarouselSummaryChange: (value: string) => void;
   onReplyPromptChange: (value: string) => void;
   onSilenceSoulChange: (value: boolean) => void;
@@ -102,6 +108,8 @@ export function PostDialog({
   collaboratorsText,
   scheduledAt,
   replyMode,
+  privateReplyMode,
+  agentActiveDays,
   carouselSummary,
   replyPrompt,
   silenceSoul,
@@ -113,6 +121,8 @@ export function PostDialog({
   onCollaboratorsTextChange,
   onScheduledAtChange,
   onReplyModeChange,
+  onPrivateReplyModeChange,
+  onAgentActiveDaysChange,
   onCarouselSummaryChange,
   onReplyPromptChange,
   onSilenceSoulChange,
@@ -320,6 +330,43 @@ export function PostDialog({
     replyMode,
   );
   const effectiveReplyCopy = replyStatusPresentation(effectiveReply);
+
+  const agentActiveCampaignHint = useMemo(() => {
+    if (
+      !post ||
+      (post.status !== "published" && post.status !== "monitored") ||
+      !post.published_at
+    ) {
+      return null;
+    }
+
+    const daysFromInput = agentActiveDays.trim()
+      ? Number(agentActiveDays)
+      : null;
+    const agentActiveDaysValue =
+      post.agent_active_days ?? (Number.isFinite(daysFromInput) ? daysFromInput : null);
+
+    if (agentActiveDaysValue == null || agentActiveDaysValue <= 0) {
+      return null;
+    }
+
+    const domainPost = {
+      agentActiveDays: agentActiveDaysValue,
+      publishedAt: post.published_at,
+      createdAt: post.created_at,
+    } as DomainPost;
+
+    const remaining = resolveAgentActiveDaysRemaining(domainPost);
+    if (remaining === null) {
+      return null;
+    }
+    if (remaining === 0) {
+      return postsMsg.dialog.fields.agentActiveDaysExpired;
+    }
+    return interpolate(postsMsg.dialog.fields.agentActiveDaysRemaining, {
+      count: remaining,
+    });
+  }, [post, agentActiveDays, postsMsg]);
 
   const statusHint = (() => {
     if (mode === "create") {
@@ -575,6 +622,50 @@ export function PostDialog({
                     {postsMsg.dialog.fields.editPersona}
                   </Link>
                 </p>
+              </div>
+
+              <div className="grid w-full max-w-full min-w-0 gap-4 sm:grid-cols-2">
+                <div className="min-w-0 space-y-2">
+                  <Label htmlFor="post-agent-active-days">
+                    {postsMsg.dialog.fields.agentActiveDays}
+                  </Label>
+                  {agentActiveCampaignHint ? (
+                    <span
+                      className="inline-flex max-w-full rounded-full border border-amber-500/35 bg-amber-500/12 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:text-amber-100"
+                    >
+                      {agentActiveCampaignHint}
+                    </span>
+                  ) : null}
+                  <Input
+                    id="post-agent-active-days"
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={agentActiveDays}
+                    onChange={(e) => onAgentActiveDaysChange(e.target.value)}
+                    placeholder={postsMsg.dialog.fields.agentActiveDaysPlaceholder}
+                    disabled={isReadOnly}
+                    className="w-full max-w-full bg-background"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {postsMsg.dialog.fields.agentActiveDaysHint}
+                  </p>
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <Label htmlFor="post-private-reply-mode">
+                    {postsMsg.dialog.fields.privateReplyMode}
+                  </Label>
+                  <ReplyModeSelect
+                    id="post-private-reply-mode"
+                    variant="post"
+                    value={privateReplyMode}
+                    onChange={onPrivateReplyModeChange}
+                    disabled={isReadOnly}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {postsMsg.dialog.fields.privateReplyModeHint}
+                  </p>
+                </div>
               </div>
 
               {showCommentsSection ? (

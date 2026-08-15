@@ -70,6 +70,15 @@ export const postsPt = {
       postReplies: "Respostas da IA neste post",
       effectiveState: "Estado efetivo agora: {label}.",
       editPersona: "Editar persona",
+      agentActiveDays: "Agente ativo por (dias)",
+      agentActiveDaysPlaceholder: "Ex.: 7 — vazio = sem limite",
+      agentActiveDaysHint:
+        "Dias após a publicação em que o agente responde neste post. Ideal para promoções com prazo.",
+      agentActiveDaysRemaining: "Expira em {count} dias",
+      agentActiveDaysExpired: "Campanha do agente expirada",
+      privateReplyMode: "DM após comentário",
+      privateReplyModeHint:
+        "Envia mensagem privada no inbox quando alguém comenta (API Meta — uma DM por comentário, até 7 dias).",
       carouselSummary: "Resumo do carrossel",
       replyPrompt: "Briefing desta publicação",
       silenceSoul: "Silenciar SOUL",

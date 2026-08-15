@@ -26,6 +26,8 @@ export type Post = {
   updated_at?: string;
   auto_reply_enabled?: boolean;
   reply_mode?: PostReplyModeSetting;
+  agent_active_days?: number | null;
+  private_reply_mode?: PostReplyModeSetting;
   assets_count?: number;
   error_message?: string | null;
   ig_media_id?: string | null;
@@ -43,6 +45,8 @@ export type UpdatePostBody = {
   scheduled_at?: string | null;
   status?: PostStatus;
   reply_mode?: PostReplyModeSetting;
+  agent_active_days?: number | null;
+  private_reply_mode?: PostReplyModeSetting;
   auto_reply_enabled?: boolean;
 };
 

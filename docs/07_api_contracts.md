@@ -142,8 +142,8 @@ Paridade com REST (`PATCH /api/posts/:id`), com convenção de naming do client 
 
 | Direção | Convenção | Campos |
 | ------- | --------- | ------ |
-| Resposta (`iris_get_post`, `iris_list_posts`, retorno de update) | snake_case via `serializePost` | `reply_prompt` (string\|null), `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
-| Argumentos (`iris_update_post`) | camelCase (mesmo padrão de `carouselSummary`) | `replyPrompt` (string\|null, máx. 32 000), `silenceSoul`, `silencePage`, `silenceKnowledge`, `silenceRestrictions` (boolean opcionais) |
+| Resposta (`iris_get_post`, `iris_list_posts`, retorno de update) | snake_case via `serializePost` | `reply_prompt`, `silence_*`, `agent_active_days` (int\|null), `private_reply_mode` (`inherit\|off\|auto\|draft`) |
+| Argumentos (`iris_update_post`) | camelCase (mesmo padrão de `carouselSummary`) | `replyPrompt`, `silenceSoul`, `silencePage`, `silenceKnowledge`, `silenceRestrictions`, `agentActiveDays` (int 1–365 ou null), `privateReplyMode` (`inherit\|off\|auto\|draft`) |
 
 Validação e persistência delegadas a `normalizeUpdatePost` — mesmas regras que REST. Silenciar `silenceRestrictions` não desliga guardrails hardcoded do harness de resposta.
 
@@ -162,7 +162,7 @@ Erros de domínio Meta podem incluir `code` (ex.: `meta_not_connected`).
 | GET | `/api/posts` | admin, agent | Lista (`status`, `from`, `to`, `calendar_only=1`) |
 | POST | `/api/posts` | admin, agent | Cria post |
 | GET | `/api/posts/:id` | admin, agent | Detalhe |
-| PATCH | `/api/posts/:id` | admin, agent | Atualiza (`auto_reply_enabled` exige admin). Campos opcionais: `reply_prompt` (string\|null, máx. 32 000), `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
+| PATCH | `/api/posts/:id` | admin, agent | Atualiza (`auto_reply_enabled` exige admin). Campos opcionais: `reply_prompt`, `silence_*`, `agent_active_days` (int 1–365 ou null), `private_reply_mode` (`inherit\|off\|auto\|draft`) |
 | DELETE | `/api/posts/:id` | admin | Cancela (`status=cancelled`) — soft-delete |
 | DELETE | `/api/posts/:id/permanent` | admin | Apaga do banco só se já estiver `cancelled` (mídias + comentários vinculados; `agent_runs` preservados) |
 | POST | `/api/posts/:id/publish` | admin, agent | Publica agora (bypass agenda) |
@@ -354,7 +354,7 @@ Comentários IG são upsert por `ig_comment_id` (único). Rascunhos (`comment_re
 | PUT | `/api/settings/agent-content` | admin | Atualiza blocos |
 | GET | `/api/settings/message-agent-content` | admin | Blocos DM (`dm_soul`, `dm_page`, `dm_knowledge`, `dm_restrictions`) |
 | PUT | `/api/settings/message-agent-content` | admin | Atualiza blocos DM |
-| GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `message_reply_mode`, delays, auto-monitor) |
+| GET | `/api/settings/app` | admin | App (`timezone`, `reply_mode`, `private_reply_mode`, `message_reply_mode`, delays, auto-monitor) |
 | PUT | `/api/settings/app` | admin | Atualiza app settings (parcial; mesmas validações) |
 | GET | `/api/settings/operator-notifications` | admin | Canais de alerta (`email`) e `ai_lock_days` (default 5) |
 | PUT | `/api/settings/operator-notifications` | admin | Atualiza email enabled/destination e dias de trava da IA |

@@ -1,27 +1,30 @@
 import type { AppContext } from "../../api/app-context.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import {
-  resolveEffectiveReplyMode,
-  shouldScheduleCommentReply,
-} from "../posts/reply-mode.ts";
+  resolveEffectivePrivateReplyMode,
+  shouldSchedulePrivateReply,
+} from "../posts/private-reply-mode.ts";
 import { computeAgentReplyNotBefore } from "./compute-agent-reply-not-before.ts";
 import {
-  buildCommentTooOldMessage,
-  isCommentWithinReplyMaxAge,
-} from "./comment-reply-max-age.ts";
+  buildPrivateReplyWindowExpiredMessage,
+  isCommentWithinPrivateReplyWindow,
+} from "./comment-private-reply-window.ts";
 import {
   buildPostAgentInactiveMessage,
   isPostWithinAgentActiveWindow,
 } from "../posts/post-agent-active.ts";
 import { supersedeOlderPendingCommentReplies } from "../agent-reply/supersede-pending-agent-replies.ts";
 
-export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean {
+export function enqueueCommentPrivateReply(
+  ctx: AppContext,
+  commentId: string,
+): boolean {
   const comment = ctx.comments.findById(commentId);
-  if (!comment || comment.status !== "pending") {
+  if (!comment || comment.deletedAt) {
     return false;
   }
 
-  if (ctx.comments.hasReplyRecord(commentId)) {
+  if (ctx.comments.hasPrivateReplyRecord(commentId)) {
     return false;
   }
 
@@ -31,12 +34,12 @@ export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean
     return false;
   }
 
-  const effectiveReplyMode = resolveEffectiveReplyMode(
-    appSettings.replyMode,
-    post.replyMode,
+  const effectivePrivateMode = resolveEffectivePrivateReplyMode(
+    appSettings.privateReplyMode,
+    post.privateReplyMode,
   );
 
-  if (!shouldScheduleCommentReply(effectiveReplyMode)) {
+  if (!shouldSchedulePrivateReply(effectivePrivateMode)) {
     return false;
   }
 
@@ -45,19 +48,22 @@ export function enqueueCommentReply(ctx: AppContext, commentId: string): boolean
   }
 
   if (!isPostWithinAgentActiveWindow(post)) {
-    ctx.comments.markSkipped(commentId, buildPostAgentInactiveMessage());
+    if (comment.status === "pending") {
+      ctx.comments.markSkipped(commentId, buildPostAgentInactiveMessage());
+    }
     return false;
   }
 
-  if (!isCommentWithinReplyMaxAge(comment, appSettings.replyMaxAgeDays)) {
-    ctx.comments.markSkipped(
-      commentId,
-      buildCommentTooOldMessage(appSettings.replyMaxAgeDays),
-    );
+  if (!isCommentWithinPrivateReplyWindow(comment)) {
+    if (comment.status === "pending") {
+      ctx.comments.markSkipped(commentId, buildPrivateReplyWindowExpiredMessage());
+    }
     return false;
   }
 
-  supersedeOlderPendingCommentReplies(ctx.comments, comment);
+  if (comment.status === "pending") {
+    supersedeOlderPendingCommentReplies(ctx.comments, comment);
+  }
 
   const notBefore = computeAgentReplyNotBefore(new Date(), appSettings.replyDelaySeconds);
   return ctx.comments.scheduleAgentReply(commentId, notBefore);

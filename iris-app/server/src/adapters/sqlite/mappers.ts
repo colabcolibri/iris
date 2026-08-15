@@ -1,6 +1,7 @@
 import type { Post, PostAsset } from "../../domain/posts/post.ts";
 import type { PostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
 import { isPostReplyModeSetting } from "../../domain/posts/reply-mode.ts";
+import { isPostPrivateReplyModeSetting } from "../../domain/posts/private-reply-mode.ts";
 import type { IgMediaStatus } from "../../domain/meta/ig-media-status.ts";
 import type { Comment } from "../../domain/comments/comment.ts";
 import { collaboratorsFromDb } from "../../domain/posts/collaborators.ts";
@@ -23,6 +24,8 @@ type PostRow = {
   error_message: string | null;
   auto_reply_enabled: number;
   reply_mode: string;
+  agent_active_days: number | null;
+  private_reply_mode: string;
   reply_prompt: string | null;
   silence_soul: number;
   silence_page: number;
@@ -93,6 +96,13 @@ export function mapPostRow(row: PostRow): Post {
     replyMode: isPostReplyModeSetting(row.reply_mode)
       ? row.reply_mode
       : "off",
+    agentActiveDays:
+      row.agent_active_days === null || row.agent_active_days === undefined
+        ? null
+        : Number(row.agent_active_days),
+    privateReplyMode: isPostPrivateReplyModeSetting(row.private_reply_mode)
+      ? row.private_reply_mode
+      : "inherit",
     replyPrompt: row.reply_prompt ?? null,
     silenceSoul: row.silence_soul === 1,
     silencePage: row.silence_page === 1,
@@ -183,6 +193,8 @@ export function serializePost(post: Post) {
     error_message: post.errorMessage,
     auto_reply_enabled: post.autoReplyEnabled,
     reply_mode: post.replyMode,
+    agent_active_days: post.agentActiveDays,
+    private_reply_mode: post.privateReplyMode,
     reply_prompt: post.replyPrompt,
     silence_soul: post.silenceSoul,
     silence_page: post.silencePage,

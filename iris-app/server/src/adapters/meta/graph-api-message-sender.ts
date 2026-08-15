@@ -33,6 +33,8 @@ type GraphSendResponse = {
 
 const META_THREAD_OWNER_SUBCODE = 2534037;
 
+const META_DUPLICATE_PRIVATE_REPLY_SUBCODE = 2534014;
+
 function mapSendError(json: GraphSendResponse, status: number): Error {
   const message = json.error?.message ?? `Meta API error (${status})`;
   const subcode = json.error?.error_subcode;
@@ -50,6 +52,10 @@ function mapSendError(json: GraphSendResponse, status: number): Error {
 
   if (subcode === META_THREAD_OWNER_SUBCODE) {
     return new MetaMessageSendError(message, "thread_owner", meta);
+  }
+
+  if (subcode === META_DUPLICATE_PRIVATE_REPLY_SUBCODE) {
+    return new MetaMessageSendError(message, "duplicate_private_reply", meta);
   }
 
   if (code === 10 || code === 200) {
@@ -109,15 +115,15 @@ export function createGraphApiMessageSender(
     }
   }
 
-  async function postMessage(
-    recipientIgUserId: string,
+  async function postMessageWithRecipient(
+    recipient: Record<string, string>,
     text: string,
     token: string,
     replyToMid?: string | null,
-  ): Promise<{ publishedIgMessageId: string | null }> {
+  ): Promise<GraphSendResponse> {
     const url = new URL(`${base}/me/messages`);
     const payload: Record<string, unknown> = {
-      recipient: { id: recipientIgUserId },
+      recipient,
       message: { text },
     };
     if (replyToMid) {
@@ -134,10 +140,24 @@ export function createGraphApiMessageSender(
     });
 
     const json = (await response.json()) as GraphSendResponse;
-
     if (!response.ok || json.error) {
       throw mapSendError(json, response.status);
     }
+    return json;
+  }
+
+  async function postMessage(
+    recipientIgUserId: string,
+    text: string,
+    token: string,
+    replyToMid?: string | null,
+  ): Promise<{ publishedIgMessageId: string | null }> {
+    const json = await postMessageWithRecipient(
+      { id: recipientIgUserId },
+      text,
+      token,
+      replyToMid,
+    );
 
     return { publishedIgMessageId: json.message_id ?? null };
   }
@@ -163,6 +183,24 @@ export function createGraphApiMessageSender(
         }
         throw error;
       }
+    },
+
+    async sendPrivateReplyToComment(igCommentId, text) {
+      const token = deps.metaTokenStore.getActiveToken();
+      if (!token) {
+        throw new Error("Meta access token not configured");
+      }
+
+      const json = await postMessageWithRecipient(
+        { comment_id: igCommentId },
+        text,
+        token,
+      );
+
+      return {
+        publishedIgMessageId: json.message_id ?? null,
+        recipientIgUserId: json.recipient_id ?? null,
+      };
     },
   };
 }

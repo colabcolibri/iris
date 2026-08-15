@@ -28,6 +28,11 @@ import {
   buildCommentTooOldMessage,
   isCommentWithinReplyMaxAge,
 } from "./comment-reply-max-age.ts";
+import {
+  buildPostAgentInactiveMessage,
+  isPostWithinAgentActiveWindow,
+} from "../posts/post-agent-active.ts";
+import { processCommentPrivateReply } from "./process-comment-private-reply.ts";
 
 export type ProcessCommentReplyOptions = {
   trigger: "worker" | "webhook" | "manual";
@@ -135,6 +140,11 @@ async function processCommentReplyCore(
     });
     ctx.comments.markReplied(commentId);
     notifyCommentsChanged({ post_id: comment.postId });
+    await processCommentPrivateReply(ctx, commentId, {
+      trigger: options.trigger,
+      llmCompleter: llm,
+      metaMessageSender: ctx.metaMessageSender,
+    });
     return true;
   } catch (error) {
     const errorMessage =
@@ -215,6 +225,18 @@ export async function processCommentReply(
     resolveEffectiveReplyMode(appSettings.replyMode, post.replyMode);
 
   if (!isManual && !shouldScheduleCommentReply(effectiveReplyMode)) {
+    return false;
+  }
+
+  if (
+    !isManual &&
+    !isPostWithinAgentActiveWindow(post)
+  ) {
+    ctx.comments.markSkipped(
+      commentId,
+      buildPostAgentInactiveMessage(),
+    );
+    notifyCommentsChanged({ post_id: comment.postId });
     return false;
   }
 

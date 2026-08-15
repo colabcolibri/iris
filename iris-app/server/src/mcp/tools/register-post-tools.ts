@@ -141,6 +141,18 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
       silencePage: z.boolean().optional(),
       silenceKnowledge: z.boolean().optional(),
       silenceRestrictions: z.boolean().optional(),
+      agentActiveDays: z
+        .number()
+        .int()
+        .min(1)
+        .max(365)
+        .nullable()
+        .optional()
+        .describe("Dias após publicação em que o agente responde neste post; null = sem limite."),
+      privateReplyMode: z
+        .enum(["inherit", "off", "auto", "draft"])
+        .optional()
+        .describe("Private reply Meta após comentário — DM no inbox do comentarista."),
       scheduledAt: z.string().nullable().optional(),
       status: z.string().optional(),
     },
@@ -168,6 +180,12 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         }
         if (args.silenceRestrictions !== undefined) {
           body.silence_restrictions = args.silenceRestrictions;
+        }
+        if (args.agentActiveDays !== undefined) {
+          body.agent_active_days = args.agentActiveDays;
+        }
+        if (args.privateReplyMode !== undefined) {
+          body.private_reply_mode = args.privateReplyMode;
         }
         if (args.scheduledAt !== undefined) body.scheduled_at = args.scheduledAt;
         if (args.status !== undefined) body.status = args.status;

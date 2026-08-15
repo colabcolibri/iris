@@ -25,6 +25,7 @@ type AppSettingsRow = {
   reply_mode: string | null;
   reply_delay_seconds: number;
   reply_max_age_days: number | null;
+  private_reply_mode: string | null;
   message_auto_reply_enabled: number | null;
   message_reply_mode: string | null;
   message_reply_delay_seconds: number | null;
@@ -40,6 +41,10 @@ function mapRow(row: AppSettingsRow): AppSettings {
     : row.auto_reply_enabled === 1
       ? "auto"
       : "off";
+
+  const privateReplyMode = isReplyMode(row.private_reply_mode ?? "")
+    ? row.private_reply_mode
+    : "off";
 
   const messageReplyMode = isReplyMode(row.message_reply_mode ?? "")
     ? row.message_reply_mode
@@ -63,6 +68,7 @@ function mapRow(row: AppSettingsRow): AppSettings {
     replyMaxAgeDays: normalizeReplyMaxAgeDays(
       Number(row.reply_max_age_days ?? REPLY_MAX_AGE_DAYS_DEFAULT),
     ),
+    privateReplyMode,
     messageReplyMode,
     messageAutoReplyEnabled: autoReplyEnabledFromReplyMode(messageReplyMode),
     messageReplyDelaySeconds: Number(row.message_reply_delay_seconds ?? 0),
@@ -88,6 +94,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       reply_mode,
       reply_delay_seconds,
       reply_max_age_days,
+      private_reply_mode,
       message_auto_reply_enabled,
       message_reply_mode,
       message_reply_delay_seconds,
@@ -108,6 +115,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       reply_mode,
       reply_delay_seconds,
       reply_max_age_days,
+      private_reply_mode,
       message_auto_reply_enabled,
       message_reply_mode,
       message_reply_delay_seconds,
@@ -116,7 +124,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       auto_monitor_interval_seconds,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       timezone = excluded.timezone,
       admin_locale = excluded.admin_locale,
@@ -124,6 +132,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       reply_mode = excluded.reply_mode,
       reply_delay_seconds = excluded.reply_delay_seconds,
       reply_max_age_days = excluded.reply_max_age_days,
+      private_reply_mode = excluded.private_reply_mode,
       message_auto_reply_enabled = excluded.message_auto_reply_enabled,
       message_reply_mode = excluded.message_reply_mode,
       message_reply_delay_seconds = excluded.message_reply_delay_seconds,
@@ -156,6 +165,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
       const autoReplyEnabled = autoReplyEnabledFromReplyMode(replyMode);
       const messageReplyMode = merged.messageReplyMode;
       const messageAutoReplyEnabled = autoReplyEnabledFromReplyMode(messageReplyMode);
+      const privateReplyMode = merged.privateReplyMode;
 
       upsertStmt.run(
         PRIMARY_ID,
@@ -165,6 +175,7 @@ export function createSqliteAppSettingsStore(db: DatabaseSync): AppSettingsStore
         replyMode,
         merged.replyDelaySeconds,
         normalizeReplyMaxAgeDays(merged.replyMaxAgeDays),
+        privateReplyMode,
         messageAutoReplyEnabled ? 1 : 0,
         messageReplyMode,
         merged.messageReplyDelaySeconds,

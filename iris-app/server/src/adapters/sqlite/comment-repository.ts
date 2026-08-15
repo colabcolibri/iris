@@ -3,6 +3,8 @@ import type { DatabaseSync } from "node:sqlite";
 import type {
   CommentRepository,
   UpsertCommentInput,
+  CommentReplyChannel,
+  CommentReplyRecord,
 } from "../../ports/comment-repository.ts";
 import type { Comment } from "../../domain/comments/comment.ts";
 import type { CommentActivityKind } from "../../domain/comments/list-comment-activity.ts";
@@ -10,6 +12,23 @@ import type { CommentActivityRow } from "../../domain/comments/list-comment-acti
 import { AGENT_REPLY_EDIT_SKIP_REASON } from "../../domain/agent-reply/agent-reply-debounce.ts";
 import { normalizeCommentTimestamp } from "../../domain/comments/normalize-comment-timestamp.ts";
 import { mapCommentRow } from "./mappers.ts";
+
+function mapReplyRecord(row: Record<string, unknown>): CommentReplyRecord {
+  return {
+    id: String(row.id),
+    commentId: String(row.comment_id),
+    channel: row.channel === "private" ? "private" : "public",
+    draftText: typeof row.draft_text === "string" ? row.draft_text : null,
+    sentText: typeof row.sent_text === "string" ? row.sent_text : null,
+    status: String(row.status),
+    sourceIgCommentId:
+      typeof row.source_ig_comment_id === "string" ? row.source_ig_comment_id : null,
+    replyToIgCommentId:
+      typeof row.reply_to_ig_comment_id === "string" ? row.reply_to_ig_comment_id : null,
+    publishedIgMessageId:
+      typeof row.published_ig_message_id === "string" ? row.published_ig_message_id : null,
+  };
+}
 
 export function createSqliteCommentRepository(db: DatabaseSync): CommentRepository {
   const insert = db.prepare(`
@@ -74,12 +93,19 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
   `);
 
   const insertReply = db.prepare(`
-    INSERT INTO comment_replies (id, comment_id, draft_text, sent_text, status, agent_run_id, source_ig_comment_id, reply_to_ig_comment_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO comment_replies (
+      id, comment_id, draft_text, sent_text, status, agent_run_id,
+      source_ig_comment_id, reply_to_ig_comment_id, channel, published_ig_message_id
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const hasReplyRecordStmt = db.prepare(`
-    SELECT 1 FROM comment_replies WHERE comment_id = ? LIMIT 1
+    SELECT 1 FROM comment_replies WHERE comment_id = ? AND channel = 'public' LIMIT 1
+  `);
+
+  const hasPrivateReplyRecordStmt = db.prepare(`
+    SELECT 1 FROM comment_replies WHERE comment_id = ? AND channel = 'private' LIMIT 1
   `);
 
   const promoteDraftToSentStmt = db.prepare(`
@@ -88,33 +114,34 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
         sent_text = ?,
         draft_text = NULL,
         reply_to_ig_comment_id = COALESCE(?, reply_to_ig_comment_id),
-        source_ig_comment_id = COALESCE(?, source_ig_comment_id)
-    WHERE comment_id = ? AND status = 'draft'
+        source_ig_comment_id = COALESCE(?, source_ig_comment_id),
+        published_ig_message_id = COALESCE(?, published_ig_message_id)
+    WHERE comment_id = ? AND status = 'draft' AND channel = ?
   `);
 
   const findLatestSentReplyStmt = db.prepare(`
     SELECT * FROM comment_replies
-    WHERE comment_id = ? AND status = 'sent' AND sent_text IS NOT NULL
+    WHERE comment_id = ? AND status = 'sent' AND sent_text IS NOT NULL AND channel = ?
     ORDER BY rowid DESC
     LIMIT 1
   `);
 
   const findLatestDraftStmt = db.prepare(`
     SELECT * FROM comment_replies
-    WHERE comment_id = ? AND status = 'draft'
+    WHERE comment_id = ? AND status = 'draft' AND channel = ?
     ORDER BY rowid DESC
     LIMIT 1
   `);
 
   const clearDraftStmt = db.prepare(`
     DELETE FROM comment_replies
-    WHERE comment_id = ? AND status = 'draft'
+    WHERE comment_id = ? AND status = 'draft' AND channel = 'public'
   `);
 
   const updateDraftStmt = db.prepare(`
     UPDATE comment_replies
     SET draft_text = ?
-    WHERE comment_id = ? AND status = 'draft'
+    WHERE comment_id = ? AND status = 'draft' AND channel = 'public'
   `);
 
   const updateDraftByIdStmt = db.prepare(`
@@ -125,27 +152,60 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
 
   const deleteExtraDraftsStmt = db.prepare(`
     DELETE FROM comment_replies
-    WHERE comment_id = ? AND status = 'draft' AND id <> ?
+    WHERE comment_id = ? AND status = 'draft' AND channel = ? AND id <> ?
   `);
+
+  const agentWorkFilterSql = `
+    (
+      (
+        c.status = 'pending'
+        AND (
+          CASE
+            WHEN p.reply_mode = 'inherit' THEN COALESCE(s.reply_mode, 'auto')
+            ELSE p.reply_mode
+          END
+        ) IN ('auto', 'draft')
+        AND NOT EXISTS (
+          SELECT 1 FROM comment_replies cr
+          WHERE cr.comment_id = c.id AND cr.channel = 'public'
+        )
+      )
+      OR (
+        (
+          CASE
+            WHEN p.private_reply_mode = 'inherit' THEN COALESCE(s.private_reply_mode, 'off')
+            ELSE p.private_reply_mode
+          END
+        ) IN ('auto', 'draft')
+        AND NOT EXISTS (
+          SELECT 1 FROM comment_replies cr
+          WHERE cr.comment_id = c.id AND cr.channel = 'private'
+        )
+        AND (
+          c.status = 'replied'
+          OR (
+            c.status = 'pending'
+            AND (
+              CASE
+                WHEN p.reply_mode = 'inherit' THEN COALESCE(s.reply_mode, 'auto')
+                ELSE p.reply_mode
+              END
+            ) = 'off'
+          )
+        )
+      )
+    )
+  `;
 
   const listPendingForAgentReplyStmt = db.prepare(`
     SELECT c.*, p.caption AS post_caption, p.reply_mode AS reply_mode
     FROM comments c
     INNER JOIN posts p ON p.id = c.post_id
     LEFT JOIN app_settings s ON s.id = 'primary'
-    WHERE c.status = 'pending'
-      AND (
-        CASE
-          WHEN p.reply_mode = 'inherit' THEN COALESCE(s.reply_mode, 'auto')
-          ELSE p.reply_mode
-        END
-      ) IN ('auto', 'draft')
-      AND NOT EXISTS (
-        SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
-      )
+    WHERE c.deleted_at IS NULL
+      AND ${agentWorkFilterSql}
       AND c.agent_reply_not_before IS NOT NULL
       AND datetime(c.agent_reply_not_before) <= datetime('now')
-      AND c.deleted_at IS NULL
       AND (
         c.author_username IS NULL
         OR NOT EXISTS (
@@ -163,18 +223,9 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     FROM comments c
     INNER JOIN posts p ON p.id = c.post_id
     LEFT JOIN app_settings s ON s.id = 'primary'
-    WHERE c.status = 'pending'
-      AND (
-        CASE
-          WHEN p.reply_mode = 'inherit' THEN COALESCE(s.reply_mode, 'auto')
-          ELSE p.reply_mode
-        END
-      ) IN ('auto', 'draft')
-      AND NOT EXISTS (
-        SELECT 1 FROM comment_replies cr WHERE cr.comment_id = c.id
-      )
+    WHERE c.deleted_at IS NULL
+      AND ${agentWorkFilterSql}
       AND c.agent_reply_not_before IS NOT NULL
-      AND c.deleted_at IS NULL
       AND (
         c.author_username IS NULL
         OR NOT EXISTS (
@@ -491,68 +542,31 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
       return Boolean(hasReplyRecordStmt.get(commentId));
     },
 
+    hasPrivateReplyRecord(commentId) {
+      return Boolean(hasPrivateReplyRecordStmt.get(commentId));
+    },
+
     promoteDraftToSent(commentId, sentText, meta) {
+      const channel: CommentReplyChannel = meta?.channel ?? "public";
       const result = promoteDraftToSentStmt.run(
         sentText,
         meta?.replyToIgCommentId ?? null,
         meta?.sourceIgCommentId ?? null,
+        meta?.publishedIgMessageId ?? null,
         commentId,
+        channel,
       );
       return result.changes > 0;
     },
 
-    findLatestSentReply(commentId) {
-      const row = findLatestSentReplyStmt.get(commentId);
-      if (!row) {
-        return null;
-      }
-
-      const record = row as {
-        id: string;
-        comment_id: string;
-        draft_text: string | null;
-        sent_text: string | null;
-        status: string;
-        source_ig_comment_id?: string | null;
-        reply_to_ig_comment_id?: string | null;
-      };
-
-      return {
-        id: record.id,
-        commentId: record.comment_id,
-        draftText: record.draft_text,
-        sentText: record.sent_text,
-        status: record.status,
-        sourceIgCommentId: record.source_ig_comment_id ?? null,
-        replyToIgCommentId: record.reply_to_ig_comment_id ?? null,
-      };
+    findLatestSentReply(commentId, channel = "public") {
+      const row = findLatestSentReplyStmt.get(commentId, channel);
+      return row ? mapReplyRecord(row as Record<string, unknown>) : null;
     },
 
-    findLatestDraft(commentId) {
-      const row = findLatestDraftStmt.get(commentId);
-      if (!row) {
-        return null;
-      }
-
-      const record = row as {
-        id: string;
-        comment_id: string;
-        draft_text: string | null;
-        sent_text: string | null;
-        status: string;
-        source_ig_comment_id?: string | null;
-        reply_to_ig_comment_id?: string | null;
-      };
-
-      return {
-        id: record.id,
-        commentId: record.comment_id,
-        draftText: record.draft_text,
-        sentText: record.sent_text,
-        status: record.status,
-        sourceIgCommentId: record.source_ig_comment_id ?? null,
-        replyToIgCommentId: record.reply_to_ig_comment_id ?? null,
-      };
+    findLatestDraft(commentId, channel = "public") {
+      const row = findLatestDraftStmt.get(commentId, channel);
+      return row ? mapReplyRecord(row as Record<string, unknown>) : null;
     },
 
     clearDraft(commentId) {
@@ -566,30 +580,15 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     },
 
     upsertDraft(commentId, draftText, options = {}) {
-      const existing = findLatestDraftStmt.get(commentId) as
-        | {
-            id: string;
-            comment_id: string;
-            draft_text: string | null;
-            sent_text: string | null;
-            status: string;
-            source_ig_comment_id?: string | null;
-            reply_to_ig_comment_id?: string | null;
-          }
+      const channel: CommentReplyChannel = options.channel ?? "public";
+      const existing = findLatestDraftStmt.get(commentId, channel) as
+        | Record<string, unknown>
         | undefined;
 
       if (existing) {
         updateDraftByIdStmt.run(draftText, existing.id);
-        deleteExtraDraftsStmt.run(commentId, existing.id);
-        return {
-          id: existing.id,
-          commentId,
-          draftText,
-          sentText: existing.sent_text,
-          status: existing.status,
-          sourceIgCommentId: existing.source_ig_comment_id ?? null,
-          replyToIgCommentId: existing.reply_to_ig_comment_id ?? null,
-        };
+        deleteExtraDraftsStmt.run(commentId, channel, existing.id);
+        return mapReplyRecord({ ...existing, draft_text: draftText });
       }
 
       const id = randomUUID();
@@ -602,17 +601,20 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
         options.agentRunId ?? null,
         null,
         null,
+        channel,
+        null,
       );
-
-      return {
+      return mapReplyRecord({
         id,
-        commentId,
-        draftText,
-        sentText: null,
+        comment_id: commentId,
+        draft_text: draftText,
+        sent_text: null,
         status: "draft",
-        sourceIgCommentId: null,
-        replyToIgCommentId: null,
-      };
+        source_ig_comment_id: null,
+        reply_to_ig_comment_id: null,
+        channel,
+        published_ig_message_id: null,
+      });
     },
 
     markDeletedFromInstagram(commentId) {
@@ -662,6 +664,7 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
     },
 
     createReply(input) {
+      const channel: CommentReplyChannel = input.channel ?? "public";
       const id = randomUUID();
       insertReply.run(
         id,
@@ -672,16 +675,20 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
         input.agentRunId ?? null,
         input.sourceIgCommentId ?? null,
         input.replyToIgCommentId ?? null,
+        channel,
+        input.publishedIgMessageId ?? null,
       );
-      return {
+      return mapReplyRecord({
         id,
-        commentId: input.commentId,
-        draftText: input.draftText ?? null,
-        sentText: input.sentText ?? null,
+        comment_id: input.commentId,
+        draft_text: input.draftText ?? null,
+        sent_text: input.sentText ?? null,
         status: input.status,
-        sourceIgCommentId: input.sourceIgCommentId ?? null,
-        replyToIgCommentId: input.replyToIgCommentId ?? null,
-      };
+        source_ig_comment_id: input.sourceIgCommentId ?? null,
+        reply_to_ig_comment_id: input.replyToIgCommentId ?? null,
+        channel,
+        published_ig_message_id: input.publishedIgMessageId ?? null,
+      });
     },
 
     linkInstagramReply(input) {
@@ -701,6 +708,8 @@ export function createSqliteCommentRepository(db: DatabaseSync): CommentReposito
         null,
         input.brandIgCommentId,
         userComment?.igCommentId ?? null,
+        "public",
+        null,
       );
       markRepliedStmt.run(input.userCommentId);
       return true;

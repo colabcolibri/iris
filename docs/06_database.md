@@ -30,6 +30,9 @@ SQLite (`node:sqlite`). Path: `IRIS_DB_PATH` (default `./data/iris.db`). Migrati
 | source_note | TEXT | Opcional — texto livre (rastreio humano) |
 | error_message | TEXT | Último erro Meta |
 | auto_reply_enabled | INTEGER | 0/1 |
+| reply_mode | TEXT | `inherit`, `off`, `auto`, `draft` |
+| agent_active_days | INTEGER | Nullable — dias após `published_at` em que o agente responde; null = sem limite |
+| private_reply_mode | TEXT | `inherit`, `off`, `auto`, `draft` — DM via Meta private reply após comentário |
 | reply_prompt | TEXT | Briefing de reply por post (nullable) |
 | silence_soul | INTEGER | 0/1 — omite SOUL no harness deste post |
 | silence_page | INTEGER | 0/1 — omite page no harness deste post |
@@ -80,6 +83,8 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | draft_text | TEXT | |
 | sent_text | TEXT | |
 | status | TEXT | `draft`, `sent`, `failed` |
+| channel | TEXT | `public` (thread) ou `private` (DM via Meta private reply) |
+| published_ig_message_id | TEXT | Nullable — ID Meta da DM quando `channel=private` |
 | agent_run_id | TEXT FK | |
 
 ### `conversations`
@@ -178,6 +183,19 @@ Sem `deck_ref`. Sem `media_urls` JSON — mídia em `post_assets` + disco.
 | source | TEXT | `iris` \| `store` \| `disabled` |
 | created_at | TEXT | |
 | updated_at | TEXT | |
+
+### `app_settings`
+
+Singleton operacional — timezone, modos de reply, auto-monitor.
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| reply_mode | TEXT | Default global para posts com `inherit` |
+| private_reply_mode | TEXT | Default global para `posts.private_reply_mode=inherit` — `off`, `auto`, `draft` |
+| message_reply_mode | TEXT | Default DM inbox |
+| reply_delay_seconds | INTEGER | Debounce agente comentário |
+| auto_monitor_enabled | INTEGER | 0/1 |
+| timezone | TEXT | IANA |
 
 ### `message_agent_content`
 

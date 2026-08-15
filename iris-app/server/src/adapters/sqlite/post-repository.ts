@@ -13,10 +13,11 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
   const insert = db.prepare(`
     INSERT INTO posts (
       id, status, channel, caption, collaborators, carousel_summary, scheduled_at, published_at, ig_media_id,
-      source_note, error_message, auto_reply_enabled, reply_mode, reply_prompt,
+      source_note, error_message, auto_reply_enabled, reply_mode, agent_active_days, private_reply_mode,
+      reply_prompt,
       silence_soul, silence_page, silence_knowledge, silence_restrictions,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const selectById = db.prepare("SELECT * FROM posts WHERE id = ?");
@@ -45,6 +46,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         input.sourceNote ?? null,
         input.replyMode === "auto" || input.replyMode === "draft" ? 1 : 0,
         input.replyMode ?? "inherit",
+        input.agentActiveDays ?? null,
+        input.privateReplyMode ?? "inherit",
         input.replyPrompt ?? null,
         input.silenceSoul ? 1 : 0,
         input.silencePage ? 1 : 0,
@@ -165,6 +168,14 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
             : current.autoReplyEnabled,
         replyMode:
           input.replyMode !== undefined ? input.replyMode : current.replyMode,
+        agentActiveDays:
+          input.agentActiveDays !== undefined
+            ? input.agentActiveDays
+            : current.agentActiveDays,
+        privateReplyMode:
+          input.privateReplyMode !== undefined
+            ? input.privateReplyMode
+            : current.privateReplyMode,
         replyPrompt:
           input.replyPrompt !== undefined ? input.replyPrompt : current.replyPrompt,
         silenceSoul:
@@ -204,7 +215,7 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         SET caption = ?, collaborators = ?, carousel_summary = ?, channel = ?, scheduled_at = ?, source_note = ?, status = ?,
             published_at = ?, ig_media_id = ?, ig_media_status = ?, ig_media_status_detail = ?,
             ig_media_status_checked_at = ?, error_message = ?, auto_reply_enabled = ?,
-            reply_mode = ?, reply_prompt = ?, silence_soul = ?, silence_page = ?,
+            reply_mode = ?, agent_active_days = ?, private_reply_mode = ?, reply_prompt = ?, silence_soul = ?, silence_page = ?,
             silence_knowledge = ?, silence_restrictions = ?, like_count = ?, reported_comments_count = ?, updated_at = ?
         WHERE id = ?
       `).run(
@@ -223,6 +234,8 @@ export function createSqlitePostRepository(db: DatabaseSync): PostRepository {
         next.errorMessage,
         autoReplyEnabled ? 1 : 0,
         next.replyMode,
+        next.agentActiveDays,
+        next.privateReplyMode,
         next.replyPrompt,
         next.silenceSoul ? 1 : 0,
         next.silencePage ? 1 : 0,

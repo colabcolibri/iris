@@ -59,6 +59,9 @@ export function DashboardPage() {
   const [collaboratorsText, setCollaboratorsText] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [replyMode, setReplyMode] = useState<PostReplyModeSetting>("inherit");
+  const [privateReplyMode, setPrivateReplyMode] =
+    useState<PostReplyModeSetting>("inherit");
+  const [agentActiveDays, setAgentActiveDays] = useState("");
   const [carouselSummary, setCarouselSummary] = useState("");
   const [replyPrompt, setReplyPrompt] = useState("");
   const [silenceSoul, setSilenceSoul] = useState(false);
@@ -156,6 +159,8 @@ export function DashboardPage() {
     setSilencePage(false);
     setSilenceKnowledge(false);
     setSilenceRestrictions(false);
+    setAgentActiveDays("");
+    setPrivateReplyMode("inherit");
   }
 
   function loadEditorialFieldsFromPost(post: Post) {
@@ -166,6 +171,24 @@ export function DashboardPage() {
     setSilencePage(post.silence_page ?? false);
     setSilenceKnowledge(post.silence_knowledge ?? false);
     setSilenceRestrictions(post.silence_restrictions ?? false);
+    setAgentActiveDays(
+      post.agent_active_days != null ? String(post.agent_active_days) : "",
+    );
+    setPrivateReplyMode(post.private_reply_mode ?? "inherit");
+  }
+
+  function parseAgentActiveDaysInput(raw: string): number | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const value = Number.parseInt(trimmed, 10);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  function campaignFieldsForPost() {
+    return {
+      agent_active_days: parseAgentActiveDaysInput(agentActiveDays),
+      private_reply_mode: privateReplyMode,
+    };
   }
 
   function buildCreatePostBody() {
@@ -179,6 +202,7 @@ export function DashboardPage() {
       silence_page: silencePage,
       silence_knowledge: silenceKnowledge,
       silence_restrictions: silenceRestrictions,
+      ...campaignFieldsForPost(),
     };
   }
 
@@ -189,6 +213,8 @@ export function DashboardPage() {
     setCollaboratorsText("");
     setScheduledAt("");
     setReplyMode("inherit");
+    setPrivateReplyMode("inherit");
+    setAgentActiveDays("");
     resetEditorialFields();
     setFiles(null);
     setError("");
@@ -203,6 +229,10 @@ export function DashboardPage() {
     setScheduledAt(toDatetimeLocalFromIso(post.scheduled_at, timezone));
     setReplyMode(
       post.reply_mode ?? (post.auto_reply_enabled ? "auto" : "inherit"),
+    );
+    setPrivateReplyMode(post.private_reply_mode ?? "inherit");
+    setAgentActiveDays(
+      post.agent_active_days != null ? String(post.agent_active_days) : "",
     );
     loadEditorialFieldsFromPost(post);
     setFiles(null);
@@ -325,6 +355,7 @@ export function DashboardPage() {
           caption,
           collaborators: parseCollaboratorsInput(collaboratorsText),
           reply_mode: replyMode,
+          ...campaignFieldsForPost(),
           status: "scheduled",
           scheduled_at: scheduledIso,
         });
@@ -334,6 +365,7 @@ export function DashboardPage() {
           caption,
           collaborators: parseCollaboratorsInput(collaboratorsText),
           reply_mode: replyMode,
+          ...campaignFieldsForPost(),
         };
         const isDraftSave = !selectedPost || selectedPost.status === "draft";
         if (!scheduledAt.trim() && isDraftSave) {
@@ -614,6 +646,8 @@ export function DashboardPage() {
         collaboratorsText={collaboratorsText}
         scheduledAt={scheduledAt}
         replyMode={replyMode}
+        privateReplyMode={privateReplyMode}
+        agentActiveDays={agentActiveDays}
         carouselSummary={carouselSummary}
         replyPrompt={replyPrompt}
         silenceSoul={silenceSoul}
@@ -628,6 +662,8 @@ export function DashboardPage() {
         onCollaboratorsTextChange={setCollaboratorsText}
         onScheduledAtChange={setScheduledAt}
         onReplyModeChange={setReplyMode}
+        onPrivateReplyModeChange={setPrivateReplyMode}
+        onAgentActiveDaysChange={setAgentActiveDays}
         onCarouselSummaryChange={setCarouselSummary}
         onReplyPromptChange={setReplyPrompt}
         onSilenceSoulChange={setSilenceSoul}

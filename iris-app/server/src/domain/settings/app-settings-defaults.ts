@@ -14,6 +14,7 @@ export function defaultAppSettings(): AppSettings {
     autoReplyEnabled: true,
     replyDelaySeconds: AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS,
     replyMaxAgeDays: REPLY_MAX_AGE_DAYS_DEFAULT,
+    privateReplyMode: "off",
     messageReplyMode: "draft",
     messageAutoReplyEnabled: false,
     messageReplyDelaySeconds: AGENT_REPLY_DEBOUNCE_DEFAULT_SECONDS,

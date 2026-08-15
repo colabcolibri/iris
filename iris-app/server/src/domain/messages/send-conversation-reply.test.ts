@@ -57,6 +57,9 @@ test("sendConversationReply persists outbound with reply_to and does not mark in
             capturedReplyTo = options?.replyToMid;
             return { publishedIgMessageId: "mid-out-1" };
           },
+          async sendPrivateReplyToComment() {
+            throw new Error("not used in this test");
+          },
         },
       },
     );

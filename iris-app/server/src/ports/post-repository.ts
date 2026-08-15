@@ -1,5 +1,6 @@
 import type { Post, PostStatus } from "../domain/posts/post.ts";
 import type { PostReplyModeSetting } from "../domain/posts/reply-mode.ts";
+import type { PostPrivateReplyModeSetting } from "../domain/posts/private-reply-mode.ts";
 import type { IgMediaStatus } from "../domain/meta/ig-media-status.ts";
 
 export type CreatePostInput = {
@@ -12,6 +13,8 @@ export type CreatePostInput = {
   igMediaId?: string | null;
   publishedAt?: string | null;
   replyMode?: PostReplyModeSetting;
+  agentActiveDays?: number | null;
+  privateReplyMode?: PostPrivateReplyModeSetting;
   carouselSummary?: string | null;
   replyPrompt?: string | null;
   silenceSoul?: boolean;
@@ -36,6 +39,8 @@ export type UpdatePostInput = {
   errorMessage?: string | null;
   autoReplyEnabled?: boolean;
   replyMode?: PostReplyModeSetting;
+  agentActiveDays?: number | null;
+  privateReplyMode?: PostPrivateReplyModeSetting;
   replyPrompt?: string | null;
   silenceSoul?: boolean;
   silencePage?: boolean;

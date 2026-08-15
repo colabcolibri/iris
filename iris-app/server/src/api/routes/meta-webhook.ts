@@ -11,6 +11,11 @@ import {
 import { notifyCommentsChanged, notifyMessagesChanged } from "../../adapters/sse/event-bus.ts";
 import { getAppSettingsOrDefault } from "../../adapters/sqlite/app-settings-repository.ts";
 import { enqueueCommentReply } from "../../domain/comments/enqueue-comment-reply.ts";
+import { enqueueCommentPrivateReply } from "../../domain/comments/enqueue-comment-private-reply.ts";
+import {
+  resolveEffectivePrivateReplyMode,
+  shouldSchedulePrivateReply,
+} from "../../domain/posts/private-reply-mode.ts";
 import { enqueueMessageReply } from "../../domain/messages/enqueue-message-reply.ts";
 import {
   resolveEffectiveReplyMode,
@@ -236,6 +241,14 @@ async function handleMetaWebhookPost(
 
           if (shouldScheduleCommentReply(effectiveReplyMode) && ctx.resolveLlmCompleter()) {
             enqueueCommentReply(ctx, result.comment.id);
+          }
+
+          const effectivePrivateMode = resolveEffectivePrivateReplyMode(
+            appSettings.privateReplyMode,
+            post.privateReplyMode,
+          );
+          if (shouldSchedulePrivateReply(effectivePrivateMode) && ctx.resolveLlmCompleter()) {
+            enqueueCommentPrivateReply(ctx, result.comment.id);
           }
         }
       }

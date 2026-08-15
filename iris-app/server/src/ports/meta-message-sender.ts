@@ -2,12 +2,21 @@ export type MetaSendTextOptions = {
   replyToMid?: string | null;
 };
 
+export type MetaSendPrivateReplyResult = {
+  publishedIgMessageId: string | null;
+  recipientIgUserId: string | null;
+};
+
 export type MetaMessageSender = {
   sendText(
     recipientIgUserId: string,
     text: string,
     options?: MetaSendTextOptions,
   ): Promise<{ publishedIgMessageId: string | null }>;
+  sendPrivateReplyToComment(
+    igCommentId: string,
+    text: string,
+  ): Promise<MetaSendPrivateReplyResult>;
 };
 
 export class MetaMessageSendError extends Error {

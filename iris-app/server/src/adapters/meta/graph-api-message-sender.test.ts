@@ -91,6 +91,34 @@ test("graph api message sender maps 24h window error", async () => {
   );
 });
 
+test("graph api message sender posts private reply with comment_id recipient", async () => {
+  let capturedBody = "";
+
+  const sender = createGraphApiMessageSender({
+    metaTokenStore: {
+      getActiveToken: () => "token-1",
+      upsertToken: () => {},
+      clear: () => {},
+    },
+    config: {
+      resolveIgUserId: () => "ig-page-1",
+      fetchImpl: async (_url, init) => {
+        capturedBody = String(init?.body ?? "");
+        return new Response(
+          JSON.stringify({ message_id: "mid-private", recipient_id: "user-99" }),
+          { status: 200 },
+        );
+      },
+    },
+  });
+
+  const result = await sender.sendPrivateReplyToComment("comment-ig-1", "cupom aqui");
+  assert.equal(result.publishedIgMessageId, "mid-private");
+  assert.equal(result.recipientIgUserId, "user-99");
+  assert.match(capturedBody, /comment_id/);
+  assert.match(capturedBody, /comment-ig-1/);
+});
+
 test("graph api message sender maps thread owner error", async () => {
   const sender = createGraphApiMessageSender({
     metaTokenStore: {

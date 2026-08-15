@@ -143,6 +143,8 @@ Webhook → `comments` → SSE → UI; worker auto-reply se habilitado.
 
 Diagramas: ver § Architecture diagrams (`iris-reply-agent-*`).
 
+**Campanhas interativas (v1.29):** `agent_active_days` limita respostas a N dias após publicação do post; `private_reply_mode` envia DM via Meta private reply (`recipient.comment_id`) após comentário — ver [post-campaign-agent-private-reply.md](architecture/post-campaign-agent-private-reply.md).
+
 ### 5 — Mensagens Instagram (DM)
 
 Webhook `messaging` → `conversations` + `messages` → SSE `messages-changed` → UI `/messages`; worker `message-responder` se `message_reply_mode` habilitado.

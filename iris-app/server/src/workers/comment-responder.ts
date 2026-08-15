@@ -6,6 +6,7 @@ import { resolveAgentReplyTickIntervalMs } from "../domain/settings/resolve-agen
 import { pickLatestPendingCommentPerAuthorOnPost } from "../domain/agent-reply/agent-reply-debounce.ts";
 import { enqueueSchedulablePendingComments } from "../domain/comments/enqueue-schedulable-pending-comments.ts";
 import { processCommentReply } from "../domain/comments/process-comment-reply.ts";
+import { processCommentPrivateReply } from "../domain/comments/process-comment-private-reply.ts";
 import { startSettingsPolledWorker } from "./start-settings-polled-worker.ts";
 
 export type CommentResponderOptions = {
@@ -43,6 +44,11 @@ export function startCommentResponder(
           trigger: "worker",
           llmCompleter: llm,
           metaCommentReplier: replier,
+        });
+        await processCommentPrivateReply(ctx, comment.id, {
+          trigger: "worker",
+          llmCompleter: llm,
+          metaMessageSender: ctx.metaMessageSender,
         });
       }
     },

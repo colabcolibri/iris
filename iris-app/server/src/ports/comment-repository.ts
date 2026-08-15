@@ -26,11 +26,13 @@ export type PendingAgentReplyComment = Comment & {
 export type CreateReplyInput = {
   commentId: string;
   status: "sent" | "failed" | "draft";
+  channel?: "public" | "private";
   sentText?: string | null;
   draftText?: string | null;
   agentRunId?: string | null;
   sourceIgCommentId?: string | null;
   replyToIgCommentId?: string | null;
+  publishedIgMessageId?: string | null;
 };
 
 export type LinkInstagramReplyInput = {
@@ -39,14 +41,18 @@ export type LinkInstagramReplyInput = {
   sentText: string | null;
 };
 
+export type CommentReplyChannel = "public" | "private";
+
 export type CommentReplyRecord = {
   id: string;
   commentId: string;
+  channel: CommentReplyChannel;
   sentText: string | null;
   draftText: string | null;
   status: string;
   sourceIgCommentId: string | null;
   replyToIgCommentId: string | null;
+  publishedIgMessageId: string | null;
 };
 
 export type CommentRepository = {
@@ -58,19 +64,28 @@ export type CommentRepository = {
   listPendingForAgentReply(): PendingAgentReplyComment[];
   listScheduledForAgentReply(): PendingAgentReplyComment[];
   hasReplyRecord(commentId: string): boolean;
+  hasPrivateReplyRecord(commentId: string): boolean;
   promoteDraftToSent(
     commentId: string,
     sentText: string,
-    meta?: { replyToIgCommentId?: string | null; sourceIgCommentId?: string | null },
+    meta?: {
+      channel?: CommentReplyChannel;
+      replyToIgCommentId?: string | null;
+      sourceIgCommentId?: string | null;
+      publishedIgMessageId?: string | null;
+    },
   ): boolean;
-  findLatestDraft(commentId: string): CommentReplyRecord | null;
-  findLatestSentReply(commentId: string): CommentReplyRecord | null;
+  findLatestDraft(commentId: string, channel?: CommentReplyChannel): CommentReplyRecord | null;
+  findLatestSentReply(
+    commentId: string,
+    channel?: CommentReplyChannel,
+  ): CommentReplyRecord | null;
   clearDraft(commentId: string): boolean;
   updateDraft(commentId: string, draftText: string): boolean;
   upsertDraft(
     commentId: string,
     draftText: string,
-    options?: { agentRunId?: string | null },
+    options?: { agentRunId?: string | null; channel?: CommentReplyChannel },
   ): CommentReplyRecord;
   markDeletedFromInstagram(commentId: string): boolean;
   restoreFromInstagram(commentId: string): boolean;
