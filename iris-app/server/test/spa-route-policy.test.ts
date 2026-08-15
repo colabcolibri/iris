@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   isProtectedSpaPath,
   isPublicSpaPath,
-  resolveDocsRedirect,
   resolveLegacyAdminRedirect,
   shouldGateSpaGet,
 } from "../src/api/spa-route-policy.ts";
@@ -31,18 +30,6 @@ test("shouldGateSpaGet allows landing and public routes", () => {
 
 test("shouldGateSpaGet ignores non-GET methods", () => {
   assert.equal(shouldGateSpaGet("/admin", "POST"), false);
-});
-
-test("resolveDocsRedirect maps docs entry and legacy meta paths", () => {
-  assert.equal(resolveDocsRedirect("/docs"), "/docs/inicio/");
-  assert.equal(resolveDocsRedirect("/docs/"), "/docs/inicio/");
-  assert.equal(resolveDocsRedirect("/docs/meta"), "/docs/configuracao/");
-  assert.equal(resolveDocsRedirect("/docs/meta/"), "/docs/configuracao/");
-  assert.equal(
-    resolveDocsRedirect("/docs/meta/04-webhooks/"),
-    "/docs/configuracao/04-webhooks/",
-  );
-  assert.equal(resolveDocsRedirect("/admin"), null);
 });
 
 test("resolveLegacyAdminRedirect maps old admin paths", () => {

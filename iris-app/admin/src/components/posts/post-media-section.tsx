@@ -362,15 +362,21 @@ export function PostMediaSection({
               </div>
               <div className="space-y-1.5">
                 <Label>{mediaMsg.imageTags}</Label>
-                <AssetUserTagsEditor
-                  key={selected.id}
-                  previewUrl={selected.previewUrl}
-                  width={selected.width}
-                  height={selected.height}
-                  tags={tagsDraft}
-                  onChange={setTagsDraft}
-                  disabled={readOnly || savingMeta || busyId === selected.id}
-                />
+                {selected.previewUrl ? (
+                  <AssetUserTagsEditor
+                    key={selected.id}
+                    previewUrl={selected.previewUrl}
+                    width={selected.width}
+                    height={selected.height}
+                    tags={tagsDraft}
+                    onChange={setTagsDraft}
+                    disabled={readOnly || savingMeta || busyId === selected.id}
+                  />
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Reenvie a mídia deste slide para posicionar tags na imagem.
+                  </p>
+                )}
               </div>
               {!readOnly ? (
                 <Button

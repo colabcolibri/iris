@@ -16,6 +16,7 @@ import {
   deletePostAsset,
   reorderPostAssets,
 } from "../../domain/posts/post-assets.ts";
+import { filenameFromStoragePath } from "../../domain/posts/publish-url.ts";
 
 export const handleAssetsRoute = createRouter([
   route(
@@ -27,7 +28,13 @@ export const handleAssetsRoute = createRouter([
         return;
       }
 
-      const assets = match.ctx.assets.listByPostId(postId).map(serializeAsset);
+      const assets = await Promise.all(
+        match.ctx.assets.listByPostId(postId).map(async (asset) => {
+          const filename = filenameFromStoragePath(asset.storagePath);
+          const file = await match.ctx.mediaStorage.read(postId, filename);
+          return serializeAsset(asset, { fileReadable: file !== null });
+        }),
+      );
       sendJson(match.res, 200, { assets });
     },
     { paramNames: ["postId"] },

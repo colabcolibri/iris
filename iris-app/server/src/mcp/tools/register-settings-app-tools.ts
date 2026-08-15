@@ -12,7 +12,7 @@ import { jsonToolContent, toolError } from "../tool-response.ts";
 export function registerSettingsAppTools(server: McpServer, ctx: AppContext): void {
   server.tool(
     "iris_get_app_settings",
-    "Read operational app settings (timezone, reply mode, auto-monitor)",
+    "Read operational app settings: timezone, reply_mode, private_reply_mode (global DM-after-comment default), message_reply_mode, delays, auto-monitor. Call iris_help topic=app_settings for field meanings.",
     {},
     async () => {
       const settings = ctx.appSettingsStore.get() ?? defaultAppSettings();
@@ -22,7 +22,7 @@ export function registerSettingsAppTools(server: McpServer, ctx: AppContext): vo
 
   server.tool(
     "iris_update_app_settings",
-    "Update operational app settings (partial updates, same validation as PUT /api/settings/app)",
+    "Update operational app settings (partial). Includes private_reply_mode for campaign inherit default. Same validation as PUT /api/settings/app. See iris_help topic=app_settings.",
     {
       timezone: z.string().optional(),
       reply_mode: z.enum(["off", "auto", "draft"]).optional(),

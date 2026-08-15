@@ -24,7 +24,7 @@ Documentação pública para operadores e deployers, **no mesmo host do Iris** e
 
 ## HTTP
 
-O `http-server` serve arquivos de `public/docs/` para paths `/docs/*`, com redirect `GET /docs` → `/docs/`. Em dev, o Vite do admin **não** intercepta `/docs` — cai direto no static.
+O `http-server` serve `public/docs/` para `/docs/*`. Redirects vêm de `docs-site/docs-routes.json` (runtime + stubs estáticos).
 
 ## Locales
 
@@ -37,14 +37,18 @@ O `http-server` serve arquivos de `public/docs/` para paths `/docs/*`, com redir
 
 ```mermaid
 flowchart LR
-  MetaMd["docs/meta/*.md"]
-  Sync["sync-meta-content.mjs"]
+  ConfigMd["docs/configuracao/*.md"]
+  UsoMd["docs/uso/*.md"]
+  Routes["docs-routes.json"]
+  Sync["sync-docs-content.mjs"]
   EnBuild["build-en-content.mjs"]
   Starlight["docs-site"]
   Public["public/docs/"]
   HTTP["GET /docs/*"]
 
-  MetaMd --> Sync --> Starlight
+  ConfigMd --> Sync --> Starlight
+  UsoMd --> Sync
+  Routes --> HTTP
   EnBuild --> Starlight
   Starlight --> Public --> HTTP
 ```
@@ -62,6 +66,7 @@ Dev: após `pnpm docs:build`, acesse `http://127.0.0.1:8792/docs/` com `pnpm dev
 
 ## Related
 
-- `docs/meta/README.md` — fonte PT
+- `docs/configuracao/README.md` — configuração Meta
+- `docs/uso/README.md` — guia de uso
 - `docs/08_environments.md` — § Site de documentação
 - EPIC-20 / v1.30

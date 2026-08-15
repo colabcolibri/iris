@@ -211,8 +211,11 @@ export function serializePost(post: Post) {
   return payload;
 }
 
-export function serializeAsset(asset: PostAsset) {
-  return {
+export function serializeAsset(
+  asset: PostAsset,
+  options?: { fileReadable?: boolean },
+) {
+  const payload: Record<string, unknown> = {
     id: asset.id,
     post_id: asset.postId,
     sort_order: asset.sortOrder,
@@ -227,4 +230,10 @@ export function serializeAsset(asset: PostAsset) {
     user_tags: asset.userTags,
     created_at: asset.createdAt,
   };
+
+  if (options?.fileReadable !== undefined) {
+    payload.file_readable = options.fileReadable;
+  }
+
+  return payload;
 }

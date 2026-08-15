@@ -1,0 +1,44 @@
+{
+  "home": {
+    "pt": "/docs/inicio/",
+    "en": "/docs/en/inicio/"
+  },
+  "legacyExact": {
+    "/docs": "/docs/inicio/",
+    "/docs/": "/docs/inicio/",
+    "/docs/en": "/docs/en/inicio/",
+    "/docs/en/": "/docs/en/inicio/",
+    "/docs/meta": "/docs/inicio/",
+    "/docs/meta/": "/docs/inicio/",
+    "/docs/configuracao": "/docs/inicio/",
+    "/docs/configuracao/": "/docs/inicio/",
+    "/docs/en/meta": "/docs/en/inicio/",
+    "/docs/en/meta/": "/docs/en/inicio/",
+    "/docs/en/configuracao": "/docs/en/inicio/",
+    "/docs/en/configuracao/": "/docs/en/inicio/",
+    "/docs/dev": "/docs/inicio/",
+    "/docs/dev/": "/docs/inicio/",
+    "/docs/en/dev": "/docs/en/inicio/",
+    "/docs/en/dev/": "/docs/en/inicio/"
+  },
+  "legacyPrefixes": [
+    { "from": "/docs/meta", "to": "/docs/inicio" },
+    { "from": "/docs/configuracao", "to": "/docs/inicio" },
+    { "from": "/docs/dev", "to": "/docs/inicio" },
+    { "from": "/docs/en/meta", "to": "/docs/en/inicio" },
+    { "from": "/docs/en/configuracao", "to": "/docs/en/inicio" },
+    { "from": "/docs/en/dev", "to": "/docs/en/inicio" }
+  ],
+  "staticStubs": [
+    { "file": "index.html", "target": "/docs/inicio/" },
+    { "file": "en/index.html", "target": "/docs/en/inicio/" },
+    { "file": "meta/index.html", "target": "/docs/inicio/" },
+    { "file": "en/meta/index.html", "target": "/docs/en/inicio/" },
+    { "file": "configuracao/index.html", "target": "/docs/inicio/" },
+    { "file": "en/configuracao/index.html", "target": "/docs/en/inicio/" },
+    { "file": "dev/referencia-tecnica/index.html", "target": "/docs/inicio/" },
+    { "file": "en/dev/referencia-tecnica/index.html", "target": "/docs/en/inicio/" }
+  ],
+  "notFoundFallback": "/docs/inicio/",
+  "allowedPrefix": "/docs/"
+}

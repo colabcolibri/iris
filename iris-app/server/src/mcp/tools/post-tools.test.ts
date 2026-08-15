@@ -128,6 +128,66 @@ test("MCP update/get/generate tools distinguish carousel_summary vs reply_prompt
   }
 });
 
+test("MCP post tools get/update campaign fields agentActiveDays and privateReplyMode", async () => {
+  const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-campaign-"));
+  const db = openDatabase(":memory:");
+  runMigrations(db);
+
+  const ctx = createAppContext({
+    db,
+    adminToken: "admin",
+    agentToken: "agent",
+    mediaRoot,
+    mcpConnectionCode: "mcp-test",
+  });
+
+  const { client, close } = await createMcpClient(ctx);
+
+  try {
+    const tools = await client.listTools();
+    const update = tools.tools.find((t) => t.name === "iris_update_post");
+    assert.ok(update);
+    assert.match(update.description ?? "", /agentActiveDays|campaign/i);
+    assert.match(update.description ?? "", /privateReplyMode/i);
+
+    const createResult = await client.callTool({
+      name: "iris_create_post",
+      arguments: { caption: "Promo", status: "draft" },
+    });
+    const created = parseToolJson(createResult) as { id: string };
+
+    const updateResult = await client.callTool({
+      name: "iris_update_post",
+      arguments: {
+        postId: created.id,
+        agentActiveDays: 7,
+        privateReplyMode: "auto",
+        replyMode: "draft",
+      },
+    });
+    assert.notEqual(updateResult.isError, true);
+    const updated = parseToolJson(updateResult) as Record<string, unknown>;
+    assert.equal(updated.agent_active_days, 7);
+    assert.equal(updated.private_reply_mode, "auto");
+    assert.equal(updated.reply_mode, "draft");
+
+    const clearResult = await client.callTool({
+      name: "iris_update_post",
+      arguments: {
+        postId: created.id,
+        agentActiveDays: null,
+      },
+    });
+    assert.notEqual(clearResult.isError, true);
+    const cleared = parseToolJson(clearResult) as Record<string, unknown>;
+    assert.equal(cleared.agent_active_days, null);
+  } finally {
+    await close();
+    db.close();
+    await rm(mediaRoot, { recursive: true, force: true });
+  }
+});
+
 test("MCP post tools get/update reply_prompt and silence flags", async () => {
   const mediaRoot = await mkdtemp(join(tmpdir(), "iris-mcp-reply-briefing-"));
   const db = openDatabase(":memory:");

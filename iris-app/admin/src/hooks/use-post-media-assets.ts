@@ -14,7 +14,8 @@ import type { AssetUserTag } from "@/lib/types";
 export type PostMediaAsset = {
   id: string;
   sortOrder: number;
-  previewUrl: string;
+  previewUrl: string | null;
+  previewMissing?: boolean;
   width: number | null;
   height: number | null;
   altText: string | null;
@@ -60,7 +61,7 @@ function moveByOffset<T extends { id: string }>(
 
 function revokePreviewUrls(items: PostMediaAsset[]) {
   for (const item of items) {
-    if (item.previewUrl.startsWith("blob:")) {
+    if (item.previewUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(item.previewUrl);
     }
   }
@@ -105,6 +106,7 @@ export function usePostMediaAssets(
 
         const sorted = [...assets].sort((a, b) => a.sort_order - b.sort_order);
         const nextItems: PostMediaAsset[] = [];
+        let missingCount = 0;
 
         for (const asset of sorted) {
           if (signal.aborted) {
@@ -117,8 +119,14 @@ export function usePostMediaAssets(
             continue;
           }
 
-          let previewUrl: string;
-          if (isDemo) {
+          const fileReadable = asset.file_readable ?? true;
+          let previewUrl: string | null = null;
+          let previewMissing = false;
+
+          if (!fileReadable) {
+            missingCount += 1;
+            previewMissing = true;
+          } else if (isDemo) {
             previewUrl = demoAssetImageUrl(
               postId,
               filename,
@@ -126,19 +134,25 @@ export function usePostMediaAssets(
               asset.height ?? 1350,
             );
           } else {
-            const blob = await fetchAssetBlob(postId, filename);
-            if (signal.aborted) {
-              revokeUrlList(createdUrls);
-              return;
+            try {
+              const blob = await fetchAssetBlob(postId, filename);
+              if (signal.aborted) {
+                revokeUrlList(createdUrls);
+                return;
+              }
+              previewUrl = URL.createObjectURL(blob);
+              createdUrls.push(previewUrl);
+            } catch {
+              missingCount += 1;
+              previewMissing = true;
             }
-            previewUrl = URL.createObjectURL(blob);
-            createdUrls.push(previewUrl);
           }
 
           nextItems.push({
             id: asset.id,
             sortOrder: asset.sort_order,
             previewUrl,
+            previewMissing,
             width: asset.width ?? null,
             height: asset.height ?? null,
             altText: asset.alt_text ?? null,
@@ -155,6 +169,12 @@ export function usePostMediaAssets(
           revokePreviewUrls(previous);
           return nextItems;
         });
+
+        if (missingCount > 0) {
+          toast.warning(
+            `${missingCount} slide(s) sem arquivo no servidor. Reenvie a mídia ou remova o slide.`,
+          );
+        }
       } catch (err) {
         revokeUrlList(createdUrls);
         if (signal.aborted) {
@@ -233,7 +253,7 @@ export function usePostMediaAssets(
         await deletePostAsset(postId, assetId);
         setItems((previous) => {
           const removed = previous.find((item) => item.id === assetId);
-          if (removed?.previewUrl.startsWith("blob:")) {
+          if (removed?.previewUrl?.startsWith("blob:")) {
             URL.revokeObjectURL(removed.previewUrl);
           }
           return previous.filter((item) => item.id !== assetId);

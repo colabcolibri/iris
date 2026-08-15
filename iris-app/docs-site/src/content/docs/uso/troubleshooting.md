@@ -1,54 +1,86 @@
 ---
-title: "Problemas no uso (dia a dia)"
-description: "Problemas no uso (dia a dia)"
+title: "Problemas no dia a dia"
+description: "Problemas no dia a dia"
 tableOfContents:
   minHeadingLevel: 2
   maxHeadingLevel: 3
 ---
 
-Soluções para quem **já entrou no admin** e algo não funciona como esperado.
+Sintomas operacionais e o que **você** pode fazer no admin. Configuração de servidor e app Meta é responsabilidade do time técnico interno.
 
 ## Login e acesso
 
-| Problema | Solução |
-| -------- | ------- |
-| Não recebo o código por email | Confira spam; confirme com quem instalou se seu email está em `IRIS_ADMIN_EMAIL` |
-| Código inválido | Códigos expiram rápido — peça um novo |
-| Tela em branco após login | Atualize a página; teste outro navegador |
+| Sintoma | Tente |
+| ------- | ----- |
+| Código OTP não chega | Pasta de spam; confirme email autorizado com quem administra o Iris |
+| Código inválido ou expirado | **Reenviar código** ou **Trocar email** |
+| Sessão cai ao recarregar | Limpe cache; peça novo código |
 
-## Postagens
+→ [Primeiro acesso](./primeiro-acesso.md)
 
-| Problema | Solução |
-| -------- | ------- |
-| Post não publicou no horário | Servidor Iris precisa estar online; confira fuso em Configurações |
-| Status **Falhou** | Abra o post — leia a mensagem de erro; reconecte Instagram |
-| Imagem não sobe | Use JPG/PNG; arquivo muito grande pode demorar |
+## Instagram e publicação
 
-## Comentários e DMs
+| Sintoma | Tente |
+| ------- | ----- |
+| Não consigo agendar | Header → **Conectar** / **Reconectar Instagram** |
+| Post **Falhou** | Abra o post → leia **Causa da falha**; **Testar conexão** |
+| Carrossel travado | Aguarde até ~1 min; não feche o dialog |
+| Horário errado no calendário | **Configurações → Fuso horário editorial** |
 
-| Problema | Solução |
-| -------- | ------- |
-| Comentário não aparece | Aguarde 1–2 min; veja [Webhooks](./07-webhooks-e-monitoramento/) |
-| Agente não responde | Modo em Silêncio? Agente desligado em Configurações? |
-| Resposta errada | Mude para **supervisionado** e ajuste **Persona** |
+→ [Conectar Instagram](./conectar-instagram.md) · [Agendar e publicar](./agendar-e-publicar.md)
 
-## Agente e IA
+## Comentários
 
-| Problema | Solução |
-| -------- | ------- |
-| “Sem resposta” do agente | Modelo LLM não configurado no servidor |
-| Agente parou numa conversa | Escalação humana — destrave na conversa ou Configurações |
-| Texto em idioma errado | Persona e idioma das respostas em Configurações |
+| Sintoma | Tente |
+| ------- | ----- |
+| Post não aparece | **Importar** ou **Adicionar** link |
+| Comentário no IG, não no Iris | **Sincronizar** no post; veja [Webhooks](./webhooks.md) |
+| Agente não responde | Modo **Desligado**? Post em **Pausar nesta publicação**? |
+| Rascunho não publica | Aba **Atividade → Aprovação** — aprove manualmente |
 
-## Produtos
+→ [Comentários — visão geral](./comentarios-visao-geral.md)
 
-| Problema | Solução |
-| -------- | ------- |
-| Lista vazia | Conecte e sincronize loja em [Produtos e lojas](./05-produtos-e-lojas/) |
-| Preço errado | Sincronize de novo na tela Lojas |
+## Mensagens (DMs)
 
-## Ainda com problema?
+| Sintoma | Tente |
+| ------- | ----- |
+| Lista vazia | **Importar**; banner de Page do Facebook? → acione técnico |
+| Não consigo enviar | Badge **Janela fechada** — Meta não permite |
+| IA não responde | Modo global **Desligado**? **IA pausada** na conversa? |
+| Caso escalado | [Alertas do operador](./alertas-operador.md); **Retomar IA** |
 
-1. Anote **o que você fez**, **hora** e **mensagem de erro** (se houver).
-2. Veja se é configuração de servidor → [Guia de configuração](../configuracao/troubleshooting/).
-3. Envie isso para quem mantém o Iris.
+→ [Mensagens — visão geral](./mensagens-visao-geral.md)
+
+## Agente e monitoramento
+
+| Sintoma | Tente |
+| ------- | ----- |
+| Respostas lentas | Normal com debounce + ciclo do worker — veja [Fila do agente](./fila-agente.md) |
+| Webhooks sem eventos | **Testar conexão**; exporte JSON em Webhooks para o técnico |
+| Assinatura inválida nos webhooks | Escale ao time técnico (config servidor) |
+| Resposta estranha | **Ver decisão do agente** ou [Execuções](./execucoes-agente.md) |
+
+## Produtos e lojas
+
+| Sintoma | Tente |
+| ------- | ----- |
+| Sync Yampi falhou | **Testar conexão** na loja; confira token no painel Yampi |
+| Agente não cita preço | **Preview resolvido** no produto; políticas de campo |
+| Produto não aparece na triagem | Toggle **Ativo**; slug correto |
+
+→ [Lojas — conectar](./lojas-conectar.md)
+
+## Quando acionar o time técnico
+
+Envie:
+
+1. Horário exato do problema (fuso editorial)
+2. @ Instagram conectado
+3. Export JSON de **Webhooks** (se aplicável)
+4. Print da **Causa da falha** em post ou execução do agente
+
+Não inclua tokens, senhas ou chaves de API em tickets.
+
+## Lista de imagens
+
+Capturas pendentes: [IMAGENS.md](./IMAGENS.md)

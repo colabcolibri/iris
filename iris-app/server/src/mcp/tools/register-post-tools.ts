@@ -48,7 +48,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_get_post",
-    "Get a post by id with asset metadata. Includes collaborators (up to 3 Instagram usernames invited as collab on publish), carousel_summary (visual description of the carousel/reel for reply context — not reply instructions) and reply_prompt (post-specific reply briefing: promo, price, link, tone — overrides conflicting global editorial blocks).",
+    "Get a post by id with asset metadata. Includes collaborators (collab invites on publish), carousel_summary (visual context), reply_prompt (reply briefing), silence_* flags, reply_mode, agent_active_days (campaign TTL), private_reply_mode (DM after comment). Call iris_help topic=post_fields for full field guide.",
     {
       postId: z.string().min(1),
     },
@@ -111,7 +111,7 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
 
   server.tool(
     "iris_update_post",
-    "Update caption, collaborators, carousel summary, reply briefing, silence flags, schedule or status for a post. collaborators = up to 3 Instagram usernames invited as collab on publish (not photo tags). carouselSummary = visual description of slides. replyPrompt = post-specific reply briefing. Do NOT set status=cancelled here — use iris_cancel_post after user confirmation.",
+    "Update caption, collaborators, carousel summary, reply briefing, reply/campaign modes, silence flags, schedule or status. Use iris_help (topic=publish or post_fields) for the full workflow. collaborators = collab on publish. carouselSummary = visual only. replyPrompt = reply briefing. agentActiveDays = campaign TTL. privateReplyMode = DM after comment. replyMode = public thread replies. Do NOT set status=cancelled — use iris_cancel_post.",
     {
       postId: z.string().min(1),
       caption: z.string().optional(),
@@ -153,6 +153,10 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         .enum(["inherit", "off", "auto", "draft"])
         .optional()
         .describe("Private reply Meta após comentário — DM no inbox do comentarista."),
+      replyMode: z
+        .enum(["inherit", "off", "auto", "draft"])
+        .optional()
+        .describe("Public comment reply on this post; inherit uses global reply_mode."),
       scheduledAt: z.string().nullable().optional(),
       status: z.string().optional(),
     },
@@ -186,6 +190,9 @@ export function registerPostTools(server: McpServer, ctx: AppContext): void {
         }
         if (args.privateReplyMode !== undefined) {
           body.private_reply_mode = args.privateReplyMode;
+        }
+        if (args.replyMode !== undefined) {
+          body.reply_mode = args.replyMode;
         }
         if (args.scheduledAt !== undefined) body.scheduled_at = args.scheduledAt;
         if (args.status !== undefined) body.status = args.status;

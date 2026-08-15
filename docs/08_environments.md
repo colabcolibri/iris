@@ -148,7 +148,7 @@ Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar 
 | `RESEND_API_KEY` | API key Resend (somente no provedor) |
 | `IRIS_ADMIN_EMAIL` | Email allowlisted para OTP |
 | `META_*` | App credentials + access token |
-| `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — DMs: guias [07](../meta/07-page-access-token.md) e [06](../meta/06-mensagens-receptor-primario.md) em `docs/meta/` |
+| `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — DMs: guias [07](../configuracao/07-page-access-token.md) e [06](../configuracao/06-mensagens-receptor-primario.md) em `docs/configuracao/` |
 | `LLM_API_KEY` | For comment responder (v1-S6) |
 | `IRIS_REPLY_MAX_CONCURRENT` | Default `10` — ajuste conforme quota/custo do provedor LLM |
 | `IRIS_RETENTION_DAYS` | Default `90` — purge de `meta_webhook_events` antigos |
@@ -166,7 +166,7 @@ Production: `https://<your-public-host>/webhooks/meta`
 
 Configure in Meta Developers → Webhooks → Instagram. OAuth callback: `https://<your-public-host>/auth/meta/callback`.
 
-Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `docs/meta/README.md` or **`/docs/`** no próprio Iris.
+Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `docs/configuracao/README.md` or **`/docs/`** no próprio Iris.
 
 ## Site de documentação
 
@@ -174,9 +174,9 @@ Pacote fonte **`iris-app/docs-site/`** — Astro Starlight. O build gera HTML em
 
 | URL | Conteúdo |
 | --- | -------- |
-| `https://<host>/docs/` | Home PT |
-| `https://<host>/docs/en/` | Home EN |
-| `https://<host>/docs/meta/…` | Guias Meta |
+| `https://<host>/docs/` | Hub (uso + configuração) |
+| `https://<host>/docs/uso/…` | Guia de uso |
+| `https://<host>/docs/configuracao/…` | Guia de configuração Meta |
 
 | Command | Description |
 | ------- | ----------- |
@@ -184,7 +184,7 @@ Pacote fonte **`iris-app/docs-site/`** — Astro Starlight. O build gera HTML em
 | `pnpm docs:dev` | Preview isolado na porta Astro (opcional) |
 | `pnpm docs:preview` | Preview do build estático |
 
-Content source: `docs/meta/` (PT) via `sync-meta-content.mjs`; EN via `build-en-content.mjs`. Detail: `docs/architecture/docs-site.md`.
+Content source: `docs/configuracao/`, `docs/uso/` via `sync-docs-content.mjs`; rotas em `docs-site/docs-routes.json`. Detail: `docs/architecture/docs-site.md`.
 
 ## Ports
 

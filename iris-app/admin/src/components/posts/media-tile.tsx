@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GripVertical,
+  ImageOff,
   Loader2,
   Tags,
   Trash2,
@@ -107,12 +108,25 @@ export function MediaTile({
           className="relative w-full"
           style={aspectRatio ? { aspectRatio } : { minHeight: "9rem" }}
         >
-          <img
-            src={item.previewUrl}
-            alt={item.altText?.trim() || ""}
-            className="size-full object-contain"
-            draggable={false}
-          />
+          {item.previewMissing || !item.previewUrl ? (
+            <div
+              className="flex size-full flex-col items-center justify-center gap-2 bg-muted/40 px-3 text-center text-muted-foreground"
+              role="img"
+              aria-label={`Slide ${index + 1} sem arquivo`}
+            >
+              <ImageOff className="size-6 shrink-0 opacity-70" aria-hidden />
+              <span className="text-xs leading-snug">
+                Arquivo ausente no servidor
+              </span>
+            </div>
+          ) : (
+            <img
+              src={item.previewUrl}
+              alt={item.altText?.trim() || ""}
+              className="size-full object-contain"
+              draggable={false}
+            />
+          )}
           {item.userTags.map((tag, tagIndex) => (
             <span
               key={`${tag.username}-${tagIndex}`}

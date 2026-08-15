@@ -12,6 +12,10 @@ import { buildDemoMessageActivity, DEMO_MESSAGE_REPLY_AUDIT } from "@/demo/fixtu
 import { demoSimulateWithDelay } from "@/demo/fixtures/simulator";
 import { demoMessageSimulateWithDelay } from "@/demo/fixtures/message-simulator";
 import type { SimulateRequestBody } from "@/demo/fixtures/simulator";
+import {
+  DEMO_STORE_CONNECTIONS,
+  DEMO_STORE_FIELD_POLICIES,
+} from "@/demo/fixtures/stores";
 import { demoAssetImageUrl } from "@/demo/demo-images";
 import { buildDemoCommentActivity } from "@/demo/fixtures/build-demo-comments";
 import type { Asset, Post, UpdatePostBody } from "@/lib/types";
@@ -227,7 +231,15 @@ async function handleGet(pathname: string, searchParams: URLSearchParams) {
   }
 
   if (pathname === "/api/store-connections") {
-    return { store_connections: [] };
+    return { store_connections: DEMO_STORE_CONNECTIONS };
+  }
+
+  const storeFieldPoliciesMatch = matchPath(
+    pathname,
+    "/api/store-connections/:id/field-policies",
+  );
+  if (storeFieldPoliciesMatch) {
+    return { policies: DEMO_STORE_FIELD_POLICIES };
   }
 
   const productStoreLinksMatch = matchPath(pathname, "/api/products/:id/store-links");
@@ -354,6 +366,16 @@ async function handleMutation(
       });
     }
     return demoSimulateWithDelay(body as SimulateRequestBody);
+  }
+
+  const storeTestMatch = matchPath(pathname, "/api/store-connections/:id/test");
+  if (storeTestMatch && method === "POST") {
+    return { ok: true, message: "Demo connection is healthy." };
+  }
+
+  const storeSyncMatch = matchPath(pathname, "/api/store-connections/:id/sync");
+  if (storeSyncMatch && method === "POST") {
+    return { imported: 2, updated: 1, skipped: 0, errors: [] };
   }
 
   const postPublishMatch = matchPath(pathname, "/api/posts/:id/publish");

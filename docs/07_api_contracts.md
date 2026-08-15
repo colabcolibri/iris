@@ -86,14 +86,15 @@ Código via interface (SQLite) ou `IRIS_MCP_CONNECTION_CODE` no `.env`. Guia: `d
 
 **Escopo MCP:** equivalente ao token agent — posts, assets, comentários, mensagens DM (leitura/contexto), insights, webhooks (leitura), catálogo de produtos, persona e conteúdo editorial do agente (comentários e DM). Sem LLM settings nem OAuth Meta.
 
-### MCP tools (45)
+### MCP tools (46)
 
 | Tool | Equivalente REST | Descrição |
 | ---- | ---------------- | --------- |
+| `iris_help` | — | Guia para agentes (publish, campos, settings, campanha, permissões). Sempre disponível. Opcional `topic` |
 | `iris_list_posts` | `GET /api/posts` | Lista com `status`, `from`, `to` |
 | `iris_get_post` | `GET /api/posts/:id` | Post + metadados de assets |
 | `iris_create_post` | `POST /api/posts` | Cria rascunho |
-| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, `carousel_summary`, `reply_prompt`, flags `silence_*`, agenda ou status (**bloqueia** `status=cancelled` — use `iris_cancel_post`) |
+| `iris_update_post` | `PATCH /api/posts/:id` | Atualiza legenda, briefing, campanha (`agentActiveDays`, `privateReplyMode`, `replyMode`), `silence_*`, agenda ou status (**bloqueia** `status=cancelled`) |
 | `iris_cancel_post` | `DELETE /api/posts/:id` | Soft-delete → `cancelled`. Exige `confirmPhrase: "cancelar"` após o usuário confirmar |
 | `iris_purge_cancelled_post` | `DELETE /api/posts/:id/permanent` | Apaga do banco só se já estiver `cancelled`. Exige `confirmPhrase: "deletar"` após o usuário confirmar |
 | `iris_list_post_assets` | `GET /api/posts/:id/assets` | Metadados + `url` assinada (`/publish/media/…`) |
@@ -142,8 +143,8 @@ Paridade com REST (`PATCH /api/posts/:id`), com convenção de naming do client 
 
 | Direção | Convenção | Campos |
 | ------- | --------- | ------ |
-| Resposta (`iris_get_post`, `iris_list_posts`, retorno de update) | snake_case via `serializePost` | `reply_prompt`, `silence_*`, `agent_active_days` (int\|null), `private_reply_mode` (`inherit\|off\|auto\|draft`) |
-| Argumentos (`iris_update_post`) | camelCase (mesmo padrão de `carouselSummary`) | `replyPrompt`, `silenceSoul`, `silencePage`, `silenceKnowledge`, `silenceRestrictions`, `agentActiveDays` (int 1–365 ou null), `privateReplyMode` (`inherit\|off\|auto\|draft`) |
+| Resposta (`iris_get_post`, `iris_list_posts`, retorno de update) | snake_case via `serializePost` | `reply_mode`, `reply_prompt`, `silence_*`, `agent_active_days` (int\|null), `private_reply_mode` (`inherit\|off\|auto\|draft`) |
+| Argumentos (`iris_update_post`) | camelCase (mesmo padrão de `carouselSummary`) | `replyPrompt`, `replyMode`, `silenceSoul`, `silencePage`, `silenceKnowledge`, `silenceRestrictions`, `agentActiveDays` (int 1–365 ou null), `privateReplyMode` (`inherit\|off\|auto\|draft`) |
 
 Validação e persistência delegadas a `normalizeUpdatePost` — mesmas regras que REST. Silenciar `silenceRestrictions` não desliga guardrails hardcoded do harness de resposta.
 

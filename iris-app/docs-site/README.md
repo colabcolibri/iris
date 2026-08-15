@@ -1,37 +1,27 @@
 # Iris docs site (Starlight)
 
-Fonte dos guias públicos PT/EN. **Não é um site separado** — o build vai para `../public/docs/` e o Iris serve em **`/docs/`**.
+Fonte dos guias públicos PT/EN. Build → `../public/docs/`, servido em **`/docs/`**.
 
-## Build (obrigatório para ver no Iris)
+## Build
 
 ```bash
 cd iris-app
 pnpm docs:build
-# ou junto com o admin:
-pnpm build:admin
 ```
 
-Depois: `http://127.0.0.1:8792/docs/` (com `pnpm dev` ou `pnpm start`).
+## Fontes de conteúdo
 
-## Editar conteúdo
+| Seção | Repo | Starlight |
+| ----- | ---- | --------- |
+| Rotas (redirects) | `docs-site/docs-routes.json` | runtime + static stubs |
+| Início | `docs/inicio/` | `inicio/` |
+| Uso | `docs/uso/` | `uso/` |
+| Configuração | `docs/configuracao/` | `configuracao/` |
+| Referência dev | `docs/configuracao/referencia-tecnica.md` | `dev/` |
+| EN | `scripts/build-en-content.mjs` | `en/` |
 
-| Seção | Fonte PT (repo) |
-| ----- | ---------------- |
-| Início | `docs/inicio/README.md` |
-| Guia de uso | `docs/uso/*.md` |
-| Guia de configuração | `docs/meta/*.md` (sync → `configuracao/`) |
-| Referência técnica | `docs/meta/referencia-tecnica.md` (sync → `dev/`) |
-| EN | `scripts/build-en-content.mjs` |
-
-O `pnpm docs:build` roda `sync-docs-content.mjs` + `build-en-content.mjs` automaticamente.
-
-## Preview isolado (opcional)
-
-```bash
-pnpm docs:dev      # porta 4321, base /docs
-pnpm docs:preview
-```
+`pnpm docs:build` roda sync + EN + Astro + `fix-docs-routes.mjs`.
 
 ## Config
 
-`astro.config.mjs` — `base: "/docs"`, sidebar (uso + configuração), i18n, branding.
+`astro.config.mjs` — sidebar, i18n, `base: "/docs"`.

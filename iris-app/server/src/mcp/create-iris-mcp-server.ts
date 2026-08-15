@@ -9,6 +9,7 @@ import { registerProductTools } from "./tools/register-product-tools.ts";
 import { registerStoreTools } from "./tools/register-store-tools.ts";
 import { registerSettingsPersonaTools } from "./tools/register-settings-persona-tools.ts";
 import { registerSimulatorTools } from "./tools/register-simulator-tools.ts";
+import { registerHelpTools } from "./tools/register-help-tools.ts";
 import type { AppContext } from "../api/app-context.ts";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
@@ -24,6 +25,8 @@ export function createIrisMcpServer(ctx: AppContext): McpServer {
   });
 
   wrapMcpServerWithPermissionPolicy(server, policy);
+
+  registerHelpTools(server);
 
   registerPostTools(server, ctx);
   registerAssetTools(server, ctx);

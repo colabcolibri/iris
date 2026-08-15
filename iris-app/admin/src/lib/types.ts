@@ -67,6 +67,7 @@ export type Asset = {
   height?: number | null;
   alt_text?: string | null;
   user_tags?: AssetUserTag[];
+  file_readable?: boolean;
 };
 
 export type Comment = {

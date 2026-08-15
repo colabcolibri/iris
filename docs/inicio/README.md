@@ -1,34 +1,34 @@
-# Bem-vindo à documentação do Iris
+# Bem-vindo ao guia de uso do Iris
 
-O Iris agenda publicações no Instagram, acompanha comentários e mensagens e pode responder com ajuda de um agente de IA — sempre na voz da sua marca.
+O Iris é o painel onde você **agenda posts no Instagram**, **responde comentários e DMs** e, se quiser, deixa um **agente de IA** ajudar — sempre na voz da sua marca.
 
-Escolha o caminho certo para você:
+Este site documenta **só como usar o admin**. Instalação, app Meta e servidor são documentação **interna** do time (não publicada aqui).
 
-## Guia de uso
+## Por onde começar?
 
-Para quem **usa o admin no dia a dia**: calendário, postagens, comentários, DMs, produtos e configurações do agente.
+| Se você… | Comece aqui |
+| -------- | ----------- |
+| Acabou de receber acesso | [Primeiro acesso](../uso/primeiro-acesso.md) |
+| Vai publicar conteúdo | [Calendário — visão geral](../uso/calendario-visao-geral.md) |
+| Cuida de comentários | [Comentários — visão geral](../uso/comentarios-visao-geral.md) |
+| Atende DMs | [Mensagens — visão geral](../uso/mensagens-visao-geral.md) |
+| Configura tom da marca | [Persona da marca](../uso/persona-marca.md) |
+| Quer saber se está tudo ok | [Webhooks](../uso/webhooks.md) |
 
-→ [Começar pelo guia de uso](../uso/)
+[IMAGEM: captura do admin na visão Calendário com sidebar completa e header com @usuario conectado — arquivo sugerido `04-sidebar-completa.png`]
 
-Ideal se você já tem o Iris no ar e Instagram conectado.
+## Mapa do menu (referência rápida)
 
-## Guia de configuração
+| Grupo no menu | Itens |
+| ------------- | ----- |
+| Dashboard | **Calendário**, **Lista**, **Kanban** |
+| Operação | **Comentários**, **Mensagens**, **Webhooks**, **Execuções**, **Fila do agente** |
+| Editorial / catálogo | **Produtos**, **Lojas** |
+| Lab | **Simulador comentários**, **Simulador DM** |
+| Rodapé | **Configurações**, **Persona** |
 
-Para **deixar o Iris funcionando** com a Meta/Instagram: conta profissional, app Meta, variáveis no servidor, webhooks e conexão no admin.
+Detalhes: [Navegação no admin](../uso/navegacao-no-admin.md).
 
-→ [Começar pela configuração](../configuracao/)
+## Lista de imagens do guia
 
-Siga na ordem na primeira vez. Se você só opera a conta, faça os passos **01** e **05**; quem instalou o servidor faz o restante.
-
-## Não sabe por onde ir?
-
-| Sua situação | Comece aqui |
-| ------------ | ----------- |
-| Acabei de receber acesso ao admin | [Uso — primeiro acesso](../uso/01-primeiro-acesso/) |
-| Preciso conectar o Instagram | [Configuração — passo 05](../configuracao/05-conectar-instagram-admin/) |
-| O Iris ainda não está instalado | [Configuração — índice](../configuracao/) |
-| Algo parou de funcionar | [Problemas na configuração](../configuracao/troubleshooting/) ou [Problemas no uso](../uso/troubleshooting/) |
-
-## Referência técnica
-
-Fluxos de API e detalhes para integradores → [Referência técnica](../dev/referencia-tecnica/)
+Todas as capturas necessárias estão em [Lista de imagens (IMAGENS.md)](../uso/IMAGENS.md) — use como checklist antes de publicar a versão final.

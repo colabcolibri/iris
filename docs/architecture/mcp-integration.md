@@ -62,10 +62,11 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 
 | Tool | Descrição |
 | ---- | --------- |
+| `iris_help` | **Guia para agentes** — fluxo de publicação, todos os campos de post, app settings, campanha/private reply, assets, permissões MCP. Sempre disponível (sem gate de permissão). Opcional `topic`: `overview`, `publish`, `post_fields`, `campaign`, `app_settings`, `assets`, `permissions`, `tools` |
 | `iris_list_posts` | Lista posts (`status`, `from`, `to` opcionais) |
-| `iris_get_post` | Post + metadados de assets; inclui `collaborators` (até 3 usernames de collab), `carousel_summary` (resumo **visual** do carrossel — contexto factual, não instrução) e `reply_prompt` (briefing de reply **só deste post** — promoção/preço/link/tom; precedência sobre blocos editoriais globais). Também `silence_soul`, `silence_page`, `silence_knowledge`, `silence_restrictions` (boolean) |
+| `iris_get_post` | Post + metadados de assets; inclui `collaborators`, `carousel_summary`, `reply_prompt`, `silence_*`, `reply_mode`, `agent_active_days`, `private_reply_mode` |
 | `iris_create_post` | Cria rascunho (`caption`, `channel`, `scheduledAt`, opcional `collaborators`) |
-| `iris_update_post` | Atualiza legenda, `collaborators` (até 3 usernames; `[]`/null limpa — convite de collab no publish, não tag na foto), `carouselSummary` → `carousel_summary` (só resumo visual das imagens), `replyPrompt` → `reply_prompt` (briefing de reply / “prompt adicional”), flags `silence*`, agenda ou status. **Não** misturar: instruções de resposta vão em `replyPrompt`; descrição do que aparece nos slides em `carouselSummary`. **Não** aceita `status=cancelled` — use `iris_cancel_post`. Silenciar `silenceRestrictions` não remove guardrails hardcoded do harness |
+| `iris_update_post` | Atualiza legenda, `collaborators`, `carouselSummary`, `replyPrompt`, `replyMode`, `agentActiveDays`, `privateReplyMode`, flags `silence*`, agenda ou status. Ver `iris_help`. **Não** aceita `status=cancelled` — use `iris_cancel_post` |
 | `iris_cancel_post` | Soft-delete (`cancelled`). Exige confirmação do usuário + `confirmPhrase: "cancelar"` |
 | `iris_purge_cancelled_post` | Delete permanente (só `cancelled`). Exige confirmação do usuário + `confirmPhrase: "deletar"` |
 | `iris_prepare_post_asset_upload` | URL assinada one-shot + `curl` multipart (sem base64) |
@@ -102,8 +103,8 @@ cd iris-agent && ./scripts/iris-mcp-check.sh
 | `iris_update_reply_persona` | Atualiza persona (campos parciais aceitos) |
 | `iris_get_agent_content` | Blocos Markdown (`soul`, `page`, `knowledge`, `restrictions`) |
 | `iris_update_agent_content` | Atualiza blocos editoriais (quatro campos obrigatórios) |
-| `iris_get_app_settings` | Config operacional (`timezone`, `reply_mode`, delay, auto-monitor) |
-| `iris_update_app_settings` | Atualização parcial — mesmas validações de `PUT /api/settings/app` |
+| `iris_get_app_settings` | Config operacional (`timezone`, `reply_mode`, `private_reply_mode`, delays, auto-monitor) |
+| `iris_update_app_settings` | Atualização parcial — inclui `private_reply_mode` global; mesmas validações de `PUT /api/settings/app` |
 | `iris_list_simulator_scenarios` | Lista cenários persistidos (resumo — sem thread completa) |
 | `iris_create_simulator_scenario` | Cria cenário (`id`, `label`, `description`, `caption`, `carousel_summary`, `thread[]`, `target_author`, `target_text`) |
 | `iris_simulate_reply` | Executa harness sandbox (`scenario_id` ou payload inline; opcional `response_language`) — não publica na Meta |

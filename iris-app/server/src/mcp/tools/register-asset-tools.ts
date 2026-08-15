@@ -45,10 +45,19 @@ export function registerAssetTools(server: McpServer, ctx: AppContext): void {
         return toolError("post not found");
       }
 
-      const assets = ctx.assets.listByPostId(args.postId).map((asset) => ({
-        ...serializeAsset(asset),
-        url: signedAssetUrl(ctx, args.postId, asset.storagePath),
-      }));
+      const assets = await Promise.all(
+        ctx.assets.listByPostId(args.postId).map(async (asset) => {
+          const filename = filenameFromStoragePath(asset.storagePath);
+          const fileReadable =
+            (await ctx.mediaStorage.read(args.postId, filename)) !== null;
+          return {
+            ...serializeAsset(asset, { fileReadable }),
+            url: fileReadable
+              ? signedAssetUrl(ctx, args.postId, asset.storagePath)
+              : null,
+          };
+        }),
+      );
       return jsonToolContent({ post_id: args.postId, assets });
     },
   );

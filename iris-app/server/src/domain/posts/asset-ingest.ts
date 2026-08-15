@@ -3,8 +3,10 @@ import type { ImageOptimizer } from "../../ports/image-optimizer.ts";
 import type { MediaStorage } from "../../ports/media-storage.ts";
 import type { PostRepository } from "../../ports/post-repository.ts";
 import type { PostAsset } from "./post.ts";
+import type { AssetUserTag } from "./asset-tags.ts";
 import { getImageLimits } from "./image-limits.ts";
 import { ImageOptimizationError } from "../../ports/image-optimizer.ts";
+import { deletePostAsset } from "./post-assets.ts";
 
 export class AssetIngestError extends Error {
   status: number;
@@ -49,6 +51,21 @@ export async function ingestPostAsset(
     throw new AssetIngestError("file too large", 413);
   }
 
+  const existingAtSort = deps.assets
+    .listByPostId(input.postId)
+    .filter((asset) => asset.sortOrder === input.sortOrder);
+  let preservedAltText: string | null | undefined;
+  let preservedUserTags: AssetUserTag[] | undefined;
+  for (const existing of existingAtSort) {
+    if (preservedAltText === undefined && existing.altText !== null) {
+      preservedAltText = existing.altText;
+    }
+    if (preservedUserTags === undefined && existing.userTags.length > 0) {
+      preservedUserTags = existing.userTags;
+    }
+    await deletePostAsset(input.postId, existing.id, deps);
+  }
+
   let optimized;
   try {
     optimized = await deps.imageOptimizer.optimize(input.buffer, input.filename);
@@ -75,5 +92,7 @@ export async function ingestPostAsset(
     height: optimized.height,
     originalSizeBytes: optimized.originalSizeBytes,
     optimizedSizeBytes: optimized.optimizedSizeBytes,
+    altText: preservedAltText,
+    userTags: preservedUserTags,
   });
 }

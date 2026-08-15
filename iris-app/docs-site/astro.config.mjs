@@ -10,66 +10,105 @@ const sidebar = [
     items: [{ slug: "inicio" }],
   },
   {
-    label: "Guia de uso",
-    translations: { en: "User guide" },
+    label: "Primeiros passos",
+    translations: { en: "Getting started" },
     items: [
-      { slug: "uso" },
-      { slug: "uso/01-primeiro-acesso" },
-      { slug: "uso/02-calendario-e-postagens" },
-      { slug: "uso/03-comentarios" },
-      { slug: "uso/04-mensagens" },
-      { slug: "uso/05-produtos-e-lojas" },
-      { slug: "uso/06-configuracoes-e-agentes" },
-      { slug: "uso/07-webhooks-e-monitoramento" },
+      { slug: "uso/primeiro-acesso" },
+      { slug: "uso/navegacao-no-admin" },
+      { slug: "uso/conectar-instagram" },
+    ],
+  },
+  {
+    label: "Calendário e postagens",
+    translations: { en: "Calendar & posts" },
+    items: [
+      { slug: "uso/calendario-visao-geral" },
+      { slug: "uso/criar-postagem" },
+      { slug: "uso/agendar-e-publicar" },
+      { slug: "uso/editar-e-status" },
+      { slug: "uso/kanban-pipeline" },
+      { slug: "uso/lista-editorial" },
+      { slug: "uso/post-campanha-agente" },
+    ],
+  },
+  {
+    label: "Comentários",
+    translations: { en: "Comments" },
+    items: [
+      { slug: "uso/comentarios-visao-geral" },
+      { slug: "uso/comentarios-importar" },
+      { slug: "uso/comentarios-responder" },
+      { slug: "uso/comentarios-aprovacao" },
+      { slug: "uso/comentarios-sincronizar" },
+    ],
+  },
+  {
+    label: "Mensagens (DMs)",
+    translations: { en: "Messages" },
+    items: [
+      { slug: "uso/mensagens-visao-geral" },
+      { slug: "uso/mensagens-responder" },
+      { slug: "uso/mensagens-aprovacao" },
+      { slug: "uso/mensagens-escalacao" },
+    ],
+  },
+  {
+    label: "Produtos e lojas",
+    translations: { en: "Products & stores" },
+    items: [
+      { slug: "uso/produtos-cadastro" },
+      { slug: "uso/produtos-vinculo-yampi" },
+      { slug: "uso/lojas-conectar" },
+      { slug: "uso/lojas-politicas-campo" },
+    ],
+  },
+  {
+    label: "Configurações e persona",
+    translations: { en: "Settings & persona" },
+    items: [
+      { slug: "uso/configuracoes-visao-geral" },
+      { slug: "uso/fuso-e-monitoramento" },
+      { slug: "uso/agente-comentarios" },
+      { slug: "uso/agente-dms" },
+      { slug: "uso/alertas-operador" },
+      { slug: "uso/persona-marca" },
+    ],
+  },
+  {
+    label: "Monitoramento",
+    translations: { en: "Monitoring" },
+    items: [
+      { slug: "uso/webhooks" },
+      { slug: "uso/execucoes-agente" },
+      { slug: "uso/fila-agente" },
+    ],
+  },
+  {
+    label: "Lab",
+    translations: { en: "Lab" },
+    items: [
+      { slug: "uso/simulador-comentarios" },
+      { slug: "uso/simulador-dm" },
+    ],
+  },
+  {
+    label: "Ajuda",
+    translations: { en: "Help" },
+    items: [
       { slug: "uso/troubleshooting" },
+      { slug: "uso/imagens" },
     ],
-  },
-  {
-    label: "Guia de configuração",
-    translations: { en: "Setup guide" },
-    items: [
-      { slug: "configuracao" },
-      { slug: "configuracao/01-conta-instagram" },
-      { slug: "configuracao/02-criar-app-meta" },
-      { slug: "configuracao/03-variaveis-de-ambiente" },
-      { slug: "configuracao/04-webhooks" },
-      { slug: "configuracao/05-conectar-instagram-admin" },
-    ],
-  },
-  {
-    label: "Mensagens (DMs) — configuração",
-    translations: { en: "DM setup" },
-    items: [
-      { slug: "configuracao/06-mensagens-receptor-primario" },
-      { slug: "configuracao/07-page-access-token" },
-    ],
-  },
-  {
-    label: "App Review",
-    items: [{ slug: "configuracao/08-app-review" }],
-  },
-  {
-    label: "Suporte",
-    translations: { en: "Support" },
-    items: [{ slug: "configuracao/troubleshooting" }],
-  },
-  {
-    label: "Desenvolvedores",
-    translations: { en: "Developers" },
-    items: [{ slug: "dev/referencia-tecnica" }],
   },
 ];
 
-// https://astro.build/config
 export default defineConfig({
   base: "/docs",
   outDir: "../public/docs",
   trailingSlash: "always",
   integrations: [
     starlight({
-      title: "Iris Docs",
-      description:
-        "Guias de uso e configuração do Iris para Instagram e Meta.",
+      title: "Iris — guia de uso",
+      description: "Como operar o admin Iris no dia a dia.",
       logo: {
         src: "./src/assets/iris-logo.svg",
         alt: "Iris",

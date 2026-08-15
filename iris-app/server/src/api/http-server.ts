@@ -51,7 +51,9 @@ import { startMessageResponder } from "../workers/message-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
 import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
 import { readAdminSession } from "../domain/auth/auth-session.ts";
-import { shouldGateSpaGet, resolveLegacyAdminRedirect, resolveDocsRedirect } from "./spa-route-policy.ts";
+import { shouldGateSpaGet, resolveLegacyAdminRedirect } from "./spa-route-policy.ts";
+import { resolveDocsRedirect } from "./docs-route-policy.ts";
+import { serveDocsNotFound, sendSafeRedirect } from "./serve-docs-static.ts";
 import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
 import { PUBLIC_DIR } from "../paths.ts";
 
@@ -135,14 +137,7 @@ function serveStatic(pathname: string, res: ServerResponse): void {
   const filePath = resolvePublicPath(pathname);
 
   if (!filePath || !existsSync(filePath)) {
-    if (pathname.startsWith("/docs")) {
-      const docsNotFound = join(PUBLIC_DIR, "docs/404.html");
-      if (existsSync(docsNotFound)) {
-        sendFile(docsNotFound, res);
-        return;
-      }
-      res.writeHead(302, { Location: "/docs/inicio/" });
-      res.end();
+    if (serveDocsNotFound(pathname, res, PUBLIC_DIR)) {
       return;
     }
 
@@ -250,9 +245,7 @@ async function handleRequest(
 
   if (req.method === "GET" || req.method === "HEAD") {
     const docsRedirect = resolveDocsRedirect(pathname);
-    if (docsRedirect) {
-      res.writeHead(302, { Location: docsRedirect });
-      res.end();
+    if (docsRedirect && sendSafeRedirect(res, docsRedirect)) {
       return;
     }
   }
