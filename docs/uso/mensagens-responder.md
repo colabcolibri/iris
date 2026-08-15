@@ -8,7 +8,7 @@
 2. Leia histórico (mensagens do cliente vs. **Marca**).
 3. Campo **Escreva uma mensagem…** → **Enviar mensagem**.
 
-![composer **Escreva uma mensagem…** com badge **Janela aberta**](/docs/images/uso/21-dm-composer.png)
+![conversa com composer e histórico de mensagens](/docs/images/uso/21-dm-composer.png)
 
 ## Responder citando mensagem
 

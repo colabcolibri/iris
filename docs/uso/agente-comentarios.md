@@ -12,8 +12,6 @@ Card **Agente de comentários**:
 | **Tempo antes de responder** | Imediato ou fila com delay (minutos) |
 | **Janela de resposta** | Dias de histórico — comentários mais antigos ignorados |
 
-![card completo com **Modo global** aberto](/docs/images/uso/29-agente-comentarios-card.png)
-
 Posts com **Seguir global** obedecem estes defaults. Override por post em [Agente no post](./post-campanha-agente.md).
 
 → [Comentários — aprovação](./comentarios-aprovacao.md) · [Fila do agente](./fila-agente.md)

@@ -18,7 +18,7 @@ Testar respostas do agente de comentários **sem publicar** no Instagram.
 2. Execute o harness.
 3. Leia o resultado: triagem, rascunho, verificação.
 
-![palco do simulador com resultado à direita](/docs/images/uso/36-simulador-comentarios.png)
+![palco do simulador com cenário e painel de resultado](/docs/images/uso/36-simulador-comentarios.png)
 
 ## Dicas
 

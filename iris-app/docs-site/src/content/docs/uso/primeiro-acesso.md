@@ -45,8 +45,6 @@ Se no header aparecer o aviso *"Conecte sua conta do Instagram para agendar e pu
 3. Aceite **todas** as permissões solicitadas.
 4. Volte ao Iris — o chip verde deve mostrar **`@seu_usuario`**.
 
-![header com botão **Conectar** antes da conexão](/docs/images/uso/06-header-conectar.png)
-
 Se o botão não aparecer e o `@usuario` já estiver visível, a conta já está ligada → pule para o próximo guia.
 
 > **Nota:** se login funciona mas Instagram nunca conecta, peça ao time técnico para validar a instalação. Este guia não cobre configuração de servidor ou app Meta.

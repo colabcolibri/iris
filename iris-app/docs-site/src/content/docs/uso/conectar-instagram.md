@@ -16,8 +16,6 @@ Você precisa conectar quando vê:
 - Aviso *"Conecte sua conta do Instagram para agendar e publicar posts"*
 - Aviso *"Sua sessão com o Instagram expirou. Conecte de novo para agendar publicações."*
 
-![header desconectado com botão **Conectar Instagram**](/docs/images/uso/06-header-conectar.png)
-
 ## Passo a passo — OAuth
 
 1. Clique **Conectar** (ou **Reconectar Instagram**).

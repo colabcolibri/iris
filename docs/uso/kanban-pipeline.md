@@ -23,8 +23,6 @@ Botão **Período** no topo — presets:
 
 Rascunhos sem data planejada **sempre** aparecem.
 
-![menu **Período** aberto com preset **Hoje → +15 dias**](/docs/images/uso/12-kanban-filtro-periodo.png)
-
 ## Ações rápidas no card
 
 Menu **Ações** do card: desagendar, cancelar, abrir editor.

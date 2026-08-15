@@ -7,7 +7,7 @@ Com **Modo global = Com aprovação** em **Configurações → Agente de coment�
 1. **Atividade** → sub-aba **Aprovação** — todos os rascunhos aguardando.
 2. Ou dentro de cada post — badge **{n} pendentes**.
 
-![aba Atividade → Aprovação com lista de rascunhos](/docs/images/uso/18-atividade-aprovacao.png)
+Veja também o exemplo de thread com rascunho em [Comentários — responder](./comentarios-responder.md).
 
 ## Ações
 

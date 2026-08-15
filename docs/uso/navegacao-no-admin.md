@@ -26,8 +26,6 @@ O menu lateral organiza o Iris em áreas de trabalho:
 | Menu da conta | **Testar conexão**, **Trocar conta**, **Desconectar**, **Sair** |
 | Seletor de idioma | **Português** / **English** |
 
-![badge **Agente: Automático** no header com seta indicando que é clicável](/docs/images/uso/37-badge-agente-header.png)
-
 ## Três visões do calendário
 
 **Calendário**, **Lista** e **Kanban** não são telas separadas — são modos de ver o mesmo pipeline editorial. Alterne clicando no item correspondente na sidebar.

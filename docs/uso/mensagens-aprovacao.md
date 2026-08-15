@@ -11,7 +11,7 @@
 
 Aba **Atividade → Aprovação** — fila centralizada de DMs.
 
-![mensagem com **Rascunho IA** e botões Salvar/Enviar](/docs/images/uso/22-dm-rascunho-ia.png)
+Veja o fluxo de rascunho na captura de [Mensagens — responder](./mensagens-responder.md).
 
 ## Modo por conversa
 

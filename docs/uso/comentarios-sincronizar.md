@@ -9,8 +9,6 @@
 | **Sincronizar** | Puxa comentários novos, mídia e métricas da Meta |
 | **Vincular respostas** | Reconcilia respostas já publicadas no Instagram com o Iris |
 
-![barra de ações com **Sincronizar** e **Vincular respostas**](/docs/images/uso/19-post-sincronizar.png)
-
 ## Abas do detalhe
 
 | Aba | Conteúdo |

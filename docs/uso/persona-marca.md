@@ -27,8 +27,6 @@ Blocos editoriais do agente público:
 
 Blocos paralelos **SOUL (DM)**, **Sobre a página (DM)**, **Base de conhecimento (DM)**, **Restrições (DM)** — tom mais direto no inbox; inclui produtos ativos na triagem de compra.
 
-![seção **Conteúdo (DM)** com editores](/docs/images/uso/31-persona-conteudo-dm.png)
-
 **Salvar conteúdo DM**
 
 Mudanças afetam **novas** respostas. Posts/conversas podem silenciar blocos via briefing.

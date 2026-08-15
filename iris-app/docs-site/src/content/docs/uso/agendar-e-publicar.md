@@ -16,8 +16,6 @@ Instagram conectado no header (`@usuario`). Sem conexão, o Iris bloqueia agenda
 2. Escolha data e hora (respeitam o **Fuso editorial** das Configurações).
 3. Confirme com **Agendar publicação** no rodapé.
 
-![campo datetime + botões **Salvar rascunho** e **Agendar publicação** destacados](/docs/images/uso/09-agendar-footer.png)
-
 **Como saber que deu certo:** status **Agendado**; post aparece no **Calendário** na data/hora; hint *"Agendado — aparece no calendário e será publicado automaticamente"*.
 
 O servidor Iris precisa estar online no horário — publicação automática roda no backend.

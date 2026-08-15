@@ -19,8 +19,6 @@ Itens aguardando processamento pelo worker de comentários e DMs:
 
 Indicador de conexão: **Ao vivo** / **Reconectando…**
 
-![tabela com itens em debounce e due](/docs/images/uso/35-fila-agente.png)
-
 ## Quando olhar
 
 - Agente em **Automático** mas nada publica — fila parada?

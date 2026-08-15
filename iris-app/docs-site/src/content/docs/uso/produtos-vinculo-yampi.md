@@ -17,8 +17,6 @@ tableOfContents:
 5. **Preview resolvido** — valores finais que o agente verá
 6. **Salvar políticas de campo**
 
-![seção Loja virtual com ID Yampi e preview](/docs/images/uso/25-produto-loja-yampi.png)
-
 ## Políticas globais vs. por produto
 
 Políticas globais da loja definem o padrão; cada produto pode sobrescrever. Detalhes em [Políticas de campo](./lojas-politicas-campo.md).

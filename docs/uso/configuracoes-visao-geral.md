@@ -16,7 +16,7 @@ Layout split: navegação lateral de seções + conteúdo.
 | **Permissões MCP** | `#mcp-permissions` | Escopo das tools |
 | **Provedor de IA** | `#llm` | API key, modelo, visão |
 
-![split layout com seção Agente de comentários selecionada](/docs/images/uso/28-configuracoes-nav.png)
+![layout split — lista de seções à esquerda e conteúdo da seção à direita](/docs/images/uso/28-configuracoes-nav.png)
 
 > **Persona** não fica aqui — menu separado **Persona** (`/admin/persona`).
 

@@ -20,8 +20,6 @@ tableOfContents:
 2. No modal, marque os posts desejados.
 3. Clique **Importar**.
 
-![modal **Importar da Meta** com checkboxes de posts](/docs/images/uso/16-importar-meta.png)
-
 Posts importados podem ter badge **Publicada**, **Agendada** ou **Externa**.
 
 ## Adicionar por link

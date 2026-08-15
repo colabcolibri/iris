@@ -30,8 +30,6 @@ Linha **Estado efetivo agora: {label}** mostra o modo calculado.
 
 **DM após comentário** — envia mensagem privada no inbox quando alguém comenta (API Meta; uma DM por comentário, janela de 7 dias).
 
-![seção Resposta IA com modo, dias ativos e toggle DM](/docs/images/uso/14-post-resposta-ia.png)
-
 Link **Editar persona** abre **Persona** em nova contexto.
 
 → Hub operacional: [Comentários — visão geral](./comentarios-visao-geral.md)
