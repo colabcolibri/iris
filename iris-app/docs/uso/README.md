@@ -14,7 +14,7 @@ Documentação para **operadores** do admin: nomes reais de telas, botões e flu
 - [Criar postagem](./criar-postagem.md)
 - [Agendar e publicar](./agendar-e-publicar.md)
 - [Editar e status](./editar-e-status.md)
-- [Kanban — pipeline](./kanban-pipeline.md)
+- [Kanban](./kanban-pipeline.md)
 - [Lista editorial](./lista-editorial.md)
 - [Agente no post (campanha)](./post-campanha-agente.md)
 
@@ -56,4 +56,7 @@ Documentação para **operadores** do admin: nomes reais de telas, botões e flu
 
 ### Ajuda
 - [Problemas no dia a dia](./troubleshooting.md)
+- [Glossário](./glossario.md)
 - [Lista de imagens a produzir](./IMAGENS.md)
+
+> Vai criar ou atualizar um artigo aqui? Veja o [guia de escrita](../configuracao/guia-de-escrita-docs-uso.md) (documentação interna do time).

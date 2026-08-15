@@ -1,6 +1,6 @@
-# Kanban — pipeline editorial
+# Kanban
 
-**Visão:** menu **Kanban** · título da página **Pipeline editorial**
+**Visão:** menu **Kanban** (a página tem o título interno **Pipeline editorial** — mesma tela)
 
 ## Colunas
 

@@ -1,27 +1,29 @@
 # Execuções do agente
 
-**Rota:** `/admin/agent-runs` · menu **Execuções**
+**Rota:** `/admin/agent-runs` · menu **Execuções** · **Para:** entender por que a IA respondeu (ou não respondeu) de determinada forma
 
-## Lista
+## Lista de execuções
 
-Filtros por status e tier. Tabela com colunas típicas: When, Trigger, Model, Tokens.
+Cada vez que o agente avalia um comentário ou DM, isso gera uma "execução". A lista mostra filtros por status e por [tier](./glossario.md#termos-técnicos), e uma tabela com quando aconteceu, o que disparou a execução, qual modelo de IA respondeu e quantos [tokens](./glossario.md#termos-técnicos) foram usados.
 
 ![lista de runs com filtro de status](/docs/images/uso/34-execucoes-agente.png)
 
 ## Detalhe de uma execução
 
-Clique na linha para ver estágios:
+Clique numa linha para ver as etapas que o agente seguiu:
 
-1. **Triagem** — decisão de responder ou não
-2. **Rascunho** — texto gerado
-3. **Verificação** — checagens finais
+1. **Triagem** — decisão de responder ou não a esse comentário/mensagem.
+2. **Rascunho** — o texto que a IA gerou.
+3. **Verificação** — checagens finais antes de publicar ou enviar.
 
-Inclui modelo usado, tokens e link **abrir thread do comentário** (quando aplicável).
+O detalhe também mostra qual modelo respondeu, quantos tokens consumiu, e um link **abrir thread do comentário** quando aplicável.
 
-## Quando consultar
+## Quando consultar esta tela
 
-- Entender por que a IA respondeu (ou não) de determinada forma
-- Depurar após **Ver decisão do agente** em um comentário
-- Auditar custo/tokens em período de campanha
+- Para entender por que a IA respondeu (ou não) de um jeito específico a um comentário ou mensagem.
+- Depois de clicar em **Ver decisão do agente** num comentário — o link leva direto para cá.
+- Para acompanhar o uso da IA (modelo e tokens) durante uma campanha, se quiser ter noção de custo.
+
+## Próximos passos
 
 → [Comentários — responder](./comentarios-responder.md) · [Fila do agente](./fila-agente.md)
