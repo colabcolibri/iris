@@ -54,8 +54,57 @@ test("enqueueSchedulablePendingComments schedules pending comments when post inh
 
     const enqueued = enqueueSchedulablePendingComments(ctx, { postId: post.id });
     assert.equal(enqueued, 1);
+    assert.ok(ctx.comments.findById(comment.id)?.agentReplyNotBefore);
+    assert.equal(ctx.comments.listPendingForAgentReply().length, 0);
+  } finally {
+    db.close();
+  }
+});
+
+test("enqueueSchedulablePendingComments does not reset existing agent_reply_not_before", () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      encryptionKey: "b".repeat(64),
+      metaAccessToken: "meta",
+    });
+
+    ctx.appSettingsStore.upsert({
+      timezone: "America/Sao_Paulo",
+      replyMode: "auto",
+      autoReplyEnabled: true,
+      replyDelaySeconds: 180,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
+    });
+    withMockLlm(ctx);
+
+    const post = ctx.posts.create({
+      channel: "instagram",
+      status: "published",
+      igMediaId: "media-2",
+      publishedAt: new Date().toISOString(),
+      replyMode: "auto",
+    });
+
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-scheduled",
+      postId: post.id,
+      authorUsername: "fan",
+      text: "Oi",
+    });
+
+    const dueAt = new Date(Date.now() - 1000).toISOString();
+    ctx.comments.scheduleAgentReply(comment.id, dueAt);
+
+    const enqueued = enqueueSchedulablePendingComments(ctx, { postId: post.id });
+    assert.equal(enqueued, 0);
+    assert.equal(ctx.comments.findById(comment.id)?.agentReplyNotBefore, dueAt);
     assert.equal(ctx.comments.listPendingForAgentReply().length, 1);
-    assert.equal(ctx.comments.listPendingForAgentReply()[0]?.id, comment.id);
   } finally {
     db.close();
   }

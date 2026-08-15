@@ -56,6 +56,11 @@ export function enqueueSchedulablePendingComments(
         continue;
       }
 
+      // Já agendado (webhook ou enqueue anterior): não reinicia o debounce.
+      if (comment.agentReplyNotBefore != null) {
+        continue;
+      }
+
       if (enqueueCommentReply(ctx, comment.id)) {
         enqueued += 1;
       }

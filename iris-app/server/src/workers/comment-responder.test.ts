@@ -6,6 +6,13 @@ import { createAppContext } from "../api/app-context.ts";
 import { startCommentResponder } from "./comment-responder.ts";
 import { createHarnessLlmMock } from "../test-utils/harness-llm-mock.ts";
 import { createTestLlmCompletion } from "../ports/llm-completer.ts";
+import type { LlmCompleter } from "../ports/llm-completer.ts";
+
+function withMockLlm(ctx: ReturnType<typeof createAppContext>): LlmCompleter {
+  const llm = createHarnessLlmMock({ draftText: "Obrigado pelo interesse!" });
+  (ctx as { resolveLlmCompleter: () => LlmCompleter | null }).resolveLlmCompleter = () => llm;
+  return llm;
+}
 
 test("comment responder replies to pending comments with auto_reply enabled", async () => {
   const db = openDatabase(":memory:");
@@ -192,6 +199,69 @@ test("comment responder skips comments before agent_reply_not_before", async () 
     stopAgain();
 
     assert.equal(called, true);
+  } finally {
+    db.close();
+  }
+});
+
+test("comment responder processes due comments without resetting debounce when LLM is on context", async () => {
+  const db = openDatabase(":memory:");
+
+  try {
+    runMigrations(db);
+    const ctx = createAppContext({
+      db,
+      adminToken: "admin",
+      agentToken: "agent",
+      encryptionKey: "i".repeat(64),
+      metaAccessToken: "meta",
+      publicBaseUrl: "https://iris.example",
+      publishUrlSecret: "publish-secret",
+    });
+
+    ctx.appSettingsStore.upsert({
+      timezone: "America/Sao_Paulo",
+      replyMode: "auto",
+      autoReplyEnabled: true,
+      replyDelaySeconds: 180,
+      agentReplyTickIntervalSeconds: 180,
+      autoMonitorEnabled: true,
+      autoMonitorIntervalSeconds: 300,
+    });
+
+    const llm = withMockLlm(ctx);
+
+    const post = ctx.posts.create({ channel: "instagram", replyMode: "auto" });
+    const { comment } = ctx.comments.upsertFromWebhook({
+      igCommentId: "ig-due-with-llm",
+      postId: post.id,
+      text: "Quanto custa?",
+      authorUsername: "lead",
+    });
+
+    db.prepare(`UPDATE comments SET agent_reply_not_before = ? WHERE id = ?`).run(
+      new Date(Date.now() - 1000).toISOString(),
+      comment.id,
+    );
+
+    let called = false;
+    ctx.metaCommentReplier = {
+      async reply() {
+        called = true;
+        return {};
+      },
+    };
+
+    const stop = startCommentResponder(ctx, {
+      intervalMs: 50,
+      llmCompleter: llm,
+      metaCommentReplier: ctx.metaCommentReplier,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    stop();
+
+    assert.equal(called, true);
+    assert.equal(ctx.comments.findById(comment.id)?.status, "replied");
   } finally {
     db.close();
   }
