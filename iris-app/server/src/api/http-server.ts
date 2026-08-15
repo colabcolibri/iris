@@ -51,7 +51,7 @@ import { startMessageResponder } from "../workers/message-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
 import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
 import { readAdminSession } from "../domain/auth/auth-session.ts";
-import { shouldGateSpaGet, resolveLegacyAdminRedirect } from "./spa-route-policy.ts";
+import { shouldGateSpaGet, resolveLegacyAdminRedirect, resolveDocsRedirect } from "./spa-route-policy.ts";
 import { IrisMcpGateway, isAllowedMcpHost } from "../mcp/gateway.ts";
 import { PUBLIC_DIR } from "../paths.ts";
 
@@ -135,6 +135,17 @@ function serveStatic(pathname: string, res: ServerResponse): void {
   const filePath = resolvePublicPath(pathname);
 
   if (!filePath || !existsSync(filePath)) {
+    if (pathname.startsWith("/docs")) {
+      const docsNotFound = join(PUBLIC_DIR, "docs/404.html");
+      if (existsSync(docsNotFound)) {
+        sendFile(docsNotFound, res);
+        return;
+      }
+      res.writeHead(302, { Location: "/docs/inicio/" });
+      res.end();
+      return;
+    }
+
     const hasExtension = extname(pathname) !== "";
     if (!hasExtension && reqAcceptsSpa(pathname)) {
       const spaIndex = join(PUBLIC_DIR, "index.html");
@@ -235,6 +246,15 @@ async function handleRequest(
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true }));
     return;
+  }
+
+  if (req.method === "GET" || req.method === "HEAD") {
+    const docsRedirect = resolveDocsRedirect(pathname);
+    if (docsRedirect) {
+      res.writeHead(302, { Location: docsRedirect });
+      res.end();
+      return;
+    }
   }
 
   if (handlePublishMediaRoute(req, res, ctx, pathname)) {
@@ -391,42 +411,6 @@ async function handleRequest(
     const legacyRedirect = resolveLegacyAdminRedirect(pathname);
     if (legacyRedirect) {
       res.writeHead(302, { Location: legacyRedirect });
-      res.end();
-      return;
-    }
-
-    if (pathname === "/docs" || pathname === "/docs/") {
-      res.writeHead(302, { Location: "/docs/inicio/" });
-      res.end();
-      return;
-    }
-
-    if (pathname === "/docs/en" || pathname === "/docs/en/") {
-      res.writeHead(302, { Location: "/docs/en/inicio/" });
-      res.end();
-      return;
-    }
-
-    // legacy doc URLs (Astro used to emit /meta/ without /docs prefix on redirect)
-    if (pathname === "/docs/meta" || pathname === "/docs/meta/") {
-      res.writeHead(302, { Location: "/docs/configuracao/" });
-      res.end();
-      return;
-    }
-    if (pathname.startsWith("/docs/meta/")) {
-      const suffix = pathname.slice("/docs/meta".length);
-      res.writeHead(302, { Location: `/docs/configuracao${suffix}` });
-      res.end();
-      return;
-    }
-    if (pathname === "/docs/en/meta" || pathname === "/docs/en/meta/") {
-      res.writeHead(302, { Location: "/docs/en/configuracao/" });
-      res.end();
-      return;
-    }
-    if (pathname.startsWith("/docs/en/meta/")) {
-      const suffix = pathname.slice("/docs/en/meta".length);
-      res.writeHead(302, { Location: `/docs/en/configuracao${suffix}` });
       res.end();
       return;
     }

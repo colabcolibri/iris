@@ -17,6 +17,31 @@ export function resolveLegacyAdminRedirect(pathname: string): string | null {
   return LEGACY_ADMIN_REDIRECTS[pathname] ?? null;
 }
 
+/** Docs URL rewrites — must use full `/docs/...` paths (Astro base breaks otherwise). */
+export function resolveDocsRedirect(pathname: string): string | null {
+  if (pathname === "/docs" || pathname === "/docs/") {
+    return "/docs/inicio/";
+  }
+  if (pathname === "/docs/en" || pathname === "/docs/en/") {
+    return "/docs/en/inicio/";
+  }
+  if (pathname === "/docs/meta" || pathname === "/docs/meta/") {
+    return "/docs/configuracao/";
+  }
+  if (pathname.startsWith("/docs/meta/")) {
+    const suffix = pathname.slice("/docs/meta".length);
+    return `/docs/configuracao${suffix}`;
+  }
+  if (pathname === "/docs/en/meta" || pathname === "/docs/en/meta/") {
+    return "/docs/en/configuracao/";
+  }
+  if (pathname.startsWith("/docs/en/meta/")) {
+    const suffix = pathname.slice("/docs/en/meta".length);
+    return `/docs/en/configuracao${suffix}`;
+  }
+  return null;
+}
+
 export function isProtectedSpaPath(pathname: string): boolean {
   if (!pathname.startsWith("/admin")) {
     return false;
