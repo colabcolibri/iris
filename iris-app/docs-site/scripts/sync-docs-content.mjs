@@ -19,6 +19,13 @@ function slugFromFilename(filename) {
   return filename.replace(/\.md$/, "");
 }
 
+function pageUrl(section, filename) {
+  if (filename === "IMAGENS.md") return `/docs/${section}/imagens/`;
+  const slug = slugFromFilename(filename);
+  if (slug === "index") return `/docs/${section}/`;
+  return `/docs/${section}/${slug}/`;
+}
+
 function syncFolder(section, outSubdir) {
   const srcDir = path.join(docsRoot, section);
   const outDir = path.join(contentRoot, outSubdir);
@@ -27,13 +34,40 @@ function syncFolder(section, outSubdir) {
   }
   const mdFiles = fs.readdirSync(srcDir).filter((f) => f.endsWith(".md"));
 
+  function escapeRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function replaceMarkdownLinks(text, linkPath, targetBase) {
+    const re = new RegExp(
+      `\\]\\(${escapeRegex(linkPath)}(#[^)]+)?\\)`,
+      "g",
+    );
+    return text.replace(re, (_match, anchor = "") => `](${targetBase}${anchor})`);
+  }
+
   function fixLinks(body) {
     let next = body;
-    for (const file of mdFiles) {
-      const slug = slugFromFilename(file);
-      const target = slug === "index" ? "./" : `./${slug}/`;
-      next = next.replaceAll(`](${file})`, `](${target})`);
+
+    for (const otherSection of PUBLIC_SECTIONS) {
+      if (otherSection === section) continue;
+      const otherDir = path.join(docsRoot, otherSection);
+      if (!fs.existsSync(otherDir)) continue;
+      const otherFiles = fs
+        .readdirSync(otherDir)
+        .filter((f) => f.endsWith(".md"));
+      for (const file of otherFiles) {
+        const target = pageUrl(otherSection, file);
+        next = replaceMarkdownLinks(next, `../${otherSection}/${file}`, target);
+      }
     }
+
+    for (const file of mdFiles) {
+      const target = pageUrl(section, file);
+      next = replaceMarkdownLinks(next, `./${file}`, target);
+      next = replaceMarkdownLinks(next, file, target);
+    }
+
     return next;
   }
 

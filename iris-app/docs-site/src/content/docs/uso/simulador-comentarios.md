@@ -23,7 +23,7 @@ Testar respostas do agente de comentários **sem publicar** no Instagram.
 ## Dicas
 
 - Ajuste **Persona** antes de simular mudanças de tom
-- Compare com [Execuções](./execucoes-agente.md) após ir para produção
+- Compare com [Execuções](/docs/uso/execucoes-agente/) após ir para produção
 - Use antes de mudar **Modo global** para **Automático**
 
-→ [Persona da marca](./persona-marca.md)
+→ [Persona da marca](/docs/uso/persona-marca/)

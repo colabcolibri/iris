@@ -11,58 +11,58 @@ Documentação para **operadores** do admin: nomes reais de telas, botões e flu
 ## Índice por área
 
 ### Primeiros passos
-- [Primeiro acesso](./primeiro-acesso.md)
-- [Navegação no admin](./navegacao-no-admin.md)
-- [Conectar Instagram](./conectar-instagram.md)
+- [Primeiro acesso](/docs/uso/primeiro-acesso/)
+- [Navegação no admin](/docs/uso/navegacao-no-admin/)
+- [Conectar Instagram](/docs/uso/conectar-instagram/)
 
 ### Calendário e postagens
-- [Visão geral (Calendário, Lista, Kanban)](./calendario-visao-geral.md)
-- [Criar postagem](./criar-postagem.md)
-- [Agendar e publicar](./agendar-e-publicar.md)
-- [Editar e status](./editar-e-status.md)
-- [Kanban](./kanban-pipeline.md)
-- [Lista editorial](./lista-editorial.md)
-- [Agente no post (campanha)](./post-campanha-agente.md)
+- [Visão geral (Calendário, Lista, Kanban)](/docs/uso/calendario-visao-geral/)
+- [Criar postagem](/docs/uso/criar-postagem/)
+- [Agendar e publicar](/docs/uso/agendar-e-publicar/)
+- [Editar e status](/docs/uso/editar-e-status/)
+- [Kanban](/docs/uso/kanban-pipeline/)
+- [Lista editorial](/docs/uso/lista-editorial/)
+- [Agente no post (campanha)](/docs/uso/post-campanha-agente/)
 
 ### Comentários
-- [Visão geral](./comentarios-visao-geral.md)
-- [Importar publicações](./comentarios-importar.md)
-- [Responder](./comentarios-responder.md)
-- [Modo com aprovação](./comentarios-aprovacao.md)
-- [Sincronizar e vincular](./comentarios-sincronizar.md)
+- [Visão geral](/docs/uso/comentarios-visao-geral/)
+- [Importar publicações](/docs/uso/comentarios-importar/)
+- [Responder](/docs/uso/comentarios-responder/)
+- [Modo com aprovação](/docs/uso/comentarios-aprovacao/)
+- [Sincronizar e vincular](/docs/uso/comentarios-sincronizar/)
 
 ### Mensagens (DMs)
-- [Visão geral](./mensagens-visao-geral.md)
-- [Responder](./mensagens-responder.md)
-- [Aprovação](./mensagens-aprovacao.md)
-- [Escalação e IA pausada](./mensagens-escalacao.md)
+- [Visão geral](/docs/uso/mensagens-visao-geral/)
+- [Responder](/docs/uso/mensagens-responder/)
+- [Aprovação](/docs/uso/mensagens-aprovacao/)
+- [Escalação e IA pausada](/docs/uso/mensagens-escalacao/)
 
 ### Produtos e lojas
-- [Cadastro de produtos](./produtos-cadastro.md)
-- [Vínculo Yampi](./produtos-vinculo-yampi.md)
-- [Conectar loja](./lojas-conectar.md)
-- [Políticas de campo](./lojas-politicas-campo.md)
+- [Cadastro de produtos](/docs/uso/produtos-cadastro/)
+- [Vínculo Yampi](/docs/uso/produtos-vinculo-yampi/)
+- [Conectar loja](/docs/uso/lojas-conectar/)
+- [Políticas de campo](/docs/uso/lojas-politicas-campo/)
 
 ### Configurações e persona
-- [Visão geral das configurações](./configuracoes-visao-geral.md)
-- [Fuso e monitoramento](./fuso-e-monitoramento.md)
-- [Agente de comentários](./agente-comentarios.md)
-- [Agente de DMs](./agente-dms.md)
-- [Alertas do operador](./alertas-operador.md)
-- [Persona da marca](./persona-marca.md)
+- [Visão geral das configurações](/docs/uso/configuracoes-visao-geral/)
+- [Fuso e monitoramento](/docs/uso/fuso-e-monitoramento/)
+- [Agente de comentários](/docs/uso/agente-comentarios/)
+- [Agente de DMs](/docs/uso/agente-dms/)
+- [Alertas do operador](/docs/uso/alertas-operador/)
+- [Persona da marca](/docs/uso/persona-marca/)
 
 ### Monitoramento
-- [Webhooks](./webhooks.md)
-- [Execuções do agente](./execucoes-agente.md)
-- [Fila do agente](./fila-agente.md)
+- [Webhooks](/docs/uso/webhooks/)
+- [Execuções do agente](/docs/uso/execucoes-agente/)
+- [Fila do agente](/docs/uso/fila-agente/)
 
 ### Lab
-- [Simulador de comentários](./simulador-comentarios.md)
-- [Simulador de DM](./simulador-dm.md)
+- [Simulador de comentários](/docs/uso/simulador-comentarios/)
+- [Simulador de DM](/docs/uso/simulador-dm/)
 
 ### Ajuda
-- [Problemas no dia a dia](./troubleshooting.md)
-- [Glossário](./glossario.md)
-- [Lista de imagens a produzir](./IMAGENS.md)
+- [Problemas no dia a dia](/docs/uso/troubleshooting/)
+- [Glossário](/docs/uso/glossario/)
+- [Lista de imagens a produzir](/docs/uso/imagens/)
 
 > Vai criar ou atualizar um artigo aqui? Veja o [guia de escrita](../configuracao/guia-de-escrita-docs-uso.md) (documentação interna do time).

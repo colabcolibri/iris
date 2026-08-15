@@ -65,4 +65,4 @@ No header, o badge **Agente: {modo}** (ex.: *Automático*, *Com aprovação*, *D
 
 ## Próximo passo
 
-→ [Navegação no admin](./navegacao-no-admin.md) · [Calendário — visão geral](./calendario-visao-geral.md)
+→ [Navegação no admin](/docs/uso/navegacao-no-admin/) · [Calendário — visão geral](/docs/uso/calendario-visao-geral/)

@@ -22,6 +22,6 @@ Testar respostas do agente de DMs **sem enviar** mensagem real na Meta.
 
 - Conteúdo DM vem de **Persona → Conteúdo (DM)** — diferente dos comentários
 - Valide escalação antes de ligar alertas em produção
-- Par com [Simulador comentários](./simulador-comentarios.md) para cobrir ambos canais
+- Par com [Simulador comentários](/docs/uso/simulador-comentarios/) para cobrir ambos canais
 
-→ [Persona da marca](./persona-marca.md) · [Mensagens — visão geral](./mensagens-visao-geral.md)
+→ [Persona da marca](/docs/uso/persona-marca/) · [Mensagens — visão geral](/docs/uso/mensagens-visao-geral/)

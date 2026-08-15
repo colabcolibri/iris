@@ -14,15 +14,15 @@ Termos técnicos que aparecem no admin e o que significam em linguagem de operad
 | ----- | ------------------------------ |
 | **Debounce / janela de debounce** | Tempo de espera depois do último comentário ou mensagem de alguém antes do agente responder. Existe para o agente não responder no meio de uma sequência de mensagens — ele espera a pessoa "terminar de falar". |
 | **Worker** | O processo em segundo plano que efetivamente processa a fila e envia as respostas do agente. Você não controla o worker diretamente — só o intervalo dele (com que frequência ele roda) nas Configurações. |
-| **Fila / item na fila** | Comentários e DMs aguardando o agente processar. Veja [Fila do agente](./fila-agente.md). |
-| **Webhook** | O aviso automático que a Meta (Instagram/Facebook) manda para o Iris toda vez que algo acontece (um comentário novo, uma DM nova). É assim que o Iris "sabe" que algo novo chegou sem precisar ficar checando o tempo todo. Veja [Webhooks](./webhooks.md). |
+| **Fila / item na fila** | Comentários e DMs aguardando o agente processar. Veja [Fila do agente](/docs/uso/fila-agente/). |
+| **Webhook** | O aviso automático que a Meta (Instagram/Facebook) manda para o Iris toda vez que algo acontece (um comentário novo, uma DM nova). É assim que o Iris "sabe" que algo novo chegou sem precisar ficar checando o tempo todo. Veja [Webhooks](/docs/uso/webhooks/). |
 | **Payload** | O conteúdo bruto de um evento vindo da Meta — os dados técnicos do que aconteceu. Só é relevante se o time técnico pedir para você exportar isso em um chamado. |
 | **Assinatura inválida** (nos webhooks) | Falha na verificação de segurança do evento vindo da Meta. Não é algo que o operador resolve — é sempre um problema de configuração no servidor; acione o time técnico. |
-| **Token / modelo de IA** | "Token" é a unidade que mede quanto texto a IA processou (aproximadamente pedaços de palavra); "modelo" é qual versão de IA respondeu. Aparecem em [Execuções do agente](./execucoes-agente.md) para ajudar a entender custo e comportamento — não é algo que você precisa configurar no dia a dia. |
+| **Token / modelo de IA** | "Token" é a unidade que mede quanto texto a IA processou (aproximadamente pedaços de palavra); "modelo" é qual versão de IA respondeu. Aparecem em [Execuções do agente](/docs/uso/execucoes-agente/) para ajudar a entender custo e comportamento — não é algo que você precisa configurar no dia a dia. |
 | **MCP (Model Context Protocol)** | Um protocolo que permite ligar o Iris a ferramentas externas de IA (como Cursor, ChatGPT ou Claude) para que elas consultem dados do Iris. É um recurso avançado — se você não usa nenhuma dessas ferramentas externas, pode ignorar essa seção nas Configurações. |
-| **Triagem** | A etapa em que o agente decide se um comentário ou mensagem merece resposta (e como). Aparece no detalhe de uma execução em [Execuções do agente](./execucoes-agente.md). |
-| **Tier** | O nível/categoria de prioridade ou complexidade atribuído a uma execução do agente — usado para filtrar a lista em [Execuções do agente](./execucoes-agente.md). |
-| **SOUL** | O bloco de texto na Persona que define a voz e o tom do agente (como ele "fala"). Veja [Persona da marca](./persona-marca.md). |
+| **Triagem** | A etapa em que o agente decide se um comentário ou mensagem merece resposta (e como). Aparece no detalhe de uma execução em [Execuções do agente](/docs/uso/execucoes-agente/). |
+| **Tier** | O nível/categoria de prioridade ou complexidade atribuído a uma execução do agente — usado para filtrar a lista em [Execuções do agente](/docs/uso/execucoes-agente/). |
+| **SOUL** | O bloco de texto na Persona que define a voz e o tom do agente (como ele "fala"). Veja [Persona da marca](/docs/uso/persona-marca/). |
 
 ## Nomes canônicos
 

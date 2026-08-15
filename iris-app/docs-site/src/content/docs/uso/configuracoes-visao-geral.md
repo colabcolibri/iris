@@ -18,7 +18,7 @@ Layout split: navegação lateral de seções + conteúdo.
 | **Agente de comentários** | `#comment-agent` | Modo global, debounce, janela |
 | **Agente de DMs** | `#message-agent` | Modo global DM |
 | **Alertas do operador** | `#operator-notifications` | Email escalação + trava IA |
-| **Conexão MCP** | `#mcp` | Liga ferramentas externas de IA (Cursor, ChatGPT, Claude) ao Iris — [avançado, veja glossário](./glossario.md#termos-técnicos); ignore se você não usa essas ferramentas |
+| **Conexão MCP** | `#mcp` | Liga ferramentas externas de IA (Cursor, ChatGPT, Claude) ao Iris — [avançado, veja glossário](/docs/uso/glossario/#termos-técnicos); ignore se você não usa essas ferramentas |
 | **Permissões MCP** | `#mcp-permissions` | O que essas ferramentas externas podem acessar no Iris, quando conectadas |
 | **Provedor de IA** | `#llm` | Chave de API e modelo de IA usados pelo agente |
 
@@ -28,4 +28,4 @@ Layout split: navegação lateral de seções + conteúdo.
 
 ## Guias por seção
 
-→ [Fuso e monitoramento](./fuso-e-monitoramento.md) · [Agente de comentários](./agente-comentarios.md) · [Agente de DMs](./agente-dms.md) · [Alertas](./alertas-operador.md) · [Persona](./persona-marca.md)
+→ [Fuso e monitoramento](/docs/uso/fuso-e-monitoramento/) · [Agente de comentários](/docs/uso/agente-comentarios/) · [Agente de DMs](/docs/uso/agente-dms/) · [Alertas](/docs/uso/alertas-operador/) · [Persona](/docs/uso/persona-marca/)

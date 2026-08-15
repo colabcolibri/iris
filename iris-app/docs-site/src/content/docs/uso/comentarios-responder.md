@@ -27,7 +27,7 @@ Badge **Rascunho IA** / status **Aguardando aprovação** identificam pendência
 
 ## Ver por que a IA respondeu assim
 
-**Ver decisão do agente** — abre auditoria (Triagem → Rascunho → Verificação, tokens, modelo). Detalhes em [Execuções do agente](./execucoes-agente.md).
+**Ver decisão do agente** — abre auditoria (Triagem → Rascunho → Verificação, tokens, modelo). Detalhes em [Execuções do agente](/docs/uso/execucoes-agente/).
 
 ## Modo por post
 
@@ -37,4 +37,4 @@ Aba **Config** do post ou **Modo de resposta deste post**:
 
 Salvar atualiza **Modo deste post: {modo}** (toast).
 
-→ [Modo com aprovação](./comentarios-aprovacao.md)
+→ [Modo com aprovação](/docs/uso/comentarios-aprovacao/)

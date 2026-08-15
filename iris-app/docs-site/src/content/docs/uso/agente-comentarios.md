@@ -10,13 +10,13 @@ tableOfContents:
 
 ## O que esta seção controla
 
-O comportamento padrão do agente ao responder comentários no Instagram. Cada post pode ter esse padrão sobrescrito individualmente — veja [Agente no post](./post-campanha-agente.md).
+O comportamento padrão do agente ao responder comentários no Instagram. Cada post pode ter esse padrão sobrescrito individualmente — veja [Agente no post](/docs/uso/post-campanha-agente/).
 
 | Controle | Função |
 | -------- | ------ |
 | **Modo global** | **Desligado** (agente não responde nada) / **Automático** (responde e publica sem revisão) / **Com aprovação** (gera rascunho, você aprova antes de publicar) |
-| **Intervalo do worker** | Com que frequência o [worker](./glossario.md#termos-técnicos) processa a fila de comentários pendentes (esse intervalo é compartilhado com o agente de DMs) |
-| **Janela de debounce** | Quanto tempo o agente espera depois do último comentário da mesma pessoa no post antes de responder — veja [glossário](./glossario.md#termos-técnicos) |
+| **Intervalo do worker** | Com que frequência o [worker](/docs/uso/glossario/#termos-técnicos) processa a fila de comentários pendentes (esse intervalo é compartilhado com o agente de DMs) |
+| **Janela de debounce** | Quanto tempo o agente espera depois do último comentário da mesma pessoa no post antes de responder — veja [glossário](/docs/uso/glossario/#termos-técnicos) |
 | **Tempo antes de responder** | Responde imediatamente ou entra numa fila com atraso configurado (minutos) |
 | **Janela de resposta** | Quantos dias de comentários antigos o agente ainda considera — comentários mais antigos que isso são ignorados |
 
@@ -27,8 +27,8 @@ O comportamento padrão do agente ao responder comentários no Instagram. Cada p
 3. Ajuste **Intervalo do worker**, **Janela de debounce**, **Tempo antes de responder** e **Janela de resposta** conforme a velocidade de resposta que você quer.
 4. Salve.
 
-**Como saber que deu certo:** posts com **Seguir global** (modo "herdar o padrão") passam a seguir o modo escolhido — confira em [Fila do agente](./fila-agente.md) se novos comentários estão sendo processados como esperado.
+**Como saber que deu certo:** posts com **Seguir global** (modo "herdar o padrão") passam a seguir o modo escolhido — confira em [Fila do agente](/docs/uso/fila-agente/) se novos comentários estão sendo processados como esperado.
 
 ## Próximos passos
 
-→ [Comentários — aprovação](./comentarios-aprovacao.md) · [Fila do agente](./fila-agente.md) · [Agente no post](./post-campanha-agente.md)
+→ [Comentários — aprovação](/docs/uso/comentarios-aprovacao/) · [Fila do agente](/docs/uso/fila-agente/) · [Agente no post](/docs/uso/post-campanha-agente/)

@@ -30,4 +30,4 @@ Posts importados podem ter badge **Publicada**, **Agendada** ou **Externa**.
 
 ## Depois de importar
 
-→ [Sincronizar e vincular](./comentarios-sincronizar.md) para puxar comentários e métricas.
+→ [Sincronizar e vincular](/docs/uso/comentarios-sincronizar/) para puxar comentários e métricas.

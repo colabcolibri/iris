@@ -30,4 +30,4 @@ Badge **Janela aberta** / **Janela fechada** — fora da janela, **Não é poss�
 
 ## Próximos passos
 
-→ [Responder DMs](./mensagens-responder.md) · [Aprovação](./mensagens-aprovacao.md) · [Escalação](./mensagens-escalacao.md)
+→ [Responder DMs](/docs/uso/mensagens-responder/) · [Aprovação](/docs/uso/mensagens-aprovacao/) · [Escalação](/docs/uso/mensagens-escalacao/)

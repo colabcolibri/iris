@@ -10,7 +10,7 @@ tableOfContents:
 
 ## Pré-requisitos
 
-Uma loja Yampi já precisa estar conectada em **Lojas**. Se ainda não conectou nenhuma, veja [Lojas — conectar](./lojas-conectar.md) primeiro.
+Uma loja Yampi já precisa estar conectada em **Lojas**. Se ainda não conectou nenhuma, veja [Lojas — conectar](/docs/uso/lojas-conectar/) primeiro.
 
 ## O que este vínculo faz
 
@@ -34,8 +34,8 @@ Se você quer que o **preço** sempre reflita o que está na Yampi (para nunca f
 
 ## Políticas globais vs. por produto
 
-A loja tem políticas globais que definem o padrão para todos os produtos vinculados a ela. Cada produto pode sobrescrever esse padrão individualmente, como no passo 5 acima. Detalhes das políticas globais em [Políticas de campo](./lojas-politicas-campo.md).
+A loja tem políticas globais que definem o padrão para todos os produtos vinculados a ela. Cada produto pode sobrescrever esse padrão individualmente, como no passo 5 acima. Detalhes das políticas globais em [Políticas de campo](/docs/uso/lojas-politicas-campo/).
 
 ## Próximos passos
 
-→ [Lojas — políticas de campo](./lojas-politicas-campo.md) · [Cadastro de produtos](./produtos-cadastro.md)
+→ [Lojas — políticas de campo](/docs/uso/lojas-politicas-campo/) · [Cadastro de produtos](/docs/uso/produtos-cadastro/)

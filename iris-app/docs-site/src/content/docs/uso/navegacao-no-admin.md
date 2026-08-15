@@ -38,4 +38,4 @@ O menu lateral organiza o Iris em áreas de trabalho:
 
 ## Próximos passos
 
-→ [Conectar Instagram](./conectar-instagram.md) · [Calendário — visão geral](./calendario-visao-geral.md)
+→ [Conectar Instagram](/docs/uso/conectar-instagram/) · [Calendário — visão geral](/docs/uso/calendario-visao-geral/)

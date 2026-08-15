@@ -30,4 +30,4 @@ Alterne clicando **Calendário**, **Lista** ou **Kanban** na sidebar (todos apon
 
 ## Próximos passos
 
-→ [Criar postagem](./criar-postagem.md) · [Agendar e publicar](./agendar-e-publicar.md) · [Kanban — pipeline](./kanban-pipeline.md)
+→ [Criar postagem](/docs/uso/criar-postagem/) · [Agendar e publicar](/docs/uso/agendar-e-publicar/) · [Kanban — pipeline](/docs/uso/kanban-pipeline/)

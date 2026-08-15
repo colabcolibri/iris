@@ -28,11 +28,11 @@ Menu **Webhooks** → lista de eventos recentes da Meta (comentários, etc.).
 | **processado** | Iris tratou o evento |
 | **ignorado** | Evento recebido mas descartado (ex.: fora da janela) |
 | **falhou** | Erro no pipeline — veja detalhe |
-| **[assinatura inválida](./glossario.md#termos-técnicos)** | Problema de configuração no servidor (escale técnico) |
+| **[assinatura inválida](/docs/uso/glossario/#termos-técnicos)** | Problema de configuração no servidor (escale técnico) |
 
 ## Detalhe do evento
 
-Clique na linha → painel com **Post**, **Comentário**, **Autor**, **[Payload](./glossario.md#termos-técnicos)** (os dados brutos do evento, truncados na tela).
+Clique na linha → painel com **Post**, **Comentário**, **Autor**, **[Payload](/docs/uso/glossario/#termos-técnicos)** (os dados brutos do evento, truncados na tela).
 
 ![detalhe com payload parcial](/docs/images/uso/33-webhook-detalhe.png)
 
@@ -55,4 +55,4 @@ Clique na linha → painel com **Post**, **Comentário**, **Autor**, **[Payload]
 
 - URL webhook no app Meta, secrets, tokens Page, logs servidor
 
-→ [Fila do agente](./fila-agente.md) · [Execuções do agente](./execucoes-agente.md)
+→ [Fila do agente](/docs/uso/fila-agente/) · [Execuções do agente](/docs/uso/execucoes-agente/)

@@ -46,4 +46,4 @@ Se **Testar conexão** falha repetidamente, anote o horário e o @ tentado e aci
 
 ## Próximo passo
 
-→ [Calendário — visão geral](./calendario-visao-geral.md) · [Comentários — visão geral](./comentarios-visao-geral.md)
+→ [Calendário — visão geral](/docs/uso/calendario-visao-geral/) · [Comentários — visão geral](/docs/uso/comentarios-visao-geral/)

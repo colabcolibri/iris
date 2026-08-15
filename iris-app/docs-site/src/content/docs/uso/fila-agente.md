@@ -10,11 +10,11 @@ tableOfContents:
 
 ## O que mostra
 
-Comentários e DMs aguardando o [worker](./glossario.md#termos-técnicos) processar.
+Comentários e DMs aguardando o [worker](/docs/uso/glossario/#termos-técnicos) processar.
 
 | Fase | Significado |
 | ---- | ----------- |
-| **debounce** | Ainda aguardando a [janela de debounce](./glossario.md#termos-técnicos) — o tempo de espera depois do último comentário/mensagem daquela pessoa |
+| **debounce** | Ainda aguardando a [janela de debounce](/docs/uso/glossario/#termos-técnicos) — o tempo de espera depois do último comentário/mensagem daquela pessoa |
 | **pronto** | Já passou o tempo de espera; será processado no próximo ciclo do worker |
 
 Indicador de conexão no topo: **Ao vivo** (atualizando em tempo real) ou **Reconectando…**.
@@ -25,8 +25,8 @@ Indicador de conexão no topo: **Ao vivo** (atualizando em tempo real) ou **Reco
 - Configurou uma janela de debounce longa — é normal um item ficar em **debounce** por vários minutos antes de passar para **pronto**.
 - Depois de um pico de comentários — confirme que os itens estão saindo de **pronto** (ou seja, sendo processados), e não acumulando.
 
-**Como saber que está funcionando normalmente:** itens passam de **debounce** para **pronto** e depois somem da lista (foram processados) dentro do tempo configurado no [Agente de comentários](./agente-comentarios.md) ou [Agente de DMs](./agente-dms.md).
+**Como saber que está funcionando normalmente:** itens passam de **debounce** para **pronto** e depois somem da lista (foram processados) dentro do tempo configurado no [Agente de comentários](/docs/uso/agente-comentarios/) ou [Agente de DMs](/docs/uso/agente-dms/).
 
 ## Próximos passos
 
-→ [Agente de comentários](./agente-comentarios.md) · [Webhooks](./webhooks.md) · [Execuções do agente](./execucoes-agente.md)
+→ [Agente de comentários](/docs/uso/agente-comentarios/) · [Webhooks](/docs/uso/webhooks/) · [Execuções do agente](/docs/uso/execucoes-agente/)

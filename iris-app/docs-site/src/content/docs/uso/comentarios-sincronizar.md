@@ -30,4 +30,4 @@ tableOfContents:
 - Após importar post externo
 - Antes de revisar métricas em **Desempenho**
 
-→ Saúde dos eventos: [Webhooks](./webhooks.md)
+→ Saúde dos eventos: [Webhooks](/docs/uso/webhooks/)

@@ -10,7 +10,7 @@ tableOfContents:
 
 ## Lista de execuções
 
-Cada vez que o agente avalia um comentário ou DM, isso gera uma "execução". A lista mostra filtros por status e por [tier](./glossario.md#termos-técnicos), e uma tabela com quando aconteceu, o que disparou a execução, qual modelo de IA respondeu e quantos [tokens](./glossario.md#termos-técnicos) foram usados.
+Cada vez que o agente avalia um comentário ou DM, isso gera uma "execução". A lista mostra filtros por status e por [tier](/docs/uso/glossario/#termos-técnicos), e uma tabela com quando aconteceu, o que disparou a execução, qual modelo de IA respondeu e quantos [tokens](/docs/uso/glossario/#termos-técnicos) foram usados.
 
 ![lista de runs com filtro de status](/docs/images/uso/34-execucoes-agente.png)
 
@@ -32,4 +32,4 @@ O detalhe também mostra qual modelo respondeu, quantos tokens consumiu, e um li
 
 ## Próximos passos
 
-→ [Comentários — responder](./comentarios-responder.md) · [Fila do agente](./fila-agente.md)
+→ [Comentários — responder](/docs/uso/comentarios-responder/) · [Fila do agente](/docs/uso/fila-agente/)

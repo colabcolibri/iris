@@ -25,4 +25,4 @@ tableOfContents:
 - **Gerar rascunho com IA** → editar → **Enviar**
 - Modo **Com aprovação**: fluxo igual comentários (rascunho antes de enviar)
 
-→ [Aprovação de DMs](./mensagens-aprovacao.md)
+→ [Aprovação de DMs](/docs/uso/mensagens-aprovacao/)

@@ -33,4 +33,4 @@ No detalhe da loja:
 
 Toast de sync: *"{imported} importados, {updated} atualizados…"*
 
-→ [Políticas de campo](./lojas-politicas-campo.md)
+→ [Políticas de campo](/docs/uso/lojas-politicas-campo/)

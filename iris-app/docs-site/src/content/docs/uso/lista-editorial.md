@@ -10,7 +10,7 @@ tableOfContents:
 
 ## O que esta tela mostra
 
-A mesma agenda editorial do [Calendário](./calendario-visao-geral.md) e do [Kanban](./kanban-pipeline.md), só que em formato de lista, uma linha por post, agrupada por mês. Útil quando o mês tem muitos posts e o calendário visual fica poluído, ou quando você quer escanear título/data rapidamente sem abrir cada card.
+A mesma agenda editorial do [Calendário](/docs/uso/calendario-visao-geral/) e do [Kanban](/docs/uso/kanban-pipeline/), só que em formato de lista, uma linha por post, agrupada por mês. Útil quando o mês tem muitos posts e o calendário visual fica poluído, ou quando você quer escanear título/data rapidamente sem abrir cada card.
 
 ## Como usar
 
@@ -31,4 +31,4 @@ As três visões mostram os mesmos posts — trocar de visão não move nem dupl
 
 ## Próximos passos
 
-→ [Criar postagem](./criar-postagem.md) · [Kanban — pipeline](./kanban-pipeline.md) · [Editar postagem e status](./editar-e-status.md)
+→ [Criar postagem](/docs/uso/criar-postagem/) · [Kanban — pipeline](/docs/uso/kanban-pipeline/) · [Editar postagem e status](/docs/uso/editar-e-status/)

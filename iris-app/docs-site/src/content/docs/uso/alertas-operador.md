@@ -10,7 +10,7 @@ tableOfContents:
 
 ## O que esta seção controla
 
-Quando o [agente de Mensagens escala um caso](./mensagens-escalacao.md) — ou seja, decide que precisa de um humano — esta seção define quem é avisado e por quanto tempo a conversa fica travada esperando ação humana.
+Quando o [agente de Mensagens escala um caso](/docs/uso/mensagens-escalacao/) — ou seja, decide que precisa de um humano — esta seção define quem é avisado e por quanto tempo a conversa fica travada esperando ação humana.
 
 | Controle | Função |
 | -------- | ------ |
@@ -30,4 +30,4 @@ Quando o [agente de Mensagens escala um caso](./mensagens-escalacao.md) — ou s
 
 ## Próximos passos
 
-→ [Mensagens — escalação e IA pausada](./mensagens-escalacao.md)
+→ [Mensagens — escalação e IA pausada](/docs/uso/mensagens-escalacao/)

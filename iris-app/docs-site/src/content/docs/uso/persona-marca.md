@@ -37,4 +37,4 @@ Blocos paralelos **SOUL (DM)**, **Sobre a página (DM)**, **Base de conhecimento
 
 Mudanças afetam **novas** respostas. Posts/conversas podem silenciar blocos via briefing.
 
-→ Testar antes: [Simulador comentários](./simulador-comentarios.md) · [Simulador DM](./simulador-dm.md)
+→ Testar antes: [Simulador comentários](/docs/uso/simulador-comentarios/) · [Simulador DM](/docs/uso/simulador-dm/)

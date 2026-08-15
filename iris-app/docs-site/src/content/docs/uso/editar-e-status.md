@@ -34,4 +34,4 @@ Clique no card no Calendário, Lista ou Kanban.
 2. Altere **Agendar para**.
 3. **Salvar** ou **Reagendar**.
 
-→ [Agente de comentários no post](./post-campanha-agente.md)
+→ [Agente de comentários no post](/docs/uso/post-campanha-agente/)

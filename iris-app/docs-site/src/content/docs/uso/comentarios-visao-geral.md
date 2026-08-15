@@ -29,8 +29,8 @@ Barra de ações: **Recarregar lista**, **Importar**, **Adicionar**
 2. Painel direito: abas **Desempenho**, **Comentários**, **Legenda**, **Resumo**, **Prompt adicional**, **Config**.
 3. Responda na aba **Comentários**.
 
-Se a lista estiver vazia → [Importar publicações](./comentarios-importar.md) ou aguarde webhook (veja [Webhooks](./webhooks.md)).
+Se a lista estiver vazia → [Importar publicações](/docs/uso/comentarios-importar/) ou aguarde webhook (veja [Webhooks](/docs/uso/webhooks/)).
 
 ## Próximos passos
 
-→ [Importar publicações](./comentarios-importar.md) · [Responder comentários](./comentarios-responder.md) · [Modo com aprovação](./comentarios-aprovacao.md)
+→ [Importar publicações](/docs/uso/comentarios-importar/) · [Responder comentários](/docs/uso/comentarios-responder/) · [Modo com aprovação](/docs/uso/comentarios-aprovacao/)

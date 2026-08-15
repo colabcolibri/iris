@@ -17,7 +17,7 @@ tableOfContents:
 
 Aba **Atividade → Aprovação** — fila centralizada de DMs.
 
-Veja o fluxo de rascunho na captura de [Mensagens — responder](./mensagens-responder.md).
+Veja o fluxo de rascunho na captura de [Mensagens — responder](/docs/uso/mensagens-responder/).
 
 ## Modo por conversa
 
@@ -26,4 +26,4 @@ Veja o fluxo de rascunho na captura de [Mensagens — responder](./mensagens-res
 - **Modo de resposta** — herda global ou override
 - **Briefing desta conversa** — contexto extra → **Salvar briefing**
 
-→ [Agente de DMs](./agente-dms.md)
+→ [Agente de DMs](/docs/uso/agente-dms/)

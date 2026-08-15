@@ -16,7 +16,7 @@ Sintomas operacionais e o que **você** pode fazer no admin. Configuração de s
 | Código inválido ou expirado | **Reenviar código** ou **Trocar email** |
 | Sessão cai ao recarregar | Limpe cache; peça novo código |
 
-→ [Primeiro acesso](./primeiro-acesso.md)
+→ [Primeiro acesso](/docs/uso/primeiro-acesso/)
 
 ## Instagram e publicação
 
@@ -27,18 +27,18 @@ Sintomas operacionais e o que **você** pode fazer no admin. Configuração de s
 | Carrossel travado | Aguarde até ~1 min; não feche o dialog |
 | Horário errado no calendário | **Configurações → Fuso horário editorial** |
 
-→ [Conectar Instagram](./conectar-instagram.md) · [Agendar e publicar](./agendar-e-publicar.md)
+→ [Conectar Instagram](/docs/uso/conectar-instagram/) · [Agendar e publicar](/docs/uso/agendar-e-publicar/)
 
 ## Comentários
 
 | Sintoma | Tente |
 | ------- | ----- |
 | Post não aparece | **Importar** ou **Adicionar** link |
-| Comentário no IG, não no Iris | **Sincronizar** no post; veja [Webhooks](./webhooks.md) |
+| Comentário no IG, não no Iris | **Sincronizar** no post; veja [Webhooks](/docs/uso/webhooks/) |
 | Agente não responde | Modo **Desligado**? Post em **Pausar nesta publicação**? |
 | Rascunho não publica | Aba **Atividade → Aprovação** — aprove manualmente |
 
-→ [Comentários — visão geral](./comentarios-visao-geral.md)
+→ [Comentários — visão geral](/docs/uso/comentarios-visao-geral/)
 
 ## Mensagens (DMs)
 
@@ -47,18 +47,18 @@ Sintomas operacionais e o que **você** pode fazer no admin. Configuração de s
 | Lista vazia | **Importar**; banner de Page do Facebook? → acione técnico |
 | Não consigo enviar | Badge **Janela fechada** — Meta não permite |
 | IA não responde | Modo global **Desligado**? **IA pausada** na conversa? |
-| Caso escalado | [Alertas do operador](./alertas-operador.md); **Retomar IA** |
+| Caso escalado | [Alertas do operador](/docs/uso/alertas-operador/); **Retomar IA** |
 
-→ [Mensagens — visão geral](./mensagens-visao-geral.md)
+→ [Mensagens — visão geral](/docs/uso/mensagens-visao-geral/)
 
 ## Agente e monitoramento
 
 | Sintoma | Tente |
 | ------- | ----- |
-| Respostas lentas | Normal com debounce + ciclo do worker — veja [Fila do agente](./fila-agente.md) |
+| Respostas lentas | Normal com debounce + ciclo do worker — veja [Fila do agente](/docs/uso/fila-agente/) |
 | Webhooks sem eventos | **Testar conexão**; exporte JSON em Webhooks para o técnico |
 | Assinatura inválida nos webhooks | Escale ao time técnico (config servidor) |
-| Resposta estranha | **Ver decisão do agente** ou [Execuções](./execucoes-agente.md) |
+| Resposta estranha | **Ver decisão do agente** ou [Execuções](/docs/uso/execucoes-agente/) |
 
 ## Produtos e lojas
 
@@ -68,7 +68,7 @@ Sintomas operacionais e o que **você** pode fazer no admin. Configuração de s
 | Agente não cita preço | **Preview resolvido** no produto; políticas de campo |
 | Produto não aparece na triagem | Toggle **Ativo**; slug correto |
 
-→ [Lojas — conectar](./lojas-conectar.md)
+→ [Lojas — conectar](/docs/uso/lojas-conectar/)
 
 ## Quando acionar o time técnico
 
@@ -83,4 +83,4 @@ Não inclua tokens, senhas ou chaves de API em tickets.
 
 ## Lista de imagens
 
-Capturas pendentes: [IMAGENS.md](./IMAGENS.md)
+Capturas pendentes: [IMAGENS.md](/docs/uso/imagens/)

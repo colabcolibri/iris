@@ -32,4 +32,4 @@ Linha **Estado efetivo agora: {label}** mostra o modo calculado.
 
 Link **Editar persona** abre **Persona** em nova contexto.
 
-→ Hub operacional: [Comentários — visão geral](./comentarios-visao-geral.md)
+→ Hub operacional: [Comentários — visão geral](/docs/uso/comentarios-visao-geral/)

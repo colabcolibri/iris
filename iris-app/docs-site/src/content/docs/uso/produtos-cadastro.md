@@ -35,4 +35,4 @@ Painel direito:
 
 Produtos manuais alimentam o agente mesmo **sem** loja Yampi.
 
-→ [Vínculo Yampi](./produtos-vinculo-yampi.md) · [Lojas — conectar](./lojas-conectar.md)
+→ [Vínculo Yampi](/docs/uso/produtos-vinculo-yampi/) · [Lojas — conectar](/docs/uso/lojas-conectar/)

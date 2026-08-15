@@ -30,4 +30,4 @@ No detalhe do produto, **Preview resolvido** mostra o que o agente de DM verá a
 - Ocultar URL de checkout do agente
 - Após mudar políticas globais, revise produtos vinculados
 
-→ [Produtos — vínculo Yampi](./produtos-vinculo-yampi.md)
+→ [Produtos — vínculo Yampi](/docs/uso/produtos-vinculo-yampi/)

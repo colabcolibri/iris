@@ -14,12 +14,12 @@ Este site documenta **só como usar o admin**. Instalação, app Meta e servidor
 
 | Se você… | Comece aqui |
 | -------- | ----------- |
-| Acabou de receber acesso | [Primeiro acesso](../uso/primeiro-acesso.md) |
-| Vai publicar conteúdo | [Calendário — visão geral](../uso/calendario-visao-geral.md) |
-| Cuida de comentários | [Comentários — visão geral](../uso/comentarios-visao-geral.md) |
-| Atende DMs | [Mensagens — visão geral](../uso/mensagens-visao-geral.md) |
-| Configura tom da marca | [Persona da marca](../uso/persona-marca.md) |
-| Quer saber se está tudo ok | [Webhooks](../uso/webhooks.md) |
+| Acabou de receber acesso | [Primeiro acesso](/docs/uso/primeiro-acesso/) |
+| Vai publicar conteúdo | [Calendário — visão geral](/docs/uso/calendario-visao-geral/) |
+| Cuida de comentários | [Comentários — visão geral](/docs/uso/comentarios-visao-geral/) |
+| Atende DMs | [Mensagens — visão geral](/docs/uso/mensagens-visao-geral/) |
+| Configura tom da marca | [Persona da marca](/docs/uso/persona-marca/) |
+| Quer saber se está tudo ok | [Webhooks](/docs/uso/webhooks/) |
 
 [IMAGEM: captura do admin na visão Calendário com sidebar completa e header com @usuario conectado — arquivo sugerido `04-sidebar-completa.png`]
 
@@ -33,8 +33,8 @@ Este site documenta **só como usar o admin**. Instalação, app Meta e servidor
 | Lab | **Simulador comentários**, **Simulador DM** |
 | Rodapé | **Configurações**, **Persona** |
 
-Detalhes: [Navegação no admin](../uso/navegacao-no-admin.md).
+Detalhes: [Navegação no admin](/docs/uso/navegacao-no-admin/).
 
 ## Lista de imagens do guia
 
-Todas as capturas necessárias estão em [Lista de imagens (IMAGENS.md)](../uso/IMAGENS.md) — use como checklist antes de publicar a versão final.
+Todas as capturas necessárias estão em [Lista de imagens (IMAGENS.md)](/docs/uso/imagens/) — use como checklist antes de publicar a versão final.

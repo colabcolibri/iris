@@ -27,8 +27,8 @@ O agente de Mensagens é treinado para reconhecer quando não deve continuar soz
 
 ## Configurar os alertas de escalação
 
-Quem recebe o email, se recebe, e depois de quantos dias a IA retoma sozinha — tudo isso fica em [Alertas do operador](./alertas-operador.md).
+Quem recebe o email, se recebe, e depois de quantos dias a IA retoma sozinha — tudo isso fica em [Alertas do operador](/docs/uso/alertas-operador/).
 
 ## Próximos passos
 
-→ [Alertas do operador](./alertas-operador.md) · [Mensagens — responder](./mensagens-responder.md)
+→ [Alertas do operador](/docs/uso/alertas-operador/) · [Mensagens — responder](/docs/uso/mensagens-responder/)

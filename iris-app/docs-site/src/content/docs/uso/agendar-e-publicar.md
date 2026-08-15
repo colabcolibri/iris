@@ -39,4 +39,4 @@ Com várias mídias, a operação pode levar até ~1 minuto (processamento Meta 
 | "Adicione pelo menos uma mídia" | Aba **Mídias** vazia |
 | "Conecte Instagram antes de agendar" | Header → **Conectar** |
 
-→ [Editar postagem e status](./editar-e-status.md)
+→ [Editar postagem e status](/docs/uso/editar-e-status/)

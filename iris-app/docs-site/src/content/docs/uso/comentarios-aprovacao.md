@@ -13,7 +13,7 @@ Com **Modo global = Com aprovação** em **Configurações → Agente de coment�
 1. **Atividade** → sub-aba **Aprovação** — todos os rascunhos aguardando.
 2. Ou dentro de cada post — badge **{n} pendentes**.
 
-Veja também o exemplo de thread com rascunho em [Comentários — responder](./comentarios-responder.md).
+Veja também o exemplo de thread com rascunho em [Comentários — responder](/docs/uso/comentarios-responder/).
 
 ## Ações
 
@@ -30,4 +30,4 @@ Veja também o exemplo de thread com rascunho em [Comentários — responder](./
 
 Termos corretos na UI: **Desligado**, **Automático**, **Com aprovação** — não use "silêncio" ou "supervisionado".
 
-→ [Agente de comentários](./agente-comentarios.md)
+→ [Agente de comentários](/docs/uso/agente-comentarios/)
