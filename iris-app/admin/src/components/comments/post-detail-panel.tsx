@@ -38,6 +38,7 @@ import type {
   Comment,
   CommentPostSummary,
   PostInsightsResult,
+  PostReplyModeSetting,
 } from "@/lib/types";
 import { ThreadSortSelect } from "@/components/comments/thread-sort-select";
 import { PostReplyStatusBadge } from "@/components/posts/post-reply-status-badge";
