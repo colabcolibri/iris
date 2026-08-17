@@ -28,7 +28,7 @@ iris-app/
 | Comando | Descrição |
 | ------- | --------- |
 | `pnpm dev` | Servidor único em `http://127.0.0.1:8792` (API + UI + HMR) |
-| `pnpm build:admin` | Build do admin → `public/` |
+| `pnpm build:admin` | Build do admin → `public/` (artefatos com hash ficam só local/CI; ver `.gitignore`) |
 | `pnpm docs:dev` | Site de docs Starlight (http://127.0.0.1:4321) |
 | `pnpm docs:build` | Build docs → `public/docs/` (servido em `/docs/`) |
 | `pnpm start` | Produção (`NODE_ENV=production`) |

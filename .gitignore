@@ -50,3 +50,8 @@ __pycache__/
 
 # Meridian IDE adapters (local symlinks)
 AGENTS.md
+
+# Admin Vite build (regenerado por pnpm build:admin — Docker/CI sempre rebuilda)
+iris-app/public/index.html
+iris-app/public/assets/index-*.js
+iris-app/public/assets/index-*.css
