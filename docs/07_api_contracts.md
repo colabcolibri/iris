@@ -14,7 +14,7 @@ Inventário alinhado ao código em `iris-app/server/src/api/` (router declarativ
 ## Base URL
 
 - Dev: `http://127.0.0.1:8792`
-- Prod: `https://iris.sergioluciano.com` (ou domínio configurado)
+- Prod: `https://your-public-host` (valor de `IRIS_PUBLIC_BASE_URL`)
 
 ## Índice rápido de rotas
 

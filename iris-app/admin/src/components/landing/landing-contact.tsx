@@ -91,11 +91,7 @@ export function LandingContact() {
         />
 
         <p className="mt-4 text-base leading-normal text-(--iris-ink-soft)">
-          {m.contact.bodyBeforeEmail}{" "}
-          <span className="font-medium text-(--iris-ink)">
-            {m.contact.email}
-          </span>
-          {m.contact.bodyAfterEmail}
+          {m.contact.body}
         </p>
 
         <div className="iris-contact-form-wrap">

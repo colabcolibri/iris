@@ -145,9 +145,7 @@ export type LandingMessages = {
     sectionLabel: string;
     title: string;
     titleAccent: string;
-    bodyBeforeEmail: string;
-    bodyAfterEmail: string;
-    email: string;
+    body: string;
     form: LandingContactFormMessages;
   };
   footer: {

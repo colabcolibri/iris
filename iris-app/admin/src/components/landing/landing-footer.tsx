@@ -7,6 +7,10 @@ import { LANDING_SECTIONS, landingHomePath } from "@/i18n/routing";
 export function LandingFooter() {
   const { locale, m } = useLandingI18n();
   const year = new Date().getFullYear();
+  const host =
+    typeof window !== "undefined" ? window.location.host : "";
+  const showHost =
+    host.length > 0 && !/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(host);
 
   return (
     <footer className="bg-(--iris-canvas-parchment) text-(--iris-ink-muted-80)">
@@ -45,7 +49,7 @@ export function LandingFooter() {
       <div className="border-t border-(--iris-hairline)">
         <div className="mx-auto flex w-full min-w-0 max-w-(--iris-container) flex-col gap-2 px-4 py-5 text-xs text-(--iris-ink-muted-48) sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>© {year} Iris · Sergio Luciano</span>
-          <span>iris.sergioluciano.com</span>
+          {showHost ? <span>{host}</span> : null}
         </div>
       </div>
     </footer>

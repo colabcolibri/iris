@@ -49,6 +49,40 @@ test("submitContactForm returns success for honeypot without sending", async () 
   assert.equal(sent, false);
 });
 
+test("submitContactForm fails when destination email is not configured", async () => {
+  const previous = process.env.IRIS_CONTACT_EMAIL;
+  delete process.env.IRIS_CONTACT_EMAIL;
+
+  try {
+    await assert.rejects(
+      () =>
+        submitContactForm(
+          {
+            name: "Ana Silva",
+            email: "ana@example.com",
+            subject: "Interest",
+            message: "I would like to learn more.",
+          },
+          {
+            emailSender: {
+              async send() {
+                return { ok: true };
+              },
+            },
+          },
+        ),
+      (error: unknown) =>
+        error instanceof ContactFormError && error.code === "email_not_configured",
+    );
+  } finally {
+    if (previous === undefined) {
+      delete process.env.IRIS_CONTACT_EMAIL;
+    } else {
+      process.env.IRIS_CONTACT_EMAIL = previous;
+    }
+  }
+});
+
 test("submitContactForm sends email to configured destination", async () => {
   const capture: { to?: string; replyTo?: string; subject?: string } = {};
   const result = await submitContactForm(
@@ -57,10 +91,10 @@ test("submitContactForm sends email to configured destination", async () => {
       email: "ana@example.com",
       subject: "Interesse no Iris",
       message: "Gostaria de conversar sobre o produto.",
-      pageUrl: "https://iris.sergioluciano.com/#contato",
+      pageUrl: "https://example.com/#contact",
     },
     {
-      destinationEmail: "ola@sergioluciano.com",
+      destinationEmail: "contact@example.com",
       emailSender: {
         async send(input) {
           capture.to = input.to;
@@ -73,7 +107,7 @@ test("submitContactForm sends email to configured destination", async () => {
   );
 
   assert.equal(result.ok, true);
-  assert.equal(capture.to, "ola@sergioluciano.com");
+  assert.equal(capture.to, "contact@example.com");
   assert.equal(capture.replyTo, "ana@example.com");
   assert.match(capture.subject ?? "", /Interesse no Iris/);
 });

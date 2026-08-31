@@ -52,11 +52,12 @@ export type ContactFormDeps = {
   locale?: ServerAppLocale;
 };
 
-export function resolveContactDestinationEmail(): string {
-  return (
-    process.env.IRIS_CONTACT_EMAIL?.trim().toLowerCase() ||
-    "ola@sergioluciano.com"
-  );
+export function resolveContactDestinationEmail(): string | null {
+  const email = process.env.IRIS_CONTACT_EMAIL?.trim().toLowerCase();
+  if (!email || !email.includes("@")) {
+    return null;
+  }
+  return email;
 }
 
 export function isContactHoneypotTriggered(website: string | undefined): boolean {
@@ -101,9 +102,10 @@ export async function submitContactForm(
   }
 
   const input = validateContactFormInput(raw);
-  const destination = deps.destinationEmail?.trim().toLowerCase() || resolveContactDestinationEmail();
+  const destination =
+    deps.destinationEmail?.trim().toLowerCase() || resolveContactDestinationEmail();
 
-  if (!destination.includes("@")) {
+  if (!destination) {
     throw new ContactFormError(
       "email_not_configured",
       "email_not_configured",

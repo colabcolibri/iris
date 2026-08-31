@@ -201,10 +201,8 @@ export const landingEn: LandingMessages = {
     sectionLabel: "06 · Contact",
     title: "Interested?",
     titleAccent: "Let's talk",
-    bodyBeforeEmail:
-      "Every implementation is individual. Use the form below for investment questions, doubts, or whether Iris fits your brand — you'll get a reply from me through",
-    bodyAfterEmail: ".",
-    email: "ola@sergioluciano.com",
+    body:
+      "Every implementation is individual. Use the form below for investment questions, doubts, or whether Iris fits your brand — we'll reply by email shortly.",
     form: {
       name: "Name",
       email: "Email",

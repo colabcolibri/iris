@@ -1,24 +1,24 @@
 <p align="center">
-  <img src="iris-app/admin/public/assets/iris-logo.png" alt="Íris" width="96" height="96" />
+  <img src="iris-app/admin/public/assets/iris-logo.png" alt="Iris" width="96" height="96" />
 </p>
 
-<h1 align="center">Íris</h1>
+<h1 align="center">Iris</h1>
 
 <p align="center">
-  <strong>Sua agente editorial e gestora de mídias sociais.</strong><br />
-  A Íris publica no seu Instagram e responde quem comenta, sempre na voz da sua marca — com o nível de autonomia que você escolher.
+  <strong>Your editorial agent and social media manager.</strong><br />
+  Iris publishes to your Instagram and replies to people commenting, always in your brand's voice — at whatever level of autonomy you choose.
 </p>
 
 <p align="center">
-  <a href="README.en.md">English</a> ·
-  <a href="#o-que-é">O que é</a> ·
-  <a href="#o-que-ela-faz">O que ela faz</a> ·
-  <a href="#como-funciona">Como funciona</a> ·
-  <a href="#respostas-a-comentários">Respostas a comentários</a> ·
-  <a href="#agentes-externos-mcp--rest">Agentes externos</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="#what-it-is">What it is</a> ·
+  <a href="#what-it-does">What it does</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#comment-replies">Comment replies</a> ·
+  <a href="#external-agents-mcp--rest">External agents</a> ·
   <a href="#interface">Interface</a> ·
   <a href="#quick-start">Quick start</a> ·
-  <a href="#documentação">Documentação</a>
+  <a href="#documentation">Documentation</a>
 </p>
 
 <p align="center">
@@ -31,130 +31,130 @@
 </p>
 
 <p align="center">
-  <img src="docs/readme/calendar.webp" alt="Calendário editorial da Íris com post agendado" width="900" />
+  <img src="docs/readme/calendar.webp" alt="Iris editorial calendar with a scheduled post" width="900" />
 </p>
 
 ---
 
-## O que é
+## What it is
 
-A **Íris** é um servidor self-hosted com painel web que cuida do Instagram da marca: agenda, publica no horário e **responde comentários na voz da marca**.
+**Iris** is a self-hosted server with a web admin that runs your brand's Instagram: schedule, publish on time, and **reply to comments in the brand's voice**.
 
-Três papéis, sem misturar:
+Three roles — keep them straight:
 
-| Quem | O que faz |
-| ---- | --------- |
-| **Você no painel** | Planeja, revisa no calendário/kanban, configura persona e autonomia |
-| **A própria Íris** | Publica no horário e opera o pipeline de respostas a comentários |
-| **Agentes externos** (Cursor, Claude, ChatGPT) | Criam/editam/agendam posts via MCP ou REST — **não** publicam sozinhos |
-
----
-
-## O que ela faz
-
-- **Calendário e kanban** — rascunhos, agendados e publicados num só lugar
-- **Publicação no horário** — worker envia para o Instagram via Graph API oficial
-- **Respostas a comentários** — lê o comentário e o contexto do post; responde com critério, persona e limites que você define
-- **MCP / REST opcional** — seu assistente de IA cria e agenda posts sem abrir o painel
-- **Self-hosted** — SQLite + mídia em disco; tokens Meta criptografados; app Meta próprio por deploy
+| Who | What they do |
+| --- | ------------ |
+| **You in the admin** | Plan, review on calendar/kanban, set persona and autonomy |
+| **Iris itself** | Publishes on schedule and runs the comment-reply pipeline |
+| **External agents** (Cursor, Claude, ChatGPT) | Create/edit/schedule posts via MCP or REST — they **do not** publish alone |
 
 ---
 
-## Como funciona
+## What it does
 
-Quatro passos, do planejamento à conversa:
+- **Calendar and kanban** — drafts, scheduled, and published posts in one place
+- **On-time publishing** — worker posts to Instagram via the official Graph API
+- **Comment replies** — reads the comment and post context; replies with judgment, persona, and limits you set
+- **Optional MCP / REST** — your AI assistant creates and schedules posts without opening the admin
+- **Self-hosted** — SQLite + media on disk; Meta tokens encrypted; your own Meta app per deployment
 
-1. **Planejar** — você (ou um agente externo) cria a legenda e sobe as imagens
-2. **Revisar** — calendário ou kanban; nada sai sem passar por aí
-3. **Publicar** — no `scheduled_at`, o worker da Íris publica no Instagram
-4. **Responder** — quando alguém comenta, a Íris decide, rascunha e (se permitido) responde na voz da marca
+---
+
+## How it works
+
+Four steps, from planning to conversation:
+
+1. **Plan** — you (or an external agent) write the caption and upload images
+2. **Review** — calendar or kanban; nothing goes live without this step
+3. **Publish** — at `scheduled_at`, Iris's worker publishes to Instagram
+4. **Reply** — when someone comments, Iris decides, drafts, and (if allowed) replies in the brand voice
 
 ```txt
-Painel / MCP / REST  →  cria, edita, agenda, sobe mídia
-Íris (server+worker) →  publica no horário, sincroniza e responde comentários
-Instagram (Graph API)→  destino final
+Admin / MCP / REST   →  create, edit, schedule, upload media
+Iris (server+worker) →  publish on time, sync and reply to comments
+Instagram (Graph API)→  final destination
 ```
 
-Pacote local opcional (`publications/…/post.md` + imagens): [`docs/architecture/local-publications.md`](docs/architecture/local-publications.md).
+Optional local package (`publications/…/post.md` + images): [`docs/architecture/local-publications.md`](docs/architecture/local-publications.md).
 
 ---
 
-## Respostas a comentários
+## Comment replies
 
-Feature central: a Íris não só publica — ela **conversa** com quem comenta, com guardrails.
+Core feature: Iris does not only publish — it **talks** to people who comment, with guardrails.
 
-### O que acontece
+### What happens
 
-1. Chega um comentário (webhook Meta ou sync)
-2. A Íris monta o contexto (texto do comentário + post / carrossel)
-3. Pipeline multi-etapa: **decidir se responde** → **rascunho** → **revisão do próprio texto**
-4. Resultado: rascunho para aprovação, envio automático dentro dos limites, ou skip (não vale responder / conteúdo bloqueado)
+1. A comment arrives (Meta webhook or sync)
+2. Iris builds context (comment text + post / carousel)
+3. Multi-step pipeline: **decide whether to reply** → **draft** → **review its own text**
+4. Outcome: draft for approval, automatic send within limits, or skip (not worth replying / blocked content)
 
-### Persona e limites
+### Persona and limits
 
-No admin você define tom, idioma, assinatura e limites (ex.: tamanho máximo). A resposta segue a persona da marca — não um tom genérico de chatbot.
+In the admin you set tone, language, signature, and limits (e.g. max length). Replies follow the brand persona — not a generic chatbot voice.
 
-### Autonomia configurável
+### Configurable autonomy
 
-| Modo | Comportamento |
-| ---- | ------------- |
-| **Aprovar antes** | Rascunho fica no painel; você libera o envio |
-| **Auto dentro dos limites** | Envia sozinha quando passa na triagem e na verificação |
-| **Delay** | Espera configurável antes do envio — última chance de revisar |
-| **Por post ou global** | Liga/desliga auto-reply em tudo ou só em posts específicos |
+| Mode | Behavior |
+| ---- | -------- |
+| **Approve first** | Draft stays in the admin; you release the send |
+| **Auto within limits** | Sends on its own when triage and verification pass |
+| **Delay** | Configurable wait before send — last chance to review |
+| **Per post or global** | Turn auto-reply on/off everywhere or only on specific posts |
 
-### Simulação e histórico
+### Simulation and history
 
-- **Simulador** — testa persona e regras sem publicar de verdade
-- **Audit trail** — cada resposta automática registra os passos (triagem → rascunho → verificação) para inspeção no painel
+- **Simulator** — try persona and rules without publishing for real
+- **Audit trail** — every automatic reply logs the steps (triage → draft → verification) for inspection in the admin
 
 ### Anti prompt-injection
 
-Comentários às vezes tentam “hackear” o assistente com instruções escondidas. A Íris trata o texto do comentário como **entrada não confiável**: não deixa um comentário mudar tom, idioma ou regras da marca.
+Comments sometimes try to “hack” the assistant with hidden instructions. Iris treats comment text as **untrusted input**: a comment cannot change tone, language, or brand rules.
 
 ---
 
-## Agentes externos (MCP / REST)
+## External agents (MCP / REST)
 
-Outro tipo de IA — **não** é o pipeline de comentários acima.
+A different kind of AI — **not** the comment pipeline above.
 
-Cursor, Claude ou ChatGPT podem criar e agendar posts. Eles **não** publicam no Instagram: a publicação fica com o worker da Íris no horário agendado.
+Cursor, Claude, or ChatGPT can create and schedule posts. They **do not** publish to Instagram: publishing stays with Iris's worker at the scheduled time.
 
-| Porta | Credencial | Uso típico |
-| ----- | ---------- | ---------- |
-| **REST** (`/api/*`) | `IRIS_AGENT_TOKEN` | Scripts, CI, push de `publications/` |
-| **MCP** (`POST /mcp`) | código de conexão (UI ou `IRIS_MCP_CONNECTION_CODE`) | Chat: criar/editar posts, mídia, calendário, comentários |
+| Door | Credential | Typical use |
+| ---- | ---------- | ----------- |
+| **REST** (`/api/*`) | `IRIS_AGENT_TOKEN` | Scripts, CI, push from `publications/` |
+| **MCP** (`POST /mcp`) | connection code (UI or `IRIS_MCP_CONNECTION_CODE`) | Chat: create/edit posts, media, calendar, comments |
 
-Tools MCP (resumo): posts, mídia, comentários, DMs (`iris_list_conversations`, `iris_get_message_reply_context`), catálogo de produtos (`iris_list_products`, …), lojas Yampi (`iris_list_store_connections`, `iris_sync_store_catalog`, …), persona/conteúdo do agente, simulador e insights — ver tabela completa em `docs/07_api_contracts.md` (45 tools).
+MCP tools (summary): posts, media, comments, DMs (`iris_list_conversations`, `iris_get_message_reply_context`), product catalog (`iris_list_products`, …), Yampi stores (`iris_list_store_connections`, `iris_sync_store_catalog`, …), agent persona/content, simulator, and insights — full list in `docs/07_api_contracts.md` (45 tools).
 
-Setup por client: [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md).
+Per-client setup: [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md).
 
 ---
 
 ## Interface
 
-Calendário, kanban, inbox de comentários, persona e conexão MCP — no mesmo admin.
+Calendar, kanban, comment inbox, persona, and MCP connection — one admin.
 
 <p align="center">
-  <strong>Pipeline kanban</strong><br />
-  <img src="docs/readme/kanban.webp" alt="Kanban por status" width="880" />
+  <strong>Editorial kanban pipeline</strong><br />
+  <img src="docs/readme/kanban.webp" alt="Kanban by status" width="880" />
 </p>
 
 <table>
   <tr>
     <td align="center" width="50%">
-      <strong>Inbox de comentários</strong><br />
-      <img src="docs/readme/comments.webp" alt="Inbox de comentários" width="420" />
+      <strong>Comment inbox</strong><br />
+      <img src="docs/readme/comments.webp" alt="Comment inbox" width="420" />
     </td>
     <td align="center" width="50%">
-      <strong>Persona da marca</strong><br />
-      <img src="docs/readme/persona.webp" alt="Persona da marca para respostas" width="420" />
+      <strong>Brand persona</strong><br />
+      <img src="docs/readme/persona.webp" alt="Brand persona for replies" width="420" />
     </td>
   </tr>
   <tr>
     <td align="center" colspan="2">
-      <strong>Conexão MCP</strong> — Cursor, ChatGPT, Claude<br />
-      <img src="docs/readme/mcp-settings.webp" alt="Configuração MCP" width="420" />
+      <strong>MCP connection</strong> — Cursor, ChatGPT, Claude<br />
+      <img src="docs/readme/mcp-settings.webp" alt="MCP setup" width="420" />
     </td>
   </tr>
 </table>
@@ -163,7 +163,7 @@ Calendário, kanban, inbox de comentários, persona e conexão MCP — no mesmo 
 
 ## Quick start
 
-**Requisitos:** Node.js ≥ 22, [pnpm](https://pnpm.io/). Para publicar no Instagram: conta Business/Creator + [app Meta no seu deploy](docs/meta/README.md).
+**Requirements:** Node.js ≥ 22, [pnpm](https://pnpm.io/). To publish to Instagram: Business/Creator account + [Meta app for your deployment](docs/meta/README.md).
 
 ```bash
 git clone https://github.com/colabcolibri/iris.git
@@ -173,12 +173,12 @@ pnpm install
 pnpm dev
 ```
 
-Abra **http://127.0.0.1:8792** — um processo serve API, UI e HMR.
+Open **http://127.0.0.1:8792** — one process serves API, UI, and HMR.
 
-**Email em dev:** [Mailpit](https://github.com/axllent/mailpit) (SMTP `:1025`, UI `:8025`) para ver os códigos OTP.
+**Email in dev:** [Mailpit](https://github.com/axllent/mailpit) (SMTP `:1025`, UI `:8025`) to see OTP codes.
 
 ```bash
-# Produção local (bundle estático)
+# Local production (static bundle)
 pnpm build:admin
 NODE_ENV=production pnpm start
 ```
@@ -187,31 +187,30 @@ NODE_ENV=production pnpm start
 cd iris-app && pnpm test
 ```
 
-Detalhes do workspace: [`iris-app/README.md`](iris-app/README.md).
+Workspace details: [`iris-app/README.md`](iris-app/README.md).
 
 ---
 
-## Repositório
+## Repository
 
-| Caminho | Descrição |
-| ------- | --------- |
-| [`iris-app/server/`](iris-app/server/) | API HTTP, workers, MCP, migrations SQLite |
-| [`iris-app/admin/`](iris-app/admin/) | SPA React (Vite) |
-| [`iris-app/public/`](iris-app/public/) | Bundle estático do admin (output do Vite) |
-| [`docs/`](docs/) | Escopo, arquitetura, API, design system |
-| [`iris-agent/`](iris-agent/) | Kit local opcional (`publications/`, scripts MCP) |
+| Path | Description |
+| ---- | ----------- |
+| [`iris-app/server/`](iris-app/server/) | HTTP API, workers, MCP, SQLite migrations |
+| [`iris-app/admin/`](iris-app/admin/) | React SPA (Vite) |
+| [`iris-app/public/`](iris-app/public/) | Static admin bundle (Vite output) |
+| [`docs/`](docs/) | Scope, architecture, API, design system |
 
-> `publications/` e credenciais ficam na sua máquina — não entram no git.
+> Credentials, SQLite data, and optional local agent kits stay on your machine — not in git.
 
 ---
 
 ## Deploy
 
-`Dockerfile` e `railway.toml` na **raiz** (build → `iris-app/`). Volume em `/app/data`. Healthcheck: `GET /health`.
+`Dockerfile` and `railway.toml` at the **root** (build → `iris-app/`). Volume at `/app/data`. Healthcheck: `GET /health`.
 
-Checklist resumido: `IRIS_PUBLIC_BASE_URL`, app Meta do **operador do deploy**, webhook `{base}/webhooks/meta`, Resend em produção, `IRIS_TOKEN_ENCRYPTION_KEY`. Secrets só no painel do provedor.
+Short checklist: `IRIS_PUBLIC_BASE_URL`, Meta app from the **deployment operator**, webhook `{base}/webhooks/meta`, Resend in production, `IRIS_TOKEN_ENCRYPTION_KEY`. Secrets only in the provider dashboard.
 
-Guia: [`docs/08_environments.md`](docs/08_environments.md) · variáveis: [`iris-app/.env.railway.example`](iris-app/.env.railway.example).
+Guide: [`docs/08_environments.md`](docs/08_environments.md) · variables: [`iris-app/.env.railway.example`](iris-app/.env.railway.example).
 
 ---
 
@@ -221,44 +220,43 @@ Node 22 + TypeScript · `node:http` · SQLite (`node:sqlite`) · React 19 / Vite
 
 ---
 
-## Documentação
+## Documentation
 
-| Doc | Conteúdo |
-| --- | -------- |
-| [`docs/00_scope.md`](docs/00_scope.md) | Escopo e problema |
-| [`docs/05_architecture.md`](docs/05_architecture.md) | Arquitetura e fluxos (incl. agente de replies) |
-| [`docs/07_api_contracts.md`](docs/07_api_contracts.md) | Contratos REST |
-| [`docs/08_environments.md`](docs/08_environments.md) | Variáveis e ambientes |
-| [`docs/meta/README.md`](docs/meta/README.md) | Instagram / Meta — guias passo a passo (01–08) |
-| [`iris-app/docs-site/`](iris-app/docs-site/) | Fonte Starlight — build → **`/docs/`** no Iris (`pnpm docs:build`) |
-| [`docs/architecture/docs-site.md`](docs/architecture/docs-site.md) | Arquitetura do site de documentação |
+| Doc | Content |
+| --- | ------- |
+| [`docs/00_scope.md`](docs/00_scope.md) | Scope and problem |
+| [`docs/05_architecture.md`](docs/05_architecture.md) | Architecture and flows (incl. reply agent) |
+| [`docs/07_api_contracts.md`](docs/07_api_contracts.md) | REST contracts |
+| [`docs/08_environments.md`](docs/08_environments.md) | Variables and environments |
+| [`docs/meta/README.md`](docs/meta/README.md) | Instagram / Meta — step-by-step guides (01–08) |
+| [`iris-app/docs-site/`](iris-app/docs-site/) | Starlight docs source — build → **`/docs/`** on Iris (`pnpm docs:build`) |
+| [`docs/architecture/docs-site.md`](docs/architecture/docs-site.md) | Documentation site architecture |
 | [`docs/architecture/mcp-integration.md`](docs/architecture/mcp-integration.md) | MCP — Cursor, ChatGPT, Claude |
-| [`docs/architecture/diagrams/iris-reply-agent-flow.md`](docs/architecture/diagrams/iris-reply-agent-flow.md) | Fluxo do agente de comentários |
-
-Backlog Meridian (opcional, não faz parte do runtime): [`AGENTS.md`](AGENTS.md).
+| [`docs/architecture/diagrams/iris-reply-agent-flow.md`](docs/architecture/diagrams/iris-reply-agent-flow.md) | Comment-reply agent flow |
 
 ---
 
-## Segurança
+## Security
 
-- Tokens Meta, LLM e sessão **só no servidor**
-- Admin: OTP por email + cookie HttpOnly + gate nas rotas SPA
-- REST e MCP usam credenciais distintas, escopo limitado
-- Comentários tratados como entrada não confiável no pipeline de reply
+- Meta, LLM, and session tokens **server-side only**
+- Admin: email OTP + HttpOnly cookie + SPA route gate
+- Distinct REST and MCP credentials, limited scope
+- Comments treated as untrusted input in the reply pipeline
+- Change every default secret in `.env` before exposing a deployment to the internet
 
-Reporte vulnerabilidades pelo canal privado do mantenedor — não abra issue pública com detalhes de exploit.
+See [`SECURITY.md`](SECURITY.md) for supported versions and how to report vulnerabilities privately.
 
 ---
 
-## Licença
+## License
 
-[PolyForm Noncommercial License 1.0.0](LICENSE) — **Colab Colibri**.
+[PolyForm Noncommercial License 1.0.0](LICENSE) — **Sergio Luciano**.
 
-Uso, modificação e distribuição gratuitos para fins **não comerciais**. Uso comercial requer autorização explícita do mantenedor.
+Free use, modification, and distribution for **noncommercial** purposes. Commercial use requires explicit authorization from the maintainer.
 
 ---
 
 <p align="center">
   <img src="iris-app/admin/public/assets/iris-logo-32.png" alt="" width="20" height="20" />
-  <sub>Íris — publica no horário e responde quem comenta, na voz da sua marca</sub>
+  <sub>Iris — publishes on time and replies to comments, in your brand's voice</sub>
 </p>

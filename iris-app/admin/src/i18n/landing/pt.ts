@@ -202,10 +202,8 @@ export const landingPt: LandingMessages = {
     sectionLabel: "06 · Contato",
     title: "Tem interesse?",
     titleAccent: "Vamos conversar",
-    bodyBeforeEmail:
-      "Cada implementação é individual. Use o formulário abaixo para falar de investimento, dúvidas ou se a Íris faz sentido para a sua marca — você receberá um retorno meu através do email",
-    bodyAfterEmail: ".",
-    email: "ola@sergioluciano.com",
+    body:
+      "Cada implementação é individual. Use o formulário abaixo para falar de investimento, dúvidas ou se a Íris faz sentido para a sua marca — responderemos por email em breve.",
     form: {
       name: "Nome",
       email: "Email",
