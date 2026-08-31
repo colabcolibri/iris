@@ -137,6 +137,22 @@ UI (produção): `pnpm build:admin` + `pnpm start` — bundle em `public/`; logi
 
 Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar valores reais** — use variáveis de ambiente no provedor.
 
+### Docker Compose (self-hosted)
+
+Para subir localmente ou em um VPS com o mínimo de fricção:
+
+```bash
+cp .env.docker.example .env.docker
+# edite secrets e IRIS_ADMIN_EMAIL
+docker compose up -d --build
+```
+
+- **Iris:** `http://localhost:8792` (ou `IRIS_HOST_PORT`)
+- **Mailpit (OTP em trial):** `http://localhost:8025`
+- **Dados:** volume `iris-data` → `/app/data/iris.db` + mídia
+
+Em produção com domínio público, use `IRIS_EMAIL_PROVIDER=resend`, HTTPS em `IRIS_PUBLIC_BASE_URL` e configure Meta conforme `docs/meta/README.md`.
+
 | Variable | Notes |
 | -------- | ----- |
 | `NODE_ENV` | `production` |

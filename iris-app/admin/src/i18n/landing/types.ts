@@ -6,6 +6,7 @@ export type LandingNavMessages = {
   faq: string;
   contact: string;
   demo: string;
+  github: string;
 };
 
 export type LandingStepMessages = {
@@ -72,6 +73,11 @@ export type LandingMessages = {
     titleLine2: string;
     titleLine2Accent: string;
     subtitle: string;
+    openSource: {
+      badge: string;
+      description: string;
+      githubCta: string;
+    };
     cta: string;
     demoCta: string;
     stage: LandingHeroStageMessages;
@@ -139,6 +145,7 @@ export type LandingMessages = {
       LandingFaqItemMessages,
       LandingFaqItemMessages,
       LandingFaqItemMessages,
+      LandingFaqItemMessages,
     ];
   };
   contact: {
@@ -152,5 +159,6 @@ export type LandingMessages = {
     blurb: string;
     contact: string;
     privacy: string;
+    github: string;
   };
 };

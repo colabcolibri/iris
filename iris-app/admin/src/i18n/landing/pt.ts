@@ -16,6 +16,7 @@ export const landingPt: LandingMessages = {
     faq: "FAQ",
     contact: "Contato",
     demo: "Ver demo",
+    github: "GitHub",
   },
   hero: {
     eyebrow: "Sua agente editorial e gestora de mídias sociais",
@@ -24,6 +25,12 @@ export const landingPt: LandingMessages = {
     titleLine2: "do jeito que você quer",
     subtitle:
       "A Íris publica no seu Instagram e responde quem comenta, sempre na voz da sua marca — com o nível de autonomia que você escolher.",
+    openSource: {
+      badge: "Código aberto",
+      description:
+        "Primeira versão pública (v0.x) no GitHub — o app evolui aos poucos.",
+      githubCta: "Ver o repositório",
+    },
     cta: "Quero conhecer a Íris",
     demoCta: "Ver demonstração",
     stage: {
@@ -144,7 +151,7 @@ export const landingPt: LandingMessages = {
     manifestoQuestion:
       "Por que assim, e não vender como um SaaS tradicional, por assinatura?",
     manifestoAnswer:
-      "Porque ser desenvolvedor não é a minha ocupação principal, e não pretendo abrir uma startup. A Íris nasceu de ferramentas que criei para o meu próprio uso, e decidi colocar à disposição de outras pessoas. Tenho mais cara de uma pequena boutique, com projetos pontuais para quem realmente vê valor nisso — não de uma empresa de software correndo atrás de milhares de contas.",
+      "Porque ser desenvolvedor não é a minha ocupação principal, e não pretendo abrir uma startup. A Íris nasceu de ferramentas que criei para o meu próprio uso — agora em código aberto no GitHub (licença não comercial) — e eu continuo oferecendo implementação sob medida para marcas que querem alguém configurando e acompanhando com elas. Tenho mais cara de boutique do que de empresa de software correndo atrás de milhares de contas.",
     items: [
       {
         title: "Implementação",
@@ -196,6 +203,11 @@ export const landingPt: LandingMessages = {
         answer:
           'Não tem cadastro nem botão de "assinar agora". Eu monto e configuro tudo pessoalmente para você, e te ensino a usar. Envie uma mensagem pelo formulário de contato e conversamos sobre o seu caso.',
       },
+      {
+        question: "A Íris é open source?",
+        answer:
+          "Sim. O código está público no GitHub, com licença não comercial. Você pode inspecionar, rodar no seu servidor com Docker Compose e acompanhar as novas versões conforme forem saindo. Prefere uma implementação gerida para a sua marca? Isso continua disponível — use o formulário de contato.",
+      },
     ],
   },
   contact: {
@@ -221,8 +233,9 @@ export const landingPt: LandingMessages = {
   },
   footer: {
     blurb:
-      "A Íris cuida do Instagram da sua marca: agenda e publica posts, responde comentários com critério e conecta com o seu agente de IA, se você usar um.",
+      "A Íris cuida do Instagram da sua marca: agenda e publica posts, responde comentários com critério e conecta com o seu agente de IA, se você usar um. Código aberto no GitHub — evoluindo em público.",
     contact: "Contato",
     privacy: "Privacidade",
+    github: "GitHub",
   },
 };

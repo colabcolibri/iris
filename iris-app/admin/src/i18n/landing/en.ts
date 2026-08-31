@@ -16,6 +16,7 @@ export const landingEn: LandingMessages = {
     faq: "FAQ",
     contact: "Contact",
     demo: "View demo",
+    github: "GitHub",
   },
   hero: {
     eyebrow: "Your editorial agent and social media manager",
@@ -24,6 +25,12 @@ export const landingEn: LandingMessages = {
     titleLine2: "exactly how you want it",
     subtitle:
       "Iris publishes to your Instagram and replies to the people commenting, always in your brand's voice — at whatever level of autonomy you choose.",
+    openSource: {
+      badge: "Open source",
+      description:
+        "First public version (v0.x) on GitHub — the app evolves step by step.",
+      githubCta: "View the repository",
+    },
     cta: "I want to meet Iris",
     demoCta: "View demo",
     stage: {
@@ -143,7 +150,7 @@ export const landingEn: LandingMessages = {
     manifestoQuestion:
       "Why this way, instead of selling it as a traditional SaaS subscription?",
     manifestoAnswer:
-      "Because being a developer isn't my main occupation, and I'm not trying to start a company. Iris grew out of tools I built for my own use, which I decided to make available to other people too. I'm more of a small boutique, taking on one-off projects for people who genuinely see the value — not a software company chasing thousands of accounts.",
+      "Because being a developer isn't my main occupation, and I'm not trying to start a company. Iris grew out of tools I built for my own use — now open source on GitHub (noncommercial license) — while I still offer hands-on implementation for brands that want someone to set it up and run it with them. I'm more of a small boutique than a software company chasing thousands of accounts.",
     items: [
       {
         title: "Implementation",
@@ -195,6 +202,11 @@ export const landingEn: LandingMessages = {
         answer:
           "There's no signup form or \"subscribe now\" button. I set up and configure everything personally for you, and teach you how to use it. Send a message through the contact form and we'll talk about your case.",
       },
+      {
+        question: "Is Iris open source?",
+        answer:
+          "Yes. The codebase is public on GitHub under a noncommercial license. You can inspect it, self-host with Docker Compose, and follow new releases as they ship. Prefer a managed setup tailored to your brand? That's still available — use the contact form.",
+      },
     ],
   },
   contact: {
@@ -219,8 +231,9 @@ export const landingEn: LandingMessages = {
   },
   footer: {
     blurb:
-      "Iris takes care of your brand's Instagram: schedules and publishes posts, replies to comments with judgment, and connects to your AI agent, if you use one.",
+      "Iris takes care of your brand's Instagram: schedules and publishes posts, replies to comments with judgment, and connects to your AI agent, if you use one. Open source on GitHub — evolving in public.",
     contact: "Contact",
     privacy: "Privacy",
+    github: "GitHub",
   },
 };

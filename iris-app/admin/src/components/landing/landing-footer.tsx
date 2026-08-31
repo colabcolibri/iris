@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { privacyPath } from "@/lib/routes";
+import { IRIS_GITHUB_REPO_URL } from "@/lib/landing-external-links";
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS, landingHomePath } from "@/i18n/routing";
 
@@ -31,6 +32,14 @@ export function LandingFooter() {
         </div>
 
         <div className="flex flex-col gap-3 text-base leading-[2.41]">
+          <a
+            href={IRIS_GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-(--iris-ink-soft) transition-colors hover:text-(--iris-primary)"
+          >
+            {m.footer.github}
+          </a>
           <a
             href={`#${LANDING_SECTIONS.contact}`}
             className="text-(--iris-ink-soft) transition-colors hover:text-(--iris-primary)"

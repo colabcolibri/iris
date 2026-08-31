@@ -17,6 +17,7 @@
   <a href="#respostas-a-comentários">Respostas a comentários</a> ·
   <a href="#agentes-externos-mcp--rest">Agentes externos</a> ·
   <a href="#interface">Interface</a> ·
+  <a href="#deploy">Deploy</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#documentação">Documentação</a>
 </p>
@@ -33,6 +34,8 @@
 <p align="center">
   <img src="docs/readme/calendar.webp" alt="Calendário editorial da Íris com post agendado" width="900" />
 </p>
+
+> **Versão inicial (v0.x)** — a Íris está na **primeira versão pública**. As funcionalidades evoluem aos poucos; espere arestas, ajustes de API e lacunas enquanto o produto amadurece. Feedback e issues são bem-vindos.
 
 ---
 
@@ -206,9 +209,32 @@ Detalhes do workspace: [`iris-app/README.md`](iris-app/README.md).
 
 ## Deploy
 
-`Dockerfile` e `railway.toml` na **raiz** (build → `iris-app/`). Volume em `/app/data`. Healthcheck: `GET /health`.
+### Docker Compose (recomendado para testar rápido)
 
-Checklist resumido: `IRIS_PUBLIC_BASE_URL`, app Meta do **operador do deploy**, webhook `{base}/webhooks/meta`, Resend em produção, `IRIS_TOKEN_ENCRYPTION_KEY`. Secrets só no painel do provedor.
+O repositório inclui um `docker-compose.yml` funcional (Íris + [Mailpit](https://github.com/axllent/mailpit) para emails OTP).
+
+```bash
+git clone https://github.com/colabcolibri/iris.git
+cd iris
+cp .env.docker.example .env.docker
+# Edite .env.docker — no mínimo IRIS_ADMIN_EMAIL e todos os change-me-*
+docker compose up -d --build
+```
+
+| URL | Uso |
+| --- | --- |
+| http://localhost:8792 | Admin da Íris (login com `IRIS_ADMIN_EMAIL`) |
+| http://localhost:8025 | Mailpit — ler códigos OTP |
+
+Os dados ficam no volume Docker `iris-data` (`/app/data` no container). Healthcheck: `GET /health`.
+
+Em produção (HTTPS, Resend, webhooks Meta), troque o Mailpit por `IRIS_EMAIL_PROVIDER=resend` e defina `IRIS_PUBLIC_BASE_URL` com o domínio público. Veja [`.env.railway.example`](iris-app/.env.railway.example).
+
+### Outros hosts
+
+`Dockerfile` e `railway.toml` na **raiz do repositório** (build inclui `iris-app/`). Monte um volume em `/app/data`.
+
+Checklist: `IRIS_PUBLIC_BASE_URL`, app Meta próprio, webhook `{base}/webhooks/meta`, `IRIS_TOKEN_ENCRYPTION_KEY`. Secrets só no painel do provedor.
 
 Guia: [`docs/08_environments.md`](docs/08_environments.md) · variáveis: [`iris-app/.env.railway.example`](iris-app/.env.railway.example).
 

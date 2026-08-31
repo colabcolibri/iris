@@ -1,6 +1,7 @@
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS } from "@/i18n/routing";
 import { ROUTES } from "@/lib/routes";
+import { IRIS_GITHUB_REPO_URL } from "@/lib/landing-external-links";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { LandingHeroStage } from "@/components/landing/landing-hero-stage";
 import { LandingPrimaryCta } from "@/components/landing/landing-section";
@@ -39,6 +40,23 @@ export function LandingHero() {
           <p className="mt-6 max-w-lg text-base leading-normal text-[color:var(--iris-ink-soft)] sm:text-lg sm:leading-[1.55]">
             {m.hero.subtitle}
           </p>
+
+          <div className="mt-5 flex max-w-lg flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal text-[color:var(--iris-ink-soft)]">
+            <span className="inline-flex shrink-0 items-center rounded-full border border-[color:var(--iris-hairline)] bg-[color:var(--iris-canvas)] px-2.5 py-0.5 text-[0.6875rem] font-semibold tracking-[0.12em] text-[color:var(--iris-primary)] uppercase">
+              {m.hero.openSource.badge}
+            </span>
+            <span>
+              {m.hero.openSource.description}{" "}
+              <a
+                href={IRIS_GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[color:var(--iris-ink)] underline-offset-2 hover:text-[color:var(--iris-primary)] hover:underline"
+              >
+                {m.hero.openSource.githubCta}
+              </a>
+            </span>
+          </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <LandingPrimaryCta href={`#${LANDING_SECTIONS.contact}`}>

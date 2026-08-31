@@ -4,6 +4,7 @@ import { LandingLanguageSwitcher } from "@/components/landing/landing-language-s
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS, landingHomePath } from "@/i18n/routing";
 import { ROUTES } from "@/lib/routes";
+import { IRIS_GITHUB_REPO_URL } from "@/lib/landing-external-links";
 import { cn } from "@/lib/utils";
 
 const navLinkClass =
@@ -68,6 +69,14 @@ export function LandingNav({ className }: LandingNavProps) {
             className="inline-flex h-9 shrink-0 items-center rounded-[var(--iris-radius-pill)] border border-white/25 px-3.5 text-sm font-medium text-[color:var(--iris-ink-on-dark)] transition-colors hover:border-white/40 hover:bg-white/5"
           >
             {m.nav.demo}
+          </a>
+          <a
+            href={IRIS_GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden h-9 shrink-0 items-center rounded-[var(--iris-radius-pill)] border border-white/25 px-3.5 text-sm font-medium text-[color:var(--iris-ink-on-dark)] transition-colors hover:border-white/40 hover:bg-white/5 sm:inline-flex"
+          >
+            {m.nav.github}
           </a>
           <LandingLanguageSwitcher onDark className="md:ml-0" />
         </nav>

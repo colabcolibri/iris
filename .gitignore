@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.docker.example
 !**/.env.railway.example
 iris-app/.env
 iris-app/.env.*
