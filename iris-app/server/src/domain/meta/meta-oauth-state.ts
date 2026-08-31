@@ -1,7 +1,8 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-const OAUTH_STATE_VERSION = "oauth1";
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+
+export type MetaOAuthFlow = "instagram" | "page";
 
 function timingSafeStringEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
@@ -12,21 +13,34 @@ function timingSafeStringEqual(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
-export function createMetaOAuthState(secret: string): string {
+function oauthStateVersion(flow: MetaOAuthFlow): string {
+  return flow === "page" ? "oauth1-page" : "oauth1-ig";
+}
+
+export function createMetaOAuthState(
+  secret: string,
+  flow: MetaOAuthFlow = "instagram",
+): string {
+  const version = oauthStateVersion(flow);
   const expiresMs = Date.now() + OAUTH_STATE_TTL_MS;
   const nonce = randomBytes(16).toString("base64url");
-  const payload = `${OAUTH_STATE_VERSION}.${expiresMs}`;
+  const payload = `${version}.${expiresMs}`;
   const signature = createHmac("sha256", secret).update(payload).digest("base64url");
   return `${payload}.${signature}.${nonce}`;
 }
 
-export function verifyMetaOAuthState(state: string, secret: string): boolean {
+export function verifyMetaOAuthState(
+  state: string,
+  secret: string,
+  flow: MetaOAuthFlow = "instagram",
+): boolean {
   if (!state.trim() || !secret.trim()) {
     return false;
   }
 
   const parts = state.trim().split(".");
-  if (parts.length !== 4 || parts[0] !== OAUTH_STATE_VERSION) {
+  const expectedVersion = oauthStateVersion(flow);
+  if (parts.length !== 4 || parts[0] !== expectedVersion) {
     return false;
   }
 

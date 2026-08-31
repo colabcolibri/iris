@@ -42,12 +42,14 @@ test("purgeMessageHistory removes messages older than import window", () => {
       igTimestamp: new Date().toISOString(),
     });
 
-    const result = purgeMessageHistory({ messages });
+    const now = Date.now();
+    const cutoffBefore = messageImportCutoffIso(now);
+    const result = purgeMessageHistory({ messages }, now);
     assert.equal(result.messagesDeleted, 1);
     assert.equal(result.conversationsDeleted, 1);
     assert.equal(messages.listByConversationId(conversation.id).length, 0);
     assert.equal(messages.listByConversationId(recentConversation.id).length, 1);
-    assert.equal(result.cutoff, messageImportCutoffIso());
+    assert.equal(result.cutoff, cutoffBefore);
   } finally {
     db.close();
   }

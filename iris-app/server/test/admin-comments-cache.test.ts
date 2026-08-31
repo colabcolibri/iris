@@ -13,10 +13,10 @@ import {
 test("formatRelativeTimeAgo returns human-readable pt-BR labels", () => {
   const now = Date.parse("2026-08-11T12:00:00.000Z");
 
-  assert.equal(formatRelativeTimeAgo("2026-08-11T11:59:55.000Z", now), "agora");
-  assert.equal(formatRelativeTimeAgo("2026-08-11T11:59:00.000Z", now), "há 1 minuto");
-  assert.equal(formatRelativeTimeAgo("2026-08-11T11:30:00.000Z", now), "há 30 minutos");
-  assert.equal(formatRelativeTimeAgo("2026-08-11T10:00:00.000Z", now), "há 2 horas");
+  assert.equal(formatRelativeTimeAgo("2026-08-11T11:59:55.000Z", "pt", now), "agora");
+  assert.equal(formatRelativeTimeAgo("2026-08-11T11:59:00.000Z", "pt", now), "há 1 minuto");
+  assert.equal(formatRelativeTimeAgo("2026-08-11T11:30:00.000Z", "pt", now), "há 30 minutos");
+  assert.equal(formatRelativeTimeAgo("2026-08-11T10:00:00.000Z", "pt", now), "há 2 horas");
 });
 
 test("derivePostCountsFromComments ignores deleted comments for totals", () => {

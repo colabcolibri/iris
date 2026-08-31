@@ -173,6 +173,10 @@ async function handleGet(pathname: string, searchParams: URLSearchParams) {
     return state.metaStatus;
   }
 
+  if (pathname === "/api/meta/setup") {
+    return state.metaSetup;
+  }
+
   if (pathname === "/api/meta/health") {
     return { ok: true, message: "Conexão demo OK." };
   }

@@ -68,7 +68,7 @@ async function withSimulatorServer(
   }
 }
 
-test("GET simulator scenarios returns seeded jogo-grok", async () => {
+test("GET simulator scenarios returns seeded lookbook-verao", async () => {
   await withSimulatorServer(async ({ baseUrl, adminCookie }) => {
     const response = await fetch(`${baseUrl}/api/agent/simulator-scenarios`, {
       headers: { Cookie: adminCookie },
@@ -77,7 +77,7 @@ test("GET simulator scenarios returns seeded jogo-grok", async () => {
     const body = (await response.json()) as {
       items: Array<{ id: string; label: string }>;
     };
-    assert.ok(body.items.some((item) => item.id === "jogo-grok"));
+    assert.ok(body.items.some((item) => item.id === "lookbook-verao"));
   });
 });
 
@@ -165,7 +165,7 @@ test("POST simulate accepts scenario_id and validates missing scenario", async (
         Cookie: adminCookie,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ scenario_id: "jogo-grok" }),
+      body: JSON.stringify({ scenario_id: "lookbook-verao" }),
     });
     assert.equal(noLlm.status, 422);
     const body = (await noLlm.json()) as {

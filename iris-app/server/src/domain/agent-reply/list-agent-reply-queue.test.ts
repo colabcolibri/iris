@@ -7,6 +7,7 @@ import { defaultAppSettings } from "../settings/app-settings-defaults.ts";
 import { listAgentReplyQueue } from "./list-agent-reply-queue.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
+import { secondsAgoIso } from "../../test-utils/recent-timestamps.ts";
 import { enqueueMessageReply } from "../messages/enqueue-message-reply.ts";
 import { enqueueCommentReply } from "../comments/enqueue-comment-reply.ts";
 
@@ -32,6 +33,10 @@ test("listAgentReplyQueue classifies debouncing and due items", () => {
     const llm = createHarnessLlmMock({ draftText: "ok" });
     (ctx as { resolveLlmCompleter: () => LlmCompleter | null }).resolveLlmCompleter = () => llm;
 
+    const now = new Date();
+    const dmAt = secondsAgoIso(61);
+    const commentAt = secondsAgoIso(55);
+
     const { conversation } = ctx.conversations.upsert({
       igConversationId: "ig:queue",
       participantIgUserId: "queue-user",
@@ -42,13 +47,13 @@ test("listAgentReplyQueue classifies debouncing and due items", () => {
       igMessageId: "queue-due",
       conversationId: conversation.id,
       text: "due agora",
-      igTimestamp: "2026-08-14T10:00:00.000Z",
+      igTimestamp: dmAt,
     }).message;
 
     enqueueMessageReply(ctx, dueMessage.id);
     ctx.messages.scheduleAgentReply(
       dueMessage.id,
-      new Date("2026-08-14T09:59:00.000Z").toISOString(),
+      secondsAgoIso(120),
     );
 
     const post = ctx.posts.create({
@@ -64,7 +69,7 @@ test("listAgentReplyQueue classifies debouncing and due items", () => {
       postId: post.id,
       authorUsername: "bob",
       text: "quanto custa?",
-      igTimestamp: "2026-08-14T10:00:05.000Z",
+      igTimestamp: commentAt,
     }).comment;
 
     enqueueCommentReply(ctx, comment.id);
@@ -73,7 +78,7 @@ test("listAgentReplyQueue classifies debouncing and due items", () => {
       messages: ctx.messages,
       comments: ctx.comments,
       settings: { ...defaultAppSettings(), messageReplyDelaySeconds: 120, replyDelaySeconds: 120 },
-      now: new Date("2026-08-14T10:01:00.000Z"),
+      now,
     });
 
     assert.ok(snapshot.items.some((item) => item.channel === "dm" && item.phase === "due"));

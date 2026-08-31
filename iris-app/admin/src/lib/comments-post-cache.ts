@@ -2,7 +2,7 @@ import type {
   Comment,
   CommentPostSummary,
   PostInsightsResult,
-} from "@/lib/types";
+} from "./types.ts";
 
 export const COMMENTS_CACHE_STALE_MS = 2 * 60 * 1000;
 export const INSIGHTS_CACHE_STALE_MS = 15 * 60 * 1000;

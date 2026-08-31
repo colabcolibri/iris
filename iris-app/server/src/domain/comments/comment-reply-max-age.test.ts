@@ -12,6 +12,7 @@ import { skipStalePendingCommentsForPost } from "./skip-stale-pending-comments.t
 import type { Comment } from "./comment.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
+import { daysAgoIso, secondsAgoIso } from "../../test-utils/recent-timestamps.ts";
 
 function sampleComment(overrides: Partial<Comment> = {}): Comment {
   return {
@@ -101,14 +102,8 @@ test("enqueueCommentReply skips and marks old comments", () => {
 });
 
 test("skipStalePendingCommentsForPost marks pending comments outside max age", () => {
-  const recent = sampleComment({
-    id: "recent",
-    igTimestamp: "2026-08-10T10:00:00.000Z",
-  });
-  const old = sampleComment({
-    id: "old",
-    igTimestamp: "2026-01-01T10:00:00.000Z",
-  });
+  const recent = sampleComment({ id: "recent", igTimestamp: daysAgoIso(5) });
+  const old = sampleComment({ id: "old", igTimestamp: daysAgoIso(30) });
   const store = new Map([
     ["recent", recent],
     ["old", old],

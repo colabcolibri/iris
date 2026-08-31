@@ -7,6 +7,12 @@ export const settingsPt = {
     loading: "Carregando…",
   },
   sections: {
+    instagramSetup: {
+      id: "instagram-setup",
+      title: "Instagram",
+      description:
+        "Conectar conta, webhook e Página para posts, comentários e DMs.",
+    },
     timezone: {
       id: "timezone",
       title: "Fuso horário editorial",
@@ -55,6 +61,64 @@ export const settingsPt = {
       id: "llm",
       title: "Provedor de IA",
       description: "API key, URL e modelo dos agentes.",
+    },
+  },
+  instagramSetup: {
+    title: "Conexão Instagram",
+    description:
+      "Configure a Meta em um lugar: OAuth, webhook e Página para mensagens.",
+    loading: "Carregando status…",
+    progress: "{ok} de {total} etapas prontas",
+    progressReady: "Tudo pronto para usar Iris com Instagram",
+    phases: {
+      server: "Servidor",
+      serverHint: "Variáveis no `.env` do Iris (quem hospeda)",
+      account: "Conta",
+      accountHint: "Login com Instagram",
+      realtime: "Eventos ao vivo",
+      realtimeHint: "Webhook e DMs",
+    },
+    primaryConnectTitle: "Conectar sua conta",
+    primaryConnectDescription:
+      "Um login no Instagram. Posts, comentários, insights e permissão de mensagens.",
+    connectedTitle: "Conta conectada",
+    connectedDescription:
+      "Posts, comentários e mensagens usam esta conta. Reconecte só se precisar trocar ou renovar permissões.",
+    connectPrimary: "Conectar Instagram",
+    reconnect: "Reconectar ou trocar conta",
+    connectPage: "Conectar Página Facebook (DMs)",
+    connectPageHint:
+      "Só se as DMs não funcionarem após o login — vincula token da Página.",
+    pageConnected: "Página conectada: {name}",
+    connectEssential: "Só posts e comentários (sem insights/DMs)",
+    developerPanelTitle: "Colar no painel Meta",
+    developerPanelDescription:
+      "Copie cada valor abaixo e cole em developers.facebook.com (uma vez, antes do primeiro login).",
+    webhookUrlLabel: "URL do webhook",
+    webhookUrlHint: "Webhooks → Instagram → Callback URL",
+    redirectUriLabel: "Redirect OAuth Instagram",
+    redirectUriHint: "Business login settings → OAuth redirect URIs",
+    pageRedirectUriLabel: "Redirect OAuth Página (DMs)",
+    pageRedirectUriHint:
+      "Login do Facebook para Empresas → redirect URIs (mesmo domínio)",
+    copy: "Copiar",
+    copySuccess: "Copiado.",
+    copyFailed: "Não foi possível copiar.",
+    refresh: "Atualizar status",
+    handoverHint:
+      "Para DMs em produção, defina o app como receptor primário na Página:",
+    handoverLink: "Abrir Mensagens Avançadas da Página",
+    connectedAs: "Conectado como {username}",
+    steps: {
+      metaApp: "App Meta no servidor",
+      publicUrl: "URL pública HTTPS",
+      webhook: "Webhook",
+      instagram: "Conta Instagram",
+      comments: "Comentários",
+      messaging: "Mensagens (DMs)",
+    },
+    toasts: {
+      loadFailed: "Falha ao carregar setup Instagram.",
     },
   },
   timezone: {

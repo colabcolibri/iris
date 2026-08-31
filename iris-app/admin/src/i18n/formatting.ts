@@ -1,5 +1,5 @@
-import type { AppLocale } from "@/i18n/types";
-import { localeToBcp47 } from "@/i18n/types";
+import type { AppLocale } from "./types.ts";
+import { localeToBcp47 } from "./types.ts";
 
 export function formatRelativeTime(
   value: string | number | Date | null | undefined,

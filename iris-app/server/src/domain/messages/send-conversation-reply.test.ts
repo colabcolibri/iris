@@ -5,6 +5,7 @@ import { runMigrations } from "../../adapters/sqlite/migrate.ts";
 import { createSqliteConversationRepository } from "../../adapters/sqlite/conversation-repository.ts";
 import { createSqliteMessageRepository } from "../../adapters/sqlite/message-repository.ts";
 import { sendConversationReply } from "./send-conversation-reply.ts";
+import { secondsAgoIso } from "../../test-utils/recent-timestamps.ts";
 
 test("sendConversationReply persists outbound with reply_to and does not mark inbound replied", async () => {
   const db = openDatabase(":memory:");
@@ -13,20 +14,22 @@ test("sendConversationReply persists outbound with reply_to and does not mark in
     const conversations = createSqliteConversationRepository(db);
     const messages = createSqliteMessageRepository(db);
 
+    const recent = secondsAgoIso(60);
+
     const { conversation } = conversations.upsert({
       igConversationId: "conv-1",
       participantIgUserId: "user-1",
       participantUsername: "cliente",
       participantDisplayName: null,
       participantAvatarUrl: null,
-      lastMessageAt: "2026-08-14T12:00:00.000Z",
+      lastMessageAt: recent,
     });
 
     const inbound = messages.upsertInbound({
       igMessageId: "mid-in-1",
       conversationId: conversation.id,
       text: "pergunta antiga",
-      igTimestamp: "2026-08-14T12:00:00.000Z",
+      igTimestamp: recent,
     }).message;
 
     let capturedReplyTo: string | null | undefined;

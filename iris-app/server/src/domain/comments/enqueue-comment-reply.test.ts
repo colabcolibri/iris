@@ -7,6 +7,7 @@ import { enqueueCommentReply } from "./enqueue-comment-reply.ts";
 import { AGENT_REPLY_SUPERSEDED_REASON } from "../agent-reply/agent-reply-debounce.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
+import { secondsAgoIso } from "../../test-utils/recent-timestamps.ts";
 
 function withMockLlm(ctx: ReturnType<typeof createAppContext>): void {
   const llm = createHarnessLlmMock({ draftText: "ok" });
@@ -133,14 +134,14 @@ test("enqueueCommentReply supersedes older pending from same author on post", ()
       postId: post.id,
       authorUsername: "ana",
       text: "oi",
-      igTimestamp: "2026-08-14T10:00:00.000Z",
+      igTimestamp: secondsAgoIso(30),
     }).comment;
     const second = ctx.comments.upsertFromWebhook({
       igCommentId: "ig-burst-2",
       postId: post.id,
       authorUsername: "ana",
       text: "quanto custa?",
-      igTimestamp: "2026-08-14T10:00:15.000Z",
+      igTimestamp: secondsAgoIso(15),
     }).comment;
 
     withMockLlm(ctx);
@@ -180,14 +181,14 @@ test("debounce keeps other authors pending on same post", () => {
       postId: post.id,
       authorUsername: "ana",
       text: "oi",
-      igTimestamp: "2026-08-14T10:00:00.000Z",
+      igTimestamp: secondsAgoIso(30),
     }).comment;
     const bob = ctx.comments.upsertFromWebhook({
       igCommentId: "ig-bob",
       postId: post.id,
       authorUsername: "bob",
       text: "legal",
-      igTimestamp: "2026-08-14T10:00:05.000Z",
+      igTimestamp: secondsAgoIso(25),
     }).comment;
 
     withMockLlm(ctx);

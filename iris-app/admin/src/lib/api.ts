@@ -21,6 +21,7 @@ import type {
   MessageActivityKind,
   MessageAgentContent,
   MetaStatus,
+  MetaSetupSnapshot,
   McpSettings,
   McpSettingsGenerateResult,
   McpPermissionsSettings,
@@ -394,6 +395,10 @@ export async function fetchAuthMe(): Promise<{
   }
 
   return response.json() as Promise<{ authenticated: true; email: string }>;
+}
+
+export function fetchMetaSetup() {
+  return apiFetch<MetaSetupSnapshot>("/api/meta/setup");
 }
 
 export function fetchMetaStatus() {

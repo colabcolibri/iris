@@ -7,6 +7,7 @@ import {
 } from "@/components/templates/preferences-split-layout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { InstagramSetupCard } from "@/components/settings/instagram-setup-card";
 import { McpConnectionCard } from "@/components/settings/mcp-connection-card";
 import { McpPermissionsCard } from "@/components/settings/mcp-permissions-card";
 import { AgentAutoReplyCard } from "@/components/settings/agent-auto-reply-card";
@@ -105,6 +106,12 @@ export function SettingsPage() {
 
   const sections = useMemo<PreferencesSection[]>(
     () => [
+      {
+        id: settings.sections.instagramSetup.id,
+        title: settings.sections.instagramSetup.title,
+        description: settings.sections.instagramSetup.description,
+        content: <InstagramSetupCard embedded />,
+      },
       {
         id: settings.sections.timezone.id,
         title: settings.sections.timezone.title,

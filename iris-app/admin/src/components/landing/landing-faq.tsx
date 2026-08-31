@@ -16,21 +16,21 @@ export function LandingFaq() {
         subtitle={m.faq.subtitle}
       />
 
-      <div className="mt-10 max-w-3xl divide-y divide-[color:var(--iris-hairline)] border-y border-[color:var(--iris-hairline)]">
+      <div className="mt-10 max-w-3xl divide-y divide-(--iris-hairline) border-y border-(--iris-hairline)">
         {m.faq.items.map((item) => (
           <details key={item.question} className="group py-4">
-            <summary className="cursor-pointer list-none text-base font-medium text-[color:var(--iris-ink)] marker:content-none [&::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none text-base font-medium text-(--iris-ink) marker:content-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-start justify-between gap-4">
                 <span>{item.question}</span>
                 <span
                   aria-hidden
-                  className="mt-0.5 text-[color:var(--iris-ink-muted)] transition-transform group-open:rotate-45"
+                  className="mt-0.5 text-(--iris-ink-muted) transition-transform group-open:rotate-45"
                 >
                   +
                 </span>
               </span>
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-[color:var(--iris-ink-soft)] sm:text-base sm:leading-normal">
+            <p className="mt-3 text-sm leading-relaxed text-(--iris-ink-soft) sm:text-base sm:leading-normal">
               {item.answer}
             </p>
           </details>

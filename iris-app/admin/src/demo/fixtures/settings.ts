@@ -24,6 +24,32 @@ export const DEMO_META_STATUS: MetaStatus = {
   igUsername: DEMO_IG_HANDLE,
   tokenExpired: false,
   messaging_supported: true,
+  page_connected: true,
+};
+
+export const DEMO_META_SETUP = {
+  oauth_configured: true,
+  public_base_url: DEMO_MCP_HOST,
+  webhook_url: `${DEMO_MCP_HOST}/webhooks/meta`,
+  webhook_verify_token_configured: true,
+  redirect_uri: `${DEMO_MCP_HOST}/auth/meta/callback`,
+  page_redirect_uri: `${DEMO_MCP_HOST}/auth/meta/page/callback`,
+  instagram_connected: true,
+  ig_username: DEMO_IG_HANDLE,
+  page_connected: true,
+  page_name: "Demo Page",
+  page_token_source: "db" as const,
+  messaging_supported: true,
+  recent_webhook_activity: true,
+  handover_help_url: "https://www.facebook.com/settings/?tab=advanced_messaging",
+  steps: [
+    { id: "meta_app", status: "ok" as const, message: "App Meta configurado." },
+    { id: "public_url", status: "ok" as const, message: "URL pública OK." },
+    { id: "webhook", status: "ok" as const, message: "Webhook ativo." },
+    { id: "instagram", status: "ok" as const, message: `Conectado (@${DEMO_IG_HANDLE}).` },
+    { id: "comments", status: "ok" as const, message: "Comentários via webhook." },
+    { id: "messaging", status: "ok" as const, message: "DMs habilitadas." },
+  ],
 };
 
 export const DEMO_APP_SETTINGS: AppSettings = {

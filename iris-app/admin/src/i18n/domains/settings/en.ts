@@ -9,6 +9,12 @@ export const settingsEn = {
     loading: "Loading…",
   },
   sections: {
+    instagramSetup: {
+      id: "instagram-setup",
+      title: "Instagram",
+      description:
+        "Connect account, webhook, and Page for posts, comments, and DMs.",
+    },
     timezone: {
       id: "timezone",
       title: "Editorial timezone",
@@ -57,6 +63,64 @@ export const settingsEn = {
       id: "llm",
       title: "AI provider",
       description: "API key, URL, and model for agents.",
+    },
+  },
+  instagramSetup: {
+    title: "Instagram connection",
+    description:
+      "Set up Meta in one place: OAuth, webhook, and Page for messages.",
+    loading: "Loading status…",
+    progress: "{ok} of {total} steps ready",
+    progressReady: "Instagram setup is complete",
+    phases: {
+      server: "Server",
+      serverHint: "Iris `.env` on whoever hosts the instance",
+      account: "Account",
+      accountHint: "Instagram login",
+      realtime: "Live events",
+      realtimeHint: "Webhook and DMs",
+    },
+    primaryConnectTitle: "Connect your account",
+    primaryConnectDescription:
+      "One Instagram login — posts, comments, insights, and messaging permission.",
+    connectedTitle: "Account connected",
+    connectedDescription:
+      "Posts, comments, and messages use this account. Reconnect only to switch accounts or refresh permissions.",
+    connectPrimary: "Connect Instagram",
+    reconnect: "Reconnect or switch account",
+    connectPage: "Connect Facebook Page (DMs)",
+    connectPageHint:
+      "Only if DMs fail after login — links the Page access token.",
+    pageConnected: "Page connected: {name}",
+    connectEssential: "Posts and comments only (no insights/DMs)",
+    developerPanelTitle: "Paste into Meta Dashboard",
+    developerPanelDescription:
+      "Copy each value below and paste it at developers.facebook.com (once, before the first login).",
+    webhookUrlLabel: "Webhook URL",
+    webhookUrlHint: "Webhooks → Instagram → Callback URL",
+    redirectUriLabel: "Instagram OAuth redirect",
+    redirectUriHint: "Business login settings → OAuth redirect URIs",
+    pageRedirectUriLabel: "Page OAuth redirect (DMs)",
+    pageRedirectUriHint:
+      "Facebook Login for Business → redirect URIs (same host)",
+    copy: "Copy",
+    copySuccess: "Copied.",
+    copyFailed: "Could not copy.",
+    refresh: "Refresh status",
+    handoverHint:
+      "For production DMs, set your app as primary receiver on the Page:",
+    handoverLink: "Open Page Advanced Messaging settings",
+    connectedAs: "Connected as {username}",
+    steps: {
+      metaApp: "Meta app on server",
+      publicUrl: "Public HTTPS URL",
+      webhook: "Webhook",
+      instagram: "Instagram account",
+      comments: "Comments",
+      messaging: "Messages (DMs)",
+    },
+    toasts: {
+      loadFailed: "Failed to load Instagram setup.",
     },
   },
   timezone: {

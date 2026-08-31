@@ -1,14 +1,14 @@
-import { Link } from "react-router-dom";
-import { BrandLogo } from "@/components/layout/brand-logo";
 import { LandingLanguageSwitcher } from "@/components/landing/landing-language-switcher";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { useLandingI18n } from "@/i18n/landing-context";
 import { LANDING_SECTIONS, landingHomePath } from "@/i18n/routing";
-import { ROUTES } from "@/lib/routes";
 import { IRIS_GITHUB_REPO_URL } from "@/lib/landing-external-links";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 const navLinkClass =
-  "text-[color:var(--iris-ink-muted-on-dark)] transition-colors hover:text-[color:var(--iris-ink-on-dark)]";
+  "text-(--iris-ink-muted-on-dark) transition-colors hover:text-(--iris-ink-on-dark)";
 
 type LandingNavProps = {
   className?: string;
@@ -29,17 +29,17 @@ export function LandingNav({ className }: LandingNavProps) {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-40 bg-[color:var(--iris-surface-tile)]/95 backdrop-blur-md",
+        "fixed inset-x-0 top-0 z-40 bg-(--iris-surface-tile)/95 backdrop-blur-md",
         className,
       )}
     >
-      <div className="mx-auto flex h-14 w-full min-w-0 max-w-[var(--iris-container)] items-center justify-between gap-4 px-4 sm:h-[56px] sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 w-full min-w-0 max-w-(--iris-container) items-center justify-between gap-4 px-4 sm:h-14 sm:px-6 lg:px-8">
         <Link
           to={landingHomePath(locale)}
           className="flex shrink-0 items-center gap-3 no-underline"
         >
           <BrandLogo size="sm" />
-          <span className="font-display text-lg font-semibold tracking-tight text-[color:var(--iris-ink-on-dark)]">
+          <span className="font-display text-lg font-semibold tracking-tight text-(--iris-ink-on-dark)">
             Iris
           </span>
         </Link>
@@ -66,7 +66,7 @@ export function LandingNav({ className }: LandingNavProps) {
             href={ROUTES.demo.root}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 shrink-0 items-center rounded-[var(--iris-radius-pill)] border border-white/25 px-3.5 text-sm font-medium text-[color:var(--iris-ink-on-dark)] transition-colors hover:border-white/40 hover:bg-white/5"
+            className="inline-flex h-9 shrink-0 items-center rounded-(--iris-radius-pill) border border-white/25 px-3.5 text-sm font-medium text-(--iris-ink-on-dark) transition-colors hover:border-white/40 hover:bg-white/5"
           >
             {m.nav.demo}
           </a>
@@ -74,7 +74,7 @@ export function LandingNav({ className }: LandingNavProps) {
             href={IRIS_GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden h-9 shrink-0 items-center rounded-[var(--iris-radius-pill)] border border-white/25 px-3.5 text-sm font-medium text-[color:var(--iris-ink-on-dark)] transition-colors hover:border-white/40 hover:bg-white/5 sm:inline-flex"
+            className="hidden h-9 shrink-0 items-center rounded-(--iris-radius-pill) border border-white/25 px-3.5 text-sm font-medium text-(--iris-ink-on-dark) transition-colors hover:border-white/40 hover:bg-white/5 sm:inline-flex"
           >
             {m.nav.github}
           </a>

@@ -1,5 +1,8 @@
 import type { MetaOAuthConfig } from "./meta-oauth-config.ts";
-import { META_OAUTH_SCOPES } from "./meta-oauth-config.ts";
+import {
+  type MetaOAuthConnectMode,
+  metaOAuthScopesForMode,
+} from "./meta-oauth-config.ts";
 
 type ShortTokenResponse = {
   access_token?: string;
@@ -46,12 +49,13 @@ export type MetaOAuthExchangeResult =
 export function buildMetaAuthorizeUrl(
   config: MetaOAuthConfig,
   state: string,
+  mode: MetaOAuthConnectMode = "full",
 ): string {
   const params = new URLSearchParams({
     client_id: config.appId,
     redirect_uri: config.redirectUri,
     state,
-    scope: META_OAUTH_SCOPES.join(","),
+    scope: metaOAuthScopesForMode(mode).join(","),
     response_type: "code",
   });
 

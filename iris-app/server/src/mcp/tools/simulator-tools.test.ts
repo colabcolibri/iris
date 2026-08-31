@@ -76,15 +76,15 @@ test("MCP simulator tools list seeded scenarios without full thread", async () =
     const body = parseToolJson(result) as {
       items: Array<Record<string, unknown>>;
     };
-    const jogoGrok = body.items.find((item) => item.id === "jogo-grok");
-    assert.ok(jogoGrok);
-    assert.equal(typeof jogoGrok!.label, "string");
-    assert.equal(typeof jogoGrok!.description, "string");
-    assert.equal(typeof jogoGrok!.caption_preview, "string");
-    assert.equal(typeof jogoGrok!.carousel_summary_preview, "string");
-    assert.equal(typeof jogoGrok!.thread_message_count, "number");
-    assert.equal("thread" in jogoGrok!, false);
-    assert.equal("target_text" in jogoGrok!, false);
+    const scenario = body.items.find((item) => item.id === "lookbook-verao");
+    assert.ok(scenario);
+    assert.equal(typeof scenario!.label, "string");
+    assert.equal(typeof scenario!.description, "string");
+    assert.equal(typeof scenario!.caption_preview, "string");
+    assert.equal(typeof scenario!.carousel_summary_preview, "string");
+    assert.equal(typeof scenario!.thread_message_count, "number");
+    assert.equal("thread" in scenario!, false);
+    assert.equal("target_text" in scenario!, false);
   } finally {
     await harness.close();
   }
@@ -131,7 +131,7 @@ test("MCP simulator tools simulate by scenario_id returns harness result", async
   try {
     const result = await harness.client.callTool({
       name: "iris_simulate_reply",
-      arguments: { scenario_id: "jogo-grok" },
+      arguments: { scenario_id: "lookbook-verao" },
     });
 
     const body = parseToolJson(result) as {
@@ -162,7 +162,7 @@ test("MCP simulator tools simulate accepts response_language override", async ()
     const result = await harness.client.callTool({
       name: "iris_simulate_reply",
       arguments: {
-        scenario_id: "jogo-grok",
+        scenario_id: "lookbook-verao",
         response_language: "pt-BR",
       },
     });
@@ -181,7 +181,7 @@ test("MCP simulator tools simulate rejects missing LLM configuration", async () 
   try {
     const result = await harness.client.callTool({
       name: "iris_simulate_reply",
-      arguments: { scenario_id: "jogo-grok" },
+      arguments: { scenario_id: "lookbook-verao" },
     });
 
     assert.equal(result.isError, true);

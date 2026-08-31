@@ -5,6 +5,7 @@ import { runMigrations } from "../../adapters/sqlite/migrate.ts";
 import { createSqliteConversationRepository } from "../../adapters/sqlite/conversation-repository.ts";
 import { createSqliteMessageRepository } from "../../adapters/sqlite/message-repository.ts";
 import { applyRemoteMessages } from "./apply-remote-messages.ts";
+import { daysAgoIso } from "../../test-utils/recent-timestamps.ts";
 
 test("applyRemoteMessages keeps the newest message timestamp for inbox ordering", () => {
   const db = openDatabase(":memory:");
@@ -19,8 +20,11 @@ test("applyRemoteMessages keeps the newest message timestamp for inbox ordering"
       participantUsername: "sergio",
       participantDisplayName: "Sergio Luciano",
       participantAvatarUrl: null,
-      lastMessageAt: "2026-07-16T01:25:00+0000",
+      lastMessageAt: daysAgoIso(25),
     });
+
+    const newerOutbound = daysAgoIso(1);
+    const olderInbound = daysAgoIso(25);
 
     const result = applyRemoteMessages(
       conversation.id,
@@ -31,7 +35,7 @@ test("applyRemoteMessages keeps the newest message timestamp for inbox ordering"
           fromId: "ig-1",
           fromUsername: "marca",
           fromDisplayName: "Marca",
-          createdTime: "2026-08-02T01:14:00+0000",
+          createdTime: newerOutbound,
           direction: "outbound",
           attachments: [],
         },
@@ -41,7 +45,7 @@ test("applyRemoteMessages keeps the newest message timestamp for inbox ordering"
           fromId: "user-1",
           fromUsername: "sergio",
           fromDisplayName: "Sergio Luciano",
-          createdTime: "2026-07-16T01:25:00+0000",
+          createdTime: olderInbound,
           direction: "inbound",
           attachments: [],
         },
@@ -52,10 +56,13 @@ test("applyRemoteMessages keeps the newest message timestamp for inbox ordering"
     assert.equal(result.imported, 2);
 
     const updated = conversations.findById(conversation.id);
-    assert.equal(updated?.lastMessageAt, "2026-08-02T01:14:00.000Z");
+    assert.ok(updated?.lastMessageAt);
+    assert.ok(
+      Date.parse(updated!.lastMessageAt!) >= Date.parse(newerOutbound) - 1000,
+    );
 
     const [listed] = conversations.listRecent(10);
-    assert.equal(listed?.lastMessageAt, "2026-08-02T01:14:00.000Z");
+    assert.equal(listed?.lastMessageAt, updated?.lastMessageAt);
   } finally {
     db.close();
   }

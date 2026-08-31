@@ -55,15 +55,42 @@ export async function handleMetaRoute(request: RouteRequest): Promise<boolean> {
     const connected =
       Boolean(token) && Boolean(connection?.igUserId) && !tokenExpired;
 
+    let messagingSupported = false;
+    if (connected && token && connection?.igUserId) {
+      const messagingHealth = await checkMetaMessagingAccess({
+        igUserId: connection.igUserId,
+        token,
+        graphApiVersion: ctx.graphApiVersion,
+      });
+      messagingSupported = messagingHealth.ok;
+    }
+
     sendJson(res, 200, {
       connected,
       igUsername: connection?.igUsername ?? null,
       igUserId: connection?.igUserId ?? null,
-      pageName: connection?.pageName ?? null,
-      messaging_supported: Boolean(connection?.pageId),
+      pageName:
+        connection?.pageId !== "instagram-login" ? connection?.pageName : null,
+      messaging_supported: messagingSupported,
+      page_connected:
+        connection?.hasPageAccessToken ||
+        Boolean(process.env.META_PAGE_ACCESS_TOKEN?.trim()),
       tokenExpiresAt,
       tokenExpired,
     });
+    return true;
+  }
+
+  if (pathname === "/api/meta/setup") {
+    const { evaluateMetaSetup, hasRecentWebhookActivity } = await import(
+      "../../domain/meta/evaluate-meta-setup.ts"
+    );
+    const snapshot = await evaluateMetaSetup({
+      ctx,
+      webhookVerifyTokenConfigured: Boolean(ctx.metaWebhookVerifyToken),
+      recentWebhookActivity: hasRecentWebhookActivity(ctx.db),
+    });
+    sendJson(res, 200, snapshot);
     return true;
   }
 

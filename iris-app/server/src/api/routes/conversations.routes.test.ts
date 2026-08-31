@@ -1,12 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MetaMessageSendError } from "../../ports/meta-message-sender.ts";
+import type { MetaConversationsReader } from "../../ports/meta-conversations-reader.ts";
+import type { AppContext } from "../app-context.ts";
 import { createServer } from "../http-server.ts";
 
 const ADMIN = "conv-admin";
 
+const EMPTY_MESSAGES_PAGE = { messages: [], after: null };
+
+function isolateMetaNetwork(ctx: AppContext): void {
+  const base = ctx.metaConversationsReader;
+  const stub: MetaConversationsReader = {
+    listConversations: (...args) => base.listConversations(...args),
+    listMessages: async () => EMPTY_MESSAGES_PAGE,
+    resolveParticipantProfile: async () => null,
+    resolveMessagingRecipientFromIgMessage: async () => null,
+  };
+  ctx.metaConversationsReader = stub;
+}
+
 async function withServer(
-  run: (baseUrl: string, ctx: ReturnType<typeof createServer>["ctx"]) => Promise<void>,
+  run: (baseUrl: string, ctx: AppContext) => Promise<void>,
 ): Promise<void> {
   const handle = createServer({
     dbPath: ":memory:",
@@ -15,6 +30,8 @@ async function withServer(
     igUserId: "ig-user",
     encryptionKey: "f".repeat(64),
   });
+
+  isolateMetaNetwork(handle.ctx);
 
   await new Promise<void>((resolve) => {
     handle.server.listen(0, "127.0.0.1", () => resolve());

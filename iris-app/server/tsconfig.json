@@ -10,9 +10,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
-  "exclude": [
-    "test/admin-build-comment-tree.test.ts",
-    "test/admin-comments-cache.test.ts"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }

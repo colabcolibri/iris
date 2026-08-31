@@ -66,8 +66,8 @@ test("landing page remains accessible without session", async () => {
   });
 });
 
-test("GET /docs/meta redirects to configuracao", async () => {
-  const docsConfig = `${process.cwd()}/../public/docs/configuracao/index.html`;
+test("GET /docs/meta redirects to inicio", async () => {
+  const docsConfig = `${process.cwd()}/../public/docs/inicio/index.html`;
   const { existsSync } = await import("node:fs");
   if (!existsSync(docsConfig)) {
     return;
@@ -78,7 +78,7 @@ test("GET /docs/meta redirects to configuracao", async () => {
       redirect: "manual",
     });
     assert.equal(redirect.status, 302);
-    assert.equal(redirect.headers.get("location"), "/docs/configuracao/");
+    assert.equal(redirect.headers.get("location"), "/docs/inicio/");
   });
 });
 

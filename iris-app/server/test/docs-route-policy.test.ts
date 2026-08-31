@@ -8,11 +8,11 @@ import {
 test("resolveDocsRedirect maps entry and legacy meta paths", () => {
   assert.equal(resolveDocsRedirect("/docs"), "/docs/inicio/");
   assert.equal(resolveDocsRedirect("/docs/"), "/docs/inicio/");
-  assert.equal(resolveDocsRedirect("/docs/meta"), "/docs/configuracao/");
-  assert.equal(resolveDocsRedirect("/docs/meta/"), "/docs/configuracao/");
+  assert.equal(resolveDocsRedirect("/docs/meta"), "/docs/inicio/");
+  assert.equal(resolveDocsRedirect("/docs/meta/"), "/docs/inicio/");
   assert.equal(
     resolveDocsRedirect("/docs/meta/04-webhooks/"),
-    "/docs/configuracao/04-webhooks/",
+    "/docs/inicio/04-webhooks/",
   );
   assert.equal(resolveDocsRedirect("/admin"), null);
 });

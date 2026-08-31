@@ -157,7 +157,7 @@ test("meta oauth callback stores token and connection", async () => {
 
   await withMetaServer(async ({ baseUrl, db }) => {
     const expiresMs = Date.now() + 60_000;
-    const payload = `oauth1.${expiresMs}`;
+    const payload = `oauth1-ig.${expiresMs}`;
     const signature = createHmac("sha256", "test-session-secret")
       .update(payload)
       .digest("base64url");

@@ -286,6 +286,33 @@ export type MetaStatus = {
   tokenExpired?: boolean;
   igUsername?: string | null;
   messaging_supported?: boolean;
+  page_connected?: boolean;
+};
+
+export type MetaSetupStepStatus = "ok" | "warning" | "error" | "pending";
+
+export type MetaSetupStep = {
+  id: string;
+  status: MetaSetupStepStatus;
+  message?: string;
+};
+
+export type MetaSetupSnapshot = {
+  oauth_configured: boolean;
+  public_base_url: string | null;
+  webhook_url: string | null;
+  webhook_verify_token_configured: boolean;
+  redirect_uri: string | null;
+  page_redirect_uri: string | null;
+  instagram_connected: boolean;
+  ig_username: string | null;
+  page_connected: boolean;
+  page_name: string | null;
+  page_token_source: "db" | "env" | null;
+  messaging_supported: boolean;
+  recent_webhook_activity: boolean;
+  handover_help_url: string;
+  steps: MetaSetupStep[];
 };
 
 export type ReplyPersona = {

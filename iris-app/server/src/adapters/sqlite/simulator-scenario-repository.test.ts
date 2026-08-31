@@ -12,13 +12,13 @@ test("simulator scenario store seeds editorial scenarios", () => {
     const store = createSqliteSimulatorScenarioStore(db);
     const items = store.list();
 
-    assert.ok(items.length >= 5);
-    assert.ok(items.some((item) => item.id === "jogo-grok"));
-    assert.ok(items.some((item) => item.id === "democracia-profunda"));
+    assert.ok(items.length >= 2);
+    assert.ok(items.some((item) => item.id === "lookbook-verao"));
+    assert.ok(items.some((item) => item.id === "reel-styling"));
 
-    const scenario = store.getById("jogo-grok");
+    const scenario = store.getById("lookbook-verao");
     assert.ok(scenario);
-    assert.equal(scenario!.targetAuthor, "renata.psi");
+    assert.equal(scenario!.targetAuthor, "julia.style");
     assert.equal(scenario!.thread.length, 2);
   } finally {
     db.close();
@@ -70,7 +70,7 @@ test("simulator scenario store rejects duplicate ids", () => {
     assert.throws(
       () =>
         store.create({
-          id: "jogo-grok",
+          id: "lookbook-verao",
           label: "Duplicate",
           description: "desc",
           caption: "caption",

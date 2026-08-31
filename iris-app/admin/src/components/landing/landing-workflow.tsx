@@ -16,7 +16,7 @@ export function LandingWorkflow() {
         title={
           <>
             <span className="block">{m.workflow.titleLine1}</span>
-            <span className="block italic text-[color:var(--iris-primary-on-dark)]">
+            <span className="block italic text-(--iris-primary-on-dark)">
               {m.workflow.titleLine2}
             </span>
           </>
@@ -31,14 +31,14 @@ export function LandingWorkflow() {
             key={step.title}
             className="flex flex-col gap-2 py-7 sm:flex-row sm:items-baseline sm:gap-8"
           >
-            <span className="font-display text-sm text-[color:var(--iris-primary-on-dark)] sm:w-10 sm:shrink-0">
+            <span className="font-display text-sm text-(--iris-primary-on-dark) sm:w-10 sm:shrink-0">
               {String(index + 1).padStart(2, "0")}
             </span>
             <div className="min-w-0 sm:flex sm:flex-1 sm:items-baseline sm:gap-8">
-              <h3 className="font-display text-xl font-semibold text-[color:var(--iris-ink-on-dark)] sm:w-64 sm:shrink-0">
+              <h3 className="font-display text-xl font-semibold text-(--iris-ink-on-dark) sm:w-64 sm:shrink-0">
                 {step.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[color:var(--iris-ink-muted-on-dark)] sm:mt-0 sm:text-base sm:leading-[1.55]">
+              <p className="mt-2 text-sm leading-relaxed text-(--iris-ink-muted-on-dark) sm:mt-0 sm:text-base sm:leading-[1.55]">
                 {step.description}
               </p>
             </div>

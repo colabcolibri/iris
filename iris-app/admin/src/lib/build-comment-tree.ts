@@ -1,5 +1,5 @@
-import { formatExactDateTime } from "@/i18n/formatting";
-import type { AppLocale } from "@/i18n/types";
+import { formatExactDateTime } from "../i18n/formatting.ts";
+import type { AppLocale } from "../i18n/types.ts";
 import type { Comment } from "./types";
 
 function parseCommentTimestampMs(value: string): number {

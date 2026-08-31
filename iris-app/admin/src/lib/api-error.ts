@@ -15,6 +15,7 @@ export class ApiRequestError extends Error {
   readonly code: string;
   readonly details?: Record<string, unknown>;
   readonly status: number;
+  readonly legacyMessage?: string;
 
   constructor(
     code: string,
@@ -27,6 +28,7 @@ export class ApiRequestError extends Error {
     this.code = code;
     this.details = details;
     this.status = status;
+    this.legacyMessage = legacyMessage;
   }
 }
 
@@ -94,6 +96,14 @@ export function getApiErrorMessage(
   locale: AppLocale,
 ): string {
   if (error instanceof ApiRequestError) {
+    const legacyText =
+      error.legacyMessage ??
+      (error.message !== error.code ? error.message : undefined);
+
+    if (error.code === "LEGACY_MESSAGE" && legacyText) {
+      return legacyText;
+    }
+
     const detailMessage =
       typeof error.details?.message === "string"
         ? error.details.message
@@ -106,14 +116,12 @@ export function getApiErrorMessage(
         status: String(error.status),
         ...(error.details as Record<string, string | number> | undefined),
       },
-      detailMessage,
+      detailMessage ?? legacyText,
     );
   }
 
-  if (error instanceof Error) {
-    return translateApiError("LEGACY_MESSAGE", locale, {
-      message: error.message,
-    });
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
   }
 
   return translateApiError("INTERNAL_ERROR", locale);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { formatRelativeTime } from "@/i18n/formatting";
-import type { AppLocale } from "@/i18n/types";
+import { formatRelativeTime } from "../i18n/formatting.ts";
+import type { AppLocale } from "../i18n/types.ts";
 
 export function formatRelativeTimeAgo(
   value: string | number | Date | null | undefined,

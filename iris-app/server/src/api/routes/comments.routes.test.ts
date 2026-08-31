@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
+import { daysAgoIso } from "../../test-utils/recent-timestamps.ts";
 import { createServer } from "../http-server.ts";
 import { processCommentReply } from "../../domain/comments/process-comment-reply.ts";
 import { createHarnessLlmMock } from "../../test-utils/harness-llm-mock.ts";
@@ -488,12 +489,14 @@ test("POST comments reconcile sincroniza e marca comentários removidos no Insta
     });
     ctx.posts.update(post.id, { igMediaId: "media-reconcile-deleted" });
 
+    const recentTs = daysAgoIso(2);
+
     ctx.comments.upsertFromWebhook({
       igCommentId: "ig-user-reconcile",
       postId: post.id,
       authorUsername: "fan",
       text: "pergunta",
-      igTimestamp: "2026-08-10T10:00:00.000Z",
+      igTimestamp: recentTs,
     });
     ctx.comments.upsertFromWebhook({
       igCommentId: "ig-brand-deleted",
@@ -501,7 +504,7 @@ test("POST comments reconcile sincroniza e marca comentários removidos no Insta
       parentIgCommentId: "ig-user-reconcile",
       authorUsername: "test-ig-user",
       text: "resposta apagada",
-      igTimestamp: "2026-08-10T11:00:00.000Z",
+      igTimestamp: recentTs,
     });
 
     ctx.metaCommentReader = {
@@ -520,7 +523,7 @@ test("POST comments reconcile sincroniza e marca comentários removidos no Insta
                   parentIgCommentId: null,
                   authorUsername: "fan",
                   text: "pergunta",
-                  timestamp: "2026-08-10T10:00:00.000Z",
+                  timestamp: recentTs,
                 },
               ],
             },

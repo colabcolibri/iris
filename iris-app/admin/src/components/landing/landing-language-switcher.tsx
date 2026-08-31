@@ -39,7 +39,7 @@ export function LandingLanguageSwitcher({
               aria-hidden
               className={cn(
                 "select-none font-normal",
-                onDark ? "text-white/25" : "text-[color:var(--iris-hairline)]",
+                onDark ? "text-white/25" : "text-(--iris-hairline)",
               )}
             >
               ·
@@ -51,11 +51,11 @@ export function LandingLanguageSwitcher({
               "rounded px-1.5 py-0.5 transition-colors",
               item === locale
                 ? onDark
-                  ? "bg-white/12 text-[color:var(--iris-primary-on-dark)]"
-                  : "bg-[color:var(--iris-primary)]/12 text-[color:var(--iris-primary)]"
+                  ? "bg-white/12 text-(--iris-primary-on-dark)"
+                  : "bg-(--iris-primary)/12 text-(--iris-primary)"
                 : onDark
-                  ? "text-[color:var(--iris-ink-muted-on-dark)] hover:text-[color:var(--iris-ink-on-dark)]"
-                  : "text-[color:var(--iris-ink-muted)] hover:text-[color:var(--iris-ink)]",
+                  ? "text-(--iris-ink-muted-on-dark) hover:text-(--iris-ink-on-dark)"
+                  : "text-(--iris-ink-muted) hover:text-(--iris-ink)",
             )}
             aria-current={item === locale ? "page" : undefined}
             hrefLang={item === "pt" ? "pt-BR" : "en"}
