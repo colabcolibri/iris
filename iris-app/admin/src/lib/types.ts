@@ -733,6 +733,12 @@ export type ReplyInspection = {
   auto_reply_enabled: boolean;
 };
 
+export type LlmProviderPreset = {
+  id: string;
+  label: string;
+  api_url: string;
+};
+
 export type LlmSettings = {
   configured: boolean;
   api_url: string;
@@ -742,6 +748,7 @@ export type LlmSettings = {
   source: "database" | "environment" | null;
   env_override: boolean;
   updated_at: string | null;
+  providers?: LlmProviderPreset[];
 };
 
 export type WebhookProcessingStatus =

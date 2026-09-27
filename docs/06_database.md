@@ -13,7 +13,7 @@ blocks: [07_api_contracts.md]
 
 SQLite (`node:sqlite`). Path: `IRIS_DB_PATH` (default `./data/iris.db`). Migrations em `migrations/`.
 
-Com Turso (v1.31), o schema editorial abaixo vive **um banco por conta**. Nenhuma tabela editorial ganha `tenant_id`. O banco de controle é outro arquivo (ou outro banco Turso) e não mistura posts. Sem variáveis Turso, o arquivo único continua sendo o schema editorial inteiro. Detalhe: `docs/architecture/tenant-sqlite.md`.
+Com o processo do produto (v1.31), o schema editorial abaixo vive **um arquivo por conta**. Nenhuma tabela editorial ganha `tenant_id`. O banco de controle é outro arquivo e não mistura posts. A suíte, sem tenancy, continua no arquivo único. Detalhe: `docs/architecture/tenant-sqlite.md`.
 
 ## Tables (v1)
 
@@ -292,15 +292,13 @@ Seed na migration `20260812110107_simulator_scenarios.sql` — paridade com `adm
 
 ## Banco de controle (v1.31)
 
-Só existe quando o Turso está configurado. Não replica o schema editorial.
+Existe no processo do produto. Não replica o schema editorial.
 
 | Tabela | Papel |
 | ------ | ----- |
 | `accounts` | Email, slug estável, status (`pending`, `active`) |
-| `account_databases` | Nome Turso, URL `libsql://`, token cifrado, migration aplicada |
-| `login_challenges` | OTP do cadastro e do login, no controle, não no banco editorial |
-
-O token da Platform API não entra nessas tabelas. Fica em `TURSO_PLATFORM_TOKEN`.
+| `account_databases` | Caminho `file:` do SQLite da conta e migration aplicada |
+| `admin_login_challenges` | OTP do cadastro e do login, no controle, não no banco editorial |
 
 ## Filesystem (não-SQL)
 
@@ -310,7 +308,7 @@ data/tenants/{accountId}/media/{post_id}/{filename}
 data/agent/{soul,page,knowledge,restrictions}.md
 ```
 
-Índice em `post_assets.storage_path` (caminho relativo). Sem conta Turso, a raiz é `data/media/`. Com conta, a raiz é `data/tenants/{accountId}/media/`. Conteúdo editorial do agente (SOUL, página, KB, restrições) em `data/agent/` — override via `IRIS_AGENT_CONTENT_DIR`. Na v1.31 o conteúdo do agente que já está no SQLite da conta permanece nesse banco. O diretório `data/agent/` global vale para o modo de um arquivo.
+Índice em `post_assets.storage_path` (caminho relativo). No arquivo único, a raiz é `data/media/`. Com conta, a raiz é `data/tenants/{accountId}/media/`. Conteúdo editorial do agente (SOUL, página, KB, restrições) em `data/agent/` — override via `IRIS_AGENT_CONTENT_DIR`. Na v1.31 o conteúdo do agente que já está no SQLite da conta permanece nesse banco. O diretório `data/agent/` global vale para o modo de um arquivo.
 
 ## Indexes
 

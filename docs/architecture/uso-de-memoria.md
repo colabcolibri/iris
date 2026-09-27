@@ -1,9 +1,13 @@
 ---
-title: Uso de memória da conta no Turso
+title: Uso de memória da conta
 updated: 2026-09-27
 ---
 
-# Uso de memória da conta no Turso
+# Uso de memória da conta
+
+O processo do produto abre um arquivo SQLite por conta com `node:sqlite`. Não abre thread libSQL.
+
+A medição abaixo, de 2026-09-27, registrou o custo do cliente libSQL que foi removido. Serve para não voltar nesse caminho.
 
 Estimativa para o processo único da Iris com tenancy ligada. Medido nesta máquina em 2026-09-27, com contas vazias. Não é carga de produção com posts, imagens em processamento nem o admin aberto.
 

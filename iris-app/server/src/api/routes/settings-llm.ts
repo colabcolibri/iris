@@ -1,13 +1,14 @@
 import { readJsonBody, sendError, sendJson, ValidationError } from "../json.ts";
 import { composeRouters, createAdminPathRouter, createRouter, route } from "../router.ts";
-import {
-  DEFAULT_API_URL,
-  DEFAULT_MODEL,
-} from "../../adapters/sqlite/llm-settings-repository.ts";
+import { DEFAULT_MODEL } from "../../adapters/sqlite/llm-settings-repository.ts";
 import {
   createLlmConfigResolver,
   llmKeyHint,
 } from "../../domain/llm/resolve-llm-config.ts";
+import {
+  LLM_PROVIDER_PRESETS,
+  requireChatCompletionsUrl,
+} from "../../domain/llm/llm-provider-presets.ts";
 import { truncateWebhookPayload } from "../../domain/meta/meta-webhook-payload.ts";
 import { summarizeWebhookPayload } from "../../domain/meta/webhook-event-summary.ts";
 import { parseWebhookEventListFilter } from "../../domain/meta/webhook-event-query.ts";
@@ -17,18 +18,22 @@ import type { AppContext } from "../app-context.ts";
 function serializeLlmSettings(ctx: AppContext) {
   const resolver = createLlmConfigResolver(ctx.llmSettingsStore);
   const resolved = resolver.resolve();
-  const sources = resolver.configuredSources();
   const stored = ctx.llmSettingsStore.get();
 
   return {
     configured: Boolean(resolved),
-    api_url: stored?.apiUrl ?? resolved?.apiUrl ?? DEFAULT_API_URL,
+    api_url: stored?.apiUrl ?? "",
     model: stored?.model ?? resolved?.model ?? DEFAULT_MODEL,
-    supports_vision: stored?.supportsVision ?? resolved?.supportsVision ?? false,
-    key_hint: llmKeyHint(resolved?.apiKey),
+    supports_vision: stored?.supportsVision ?? false,
+    key_hint: llmKeyHint(stored?.apiKey),
     source: resolved?.source ?? null,
-    env_override: sources.environment,
+    env_override: false,
     updated_at: stored?.updatedAt ?? null,
+    providers: LLM_PROVIDER_PRESETS.map((preset) => ({
+      id: preset.id,
+      label: preset.label,
+      api_url: preset.apiUrl,
+    })),
   };
 }
 
@@ -42,10 +47,16 @@ function normalizeLlmBody(
   supportsVision: boolean;
 } {
   const apiUrlRaw = body.api_url;
-  const apiUrl =
-    typeof apiUrlRaw === "string" && apiUrlRaw.trim()
-      ? apiUrlRaw.trim()
-      : DEFAULT_API_URL;
+  if (typeof apiUrlRaw !== "string" || !apiUrlRaw.trim()) {
+    throw new ValidationError("api_url is required");
+  }
+
+  let apiUrl: string;
+  try {
+    apiUrl = requireChatCompletionsUrl(apiUrlRaw);
+  } catch (error) {
+    throw new ValidationError(error instanceof Error ? error.message : "api_url is required");
+  }
 
   const modelRaw = body.model;
   const model =

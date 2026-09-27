@@ -13,3 +13,4 @@ export const MIGRATIONS_DIR = join(SERVER_ROOT, "migrations");
 export const DATA_DIR = join(WORKSPACE_ROOT, "data");
 export const MEDIA_ROOT = join(DATA_DIR, "media");
 export const WORKSPACE_ENV_PATH = join(WORKSPACE_ROOT, ".env");
+export const WORKSPACE_ENV_LOCAL_PATH = join(WORKSPACE_ROOT, ".env.local");

@@ -64,16 +64,18 @@ export function createEnvLlmCompleter(config: EnvLlmCompleterConfig): LlmComplet
 }
 
 function createProviderLlmCompleter(config: EnvLlmCompleterConfig): LlmCompleter {
-  const apiKey = config.apiKey ?? process.env.LLM_API_KEY ?? "";
-  const apiUrl =
-    config.apiUrl ?? process.env.LLM_API_URL ?? "https://api.openai.com/v1/chat/completions";
-  const model = config.model ?? process.env.LLM_MODEL ?? "gpt-4o-mini";
+  const apiKey = config.apiKey?.trim() ?? "";
+  const apiUrl = config.apiUrl?.trim() ?? "";
+  const model = config.model?.trim() || "gpt-4o-mini";
   const fetchFn = config.fetchImpl ?? fetch;
 
   return {
     async complete(prompt, options?: LlmCompleteOptions) {
       if (!apiKey) {
-        throw new Error("LLM_API_KEY is not configured");
+        throw new Error("LLM api key is not configured");
+      }
+      if (!apiUrl) {
+        throw new Error("LLM api url is not configured");
       }
 
       const startedAt = Date.now();

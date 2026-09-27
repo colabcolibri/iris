@@ -347,7 +347,7 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const imageContextProvider = createEnvImageContextProvider({
     resolveLlm: () => llmConfigResolver.createCompleter(),
     resolveModel: () =>
-      llmConfigResolver.resolve()?.model ?? process.env.LLM_MODEL ?? "gpt-4o-mini",
+      llmConfigResolver.resolve()?.model ?? "gpt-4o-mini",
     resolveSupportsVision: () =>
       llmConfigResolver.resolve()?.supportsVision ?? false,
   });

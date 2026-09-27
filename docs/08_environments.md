@@ -16,12 +16,8 @@ blocks: []
 | `PORT` | `8792` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `IRIS_DB_PATH` | `./data/iris.db` | SQLite file — caminho relativo é resolvido a partir de `iris-app/` (workspace), **não** do `cwd` do processo (`server/`). Evita abrir um segundo DB vazio em `server/data/`. |
-| `IRIS_ADMIN_EMAIL` | required (UI) sem Turso | Email allowlisted para OTP. Com Turso, o cadastro aceita email novo e esta variável deixa de ser a única porta. |
-| `TURSO_ORG` | vazio | Slug da organização Turso. Vazio mantém o arquivo local. |
-| `TURSO_PLATFORM_TOKEN` | vazio | Token da Platform API. Segredo do servidor. |
-| `TURSO_GROUP` | `iris` | Grupo onde nascem os bancos de conta. |
-| `TURSO_GROUP_LOCATION` | `gru` | Região do grupo. |
-| `TURSO_CONTROL_URL` | vazio | URL `libsql://` do banco de controle, se já criado. |
+| `IRIS_ADMIN_EMAIL` | required (UI) sem conta por arquivo | Com `pnpm dev`, qualquer email confirmado cria a própria conta. Esta variável continua sendo o email do operador. |
+| `IRIS_TENANCY` | vazio no processo de teste | O `pnpm dev` abre um arquivo SQLite por conta. A suíte deixa vazio e usa um arquivo só, a menos que o teste peça `local`. |
 | `IRIS_SESSION_SECRET` | required (UI) | HMAC da sessão HttpOnly |
 | `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
 | `RESEND_API_KEY` | prod | Envio de email (Resend) |
@@ -158,6 +154,14 @@ docker compose up -d --build
 
 Em produção com domínio público, use `IRIS_EMAIL_PROVIDER=resend`, HTTPS em `IRIS_PUBLIC_BASE_URL` e configure Meta conforme `iris-app/docs/configuracao/README.md`.
 
+A conta que já existe em `iris.db` não entra sozinha. Com o processo parado, na pasta `iris-app/server`:
+
+```bash
+pnpm import-account seu@email.com ../data/iris.db ../data/media
+```
+
+O comando cria a conta se o email ainda não existir, copia o arquivo por cima do SQLite vazio e copia a mídia. Não apaga a origem. Se a conta já tiver posts, não copia de novo. Mantenha o mesmo `IRIS_TOKEN_ENCRYPTION_KEY`.
+
 | Variable | Notes |
 | -------- | ----- |
 | `NODE_ENV` | `production` |
@@ -170,7 +174,7 @@ Em produção com domínio público, use `IRIS_EMAIL_PROVIDER=resend`, HTTPS em 
 | `IRIS_ADMIN_EMAIL` | Email allowlisted para OTP |
 | `META_*` | App credentials + access token |
 | `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — DMs: guias [07](../iris-app/docs/configuracao/07-page-access-token.md) e [06](../iris-app/docs/configuracao/06-mensagens-receptor-primario.md) em `iris-app/docs/configuracao/` |
-| `LLM_API_KEY` | For comment responder (v1-S6) |
+| `LLM_API_KEY` | Não chama o modelo. Cada conta salva a própria chave e a URL em Configurações. |
 | `IRIS_REPLY_MAX_CONCURRENT` | Default `10` — ajuste conforme quota/custo do provedor LLM |
 | `IRIS_RETENTION_DAYS` | Default `90` — purge de `meta_webhook_events` antigos |
 | `VITE_UMAMI_WEBSITE_ID` | Opcional — website ID Umami (build-time; exige também `VITE_UMAMI_SCRIPT_URL`) |
@@ -183,11 +187,11 @@ Requirements:
 
 ## Meta webhook URL
 
-Sem Turso e com Turso, a URL é a mesma: `https://<your-public-host>/webhooks/meta`. App id, app secret e verify token são os da Iris, no ambiente do servidor. Com Turso, o `entry.id` escolhe o SQLite da conta que conectou aquele Instagram.
+A URL é `https://<your-public-host>/webhooks/meta`. App id, app secret e verify token são os da Iris, no ambiente do servidor. Não há tela para colar esses três. O `entry.id` escolhe o arquivo da conta que conectou aquele Instagram.
 
-OAuth callback, nos dois modos: `https://<your-public-host>/auth/meta/callback`. Com Turso, o `state` assinado indica a conta. O token do Instagram grava no banco dela.
+OAuth callback: `https://<your-public-host>/auth/meta/callback`. O `state` assinado indica a conta. O token do Instagram grava no arquivo dela.
 
-Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `iris-app/docs/configuracao/README.md` or **`/docs/`** no próprio Iris.
+Quem sobe a Iris cria o próprio app na Meta. As chaves ficam no ambiente daquele deploy, não no repositório e não na conta de cada pessoa. Setup: `iris-app/docs/configuracao/README.md` or **`/docs/`** no próprio Iris.
 
 ## Site de documentação
 

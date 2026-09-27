@@ -36,14 +36,12 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 - UI **não** armazena tokens em `sessionStorage` — autenticação via cookie HttpOnly após OTP
 - Tokens Meta criptografados em repouso na tabela `meta_tokens` (v1-S4)
 
-## Contas e Turso (v1.31)
+## Contas (v1.31)
 
-- `TURSO_PLATFORM_TOKEN` fica só no ambiente. Não entra em resposta, log nem no banco de controle.
-- O token de cada SQLite de conta é cifrado no controle com o mesmo cofre dos tokens Meta. Token de grupo, que abriria todos os bancos, não é usado.
-- A sessão carrega o id da conta. O cliente não escolhe o banco por parâmetro.
+- A sessão carrega o id da conta. O cliente não escolhe o arquivo por parâmetro. Sessão sem esse id não abre o SQLite editorial.
 - App id, app secret e verify token da Meta ficam no servidor da Iris. O HMAC do webhook e o OAuth usam esse secret. O evento chega em `/webhooks/meta` e a Iris abre o SQLite da conta cujo Instagram conectado é o `entry.id`. Id desconhecido não grava em banco nenhum.
 - O `state` do OAuth é assinado e tem prazo.
-- O processo descriptografa o token da conta para publicar. O isolamento é de armazenamento entre contas, não um cofre que o servidor não consegue ler.
+- O isolamento é de arquivo entre contas. O processo da Iris lê o arquivo da conta para publicar.
 
 ## API hardening
 

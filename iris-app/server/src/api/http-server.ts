@@ -55,7 +55,7 @@ import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
 import { startAccountWorkers } from "../workers/account-workers.ts";
 import { readTenancyConfig, type TenancyConfig } from "../domain/accounts/tenancy-config.ts";
 import { createTenancyRuntime, type TenancyRuntime } from "./tenancy-runtime.ts";
-import { verifySessionToken, readSessionToken } from "./session.ts";
+import { clearSessionCookie, verifySessionToken, readSessionToken } from "./session.ts";
 import { readAdminSession } from "../domain/auth/auth-session.ts";
 import { shouldGateSpaGet, resolveLegacyAdminRedirect } from "./spa-route-policy.ts";
 import { resolveDocsRedirect } from "./docs-route-policy.ts";
@@ -194,7 +194,7 @@ function resolveTenancyContext(
   pathname: string,
   fallback: AppContext,
   tenancy: TenancyRuntime | null,
-): { kind: "ok"; ctx: AppContext } | { kind: "missing" } {
+): { kind: "ok"; ctx: AppContext } | { kind: "missing" } | { kind: "stale" } {
   if (!tenancy) {
     return { kind: "ok", ctx: fallback };
   }
@@ -214,6 +214,10 @@ function resolveTenancyContext(
   if (session.accountId) {
     const accountCtx = tenancy.contextForAccount(session.accountId);
     return accountCtx ? { kind: "ok", ctx: accountCtx } : { kind: "missing" };
+  }
+
+  if (session.ok) {
+    return { kind: "stale" };
   }
 
   return { kind: "ok", ctx: fallback };
@@ -366,7 +370,25 @@ async function handleRequest(
     sendError(res, 404, "Not found");
     return;
   }
-  ctx = resolved.ctx;
+  if (resolved.kind === "stale") {
+    clearSessionCookie(res);
+    const allowAnonymous =
+      pathname.startsWith("/api/auth/") ||
+      pathname === "/auth/meta/callback" ||
+      pathname === "/login" ||
+      pathname === "/admin/login";
+    if (!allowAnonymous) {
+      if (req.method === "GET" && !pathname.startsWith("/api/")) {
+        res.writeHead(302, { Location: "/admin/login" });
+        res.end();
+        return;
+      }
+      sendError(res, 401, "not authenticated");
+      return;
+    }
+  } else {
+    ctx = resolved.ctx;
+  }
 
   if (req.method === "GET" && pathname === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -635,11 +657,11 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
       })
     : () => undefined;
 
-  const stopDataRetention = options.startScheduler
+  const stopDataRetention = options.startScheduler && !tenancy
     ? startDataRetention(ctx)
     : () => undefined;
 
-  const stopAutoMonitorMedia = options.startScheduler
+  const stopAutoMonitorMedia = options.startScheduler && !tenancy
     ? startAutoMonitorMedia(ctx)
     : () => undefined;
 

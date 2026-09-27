@@ -13,7 +13,7 @@ blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_syst
 
 Forma do Iris: mini-server com camadas SRP, mídia em disco, SQLite, UI HTML, Meta API. Pacote local do agente em `iris-agent/publications/` — ver `docs/architecture/local-publications.md`.
 
-A partir da v1.31 o mesmo servidor atende várias contas. O login fica num banco de controle. Cada conta tem o próprio SQLite no Turso e a própria pasta de mídia. Sem as variáveis Turso, a instalação continua um arquivo local. Detalhe: `docs/architecture/tenant-sqlite.md`.
+A partir da v1.31 o processo do produto atende várias contas. O login fica em `data/control.db`. Cada conta tem o próprio arquivo SQLite e a própria pasta de mídia. A suíte de testes, sem pedir tenancy, continua num arquivo só. Detalhe: `docs/architecture/tenant-sqlite.md`.
 
 ## System context
 
@@ -113,7 +113,7 @@ iris/                     # workspace Meridian
 | System | Direction | Notes |
 | ------ | --------- | ----- |
 | Instagram Graph API | Outbound publish/reply | Token no server |
-| Meta webhooks | Inbound comments and messages | HMAC com o app secret da Iris. Com Turso, `POST /webhooks/meta` escolhe a conta pelo id do Instagram no payload |
+| Meta webhooks | Inbound comments and messages | HMAC com o app secret da Iris. `POST /webhooks/meta` escolhe a conta pelo id do Instagram no payload |
 | Ferramentas externas / clients MCP | Inbound tools ou REST | Cursor, ChatGPT, Claude — ver `mcp-integration.md` |
 
 ## Key flows
@@ -200,7 +200,7 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | `docs/architecture/admin-demo-mode.md` | Demo público `/demo` — fixtures client-side, isolamento de sessão |
 | `docs/architecture/i18n.md` | i18n PT/EN — domínios, provider admin, erros API, email |
 | `docs/architecture/docs-site.md` | Site Starlight — guias Meta públicos PT/EN, build e deploy |
-| `docs/architecture/tenant-sqlite.md` | v1.31 — banco de controle, SQLite por conta no Turso, mídia, Meta, workers |
+| `docs/architecture/tenant-sqlite.md` | v1.31 — banco de controle, um SQLite em arquivo por conta, mídia, Meta, workers |
 
 ## Internacionalização
 

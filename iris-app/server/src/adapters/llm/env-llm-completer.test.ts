@@ -13,6 +13,7 @@ test("createEnvLlmCompleter sends image bytes as data URLs in multimodal content
 
   const completer = createEnvLlmCompleter({
     apiKey: "test-key",
+    apiUrl: "https://llm.test/v1/chat/completions",
     callLog: {
       record(input) {
         recorded.push(input.source);

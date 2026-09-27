@@ -331,6 +331,24 @@ test("PUT and GET llm settings persist encrypted api key", async () => {
   });
 });
 
+test("PUT llm settings rejects a blank api url", async () => {
+  await withSettingsServer(async ({ baseUrl, adminCookie }) => {
+    const response = await fetch(`${baseUrl}/api/settings/llm`, {
+      method: "PUT",
+      headers: {
+        Cookie: adminCookie,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: "sk-test-key-1234",
+        api_url: "  ",
+        model: "gpt-test",
+      }),
+    });
+    assert.equal(response.status, 422);
+  });
+});
+
 test("agent cannot update llm settings", async () => {
   await withSettingsServer(async ({ baseUrl }) => {
     const response = await fetch(`${baseUrl}/api/settings/llm`, {

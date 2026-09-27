@@ -49,7 +49,7 @@ blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 - App mobile nativo
 - Várias contas Instagram dentro da mesma pessoa (cada SQLite continua com uma conexão Meta)
 - Cobrança, planos e bloqueio por assinatura (v1.31 abre a conta; não cobra)
-- Multi-tenant no v1: a instalação única com um `iris.db` permanece o MVP. A partir de v1.31 cada pessoa tem o próprio SQLite no Turso e login único (decisão 2026-09-27)
+- Multi-tenant no v1: a instalação única com um `iris.db` permanece o modo da suíte. A partir de v1.31 o processo do produto dá a cada pessoa o próprio arquivo SQLite e login único (decisão 2026-09-27, ajustada no mesmo dia para arquivo local, sem Turso Cloud)
 - UI React/SPA
 - Object storage S3 (v1 = disco local no server)
 

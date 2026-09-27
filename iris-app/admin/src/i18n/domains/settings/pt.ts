@@ -60,7 +60,7 @@ export const settingsPt = {
     llm: {
       id: "llm",
       title: "Provedor de IA",
-      description: "API key, URL e modelo dos agentes.",
+      description: "Chave e URL de chamada dos agentes.",
     },
   },
   instagramSetup: {
@@ -292,9 +292,12 @@ export const settingsPt = {
   llm: {
     title: "Provedor de IA (respostas automáticas)",
     description:
-      "API key, URL e modelo usados pelo agente de comentários. Valores do servidor em .env servem de fallback.",
-    apiUrlLabel: "URL da API",
+      "A chave e a URL de chamada ficam nesta conta. Sem as duas, o agente não chama o provedor.",
+    providerLabel: "Provedor",
+    providerCustom: "Outra URL",
+    apiUrlLabel: "URL da chamada",
     apiUrlPlaceholder: "https://api.openai.com/v1/chat/completions",
+    apiUrlHint: "Escolha um provedor ou cole a URL compatível com chat completions.",
     apiKeyLabel: "API key",
     keyPlaceholderBlank: "••••{hint} — deixe em branco para manter",
     keyPlaceholderNew: "sk-…",
@@ -306,8 +309,6 @@ export const settingsPt = {
     save: "Salvar provedor de IA",
     saving: "Salvando…",
     loading: "Carregando…",
-    envOverride:
-      "Variáveis {envVars} no ambiente estão definidas. O banco tem prioridade quando configurado aqui.",
     toasts: {
       saved: "Configuração de IA salva.",
       failed: "Falha ao salvar.",

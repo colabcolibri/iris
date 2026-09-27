@@ -2,10 +2,14 @@ import { existsSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 import { createServer } from "./api/http-server.ts";
 import { createAdminViteDevServer } from "./dev/admin-vite.ts";
-import { WORKSPACE_ENV_PATH, WORKSPACE_ROOT } from "./paths.ts";
+import { localTenancyConfig } from "./domain/accounts/tenancy-config.ts";
+import { WORKSPACE_ENV_LOCAL_PATH, WORKSPACE_ENV_PATH, WORKSPACE_ROOT } from "./paths.ts";
 
 if (existsSync(WORKSPACE_ENV_PATH)) {
   loadEnvFile(WORKSPACE_ENV_PATH);
+}
+if (existsSync(WORKSPACE_ENV_LOCAL_PATH)) {
+  loadEnvFile(WORKSPACE_ENV_LOCAL_PATH);
 }
 
 const port = Number(process.env.PORT ?? 8792);
@@ -14,6 +18,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const { server, stopScheduler, closeDatabase, setAdminVite, closeAdminVite } = createServer({
   startScheduler: true,
+  tenancy: localTenancyConfig(),
 });
 
 if (isDev) {

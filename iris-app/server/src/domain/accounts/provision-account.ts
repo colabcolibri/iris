@@ -6,7 +6,17 @@ import { openDatabase } from "../../adapters/sqlite/connection.ts";
 import { runMigrations } from "../../adapters/sqlite/migrate.ts";
 import type { AccountStore } from "../../adapters/sqlite/account-store.ts";
 import { openAccountDatabase } from "../../adapters/sqlite/open-account-database.ts";
-import type { AccountDatabaseProvisioner } from "../../adapters/turso/turso-provisioner.ts";
+
+export type ProvisionedDatabase = {
+  name: string;
+  url: string;
+  authToken: string | null;
+  migrationVersion: string;
+};
+
+export type AccountDatabaseProvisioner = {
+  create(accountId: string): Promise<ProvisionedDatabase>;
+};
 
 export function latestMigrationVersion(db: DatabaseSync): string {
   const row = db

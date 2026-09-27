@@ -13,7 +13,6 @@ import {
   openStoredAccountDatabase,
 } from "../domain/accounts/provision-account.ts";
 import type { TenancyConfig } from "../domain/accounts/tenancy-config.ts";
-import { createTursoProvisioner } from "../adapters/turso/turso-provisioner.ts";
 import { createAppContext, type AppContext, type AppContextOptions } from "./app-context.ts";
 
 export type TenancyRuntime = {
@@ -37,28 +36,16 @@ export function createTenancyRuntime(input: {
   dataRoot?: string;
   contextOptions: Omit<AppContextOptions, "db" | "mediaRoot" | "accountId" | "accountSlug">;
 }): TenancyRuntime {
+  if (!input.config.enabled || input.config.mode !== "local") {
+    throw new Error("account files require local tenancy");
+  }
+
   const dataRoot =
     input.dataRoot ??
     (input.controlDbPath ? dirname(input.controlDbPath) : DATA_DIR);
   const control = openControlDatabase(input.controlDbPath);
   const store = createAccountStore(control, input.contextOptions.encryptionKey);
-  const provisioner =
-    input.config.mode === "turso"
-      ? createTursoProvisioner({
-          org: input.config.org,
-          platformToken: input.config.platformToken,
-          group: input.config.group,
-          location: input.config.location,
-          applyMigrations: (url, authToken) => {
-            const db = openStoredAccountDatabase(url, authToken);
-            try {
-              return applyMigrationsToAccount(db);
-            } finally {
-              db.close();
-            }
-          },
-        })
-      : createLocalProvisioner(dataRoot);
+  const provisioner = createLocalProvisioner(dataRoot);
 
   const cache = new Map<string, AppContext>();
 
@@ -91,6 +78,10 @@ export function createTenancyRuntime(input: {
     control,
     challenges: createSqliteAdminLoginChallengeRepository(control),
     contextForAccount(accountId: string) {
+      const cached = cache.get(accountId);
+      if (cached) {
+        return cached;
+      }
       return requireRecord(store.findById(accountId));
     },
     contextForIgUserId(igUserId: string) {

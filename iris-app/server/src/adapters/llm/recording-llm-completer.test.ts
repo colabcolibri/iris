@@ -106,6 +106,29 @@ test("a call without source never reaches the provider", async () => {
   assert.equal(called, false);
 });
 
+test("createLlmConfigResolver ignores the server LLM_API_KEY", () => {
+  const previous = process.env.LLM_API_KEY;
+  process.env.LLM_API_KEY = "sk-server-secret";
+  try {
+    const resolver = createLlmConfigResolver({
+      get: () => null,
+      upsert: () => {
+        throw new Error("unused");
+      },
+      clear: () => undefined,
+    });
+    assert.equal(resolver.resolve(), null);
+    assert.equal(resolver.createCompleter(), null);
+    assert.equal(resolver.configuredSources().environment, false);
+  } finally {
+    if (previous === undefined) {
+      delete process.env.LLM_API_KEY;
+    } else {
+      process.env.LLM_API_KEY = previous;
+    }
+  }
+});
+
 test("createLlmConfigResolver records the provider call on the account log", async () => {
   const db = openDatabase(":memory:");
 

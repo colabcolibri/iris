@@ -69,16 +69,33 @@ export function LlmSettingsCard({ embedded = false }: LlmSettingsCardProps) {
 
   return (
     <SettingsCardShell embedded={embedded} title={t.title} description={t.description}>
-      {settings?.env_override && (
-        <p className="rounded-(--iris-radius-sm) border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-          {interpolate(t.envOverride, { envVars: "LLM_*" })}
-        </p>
-      )}
-
       {loading ? (
         <p className="text-sm text-muted-foreground">{t.loading}</p>
       ) : (
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="llm-provider">{t.providerLabel}</Label>
+            <select
+              id="llm-provider"
+              value={
+                settings?.providers?.find((preset) => preset.api_url === apiUrl)?.id ?? "custom"
+              }
+              onChange={(event) => {
+                const id = event.target.value;
+                const preset = settings?.providers?.find((item) => item.id === id);
+                setApiUrl(preset?.api_url ?? "");
+              }}
+              className="flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 text-sm"
+            >
+              {(settings?.providers ?? []).map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.label}
+                </option>
+              ))}
+              <option value="custom">{t.providerCustom}</option>
+            </select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="llm-api-url">{t.apiUrlLabel}</Label>
             <Input
@@ -86,8 +103,10 @@ export function LlmSettingsCard({ embedded = false }: LlmSettingsCardProps) {
               value={apiUrl}
               onChange={(e) => setApiUrl(e.target.value)}
               placeholder={t.apiUrlPlaceholder}
+              required
               className="font-mono text-sm"
             />
+            <p className="text-sm text-muted-foreground">{t.apiUrlHint}</p>
           </div>
 
           <div className="space-y-2">
@@ -135,7 +154,11 @@ export function LlmSettingsCard({ embedded = false }: LlmSettingsCardProps) {
             {t.visionLabel}
           </label>
 
-          <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+          <Button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={saving || !apiUrl.trim() || (!settings?.configured && !apiKey.trim())}
+          >
             {saving ? t.saving : t.save}
           </Button>
         </div>

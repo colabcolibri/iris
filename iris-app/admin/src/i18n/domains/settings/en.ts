@@ -62,7 +62,7 @@ export const settingsEn = {
     llm: {
       id: "llm",
       title: "AI provider",
-      description: "API key, URL, and model for agents.",
+      description: "Key and call URL for agents.",
     },
   },
   instagramSetup: {
@@ -293,9 +293,12 @@ export const settingsEn = {
   llm: {
     title: "AI provider (automatic replies)",
     description:
-      "API key, URL, and model used by the comment agent. Server .env values serve as fallback.",
-    apiUrlLabel: "API URL",
+      "The key and the call URL live on this account. Without both, the agent does not call the provider.",
+    providerLabel: "Provider",
+    providerCustom: "Other URL",
+    apiUrlLabel: "Call URL",
     apiUrlPlaceholder: "https://api.openai.com/v1/chat/completions",
+    apiUrlHint: "Pick a provider or paste an OpenAI-compatible chat completions URL.",
     apiKeyLabel: "API key",
     keyPlaceholderBlank: "••••{hint} — leave blank to keep",
     keyPlaceholderNew: "sk-…",
@@ -307,8 +310,6 @@ export const settingsEn = {
     save: "Save AI provider",
     saving: "Saving…",
     loading: "Loading…",
-    envOverride:
-      "Environment variables {envVars} are set. Database settings take precedence when configured here.",
     toasts: {
       saved: "AI configuration saved.",
       failed: "Failed to save.",
