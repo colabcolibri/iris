@@ -332,7 +332,6 @@ export function StoresPage() {
   const pageHeader = (
     <PageContainer.Header
       title={storesMsg.page.title}
-      title={storesMsg.page.title}
       description={storesMsg.page.description}
     />
   );

@@ -194,7 +194,6 @@ export function ProductsPage() {
   const pageHeader = (
     <PageContainer.Header
       title={productsMsg.page.title}
-      title={productsMsg.page.title}
       description={productsMsg.page.description}
     />
   );

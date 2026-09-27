@@ -514,7 +514,6 @@ export function MessagesPage() {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <PageContainer.Header
         title={messagesMsg.page.title}
-        title={messagesMsg.page.title}
         description={messagesMsg.page.description}
       />
       <div className="flex shrink-0 items-center gap-1.5">

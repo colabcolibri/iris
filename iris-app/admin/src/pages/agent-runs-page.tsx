@@ -289,9 +289,8 @@ export function AgentRunsPage() {
               <div className="shrink-0 space-y-3 px-4 py-4 sm:px-6 md:px-8">
               <PageContainer.Header
                 title={t.page.title}
-                  title={t.page.title}
-                  description={t.page.description}
-                />
+                description={t.page.description}
+              />
                 {responseLanguage ? (
                   <p className="text-xs text-muted-foreground">
                     {t.page.languageNote}{" "}
