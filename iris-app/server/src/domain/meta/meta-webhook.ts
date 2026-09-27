@@ -414,6 +414,29 @@ export function parseMessageEntries(
   return parsed;
 }
 
+export function readWebhookEntryIds(payload: unknown): string[] {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+  const entries = (payload as { entry?: unknown }).entry;
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+  const ids: string[] = [];
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+    const id = (entry as { id?: unknown }).id;
+    if (typeof id === "string" && id.trim()) {
+      ids.push(id.trim());
+    } else if (typeof id === "number" && Number.isFinite(id)) {
+      ids.push(String(id));
+    }
+  }
+  return ids;
+}
+
 export function readWebhookEnvelope(payload: unknown): {
   object: string | null;
   field: string | null;

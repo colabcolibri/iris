@@ -21,7 +21,7 @@ export type TenancyRuntime = {
   control: DatabaseSync;
   challenges: AdminLoginChallengeRepository;
   contextForAccount(accountId: string): AppContext | null;
-  contextForSlug(slug: string): AppContext | null;
+  contextForIgUserId(igUserId: string): AppContext | null;
   contextForMcpCode(code: string): AppContext | null;
   listContexts(): AppContext[];
   ensureAccount(email: string): Promise<{ id: string; slug: string; email: string }>;
@@ -93,8 +93,18 @@ export function createTenancyRuntime(input: {
     contextForAccount(accountId: string) {
       return requireRecord(store.findById(accountId));
     },
-    contextForSlug(slug: string) {
-      return requireRecord(store.findBySlug(slug));
+    contextForIgUserId(igUserId: string) {
+      const wanted = igUserId.trim();
+      if (!wanted) {
+        return null;
+      }
+      for (const account of store.listActive()) {
+        const ctx = contextForRecord(account);
+        if (ctx?.metaConnectionStore.get()?.igUserId === wanted) {
+          return ctx;
+        }
+      }
+      return null;
     },
     contextForMcpCode(code: string) {
       for (const account of store.listActive()) {

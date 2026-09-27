@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useDomainMessages } from "@/i18n/provider";
-import { fetchMetaAppCredentials, fetchMetaSetup, saveMetaAppCredentials } from "@/lib/api";
+import { fetchMetaSetup } from "@/lib/api";
 import type { MetaSetupSnapshot, MetaSetupStep, MetaSetupStepStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -146,90 +146,6 @@ function PhaseCard({
   );
 }
 
-function MetaAppCredentialsForm({
-  labels,
-}: {
-  labels: {
-    appCredentialsTitle: string;
-    appIdLabel: string;
-    appSecretLabel: string;
-    verifyTokenLabel: string;
-    saveCredentials: string;
-    credentialsSaved: string;
-  };
-}) {
-  const [appId, setAppId] = useState("");
-  const [appSecret, setAppSecret] = useState("");
-  const [verifyToken, setVerifyToken] = useState("");
-  const [hasSecret, setHasSecret] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    void fetchMetaAppCredentials()
-      .then((current) => {
-        setAppId(current.app_id);
-        setHasSecret(current.has_secret);
-      })
-      .catch(() => undefined);
-  }, []);
-
-  return (
-    <form
-      className="space-y-3 rounded-sm border border-border bg-card p-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        setSaving(true);
-        void saveMetaAppCredentials({ appId, appSecret, verifyToken })
-          .then(() => {
-            setHasSecret(true);
-            setAppSecret("");
-            setVerifyToken("");
-            toast.success(labels.credentialsSaved);
-          })
-          .catch((error: unknown) => {
-            toast.error(error instanceof Error ? error.message : "Error");
-          })
-          .finally(() => setSaving(false));
-      }}
-    >
-      <p className="text-sm font-medium text-foreground">{labels.appCredentialsTitle}</p>
-      <div className="space-y-1">
-        <Label htmlFor="meta-app-id">{labels.appIdLabel}</Label>
-        <Input
-          id="meta-app-id"
-          value={appId}
-          autoComplete="off"
-          onChange={(event) => setAppId(event.target.value)}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="meta-app-secret">{labels.appSecretLabel}</Label>
-        <Input
-          id="meta-app-secret"
-          type="password"
-          value={appSecret}
-          autoComplete="new-password"
-          placeholder={hasSecret ? "••••••••" : ""}
-          onChange={(event) => setAppSecret(event.target.value)}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="meta-verify-token">{labels.verifyTokenLabel}</Label>
-        <Input
-          id="meta-verify-token"
-          type="password"
-          value={verifyToken}
-          autoComplete="new-password"
-          onChange={(event) => setVerifyToken(event.target.value)}
-        />
-      </div>
-      <Button type="submit" size="sm" disabled={saving || !appId || !appSecret || !verifyToken}>
-        {saving ? <Loader2 className="size-4 animate-spin" /> : labels.saveCredentials}
-      </Button>
-    </form>
-  );
-}
-
 export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps) {
   const t = useDomainMessages("settings").instagramSetup;
   const { meta } = useMetaSession();
@@ -290,11 +206,13 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
 
   const progress = useMemo(() => {
     const steps = setup?.steps ?? [];
-    const ok = steps.filter((s) => s.status === "ok").length;
+    const ok = steps.filter((step) => step.status === "ok").length;
     return { ok, total: steps.length };
   }, [setup?.steps]);
 
+  const subscriber = Boolean(setup?.shared_meta_app);
   const showDeveloperPanel =
+    !subscriber &&
     Boolean(setup?.webhook_url) &&
     (!setup?.instagram_connected ||
       stepsById.get("webhook")?.status !== "ok" ||
@@ -302,7 +220,10 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
       stepsById.get("public_url")?.status !== "ok");
 
   const needsPageConnect =
-    setup?.instagram_connected && !setup.messaging_supported && !setup.page_connected;
+    !subscriber &&
+    setup?.instagram_connected &&
+    !setup.messaging_supported &&
+    !setup.page_connected;
 
   return (
     <SettingsCardShell
@@ -310,8 +231,6 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
       title={t.title}
       description={t.description}
     >
-      <MetaAppCredentialsForm labels={t} />
-
       {loading && !setup ? (
         <p className="text-sm text-muted-foreground">{t.loading}</p>
       ) : null}
@@ -347,6 +266,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
             </div>
           </div>
 
+          {subscriber ? null : (
           <div className="grid gap-3 lg:grid-cols-3">
             <PhaseCard
               title={t.phases.server}
@@ -367,6 +287,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
               stepLabels={stepLabels}
             />
           </div>
+          )}
 
           <div
             className={cn(

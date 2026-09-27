@@ -113,7 +113,7 @@ iris/                     # workspace Meridian
 | System | Direction | Notes |
 | ------ | --------- | ----- |
 | Instagram Graph API | Outbound publish/reply | Token no server |
-| Meta webhooks | Inbound comments | HMAC. Com conta Turso: `/webhooks/meta/{slug}` e secret no banco dela |
+| Meta webhooks | Inbound comments and messages | HMAC com o app secret da Iris. Com Turso, `POST /webhooks/meta` escolhe a conta pelo id do Instagram no payload |
 | Ferramentas externas / clients MCP | Inbound tools ou REST | Cursor, ChatGPT, Claude — ver `mcp-integration.md` |
 
 ## Key flows

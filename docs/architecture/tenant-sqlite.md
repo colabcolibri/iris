@@ -35,21 +35,19 @@ Imagem não vai para o Turso. `post_assets.storage_path` continua relativo. A ra
 
 Sem Turso, a raiz segue `data/media/`.
 
-## Credenciais Meta da conta
+## Credenciais Meta
 
-App id, app secret e verify token ficam no SQLite da conta, no mesmo cofre já usado por `page_access_token_vault`. A API devolve o app id e se o segredo existe. Não devolve o segredo.
+O app da Meta é um só, o da Iris. App id, app secret e verify token ficam no ambiente do servidor (`META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`). A conta não guarda esses segredos e a tela dela não pede para colar.
 
-O início do OAuth usa esse app id, mesmo sem `META_APP_ID` e `META_APP_SECRET` no ambiente. O processo ainda descriptografa o token para chamar a Graph API. Isolar no banco dela não torna o servidor cego na hora de publicar.
+A pessoa conecta o Instagram profissional. O token dessa conexão fica cifrado no SQLite dela, como já acontece com `meta_connection`. Publicação, comentário e mensagem usam esse token.
 
-No modo sem Turso, as variáveis de ambiente continuam como atalho de uma instalação só.
+## Webhook único e OAuth
 
-## Webhook por slug e OAuth
+A Meta chama `GET` e `POST /webhooks/meta`, a URL do app da Iris. A assinatura usa o app secret do servidor. O `entry.id` é o Instagram da conta. A Iris abre o SQLite de quem conectou esse id. Assinatura inválida não grava. Id sem conta responde 200 e não escolhe banco.
 
-A Meta chama `GET` e `POST /webhooks/meta/{slug}`. O slug, estável desde o cadastro, acha a conta no controle e abre o SQLite dela. O HMAC usa o app secret dessa conta. Assinatura inválida não grava evento. Slug desconhecido responde 404, sem banco padrão.
+O redirect OAuth continua `/auth/meta/callback`. O `state` é assinado, com prazo, e carrega a conta. A troca do code usa o app secret da Iris. O token resultante grava no banco dela.
 
-O redirect OAuth continua uma URL só (`/auth/meta/callback`). O `state` é assinado, com prazo, e carrega a conta. A troca do code usa o app secret dela. Query string solta não escolhe conta.
-
-A tela de setup mostra a URL do webhook e o verify token para a pessoa colar no app dela. O slug não é editável.
+A tela da pessoa é o botão de conectar. A URL de webhook e o verify token ficam na configuração do servidor, não na conta.
 
 ## Workers por conta
 

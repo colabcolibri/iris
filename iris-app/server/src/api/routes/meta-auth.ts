@@ -82,11 +82,7 @@ export async function handleMetaAuthRoute(
     return true;
   }
 
-  const storedMeta = ctx.metaAppCredentials.getSecrets();
-  const oauthConfig = readMetaOAuthConfig(ctx.publicBaseUrl ?? undefined, {
-    appId: storedMeta?.appId,
-    appSecret: storedMeta?.appSecret,
-  });
+  const oauthConfig = readMetaOAuthConfig(ctx.publicBaseUrl ?? undefined);
   if (!oauthConfig) {
     res.writeHead(503, { "Content-Type": "text/plain" });
     res.end("Meta OAuth is not configured");

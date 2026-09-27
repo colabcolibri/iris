@@ -13,7 +13,8 @@ import { handleAssetsRoute } from "./routes/assets.ts";
 import { handleEventsRoute } from "./routes/events.ts";
 import { handlePublishMediaRoute } from "./routes/publish-media.ts";
 import { handleUploadAssetRoute } from "./routes/upload-asset.ts";
-import { handleMetaWebhookRoute } from "./routes/meta-webhook.ts";
+import { handleMetaWebhookRoute, ingestMetaWebhook } from "./routes/meta-webhook.ts";
+import { readWebhookEntryIds, verifyHubSignature } from "../domain/meta/meta-webhook.ts";
 import { handleCommentsRoute } from "./routes/comments/index.ts";
 import { handleInsightsRoute } from "./routes/insights.ts";
 import { handleAuthRoute } from "./routes/auth.ts";
@@ -25,7 +26,6 @@ import { handleMetaRoute } from "./routes/meta.ts";
 import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
 import { handleMcpPermissionsSettingsRoute } from "./routes/mcp-permissions-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
-import { handleMetaAppSettingsRoute } from "./routes/meta-app-settings.ts";
 import {
   handleLlmSettingsRoute,
   handleWebhookEventsSettingsRoute,
@@ -199,16 +199,6 @@ function resolveTenancyContext(
     return { kind: "ok", ctx: fallback };
   }
 
-  const slugMatch = pathname.match(/^\/webhooks\/meta\/([^/]+)$/);
-  if (slugMatch) {
-    const accountCtx = tenancy.contextForSlug(decodeURIComponent(slugMatch[1] ?? ""));
-    return accountCtx ? { kind: "ok", ctx: accountCtx } : { kind: "missing" };
-  }
-
-  if (pathname === "/webhooks/meta") {
-    return { kind: "missing" };
-  }
-
   if (pathname === "/auth/meta/callback" || pathname === "/auth/meta/page/callback") {
     const state = new URL(req.url ?? "/", "http://localhost").searchParams.get("state");
     const secret = process.env.IRIS_SESSION_SECRET ?? "";
@@ -308,6 +298,49 @@ async function handleMcpRoute(
   return true;
 }
 
+async function handleSharedMetaWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+  serverCtx: AppContext,
+  tenancy: TenancyRuntime,
+): Promise<void> {
+  if (req.method === "GET") {
+    await handleMetaWebhookRoute(req, res, serverCtx, "/webhooks/meta");
+    return;
+  }
+  if (req.method !== "POST") {
+    sendError(res, 405, "method not allowed");
+    return;
+  }
+
+  const rawBody = await readRawBody(req);
+  const signature = req.headers["x-hub-signature-256"];
+  const signatureHeader = Array.isArray(signature) ? signature[0] : signature;
+  if (!verifyHubSignature(rawBody, signatureHeader, serverCtx.metaAppSecret || "")) {
+    sendError(res, 403, "invalid signature");
+    return;
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(rawBody.toString("utf8")) as unknown;
+  } catch {
+    sendError(res, 400, "invalid json payload");
+    return;
+  }
+
+  const accountCtx = readWebhookEntryIds(payload)
+    .map((id) => tenancy.contextForIgUserId(id))
+    .find((match) => match !== null);
+  if (!accountCtx) {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("ok");
+    return;
+  }
+
+  await ingestMetaWebhook(res, accountCtx, rawBody, signatureHeader);
+}
+
 async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
@@ -318,6 +351,16 @@ async function handleRequest(
 ): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const { pathname } = url;
+
+  if (tenancy && pathname.startsWith("/webhooks/meta/")) {
+    sendError(res, 404, "Not found");
+    return;
+  }
+  if (tenancy && pathname === "/webhooks/meta") {
+    await handleSharedMetaWebhook(req, res, ctx, tenancy);
+    return;
+  }
+
   const resolved = resolveTenancyContext(req, pathname, ctx, tenancy);
   if (resolved.kind === "missing") {
     sendError(res, 404, "Not found");
@@ -421,10 +464,6 @@ async function handleRequest(
     }
 
     if (await handleSettingsRoute(routeRequest)) {
-      return;
-    }
-
-    if (await handleMetaAppSettingsRoute(req, res, ctx, pathname)) {
       return;
     }
 

@@ -11,7 +11,7 @@ Estimativa para o processo único da Iris com tenancy ligada. Medido nesta máqu
 
 Existe um processo Node: o servidor HTTP. Não há um segundo programa escutando o Instagram.
 
-A Meta empurra o evento. O webhook `POST /webhooks/meta/{slug}` grava a mensagem no SQLite daquela conta e avisa o navegador que estiver com a tela aberta, pelo fluxo de eventos que o admin já usa. Enquanto a aba está fechada, essa ligação com o navegador não existe.
+A Meta empurra o evento. O webhook `POST /webhooks/meta` grava a mensagem no SQLite da conta cujo Instagram é o `entry.id`, e avisa o navegador que estiver com a tela aberta. Enquanto a aba está fechada, essa ligação com o navegador não existe.
 
 O worker que publica e responde é um `setInterval` dentro desse mesmo processo, a cada 60 segundos quando o intervalo não é configurado. Ele não segura um socket com a Meta. Ele relê o SQLite que o webhook já preencheu e, se a conta tem token e LLM, responde.
 

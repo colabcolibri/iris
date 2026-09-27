@@ -37,10 +37,7 @@ export function handleMetaWebhookRoute(
   ctx: AppContext,
   pathname: string,
 ): Promise<boolean> {
-  const expectedPath = ctx.accountSlug
-    ? `/webhooks/meta/${ctx.accountSlug}`
-    : "/webhooks/meta";
-  if (pathname !== expectedPath) {
+  if (pathname !== "/webhooks/meta") {
     return Promise.resolve(false);
   }
 
@@ -55,7 +52,7 @@ export function handleMetaWebhookRoute(
       !challenge ||
       !verifySubscribeToken(
         token,
-        ctx.metaAppCredentials.getSecrets()?.verifyToken || ctx.metaWebhookVerifyToken || "",
+        ctx.metaWebhookVerifyToken || "",
       )
     ) {
       sendError(res, 403, "invalid verify token");
@@ -101,17 +98,26 @@ async function handleMetaWebhookPost(
   res: ServerResponse,
   ctx: AppContext,
 ): Promise<boolean> {
+  const rawBody = await readRawBody(req);
+  const signature = req.headers["x-hub-signature-256"];
+  const signatureHeader = Array.isArray(signature) ? signature[0] : signature;
+  return ingestMetaWebhook(res, ctx, rawBody, signatureHeader);
+}
+
+export async function ingestMetaWebhook(
+  res: ServerResponse,
+  ctx: AppContext,
+  rawBody: Buffer,
+  signatureHeader: string | undefined,
+): Promise<boolean> {
   let eventId: string | null = null;
 
   try {
-    const rawBody = await readRawBody(req);
     const payloadJson = rawBody.toString("utf8");
-    const signature = req.headers["x-hub-signature-256"];
-    const signatureHeader = Array.isArray(signature) ? signature[0] : signature;
     const signatureValid = verifyHubSignature(
       rawBody,
       signatureHeader,
-      ctx.metaAppCredentials.getSecrets()?.appSecret || ctx.metaAppSecret || "",
+      ctx.metaAppSecret || "",
     );
 
     const event = persistWebhookReceipt(ctx, {

@@ -183,11 +183,9 @@ Requirements:
 
 ## Meta webhook URL
 
-Sem Turso: `https://<your-public-host>/webhooks/meta`
+Sem Turso e com Turso, a URL é a mesma: `https://<your-public-host>/webhooks/meta`. App id, app secret e verify token são os da Iris, no ambiente do servidor. Com Turso, o `entry.id` escolhe o SQLite da conta que conectou aquele Instagram.
 
-Com conta no Turso: `https://<your-public-host>/webhooks/meta/<slug>`. O slug sai na tela de setup daquela conta. O verify token é o dela, não um segredo global.
-
-OAuth callback, nos dois modos: `https://<your-public-host>/auth/meta/callback`. Com Turso, o `state` assinado indica a conta. App id e app secret vêm do banco dela. `META_APP_ID` e `META_APP_SECRET` continuam válidos só no modo de um arquivo.
+OAuth callback, nos dois modos: `https://<your-public-host>/auth/meta/callback`. Com Turso, o `state` assinado indica a conta. O token do Instagram grava no banco dela.
 
 Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `iris-app/docs/configuracao/README.md` or **`/docs/`** no próprio Iris.
 

@@ -301,6 +301,7 @@ export type MetaSetupSnapshot = {
   oauth_configured: boolean;
   public_base_url: string | null;
   webhook_url: string | null;
+  shared_meta_app?: boolean;
   webhook_verify_token_configured: boolean;
   redirect_uri: string | null;
   page_redirect_uri: string | null;

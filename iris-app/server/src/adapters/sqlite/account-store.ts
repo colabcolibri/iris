@@ -45,12 +45,6 @@ export function createAccountStore(
     LEFT JOIN account_databases d ON d.account_id = a.id
     WHERE a.id = ?
   `);
-  const selectBySlug = db.prepare(`
-    SELECT a.id, a.email, a.slug, a.status, d.url, d.name, d.auth_token_vault, d.migration_version
-    FROM accounts a
-    LEFT JOIN account_databases d ON d.account_id = a.id
-    WHERE a.slug = ?
-  `);
   const selectActive = db.prepare(`
     SELECT a.id, a.email, a.slug, a.status, d.url, d.name, d.auth_token_vault, d.migration_version
     FROM accounts a
@@ -100,9 +94,6 @@ export function createAccountStore(
     },
     findById(id: string): AccountRecord | null {
       return map(selectById.get(id) as AccountRow | undefined);
-    },
-    findBySlug(slug: string): AccountRecord | null {
-      return map(selectBySlug.get(slug) as AccountRow | undefined);
     },
     listActive(): AccountRecord[] {
       return (selectActive.all() as AccountRow[])

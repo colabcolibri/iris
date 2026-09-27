@@ -1,8 +1,4 @@
 import type { DatabaseSync } from "node:sqlite";
-import {
-  createMetaAppCredentialStore,
-  type MetaAppCredentialStore,
-} from "../adapters/sqlite/meta-app-credential-store.ts";
 import type { AuthConfig } from "./auth.ts";
 import { MEDIA_ROOT } from "../paths.ts";
 import { createSqliteAssetRepository } from "../adapters/sqlite/asset-repository.ts";
@@ -113,7 +109,6 @@ export type AppContext = {
   db: DatabaseSync;
   accountId: string | null;
   accountSlug: string | null;
-  metaAppCredentials: MetaAppCredentialStore;
   auth: AuthConfig;
   mcp: McpConfig;
   mcpVerifier: McpConnectionVerifier;
@@ -232,21 +227,9 @@ export function createAppContext(options: AppContextOptions): AppContext {
 
   const assets = createSqliteAssetRepository(options.db);
   const posts = createSqlitePostRepository(options.db);
-  const metaAppCredentials = createMetaAppCredentialStore(
-    options.db,
-    options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
-  );
-  const storedMetaApp = metaAppCredentials.getSecrets();
-  const metaAppSecret =
-    storedMetaApp?.appSecret ||
-    options.metaAppSecret ||
-    process.env.META_APP_SECRET ||
-    "";
+  const metaAppSecret = options.metaAppSecret || process.env.META_APP_SECRET || "";
   const metaWebhookVerifyToken =
-    storedMetaApp?.verifyToken ||
-    options.metaWebhookVerifyToken ||
-    process.env.META_WEBHOOK_VERIFY_TOKEN ||
-    "";
+    options.metaWebhookVerifyToken || process.env.META_WEBHOOK_VERIFY_TOKEN || "";
 
   const metaPublisher =
     publicBaseUrl && publishUrlSecret
@@ -392,7 +375,6 @@ export function createAppContext(options: AppContextOptions): AppContext {
     db: options.db,
     accountId: options.accountId ?? null,
     accountSlug: options.accountSlug ?? null,
-    metaAppCredentials,
     auth,
     mcp: {
       connectionCode: envMcpCode || loadMcpConnectionCodeFromEnv(nodeEnv),

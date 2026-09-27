@@ -91,12 +91,6 @@ export const settingsPt = {
       "Só se as DMs não funcionarem após o login — vincula token da Página.",
     pageConnected: "Página conectada: {name}",
     connectEssential: "Só posts e comentários (sem insights/DMs)",
-    appCredentialsTitle: "App da Meta desta conta",
-    appIdLabel: "App id",
-    appSecretLabel: "App secret",
-    verifyTokenLabel: "Verify token do webhook",
-    saveCredentials: "Salvar credenciais",
-    credentialsSaved: "Credenciais salvas nesta conta.",
     developerPanelTitle: "Colar no painel Meta",
     developerPanelDescription:
       "Copie cada valor abaixo e cole em developers.facebook.com (uma vez, antes do primeiro login).",

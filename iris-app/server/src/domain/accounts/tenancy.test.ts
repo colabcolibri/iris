@@ -64,6 +64,9 @@ test("two accounts do not share posts, and webhook lands on the slug", async () 
   };
   process.env.IRIS_SESSION_SECRET = "test-session-secret";
   process.env.IRIS_OTP_PEPPER = "test-otp-pepper";
+  process.env.META_APP_ID = "iris-app";
+  process.env.META_APP_SECRET = "iris-secret";
+  process.env.META_WEBHOOK_VERIFY_TOKEN = "iris-verify";
 
   const { server, stopScheduler, closeDatabase } = createServer({
     dbPath: join(root, "fallback.db"),
@@ -102,7 +105,22 @@ test("two accounts do not share posts, and webhook lands on the slug", async () 
     const bodyB = (await listB.json()) as { posts: unknown[] };
     assert.equal(bodyB.posts.length, 0);
 
-    const saved = await fetch(`${baseUrl}/api/settings/meta-app`, {
+    const ownerRow = openControlDatabase(join(root, "control.db"));
+    const ownerEarly = ownerRow
+      .prepare("SELECT id FROM accounts WHERE email = ?")
+      .get("a@example.com") as { id: string };
+    ownerRow.close();
+    const connectionDb = openDatabase(join(root, "tenants", ownerEarly.id, "iris.db"));
+    const now = new Date().toISOString();
+    connectionDb
+      .prepare(
+        `INSERT INTO meta_connection (id, ig_user_id, ig_username, page_id, page_name, connected_at, updated_at)
+         VALUES ('primary', 'ig-a', 'marca_a', 'instagram-login', NULL, ?, ?)`,
+      )
+      .run(now, now);
+    connectionDb.close();
+
+    const denied = await fetch(`${baseUrl}/api/settings/meta-app`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Cookie: cookieA },
       body: JSON.stringify({
@@ -111,23 +129,21 @@ test("two accounts do not share posts, and webhook lands on the slug", async () 
         verify_token: "verify-a",
       }),
     });
-    const savedBody = await saved.text();
-    assert.equal(saved.status, 200);
-    assert.equal(savedBody.includes("secret-a"), false);
+    assert.equal(denied.status, 404);
 
-    const me = (await (await fetch(`${baseUrl}/api/auth/me`, { headers: { Cookie: cookieA } })).json()) as {
-      slug: string;
-    };
-    const payload = JSON.stringify({ object: "instagram", entry: [] });
-    const bad = await fetch(`${baseUrl}/webhooks/meta/${me.slug}`, {
+    const payload = JSON.stringify({
+      object: "instagram",
+      entry: [{ id: "ig-a", time: 1, changes: [] }],
+    });
+    const bad = await fetch(`${baseUrl}/webhooks/meta`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Hub-Signature-256": "sha256=dead" },
       body: payload,
     });
-    assert.notEqual(bad.status, 200);
+    assert.equal(bad.status, 403);
 
-    const digest = createHmac("sha256", "secret-a").update(payload).digest("hex");
-    const good = await fetch(`${baseUrl}/webhooks/meta/${me.slug}`, {
+    const digest = createHmac("sha256", "iris-secret").update(payload).digest("hex");
+    const good = await fetch(`${baseUrl}/webhooks/meta`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,6 +152,27 @@ test("two accounts do not share posts, and webhook lands on the slug", async () 
       body: payload,
     });
     assert.equal(good.status, 200);
+    const afterGood = openDatabase(join(root, "tenants", ownerEarly.id, "iris.db"));
+    const events = afterGood
+      .prepare("SELECT COUNT(*) AS total FROM meta_webhook_events")
+      .get() as { total: number };
+    afterGood.close();
+    assert.equal(events.total, 1);
+
+    const unknownPayload = JSON.stringify({
+      object: "instagram",
+      entry: [{ id: "ig-nobody", time: 1, changes: [] }],
+    });
+    const unknownDigest = createHmac("sha256", "iris-secret").update(unknownPayload).digest("hex");
+    const unknown = await fetch(`${baseUrl}/webhooks/meta`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": `sha256=${unknownDigest}`,
+      },
+      body: unknownPayload,
+    });
+    assert.equal(unknown.status, 200);
 
     const missing = await fetch(`${baseUrl}/webhooks/meta/does-not-exist`, {
       method: "POST",
@@ -157,28 +194,18 @@ test("two accounts do not share posts, and webhook lands on the slug", async () 
     assert.ok(accountsTable);
     controlAfter.close();
 
-    const publicA = (await (
-      await fetch(`${baseUrl}/api/settings/meta-app`, { headers: { Cookie: cookieA } })
-    ).json()) as { app_id: string; has_secret: boolean };
-    assert.equal(publicA.app_id, "app-a");
-    assert.equal(publicA.has_secret, true);
-    const publicB = (await (
-      await fetch(`${baseUrl}/api/settings/meta-app`, { headers: { Cookie: cookieB } })
-    ).json()) as { app_id: string; has_secret: boolean };
-    assert.equal(publicB.app_id, "");
-    assert.equal(publicB.has_secret, false);
-
     const setup = (await (
       await fetch(`${baseUrl}/api/meta/setup`, { headers: { Cookie: cookieA } })
-    ).json()) as { webhook_url: string };
-    assert.match(setup.webhook_url, new RegExp(`/webhooks/meta/${me.slug}$`));
+    ).json()) as { webhook_url: string; shared_meta_app: boolean };
+    assert.match(setup.webhook_url, /\/webhooks\/meta$/);
+    assert.equal(setup.shared_meta_app, true);
 
     const oauth = await fetch(`${baseUrl}/auth/meta`, {
       headers: { Cookie: cookieA },
       redirect: "manual",
     });
     assert.equal(oauth.status, 302);
-    assert.match(oauth.headers.get("location") ?? "", /client_id=app-a/);
+    assert.match(oauth.headers.get("location") ?? "", /client_id=iris-app/);
 
     const expired = await fetch(`${baseUrl}/api/posts`, {
       headers: { Cookie: "iris_session=v1.1.bad.bad" },
@@ -290,13 +317,13 @@ test("two accounts do not share posts, and webhook lands on the slug", async () 
         return originalFetch(input, init);
       }
       if (url.includes("api.instagram.com/oauth/access_token")) {
-        assert.match(String(init?.body), /client_secret=secret-a/);
+        assert.match(String(init?.body), /client_secret=iris-secret/);
         return new Response(JSON.stringify({ access_token: "short-a", user_id: "ig-user-a" }), {
           status: 200,
         });
       }
       if (url.includes("graph.instagram.com/access_token")) {
-        assert.match(url, /client_secret=secret-a/);
+        assert.match(url, /client_secret=iris-secret/);
         return new Response(JSON.stringify({ access_token: "long-token-a", expires_in: 3600 }), {
           status: 200,
         });

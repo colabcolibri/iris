@@ -41,7 +41,7 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 - `TURSO_PLATFORM_TOKEN` fica só no ambiente. Não entra em resposta, log nem no banco de controle.
 - O token de cada SQLite de conta é cifrado no controle com o mesmo cofre dos tokens Meta. Token de grupo, que abriria todos os bancos, não é usado.
 - A sessão carrega o id da conta. O cliente não escolhe o banco por parâmetro.
-- App secret e verify token da Meta, quando a conta existe, ficam cifrados no SQLite dela. O HMAC do webhook e a troca do OAuth usam esse secret. Slug desconhecido não cai num banco padrão.
+- App id, app secret e verify token da Meta ficam no servidor da Iris. O HMAC do webhook e o OAuth usam esse secret. O evento chega em `/webhooks/meta` e a Iris abre o SQLite da conta cujo Instagram conectado é o `entry.id`. Id desconhecido não grava em banco nenhum.
 - O `state` do OAuth é assinado e tem prazo.
 - O processo descriptografa o token da conta para publicar. O isolamento é de armazenamento entre contas, não um cofre que o servidor não consegue ler.
 
