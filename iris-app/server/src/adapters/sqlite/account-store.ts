@@ -31,7 +31,9 @@ export function createAccountStore(
   db: DatabaseSync,
   encryptionKey?: string,
 ) {
-  const key = resolveEncryptionKey(encryptionKey);
+  const key = resolveEncryptionKey(
+    encryptionKey?.trim() || process.env.IRIS_TOKEN_ENCRYPTION_KEY?.trim(),
+  );
 
   const selectByEmail = db.prepare(`
     SELECT a.id, a.email, a.slug, a.status, d.url, d.name, d.auth_token_vault, d.migration_version

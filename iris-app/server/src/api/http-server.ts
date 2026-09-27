@@ -625,7 +625,7 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
         contextOptions: {
           adminToken: options.adminToken,
           agentToken: options.agentToken,
-          encryptionKey: options.encryptionKey,
+          encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
           metaAccessToken: options.metaAccessToken,
           igUserId: options.igUserId,
           publicBaseUrl: options.publicBaseUrl,
