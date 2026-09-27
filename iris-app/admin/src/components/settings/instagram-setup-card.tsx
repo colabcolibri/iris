@@ -117,7 +117,7 @@ function PhaseCard({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-(--iris-radius-sm) border p-4",
+        "flex min-w-0 flex-col gap-3 rounded-sm border p-4",
         phaseOk ? "border-emerald-500/30 bg-emerald-500/5" : "border-border bg-muted/20",
       )}
     >
@@ -233,7 +233,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
       {setup ? (
         <div className="space-y-6">
           <div
-            className="rounded-(--iris-radius-sm) border border-border bg-card px-4 py-3"
+            className="rounded-sm border border-border bg-card px-4 py-3"
             role="status"
           >
             <p className="text-sm font-medium text-foreground">
@@ -284,7 +284,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
 
           <div
             className={cn(
-              "space-y-4 rounded-(--iris-radius-sm) border p-4 sm:p-5",
+              "space-y-4 rounded-sm border p-4 sm:p-5",
               setup.instagram_connected
                 ? "border-emerald-500/30 bg-emerald-500/5"
                 : "border-border bg-muted/15",
@@ -384,7 +384,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
           ) : null}
 
           {needsPageConnect ? (
-            <div className="space-y-3 rounded-(--iris-radius-sm) border border-amber-500/30 bg-amber-500/5 p-4">
+            <div className="space-y-3 rounded-sm border border-amber-500/30 bg-amber-500/5 p-4">
               <p className="text-sm text-foreground">{t.connectPageHint}</p>
               <a
                 href="/auth/meta/page"
@@ -396,7 +396,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
           ) : null}
 
           {showDeveloperPanel ? (
-            <Accordion className="rounded-(--iris-radius-sm) border border-border px-4">
+            <Accordion className="rounded-sm border border-border px-4">
               <AccordionItem value="developer">
                 <AccordionTrigger className="py-3 text-sm font-semibold">
                   {t.developerPanelTitle}
