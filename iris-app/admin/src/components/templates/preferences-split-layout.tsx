@@ -21,7 +21,6 @@ export type PreferencesSection = {
 };
 
 type PreferencesSplitLayoutProps = {
-  eyebrow: string;
   title: string;
   description: string;
   sections: PreferencesSection[];
@@ -69,7 +68,6 @@ function PreferencesSectionNav({
 }
 
 export function PreferencesSplitLayout({
-  eyebrow,
   title,
   description,
   sections,
@@ -111,7 +109,7 @@ export function PreferencesSplitLayout({
   const navSelectedId = activeSection?.id ?? "";
 
   const pageHeader = (
-    <PageContainer.Header eyebrow={eyebrow} title={title} description={description} />
+    <PageContainer.Header title={title} description={description} />
   );
 
   const navBody = loading ? (
@@ -130,10 +128,6 @@ export function PreferencesSplitLayout({
     </div>
   ) : activeSection ? (
     <PagePanel className="flex min-h-0 flex-1 flex-col border-0 bg-transparent md:rounded-none md:border-l md:border-border/60 md:bg-card">
-      <PagePanel.Header
-        title={activeSection.title}
-        description={activeSection.description}
-      />
       <PagePanel.Body>
         <PageScrollArea contentClassName="space-y-5 p-4 sm:p-6 md:max-w-3xl">
           {activeSection.content}
@@ -214,7 +208,7 @@ export function PreferencesSplitLayout({
           className="flex w-full max-w-md flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
         >
           <SheetHeader className="border-b border-border">
-            <SheetTitle className="font-display text-lg font-semibold">
+            <SheetTitle className="text-base font-semibold text-foreground">
               {title}
             </SheetTitle>
           </SheetHeader>

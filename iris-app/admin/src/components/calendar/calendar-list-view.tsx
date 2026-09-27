@@ -45,9 +45,6 @@ export function CalendarListView({
     <div className="flex h-full min-h-0 flex-col pt-6 md:pt-8">
       <header className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="mb-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            {listMsg.eyebrow}
-          </p>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -59,7 +56,7 @@ export function CalendarListView({
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <h2 className="min-w-45 text-center font-display text-2xl font-semibold sm:text-3xl">
+            <h2 className="min-w-45 text-center font-display text-xl font-semibold tracking-tight">
               {formatMonthLabel(year, month)}
             </h2>
             <Button

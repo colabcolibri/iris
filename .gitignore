@@ -33,6 +33,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/css-custom-data.json
 .cursor/
 .claude/
 .agent/
@@ -56,3 +58,6 @@ AGENTS.md
 iris-app/public/index.html
 iris-app/public/assets/index-*.js
 iris-app/public/assets/index-*.css
+# Meridian harness backups (Upgrade Harness)
+agent-backup/
+.opencode/

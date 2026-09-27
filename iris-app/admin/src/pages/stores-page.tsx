@@ -331,7 +331,7 @@ export function StoresPage() {
 
   const pageHeader = (
     <PageContainer.Header
-      eyebrow={storesMsg.page.eyebrow}
+      title={storesMsg.page.title}
       title={storesMsg.page.title}
       description={storesMsg.page.description}
     />

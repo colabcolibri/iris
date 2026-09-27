@@ -64,7 +64,6 @@ PageContainer.Content = function PageContainerContent({
 };
 
 type PageContainerHeaderProps = {
-  eyebrow?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
@@ -72,7 +71,6 @@ type PageContainerHeaderProps = {
 };
 
 PageContainer.Header = function PageContainerHeader({
-  eyebrow,
   title,
   description,
   actions,
@@ -86,17 +84,12 @@ PageContainer.Header = function PageContainerHeader({
         className,
       )}
     >
-      <div className="space-y-1">
-        {eyebrow ? (
-          <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl">
+      <div className="min-w-0 space-y-1">
+        <h1 className="font-display text-xl font-semibold leading-tight tracking-tight text-foreground">
           {title}
         </h1>
         {description ? (
-          <p className="max-w-2xl text-base leading-normal text-muted-foreground">
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         ) : null}

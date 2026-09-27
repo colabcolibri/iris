@@ -37,7 +37,7 @@ PagePanel.Header = function PagePanelHeader({
     <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
       <div className="space-y-1">
         {title ? (
-          <h2 className="font-display text-lg font-semibold tracking-tight">
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
             {title}
           </h2>
         ) : null}

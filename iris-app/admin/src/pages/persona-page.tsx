@@ -471,7 +471,6 @@ export function PersonaPage() {
 
   return (
     <PreferencesSplitLayout
-      eyebrow={t.page.eyebrow}
       title={t.page.title}
       description={t.page.description}
       sections={sections}

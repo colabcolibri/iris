@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CheckCircle2,
-  Circle,
-  Loader2,
-  XCircle,
-  AlertCircle,
-  ExternalLink,
-} from "lucide-react";
-import { toast } from "sonner";
 import { SettingsCardShell } from "@/components/templates/settings-card-shell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { fetchMetaSetup } from "@/lib/api";
-import type { MetaSetupSnapshot, MetaSetupStep, MetaSetupStepStatus } from "@/lib/types";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useDomainMessages } from "@/i18n/provider";
+import { fetchMetaSetup } from "@/lib/api";
+import type { MetaSetupSnapshot, MetaSetupStep, MetaSetupStepStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Circle,
+  ExternalLink,
+  Loader2,
+  XCircle,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 type InstagramSetupCardProps = {
   embedded?: boolean;
@@ -117,7 +117,7 @@ function PhaseCard({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-[var(--iris-radius-sm)] border p-4",
+        "flex min-w-0 flex-col gap-3 rounded-(--iris-radius-sm) border p-4",
         phaseOk ? "border-emerald-500/30 bg-emerald-500/5" : "border-border bg-muted/20",
       )}
     >
@@ -212,7 +212,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
 
   const showDeveloperPanel =
     Boolean(setup?.webhook_url) &&
-    (!setup.instagram_connected ||
+    (!setup?.instagram_connected ||
       stepsById.get("webhook")?.status !== "ok" ||
       stepsById.get("meta_app")?.status !== "ok" ||
       stepsById.get("public_url")?.status !== "ok");
@@ -233,7 +233,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
       {setup ? (
         <div className="space-y-6">
           <div
-            className="rounded-[var(--iris-radius-sm)] border border-border bg-card px-4 py-3"
+            className="rounded-(--iris-radius-sm) border border-border bg-card px-4 py-3"
             role="status"
           >
             <p className="text-sm font-medium text-foreground">
@@ -284,7 +284,7 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
 
           <div
             className={cn(
-              "space-y-4 rounded-[var(--iris-radius-sm)] border p-4 sm:p-5",
+              "space-y-4 rounded-(--iris-radius-sm) border p-4 sm:p-5",
               setup.instagram_connected
                 ? "border-emerald-500/30 bg-emerald-500/5"
                 : "border-border bg-muted/15",
@@ -312,9 +312,12 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <Button type="button" variant="outline" size="sm" asChild>
-                    <a href="/auth/meta?mode=full">{t.reconnect}</a>
-                  </Button>
+                  <a
+                    href="/auth/meta?mode=full"
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    {t.reconnect}
+                  </a>
                   <Button
                     type="button"
                     variant="ghost"
@@ -340,9 +343,15 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <Button type="button" size="lg" className="w-full sm:w-auto" asChild>
-                    <a href="/auth/meta?mode=full">{t.connectPrimary}</a>
-                  </Button>
+                  <a
+                    href="/auth/meta?mode=full"
+                    className={cn(
+                      buttonVariants({ size: "lg" }),
+                      "w-full sm:w-auto",
+                    )}
+                  >
+                    {t.connectPrimary}
+                  </a>
                   <Button
                     type="button"
                     variant="ghost"
@@ -375,16 +384,19 @@ export function InstagramSetupCard({ embedded = false }: InstagramSetupCardProps
           ) : null}
 
           {needsPageConnect ? (
-            <div className="space-y-3 rounded-[var(--iris-radius-sm)] border border-amber-500/30 bg-amber-500/5 p-4">
+            <div className="space-y-3 rounded-(--iris-radius-sm) border border-amber-500/30 bg-amber-500/5 p-4">
               <p className="text-sm text-foreground">{t.connectPageHint}</p>
-              <Button type="button" variant="secondary" asChild>
-                <a href="/auth/meta/page">{t.connectPage}</a>
-              </Button>
+              <a
+                href="/auth/meta/page"
+                className={buttonVariants({ variant: "secondary" })}
+              >
+                {t.connectPage}
+              </a>
             </div>
           ) : null}
 
           {showDeveloperPanel ? (
-            <Accordion className="rounded-[var(--iris-radius-sm)] border border-border px-4">
+            <Accordion className="rounded-(--iris-radius-sm) border border-border px-4">
               <AccordionItem value="developer">
                 <AccordionTrigger className="py-3 text-sm font-semibold">
                   {t.developerPanelTitle}

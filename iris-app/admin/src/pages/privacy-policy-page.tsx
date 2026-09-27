@@ -31,11 +31,8 @@ export function PrivacyPolicyPage() {
 
       <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
         <article className="space-y-8 text-foreground">
-          <header className="space-y-3">
-            <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-              {legal.page.eyebrow}
-            </p>
-            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          <header className="space-y-2">
+            <h1 className="font-display text-xl font-semibold tracking-tight">
               {legal.page.title}
             </h1>
             <p className="text-sm text-muted-foreground">

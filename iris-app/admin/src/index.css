@@ -55,9 +55,17 @@
   --text-base--line-height: 1.47;
   --text-base--letter-spacing: -0.374px;
 
+  --text-lg: 18px;
+  --text-lg--line-height: 1.44;
+  --text-lg--letter-spacing: -0.28px;
+
   --text-xl: 21px;
   --text-xl--line-height: 1.19;
   --text-xl--letter-spacing: 0.231px;
+
+  --text-2xl: 27px;
+  --text-2xl--line-height: 1.15;
+  --text-2xl--letter-spacing: -0.33px;
 
   --text-3xl: 34px;
   --text-3xl--line-height: 1.1;

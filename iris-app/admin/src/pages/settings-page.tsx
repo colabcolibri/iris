@@ -172,7 +172,6 @@ export function SettingsPage() {
 
   return (
     <PreferencesSplitLayout
-      eyebrow={settings.page.eyebrow}
       title={settings.page.title}
       description={settings.page.description}
       sections={sections}

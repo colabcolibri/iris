@@ -24,7 +24,7 @@ function McpCopyField({ id, label, value, hint }: McpCopyFieldProps) {
     <div className="space-y-1.5">
       <Label
         htmlFor={id}
-        className="text-xs font-semibold tracking-wide uppercase"
+        className="text-xs font-medium text-foreground"
       >
         {label}
       </Label>
@@ -98,7 +98,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4 rounded-[var(--iris-radius-sm)] border border-border/80 bg-muted/30 p-4">
+      <div className="space-y-4 rounded-sm border border-border/80 bg-muted/30 p-4">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">ChatGPT</h3>
           <p className="text-xs text-muted-foreground">
@@ -155,7 +155,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
         )}
       </div>
 
-      <div className="space-y-4 rounded-[var(--iris-radius-sm)] border border-border/80 bg-muted/30 p-4">
+      <div className="space-y-4 rounded-sm border border-border/80 bg-muted/30 p-4">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">Cursor</h3>
           <p className="text-xs text-muted-foreground">
@@ -188,7 +188,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
         )}
       </div>
 
-      <div className="space-y-4 rounded-[var(--iris-radius-sm)] border border-border/80 bg-muted/30 p-4">
+      <div className="space-y-4 rounded-sm border border-border/80 bg-muted/30 p-4">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">Claude Desktop</h3>
           <p className="text-xs text-muted-foreground">
@@ -216,7 +216,7 @@ export function McpSetupGuide({ mcpUrl, connectionCode }: McpSetupGuideProps) {
             />
             {claudeSnippet ? (
               <>
-                <Label className="text-xs font-semibold tracking-wide uppercase">
+                <Label className="text-xs font-medium text-foreground">
                   JSON completo
                 </Label>
                 <textarea

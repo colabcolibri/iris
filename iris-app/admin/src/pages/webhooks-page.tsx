@@ -11,7 +11,6 @@ export function WebhooksPage() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">
             <PageContainer.Header
-              eyebrow={webhooks.page.eyebrow}
               title={webhooks.page.title}
               description={webhooks.page.description}
             />

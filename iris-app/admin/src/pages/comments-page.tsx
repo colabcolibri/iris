@@ -1026,7 +1026,6 @@ export function CommentsPage() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <PageContainer.Header
-          eyebrow={commentsMsg.page.eyebrow}
           title={leftPanelMode === "posts" ? commentsMsg.page.postsTitle : commentsMsg.page.activityTitle}
           description={
             leftPanelMode === "posts"

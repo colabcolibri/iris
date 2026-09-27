@@ -563,7 +563,7 @@ export function DashboardPage() {
       {view === "kanban" && (
         <header className="flex shrink-0 flex-wrap items-start justify-between gap-4 px-8 pt-8 pb-4">
           <div className="min-w-0">
-            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">
+            <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">
               {postsMsg.page.kanban.title}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">

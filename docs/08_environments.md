@@ -151,7 +151,7 @@ docker compose up -d --build
 - **Mailpit (OTP em trial):** `http://localhost:8025`
 - **Dados:** volume `iris-data` → `/app/data/iris.db` + mídia
 
-Em produção com domínio público, use `IRIS_EMAIL_PROVIDER=resend`, HTTPS em `IRIS_PUBLIC_BASE_URL` e configure Meta conforme `docs/meta/README.md`.
+Em produção com domínio público, use `IRIS_EMAIL_PROVIDER=resend`, HTTPS em `IRIS_PUBLIC_BASE_URL` e configure Meta conforme `iris-app/docs/configuracao/README.md`.
 
 | Variable | Notes |
 | -------- | ----- |

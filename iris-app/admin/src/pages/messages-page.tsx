@@ -513,7 +513,7 @@ export function MessagesPage() {
   const pageHeader = (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <PageContainer.Header
-        eyebrow={messagesMsg.page.eyebrow}
+        title={messagesMsg.page.title}
         title={messagesMsg.page.title}
         description={messagesMsg.page.description}
       />

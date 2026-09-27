@@ -562,7 +562,7 @@ export function WebhookEventsPanel() {
             </div>
 
             <div>
-              <h2 className="font-display text-2xl font-semibold text-foreground">
+              <h2 className="text-base font-semibold text-foreground">
                 {selectedEvent.webhook_type}
               </h2>
               {selectedEvent.field ? (

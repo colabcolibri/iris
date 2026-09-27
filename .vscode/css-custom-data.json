@@ -1,0 +1,29 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS v4: define tokens do tema."
+    },
+    {
+      "name": "@custom-variant",
+      "description": "Tailwind CSS v4: registra uma variante customizada."
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind CSS: aplica utilities em CSS."
+    },
+    {
+      "name": "@source",
+      "description": "Tailwind CSS v4: inclui arquivos na detecção de classes."
+    },
+    {
+      "name": "@plugin",
+      "description": "Tailwind CSS v4: carrega um plugin."
+    },
+    {
+      "name": "@utility",
+      "description": "Tailwind CSS v4: define uma utility customizada."
+    }
+  ]
+}

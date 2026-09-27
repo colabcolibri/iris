@@ -30,7 +30,7 @@ export function SettingsCardShell({
       )}
     >
       <header className="space-y-1">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {description ? (
           <p className="text-sm leading-relaxed text-muted-foreground">
             {description}

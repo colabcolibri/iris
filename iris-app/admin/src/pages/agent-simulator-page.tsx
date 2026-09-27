@@ -161,7 +161,6 @@ export function AgentSimulatorPage() {
           <aside className="m-4 flex min-h-0 w-auto shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-none lg:m-6 lg:mr-0 lg:w-[min(100%,420px)] lg:max-w-105">
             <PageScrollArea contentClassName="space-y-5 p-4 sm:p-5">
               <PageContainer.Header
-                eyebrow={t.page.eyebrow}
                 title={t.page.title}
                 description={t.page.description}
               />
@@ -282,7 +281,6 @@ export function AgentSimulatorPage() {
           </aside>
 
           <SimulatorResultPanel
-            eyebrow={t.page.resultEyebrow}
             title={t.page.resultTitle}
             description={t.page.resultDescription}
             running={running}

@@ -5,7 +5,6 @@ import type { OperatorNotificationLog } from "@/lib/api";
 import type { ReplyAudit } from "@/lib/types";
 
 type SimulatorResultPanelProps = {
-  eyebrow: string;
   title: string;
   description: string;
   running: boolean;
@@ -30,7 +29,6 @@ type SimulatorResultPanelProps = {
 };
 
 export function SimulatorResultPanel({
-  eyebrow,
   title,
   description,
   running,
@@ -49,25 +47,24 @@ export function SimulatorResultPanel({
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="shrink-0 px-4 py-4 sm:px-6 md:px-8">
-        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-          {eyebrow}
-        </p>
-        <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
           {title}
         </h2>
-        <p className="mt-1 max-w-2xl text-base text-muted-foreground">{description}</p>
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
       </div>
       <PageScrollArea contentClassName="p-4 sm:p-6 md:px-8">
         <div className="w-full">
           {!hasResult && !running ? (
             <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 px-6 py-12 text-center">
-              <p className="font-display text-xl font-semibold text-foreground">{emptyTitle}</p>
-              <p className="mt-2 max-w-sm text-base text-muted-foreground">{emptyBody}</p>
+              <p className="text-base font-semibold text-foreground">{emptyTitle}</p>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">{emptyBody}</p>
             </div>
           ) : null}
 
           {running ? (
-            <p className="text-base text-muted-foreground">{runningLabel}</p>
+            <p className="text-sm text-muted-foreground">{runningLabel}</p>
           ) : null}
 
           {audit ? (
@@ -79,23 +76,23 @@ export function SimulatorResultPanel({
                 />
               ) : null}
               <ReplyAuditTimeline
-              audit={audit}
-              proposedReply={finalText}
-              proposedReplyLanguageLabel={languageLabel}
-              summary={{
-                toolCallCount: audit.session_summary?.toolCallCount ?? null,
-                totalTokens: audit.session_summary?.totalTokens ?? null,
-                totalPromptTokens: audit.session_summary?.totalPromptTokens ?? null,
-                totalCompletionTokens:
-                  audit.session_summary?.totalCompletionTokens ?? null,
-                durationMs: audit.session_summary?.durationMs ?? null,
-              }}
-            />
+                audit={audit}
+                proposedReply={finalText}
+                proposedReplyLanguageLabel={languageLabel}
+                summary={{
+                  toolCallCount: audit.session_summary?.toolCallCount ?? null,
+                  totalTokens: audit.session_summary?.totalTokens ?? null,
+                  totalPromptTokens: audit.session_summary?.totalPromptTokens ?? null,
+                  totalCompletionTokens:
+                    audit.session_summary?.totalCompletionTokens ?? null,
+                  durationMs: audit.session_summary?.durationMs ?? null,
+                }}
+              />
             </>
           ) : null}
 
           {audit && !finalText ? (
-            <p className="mt-4 text-base text-muted-foreground">{noApprovedLabel}</p>
+            <p className="mt-4 text-sm text-muted-foreground">{noApprovedLabel}</p>
           ) : null}
         </div>
       </PageScrollArea>
