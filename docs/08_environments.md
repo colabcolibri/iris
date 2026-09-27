@@ -150,7 +150,7 @@ docker compose up -d --build
 
 - **Iris:** `http://localhost:8792` (ou `IRIS_HOST_PORT`)
 - **Mailpit (OTP em trial):** `http://localhost:8025`
-- **Dados:** volume `iris-data` → `/app/data/iris.db` + mídia
+- **Dados:** volume `iris-data` → diretório `/app/data` (`control.db`, `tenants/`, `media/` e o `iris.db` de origem)
 
 Em produção com domínio público, use `IRIS_EMAIL_PROVIDER=resend`, HTTPS em `IRIS_PUBLIC_BASE_URL` e configure Meta conforme `iris-app/docs/configuracao/README.md`.
 
@@ -165,13 +165,14 @@ O comando cria a conta se o email ainda não existir, copia o arquivo por cima d
 | Variable | Notes |
 | -------- | ----- |
 | `NODE_ENV` | `production` |
-| `IRIS_DB_PATH` | Persistent volume path (ex.: `/app/data/iris.db`) |
+| `IRIS_DB_PATH` | Caminho do arquivo antigo no volume (ex.: `/app/data/iris.db`). As contas ficam ao lado, em `/app/data/tenants`. |
+| `IRIS_TENANCY` | `local`. O processo do produto já abre um arquivo por conta; deixe a variável no painel. |
 | `IRIS_PUBLIC_BASE_URL` | URL pública HTTPS (ex.: `https://iris.example.com`) |
 | `META_OAUTH_REDIRECT_URI` | `{IRIS_PUBLIC_BASE_URL}/auth/meta/callback` |
 | `IRIS_EMAIL_PROVIDER` | `resend` |
 | `IRIS_FROM_EMAIL` | Remetente verificado no Resend |
 | `RESEND_API_KEY` | API key Resend (somente no provedor) |
-| `IRIS_ADMIN_EMAIL` | Email allowlisted para OTP |
+| `IRIS_ADMIN_EMAIL` | Email do operador. Com `IRIS_TENANCY=local`, qualquer email confirmado também recebe código. |
 | `META_*` | App credentials + access token |
 | `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — DMs: guias [07](../iris-app/docs/configuracao/07-page-access-token.md) e [06](../iris-app/docs/configuracao/06-mensagens-receptor-primario.md) em `iris-app/docs/configuracao/` |
 | `LLM_API_KEY` | Não chama o modelo. Cada conta salva a própria chave e a URL em Configurações. |
