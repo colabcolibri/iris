@@ -39,6 +39,7 @@ export type AdminLoginDeps = {
   challenges: AdminLoginChallengeRepository;
   emailSender: EmailSender;
   locale?: ServerAppLocale;
+  allowUnlistedEmail?: boolean;
 };
 
 const GENERIC_MESSAGE =
@@ -54,7 +55,7 @@ export async function requestAdminLoginCode(
     return { sent: true, message: GENERIC_MESSAGE };
   }
 
-  if (!isEmailAllowlisted(email)) {
+  if (!deps.allowUnlistedEmail && !isEmailAllowlisted(email)) {
     return { sent: true, message: GENERIC_MESSAGE };
   }
 

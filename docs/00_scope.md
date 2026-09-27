@@ -1,8 +1,8 @@
 ---
 title: Scope
-status: approved
+status: review
 version: 1.2
-updated: 2026-08-10
+updated: 2026-09-27
 depends_on: []
 blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 ---
@@ -47,7 +47,9 @@ blocks: [01_tech_stack.md, 04_principles.md, 05_architecture.md]
 - Integração embutida com Casper, Canva ou outros criadores (agente local resolve)
 - LinkedIn, TikTok (arquitetura `channel` preparada, não implementado)
 - App mobile nativo
-- Multi-tenant / múltiplas contas IG
+- Várias contas Instagram dentro da mesma pessoa (cada SQLite continua com uma conexão Meta)
+- Cobrança, planos e bloqueio por assinatura (v1.31 abre a conta; não cobra)
+- Multi-tenant no v1: a instalação única com um `iris.db` permanece o MVP. A partir de v1.31 cada pessoa tem o próprio SQLite no Turso e login único (decisão 2026-09-27)
 - UI React/SPA
 - Object storage S3 (v1 = disco local no server)
 

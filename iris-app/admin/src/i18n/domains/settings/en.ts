@@ -93,6 +93,12 @@ export const settingsEn = {
       "Only if DMs fail after login — links the Page access token.",
     pageConnected: "Page connected: {name}",
     connectEssential: "Posts and comments only (no insights/DMs)",
+    appCredentialsTitle: "This account's Meta app",
+    appIdLabel: "App id",
+    appSecretLabel: "App secret",
+    verifyTokenLabel: "Webhook verify token",
+    saveCredentials: "Save credentials",
+    credentialsSaved: "Credentials saved on this account.",
     developerPanelTitle: "Paste into Meta Dashboard",
     developerPanelDescription:
       "Copy each value below and paste it at developers.facebook.com (once, before the first login).",

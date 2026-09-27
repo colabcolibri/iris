@@ -2,7 +2,7 @@
 title: Environments
 status: review
 version: 1.2
-updated: 2026-08-11
+updated: 2026-09-27
 depends_on: [01_tech_stack.md, 05_architecture.md]
 blocks: []
 ---
@@ -16,7 +16,12 @@ blocks: []
 | `PORT` | `8792` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `IRIS_DB_PATH` | `./data/iris.db` | SQLite file — caminho relativo é resolvido a partir de `iris-app/` (workspace), **não** do `cwd` do processo (`server/`). Evita abrir um segundo DB vazio em `server/data/`. |
-| `IRIS_ADMIN_EMAIL` | required (UI) | Email allowlisted para OTP |
+| `IRIS_ADMIN_EMAIL` | required (UI) sem Turso | Email allowlisted para OTP. Com Turso, o cadastro aceita email novo e esta variável deixa de ser a única porta. |
+| `TURSO_ORG` | vazio | Slug da organização Turso. Vazio mantém o arquivo local. |
+| `TURSO_PLATFORM_TOKEN` | vazio | Token da Platform API. Segredo do servidor. |
+| `TURSO_GROUP` | `iris` | Grupo onde nascem os bancos de conta. |
+| `TURSO_GROUP_LOCATION` | `gru` | Região do grupo. |
+| `TURSO_CONTROL_URL` | vazio | URL `libsql://` do banco de controle, se já criado. |
 | `IRIS_SESSION_SECRET` | required (UI) | HMAC da sessão HttpOnly |
 | `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
 | `RESEND_API_KEY` | prod | Envio de email (Resend) |
@@ -178,9 +183,11 @@ Requirements:
 
 ## Meta webhook URL
 
-Production: `https://<your-public-host>/webhooks/meta`
+Sem Turso: `https://<your-public-host>/webhooks/meta`
 
-Configure in Meta Developers → Webhooks → Instagram. OAuth callback: `https://<your-public-host>/auth/meta/callback`.
+Com conta no Turso: `https://<your-public-host>/webhooks/meta/<slug>`. O slug sai na tela de setup daquela conta. O verify token é o dela, não um segredo global.
+
+OAuth callback, nos dois modos: `https://<your-public-host>/auth/meta/callback`. Com Turso, o `state` assinado indica a conta. App id e app secret vêm do banco dela. `META_APP_ID` e `META_APP_SECRET` continuam válidos só no modo de um arquivo.
 
 Self-hosters create their own Meta app (BYOA) — credentials are per deployment, not shared via the repo. Setup: `iris-app/docs/configuracao/README.md` or **`/docs/`** no próprio Iris.
 

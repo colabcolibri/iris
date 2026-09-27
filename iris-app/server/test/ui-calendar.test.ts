@@ -19,7 +19,7 @@ test("admin includes calendar list view", () => {
   assert.match(list, /CalendarListView/);
   assert.match(list, /groupPostsByCalendarDay/);
   assert.match(list, /kanban\.calendarList/);
-  assert.match(list, /listMsg\.eyebrow/);
+  assert.match(list, /formatMonthLabel/);
 });
 
 test("calendar utilities and api filtering exist", () => {

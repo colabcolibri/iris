@@ -1,8 +1,8 @@
 ---
 title: Architecture
-status: review
-version: 1.4
-updated: 2026-08-12
+status: approved
+version: 1.5
+updated: 2026-09-27
 depends_on: [00_scope.md, 01_tech_stack.md, 02_security.md, 03_user_types.md, 04_principles.md]
 blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_system.md]
 ---
@@ -12,6 +12,8 @@ blocks: [06_database.md, 07_api_contracts.md, 08_environments.md, 09_design_syst
 ## Objective
 
 Forma do Iris: mini-server com camadas SRP, mídia em disco, SQLite, UI HTML, Meta API. Pacote local do agente em `iris-agent/publications/` — ver `docs/architecture/local-publications.md`.
+
+A partir da v1.31 o mesmo servidor atende várias contas. O login fica num banco de controle. Cada conta tem o próprio SQLite no Turso e a própria pasta de mídia. Sem as variáveis Turso, a instalação continua um arquivo local. Detalhe: `docs/architecture/tenant-sqlite.md`.
 
 ## System context
 
@@ -101,7 +103,7 @@ iris/                     # workspace Meridian
 | Assets API | Multipart upload + serve | `src/api/routes/assets.ts` |
 | Comments API | List + manual reply | `src/api/routes/comments.ts` |
 | Events API | SSE | `src/api/routes/events.ts` |
-| Media storage | `data/media/{post_id}/` | `src/adapters/media-storage/` |
+| Media storage | `data/media/{post_id}/` ou `data/tenants/{accountId}/media/` | `src/adapters/media-storage/` |
 | Image optimizer | Resize + JPEG no ingest | `src/adapters/image-optimizer/` |
 | Publish worker | Lê disco → Meta | `src/workers/publish-scheduler.ts` |
 | Admin UI (React SPA) | Operador editorial — calendário, kanban, comentários | `admin/src/` → build `public/` |
@@ -111,7 +113,7 @@ iris/                     # workspace Meridian
 | System | Direction | Notes |
 | ------ | --------- | ----- |
 | Instagram Graph API | Outbound publish/reply | Token no server |
-| Meta webhooks | Inbound comments | HMAC |
+| Meta webhooks | Inbound comments | HMAC. Com conta Turso: `/webhooks/meta/{slug}` e secret no banco dela |
 | Ferramentas externas / clients MCP | Inbound tools ou REST | Cursor, ChatGPT, Claude — ver `mcp-integration.md` |
 
 ## Key flows
@@ -198,6 +200,7 @@ Diagramas Mermaid para o viewer **Meridian: Open Architecture Diagram** (`docs/a
 | `docs/architecture/admin-demo-mode.md` | Demo público `/demo` — fixtures client-side, isolamento de sessão |
 | `docs/architecture/i18n.md` | i18n PT/EN — domínios, provider admin, erros API, email |
 | `docs/architecture/docs-site.md` | Site Starlight — guias Meta públicos PT/EN, build e deploy |
+| `docs/architecture/tenant-sqlite.md` | v1.31 — banco de controle, SQLite por conta no Turso, mídia, Meta, workers |
 
 ## Internacionalização
 

@@ -1,8 +1,8 @@
 ---
 title: Security
-status: approved
-version: 1.1
-updated: 2026-08-10
+status: review
+version: 1.2
+updated: 2026-09-27
 depends_on: [00_scope.md, 01_tech_stack.md]
 blocks: [03_user_types.md, 05_architecture.md]
 ---
@@ -35,6 +35,15 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 - Nunca expor `META_ACCESS_TOKEN`, `META_APP_SECRET`, `RESEND_API_KEY`, `IRIS_SESSION_SECRET` ao cliente HTML
 - UI **não** armazena tokens em `sessionStorage` — autenticação via cookie HttpOnly após OTP
 - Tokens Meta criptografados em repouso na tabela `meta_tokens` (v1-S4)
+
+## Contas e Turso (v1.31)
+
+- `TURSO_PLATFORM_TOKEN` fica só no ambiente. Não entra em resposta, log nem no banco de controle.
+- O token de cada SQLite de conta é cifrado no controle com o mesmo cofre dos tokens Meta. Token de grupo, que abriria todos os bancos, não é usado.
+- A sessão carrega o id da conta. O cliente não escolhe o banco por parâmetro.
+- App secret e verify token da Meta, quando a conta existe, ficam cifrados no SQLite dela. O HMAC do webhook e a troca do OAuth usam esse secret. Slug desconhecido não cai num banco padrão.
+- O `state` do OAuth é assinado e tem prazo.
+- O processo descriptografa o token da conta para publicar. O isolamento é de armazenamento entre contas, não um cofre que o servidor não consegue ler.
 
 ## API hardening
 

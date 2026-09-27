@@ -2,7 +2,7 @@
 title: Database
 status: review
 version: 1.2
-updated: 2026-08-11
+updated: 2026-09-27
 depends_on: [05_architecture.md]
 blocks: [07_api_contracts.md]
 ---
@@ -12,6 +12,8 @@ blocks: [07_api_contracts.md]
 ## Engine
 
 SQLite (`node:sqlite`). Path: `IRIS_DB_PATH` (default `./data/iris.db`). Migrations em `migrations/`.
+
+Com Turso (v1.31), o schema editorial abaixo vive **um banco por conta**. Nenhuma tabela editorial ganha `tenant_id`. O banco de controle é outro arquivo (ou outro banco Turso) e não mistura posts. Sem variáveis Turso, o arquivo único continua sendo o schema editorial inteiro. Detalhe: `docs/architecture/tenant-sqlite.md`.
 
 ## Tables (v1)
 
@@ -271,14 +273,27 @@ Singleton (id=1) — blocos editoriais do message-harness DM.
 
 Seed na migration `20260812110107_simulator_scenarios.sql` — paridade com `admin/src/lib/agent-simulator-scenarios.ts`.
 
+## Banco de controle (v1.31)
+
+Só existe quando o Turso está configurado. Não replica o schema editorial.
+
+| Tabela | Papel |
+| ------ | ----- |
+| `accounts` | Email, slug estável, status (`pending`, `active`) |
+| `account_databases` | Nome Turso, URL `libsql://`, token cifrado, migration aplicada |
+| `login_challenges` | OTP do cadastro e do login, no controle, não no banco editorial |
+
+O token da Platform API não entra nessas tabelas. Fica em `TURSO_PLATFORM_TOKEN`.
+
 ## Filesystem (não-SQL)
 
 ```txt
 data/media/{post_id}/{filename}
+data/tenants/{accountId}/media/{post_id}/{filename}
 data/agent/{soul,page,knowledge,restrictions}.md
 ```
 
-Índice em `post_assets.storage_path`. Worker e Meta leem mídia daqui. Conteúdo editorial do agente (SOUL, página, KB, restrições) em `data/agent/` — override via `IRIS_AGENT_CONTENT_DIR`.
+Índice em `post_assets.storage_path` (caminho relativo). Sem conta Turso, a raiz é `data/media/`. Com conta, a raiz é `data/tenants/{accountId}/media/`. Conteúdo editorial do agente (SOUL, página, KB, restrições) em `data/agent/` — override via `IRIS_AGENT_CONTENT_DIR`. Na v1.31 o conteúdo do agente que já está no SQLite da conta permanece nesse banco. O diretório `data/agent/` global vale para o modo de um arquivo.
 
 ## Indexes
 

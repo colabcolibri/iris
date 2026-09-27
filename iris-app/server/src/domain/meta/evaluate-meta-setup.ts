@@ -158,7 +158,9 @@ export async function evaluateMetaSetup(
   return {
     oauth_configured: oauthConfigured,
     public_base_url: publicBase,
-    webhook_url: publicBase ? `${publicBase}/webhooks/meta` : null,
+    webhook_url: publicBase
+      ? `${publicBase}/webhooks/meta${ctx.accountSlug ? `/${ctx.accountSlug}` : ""}`
+      : null,
     webhook_verify_token_configured: webhookVerifyTokenConfigured,
     redirect_uri: publicBase ? `${publicBase}/auth/meta/callback` : null,
     page_redirect_uri: publicBase ? `${publicBase}/auth/meta/page/callback` : null,

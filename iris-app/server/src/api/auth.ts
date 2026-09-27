@@ -8,6 +8,7 @@ export type AuthContext = {
   role: AuthRole;
   token?: string;
   email?: string;
+  accountId?: string;
 };
 
 export type AuthConfig = {
@@ -42,7 +43,7 @@ export function authenticateRequest(
   if (session.ok) {
     return {
       ok: true,
-      context: { role: "admin", email: session.email },
+      context: { role: "admin", email: session.email, accountId: session.accountId },
     };
   }
 

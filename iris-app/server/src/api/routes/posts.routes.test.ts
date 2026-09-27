@@ -240,8 +240,11 @@ test("agent cannot toggle auto_reply without admin", async () => {
 
 test("list posts filters by from/to and includes assets_count", async () => {
   await withIntegrationServer(async ({ baseUrl }) => {
-    const inRangeAt = "2026-08-15T12:00:00.000Z";
-    const outRangeAt = "2026-09-10T12:00:00.000Z";
+    const now = new Date();
+    const inRangeAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, 12)).toISOString();
+    const outRangeAt = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 10, 12)).toISOString();
+    const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+    const rangeEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999)).toISOString();
 
     const inRangeResponse = await fetch(`${baseUrl}/api/posts`, {
       method: "POST",
@@ -286,7 +289,7 @@ test("list posts filters by from/to and includes assets_count", async () => {
     assert.equal(publishResponse.status, 200);
 
     const listResponse = await fetch(
-      `${baseUrl}/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z`,
+      `${baseUrl}/api/posts?from=${encodeURIComponent(rangeStart)}&to=${encodeURIComponent(rangeEnd)}`,
       { headers: { Authorization: `Bearer ${AGENT}` } },
     );
     assert.equal(listResponse.status, 200);
@@ -301,7 +304,7 @@ test("list posts filters by from/to and includes assets_count", async () => {
     assert.ok(payload.posts.every((post) => typeof post.assets_count === "number"));
 
     const calendarResponse = await fetch(
-      `${baseUrl}/api/posts?from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z&calendar_only=1`,
+      `${baseUrl}/api/posts?from=${encodeURIComponent(rangeStart)}&to=${encodeURIComponent(rangeEnd)}&calendar_only=1`,
       { headers: { Authorization: `Bearer ${AGENT}` } },
     );
     assert.equal(calendarResponse.status, 200);

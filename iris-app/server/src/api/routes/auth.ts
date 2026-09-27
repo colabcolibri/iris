@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AppContext } from "../app-context.ts";
+import type { TenancyRuntime } from "../tenancy-runtime.ts";
 import {
   BodyTooLargeError,
   readJsonBody,
@@ -33,6 +34,7 @@ export async function handleAuthRoute(
   res: ServerResponse,
   ctx: AppContext,
   pathname: string,
+  tenancy?: TenancyRuntime | null,
 ): Promise<boolean> {
   if (!pathname.startsWith("/api/auth/")) {
     return false;
@@ -53,9 +55,10 @@ export async function handleAuthRoute(
 
       const locale = parseServerLocale(req.headers["x-iris-locale"]?.toString());
       const result = await requestAdminLoginCode(email, {
-        challenges: ctx.adminLoginChallenges,
+        challenges: tenancy?.challenges ?? ctx.adminLoginChallenges,
         emailSender: ctx.emailSender,
         locale,
+        allowUnlistedEmail: Boolean(tenancy?.enabled),
       });
       sendJson(res, 200, result);
     } catch (error) {
@@ -79,12 +82,14 @@ export async function handleAuthRoute(
       }
 
       const confirmed = await confirmAdminLoginCode(email, code, {
-        challenges: ctx.adminLoginChallenges,
+        challenges: tenancy?.challenges ?? ctx.adminLoginChallenges,
         emailSender: ctx.emailSender,
+        allowUnlistedEmail: Boolean(tenancy?.enabled),
       });
-      const token = createSessionToken(confirmed.email);
+      const account = tenancy ? await tenancy.ensureAccount(confirmed.email) : null;
+      const token = createSessionToken(confirmed.email, account?.id);
       appendSessionCookie(res, token);
-      sendJson(res, 200, { ok: true });
+      sendJson(res, 200, { ok: true, slug: account?.slug ?? null });
     } catch (error) {
       handleAuthError(res, error);
     }
@@ -104,7 +109,14 @@ export async function handleAuthRoute(
       return true;
     }
 
-    sendJson(res, 200, { authenticated: true, email: session.email });
+    const slug = session.accountId && tenancy
+      ? tenancy.contextForAccount(session.accountId)?.accountSlug ?? null
+      : null;
+    sendJson(res, 200, {
+      authenticated: true,
+      email: session.email,
+      ...(slug ? { slug } : {}),
+    });
     return true;
   }
 

@@ -37,7 +37,10 @@ export function handleMetaWebhookRoute(
   ctx: AppContext,
   pathname: string,
 ): Promise<boolean> {
-  if (pathname !== "/webhooks/meta") {
+  const expectedPath = ctx.accountSlug
+    ? `/webhooks/meta/${ctx.accountSlug}`
+    : "/webhooks/meta";
+  if (pathname !== expectedPath) {
     return Promise.resolve(false);
   }
 
@@ -50,7 +53,10 @@ export function handleMetaWebhookRoute(
     if (
       mode !== "subscribe" ||
       !challenge ||
-      !verifySubscribeToken(token, ctx.metaWebhookVerifyToken ?? "")
+      !verifySubscribeToken(
+        token,
+        ctx.metaAppCredentials.getSecrets()?.verifyToken || ctx.metaWebhookVerifyToken || "",
+      )
     ) {
       sendError(res, 403, "invalid verify token");
       return Promise.resolve(true);
@@ -105,7 +111,7 @@ async function handleMetaWebhookPost(
     const signatureValid = verifyHubSignature(
       rawBody,
       signatureHeader,
-      ctx.metaAppSecret ?? "",
+      ctx.metaAppCredentials.getSecrets()?.appSecret || ctx.metaAppSecret || "",
     );
 
     const event = persistWebhookReceipt(ctx, {

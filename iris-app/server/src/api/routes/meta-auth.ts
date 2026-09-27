@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { AppContext } from "../app-context.ts";
 import {
   createMetaOAuthState,
+  readMetaOAuthAccountId,
   verifyMetaOAuthState,
 } from "../../domain/meta/meta-oauth-state.ts";
 import {
@@ -20,6 +21,16 @@ import {
 } from "../../adapters/meta/meta-oauth-config.ts";
 import { readSessionToken, verifySessionToken } from "../session.ts";
 import { sessionSecret } from "../session.ts";
+
+function oauthStateAccountMismatch(
+  state: string,
+  secret: string,
+  flow: "instagram" | "page",
+  accountId: string | null,
+): boolean {
+  const stateAccount = readMetaOAuthAccountId(state, secret, flow);
+  return Boolean(accountId && stateAccount && stateAccount !== accountId);
+}
 
 function redirect(res: ServerResponse, location: string): void {
   res.writeHead(302, { Location: location });
@@ -71,7 +82,11 @@ export async function handleMetaAuthRoute(
     return true;
   }
 
-  const oauthConfig = readMetaOAuthConfig(ctx.publicBaseUrl ?? undefined);
+  const storedMeta = ctx.metaAppCredentials.getSecrets();
+  const oauthConfig = readMetaOAuthConfig(ctx.publicBaseUrl ?? undefined, {
+    appId: storedMeta?.appId,
+    appSecret: storedMeta?.appSecret,
+  });
   if (!oauthConfig) {
     res.writeHead(503, { "Content-Type": "text/plain" });
     res.end("Meta OAuth is not configured");
@@ -93,7 +108,7 @@ export async function handleMetaAuthRoute(
 
     const url = new URL(req.url ?? "/", "http://localhost");
     const mode = parseConnectMode(url.searchParams.get("mode"));
-    const state = createMetaOAuthState(secret, "instagram");
+    const state = createMetaOAuthState(secret, "instagram", ctx.accountId ?? undefined);
     const authorizeUrl = buildMetaAuthorizeUrl(oauthConfig, state, mode);
     redirect(res, authorizeUrl);
     return true;
@@ -115,7 +130,7 @@ export async function handleMetaAuthRoute(
       return true;
     }
 
-    const state = createMetaOAuthState(secret, "page");
+    const state = createMetaOAuthState(secret, "page", ctx.accountId ?? undefined);
     const authorizeUrl = buildFacebookPageAuthorizeUrl(
       facebookCreds.appId,
       pageRedirectUri,
@@ -144,7 +159,8 @@ export async function handleMetaAuthRoute(
       !state ||
       !secret ||
       !pageRedirectUri ||
-      !verifyMetaOAuthState(state, secret, "page")
+      !verifyMetaOAuthState(state, secret, "page") ||
+      oauthStateAccountMismatch(state, secret, "page", ctx.accountId)
     ) {
       redirect(res, `/admin/settings?meta_page_error=invalid_state`);
       return true;
@@ -187,7 +203,13 @@ export async function handleMetaAuthRoute(
   const state = url.searchParams.get("state");
   const secret = sessionSecret();
 
-  if (!code || !state || !secret || !verifyMetaOAuthState(state, secret, "instagram")) {
+  if (
+    !code ||
+    !state ||
+    !secret ||
+    !verifyMetaOAuthState(state, secret, "instagram") ||
+    oauthStateAccountMismatch(state, secret, "instagram", ctx.accountId)
+  ) {
     redirect(res, `/admin?meta_error=invalid_state`);
     return true;
   }

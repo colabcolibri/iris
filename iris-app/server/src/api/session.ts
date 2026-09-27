@@ -21,20 +21,28 @@ function signSessionPayload(expiresAtMs: number, secret: string): string {
   return `${payload}.${signature}`;
 }
 
-export function createSessionToken(email: string): string {
+export function createSessionToken(email: string, accountId?: string): string {
   const secret = sessionSecret();
   if (!secret) {
     throw new Error("IRIS_SESSION_SECRET is not configured");
   }
 
   const expiresAtMs = Date.now() + sessionMaxAgeSeconds() * 1000;
-  const token = signSessionPayload(expiresAtMs, secret);
-  return `${token}.${Buffer.from(email, "utf8").toString("base64url")}`;
+  if (!accountId) {
+    const token = signSessionPayload(expiresAtMs, secret);
+    return `${token}.${Buffer.from(email, "utf8").toString("base64url")}`;
+  }
+
+  const emailPart = Buffer.from(email, "utf8").toString("base64url");
+  const payload = `${SESSION_VERSION}.${expiresAtMs}.${emailPart}.${accountId}`;
+  const signature = createHmac("sha256", secret).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
 }
 
 export function verifySessionToken(token: string | null | undefined): {
   ok: boolean;
   email?: string;
+  accountId?: string;
 } {
   if (!token?.trim()) {
     return { ok: false };
@@ -46,6 +54,24 @@ export function verifySessionToken(token: string | null | undefined): {
   }
 
   const parts = token.trim().split(".");
+  if (parts.length === 5 && parts[0] === SESSION_VERSION) {
+    const expiresAtMs = Number(parts[1]);
+    if (!Number.isFinite(expiresAtMs) || Date.now() > expiresAtMs) {
+      return { ok: false };
+    }
+    const payload = `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`;
+    const expectedSignature = createHmac("sha256", secret).update(payload).digest("base64url");
+    if (!timingSafeStringEqual(parts[4]!, expectedSignature)) {
+      return { ok: false };
+    }
+    try {
+      const email = Buffer.from(parts[2]!, "base64url").toString("utf8");
+      return { ok: true, email, accountId: parts[3] };
+    } catch {
+      return { ok: false };
+    }
+  }
+
   if (parts.length !== 4 || parts[0] !== SESSION_VERSION) {
     return { ok: false };
   }

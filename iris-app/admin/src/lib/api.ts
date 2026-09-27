@@ -401,6 +401,27 @@ export function fetchMetaSetup() {
   return apiFetch<MetaSetupSnapshot>("/api/meta/setup");
 }
 
+export function fetchMetaAppCredentials() {
+  return apiFetch<{ app_id: string; has_secret: boolean; has_verify_token: boolean }>(
+    "/api/settings/meta-app",
+  );
+}
+
+export function saveMetaAppCredentials(input: {
+  appId: string;
+  appSecret: string;
+  verifyToken: string;
+}) {
+  return apiFetch("/api/settings/meta-app", {
+    method: "PUT",
+    body: JSON.stringify({
+      app_id: input.appId,
+      app_secret: input.appSecret,
+      verify_token: input.verifyToken,
+    }),
+  });
+}
+
 export function fetchMetaStatus() {
   return apiFetch<MetaStatus>("/api/meta/status");
 }

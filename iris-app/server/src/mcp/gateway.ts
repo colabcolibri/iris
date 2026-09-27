@@ -61,10 +61,11 @@ export class IrisMcpGateway {
     req: IncomingMessage,
     res: ServerResponse,
     parsedBody?: unknown,
+    ctx: AppContext = this.ctx,
   ): Promise<void> {
     if (isToolsCallBody(parsedBody)) {
       const policy = resolveActiveMcpPermissionPolicy(
-        this.ctx.mcpPermissionStore.get(),
+        ctx.mcpPermissionStore.get(),
       );
       if (!isMcpToolCallAllowed(policy, parsedBody.params.name)) {
         sendMcpToolPermissionDenied(res, parsedBody, parsedBody.params.name);
@@ -72,7 +73,7 @@ export class IrisMcpGateway {
       }
     }
 
-    const server = createIrisMcpServer(this.ctx);
+    const server = createIrisMcpServer(ctx);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

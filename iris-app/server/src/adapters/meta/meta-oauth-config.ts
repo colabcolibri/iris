@@ -59,14 +59,19 @@ export function metaPageOAuthRedirectUri(publicBaseUrl?: string): string {
   return base ? `${base}/auth/meta/page/callback` : "";
 }
 
-export function readMetaOAuthConfig(publicBaseUrl?: string): MetaOAuthConfig | null {
+export function readMetaOAuthConfig(
+  publicBaseUrl?: string,
+  overrides?: { appId?: string; appSecret?: string },
+): MetaOAuthConfig | null {
   // Instagram Login uses Instagram App ID/Secret from
   // Dashboard → Instagram → API setup with Instagram login → Business login settings
   const appId =
+    overrides?.appId?.trim() ||
     process.env.META_INSTAGRAM_APP_ID?.trim() ||
     process.env.META_APP_ID?.trim() ||
     "";
   const appSecret =
+    overrides?.appSecret?.trim() ||
     process.env.META_INSTAGRAM_APP_SECRET?.trim() ||
     process.env.META_APP_SECRET?.trim() ||
     "";

@@ -20,10 +20,12 @@ import { handleAuthRoute } from "./routes/auth.ts";
 import { handleContactRoute } from "./routes/contact.ts";
 import { handleMcpAuthRoute } from "./routes/mcp-auth.ts";
 import { handleMetaAuthRoute } from "./routes/meta-auth.ts";
+import { readMetaOAuthAccountId } from "../domain/meta/meta-oauth-state.ts";
 import { handleMetaRoute } from "./routes/meta.ts";
 import { handleMcpSettingsRoute } from "./routes/mcp-settings.ts";
 import { handleMcpPermissionsSettingsRoute } from "./routes/mcp-permissions-settings.ts";
 import { handleSettingsRoute } from "./routes/settings.ts";
+import { handleMetaAppSettingsRoute } from "./routes/meta-app-settings.ts";
 import {
   handleLlmSettingsRoute,
   handleWebhookEventsSettingsRoute,
@@ -50,6 +52,10 @@ import { startCommentResponder } from "../workers/comment-responder.ts";
 import { startMessageResponder } from "../workers/message-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
 import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
+import { startAccountWorkers } from "../workers/account-workers.ts";
+import { readTenancyConfig, type TenancyConfig } from "../domain/accounts/tenancy-config.ts";
+import { createTenancyRuntime, type TenancyRuntime } from "./tenancy-runtime.ts";
+import { verifySessionToken, readSessionToken } from "./session.ts";
 import { readAdminSession } from "../domain/auth/auth-session.ts";
 import { shouldGateSpaGet, resolveLegacyAdminRedirect } from "./spa-route-policy.ts";
 import { resolveDocsRedirect } from "./docs-route-policy.ts";
@@ -91,6 +97,8 @@ export type HttpServerOptions = {
   publishTickMs?: number;
   replyTickMs?: number;
   mcpConnectionCode?: string;
+  tenancy?: TenancyConfig;
+  controlDbPath?: string;
 };
 
 const MCP_BODY_LIMIT = 20 * 1024 * 1024;
@@ -181,12 +189,53 @@ function delegateToVite(
   });
 }
 
+function resolveTenancyContext(
+  req: IncomingMessage,
+  pathname: string,
+  fallback: AppContext,
+  tenancy: TenancyRuntime | null,
+): { kind: "ok"; ctx: AppContext } | { kind: "missing" } {
+  if (!tenancy) {
+    return { kind: "ok", ctx: fallback };
+  }
+
+  const slugMatch = pathname.match(/^\/webhooks\/meta\/([^/]+)$/);
+  if (slugMatch) {
+    const accountCtx = tenancy.contextForSlug(decodeURIComponent(slugMatch[1] ?? ""));
+    return accountCtx ? { kind: "ok", ctx: accountCtx } : { kind: "missing" };
+  }
+
+  if (pathname === "/webhooks/meta") {
+    return { kind: "missing" };
+  }
+
+  if (pathname === "/auth/meta/callback" || pathname === "/auth/meta/page/callback") {
+    const state = new URL(req.url ?? "/", "http://localhost").searchParams.get("state");
+    const secret = process.env.IRIS_SESSION_SECRET ?? "";
+    const flow = pathname === "/auth/meta/page/callback" ? "page" : "instagram";
+    const accountId = state && secret ? readMetaOAuthAccountId(state, secret, flow) : null;
+    if (accountId) {
+      const accountCtx = tenancy.contextForAccount(accountId);
+      return accountCtx ? { kind: "ok", ctx: accountCtx } : { kind: "missing" };
+    }
+  }
+
+  const session = verifySessionToken(readSessionToken(req));
+  if (session.accountId) {
+    const accountCtx = tenancy.contextForAccount(session.accountId);
+    return accountCtx ? { kind: "ok", ctx: accountCtx } : { kind: "missing" };
+  }
+
+  return { kind: "ok", ctx: fallback };
+}
+
 async function handleMcpRoute(
   req: IncomingMessage,
   res: ServerResponse,
   ctx: AppContext,
   pathname: string,
   gateway: IrisMcpGateway,
+  tenancy: TenancyRuntime | null,
 ): Promise<boolean> {
   if (pathname !== "/mcp") {
     return false;
@@ -198,6 +247,38 @@ async function handleMcpRoute(
   }
 
   const token = extractBearerToken(req);
+  if (tenancy) {
+    if (!token) {
+      res.writeHead(401, {
+        "Content-Type": "application/json",
+        "WWW-Authenticate": 'Bearer realm="iris-mcp"',
+      });
+      res.end(JSON.stringify({ error: "Authorization required" }));
+      return true;
+    }
+    const accountCtx = tenancy.contextForMcpCode(token);
+    if (!accountCtx) {
+      res.writeHead(401, {
+        "Content-Type": "application/json",
+        "WWW-Authenticate": 'Bearer realm="iris-mcp"',
+      });
+      res.end(JSON.stringify({ error: "Authorization required" }));
+      return true;
+    }
+    let parsedBody: unknown;
+    if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
+      try {
+        const raw = await readRawBody(req, MCP_BODY_LIMIT);
+        parsedBody = raw.length > 0 ? JSON.parse(raw.toString("utf8")) : undefined;
+      } catch {
+        sendError(res, 400, "Invalid request body");
+        return true;
+      }
+    }
+    await gateway.handleRequest(req, res, parsedBody, accountCtx);
+    return true;
+  }
+
   if (!ctx.mcpVerifier.isConfigured()) {
     sendError(res, 503, "MCP connection is not configured");
     return true;
@@ -233,9 +314,16 @@ async function handleRequest(
   ctx: AppContext,
   adminVite: ViteDevServer | undefined,
   mcpGateway: IrisMcpGateway,
+  tenancy: TenancyRuntime | null,
 ): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const { pathname } = url;
+  const resolved = resolveTenancyContext(req, pathname, ctx, tenancy);
+  if (resolved.kind === "missing") {
+    sendError(res, 404, "Not found");
+    return;
+  }
+  ctx = resolved.ctx;
 
   if (req.method === "GET" && pathname === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -266,7 +354,7 @@ async function handleRequest(
     return;
   }
 
-  if (await handleMcpRoute(req, res, ctx, pathname, mcpGateway)) {
+  if (await handleMcpRoute(req, res, ctx, pathname, mcpGateway, tenancy)) {
     return;
   }
 
@@ -275,7 +363,7 @@ async function handleRequest(
       return;
     }
 
-    if (await handleAuthRoute(req, res, ctx, pathname)) {
+    if (await handleAuthRoute(req, res, ctx, pathname, tenancy)) {
       return;
     }
 
@@ -333,6 +421,10 @@ async function handleRequest(
     }
 
     if (await handleSettingsRoute(routeRequest)) {
+      return;
+    }
+
+    if (await handleMetaAppSettingsRoute(req, res, ctx, pathname)) {
       return;
     }
 
@@ -432,6 +524,7 @@ async function handleRequest(
 }
 
 export function createServer(options: HttpServerOptions = {}): HttpServerHandle {
+  const tenancyConfig = options.tenancy ?? readTenancyConfig();
   const db = openDatabase(options.dbPath);
 
   if (!options.skipMigrations) {
@@ -464,20 +557,40 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
   });
 
   const mcpGateway = new IrisMcpGateway(ctx);
+  const tenancy = tenancyConfig.enabled
+    ? createTenancyRuntime({
+        config: tenancyConfig,
+        controlDbPath: options.controlDbPath,
+        contextOptions: {
+          adminToken: options.adminToken,
+          agentToken: options.agentToken,
+          encryptionKey: options.encryptionKey,
+          metaAccessToken: options.metaAccessToken,
+          igUserId: options.igUserId,
+          publicBaseUrl: options.publicBaseUrl,
+          publishUrlSecret: options.publishUrlSecret,
+          graphApiVersion: options.graphApiVersion,
+          metaAppSecret: options.metaAppSecret,
+          metaWebhookVerifyToken: options.metaWebhookVerifyToken,
+          emailSender: options.emailSender,
+          mcpConnectionCode: options.mcpConnectionCode,
+        },
+      })
+    : null;
 
-  const stopPublishScheduler = options.startScheduler
+  const stopPublishScheduler = options.startScheduler && !tenancy
     ? startPublishScheduler(ctx, {
         intervalMs: options.publishTickMs,
       })
     : () => undefined;
 
-  const stopCommentResponder = options.startScheduler
+  const stopCommentResponder = options.startScheduler && !tenancy
     ? startCommentResponder(ctx, {
         intervalMs: options.replyTickMs,
       })
     : () => undefined;
 
-  const stopMessageResponder = options.startScheduler
+  const stopMessageResponder = options.startScheduler && !tenancy
     ? startMessageResponder(ctx, {
         intervalMs: options.replyTickMs,
       })
@@ -491,18 +604,23 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     ? startAutoMonitorMedia(ctx)
     : () => undefined;
 
+  const stopAccountWorkers = tenancy
+    ? startAccountWorkers(() => tenancy.listContexts(), options.publishTickMs)
+    : () => undefined;
+
   const stopScheduler = () => {
     stopPublishScheduler();
     stopCommentResponder();
     stopMessageResponder();
     stopDataRetention();
     stopAutoMonitorMedia();
+    stopAccountWorkers();
   };
 
   let adminVite: ViteDevServer | undefined;
 
   const server = createHttpServer((req, res) => {
-    void handleRequest(req, res, ctx, adminVite, mcpGateway).catch(() => {
+    void handleRequest(req, res, ctx, adminVite, mcpGateway, tenancy).catch(() => {
       sendError(res, 500, "internal server error");
     });
   });
@@ -513,6 +631,7 @@ export function createServer(options: HttpServerOptions = {}): HttpServerHandle 
     ctx,
     stopScheduler,
     closeDatabase() {
+      tenancy?.close();
       db.close();
     },
     setAdminVite(vite: ViteDevServer) {
