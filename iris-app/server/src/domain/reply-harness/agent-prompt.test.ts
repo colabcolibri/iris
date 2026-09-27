@@ -28,7 +28,10 @@ test("completeAgentPrompt wraps body before calling the LLM", async () => {
     },
   };
 
-  await completeAgentPrompt(llm, persona, "Draft stage.", { complement: "triageJsonNote" });
+  await completeAgentPrompt(llm, persona, "Draft stage.", {
+    complement: "triageJsonNote",
+    source: "draft",
+  });
 
   assert.match(captured, /Draft stage\./);
   assert.match(captured, /Spanish/);

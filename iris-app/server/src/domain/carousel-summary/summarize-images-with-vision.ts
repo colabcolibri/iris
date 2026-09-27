@@ -37,6 +37,7 @@ export async function summarizeImagesWithVision(
       const description = await llm.complete(buildSlidePrompt(language, item.sortOrder), {
         images: [{ mime: item.image.mime, base64: item.image.base64 }],
         maxOutputChars: SLIDE_MAX_OUTPUT_CHARS,
+        source: "carousel_slide",
       });
       descriptions.push(`## Slide ${item.sortOrder}\n${description.text.trim()}`);
     } catch {
@@ -58,6 +59,7 @@ export async function summarizeImagesWithVision(
     return (
       await llm.complete(synthesisPrompt, {
         maxOutputChars: SYNTHESIS_MAX_OUTPUT_CHARS,
+        source: "carousel_synthesis",
       })
     ).text.trim();
   } catch {

@@ -236,6 +236,23 @@ Singleton (id=1) — blocos editoriais do message-harness DM.
 | reasoning | TEXT | Texto livre do LLM |
 | created_at | TEXT | |
 
+### `llm_calls`
+
+Uma linha por request ao provedor, no SQLite da conta. Sem `source` a request não sai. O passo do agente continua sendo a decisão.
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| id | TEXT PK | UUID |
+| model | TEXT | Modelo devolvido pelo provedor |
+| source | TEXT | De onde veio: `draft`, `triage`, `carousel_slide`, `message_draft_turn`, … |
+| status | TEXT | `ok`, `error` |
+| prompt_tokens | INTEGER | Nulo se o provedor não devolveu uso |
+| completion_tokens | INTEGER | |
+| total_tokens | INTEGER | |
+| latency_ms | INTEGER | |
+| error_message | TEXT | Truncado. Sem o prompt |
+| created_at | TEXT | |
+
 ### `api_keys`
 
 | Column | Type | Notes |
@@ -302,6 +319,7 @@ data/agent/{soul,page,knowledge,restrictions}.md
 - `comments(post_id)`
 - `comments(ig_comment_id)`
 - `agent_run_steps(comment_id, created_at)`
+- `llm_calls(created_at)`
 
 ## Backup
 
@@ -313,6 +331,7 @@ SQLite + cópia de `data/media/` juntos.
 | ------ | -------- |
 | `meta_webhook_events` | Worker periódico remove linhas com `received_at` anterior a `IRIS_RETENTION_DAYS` (default 90). Payload já truncado a 2048 bytes no insert. |
 | `agent_runs` / `agent_run_steps` | **Sem delete automático** — trail de auditoria do harness preservado integralmente. Crescimento em disco é aceito; backup periódico recomendado. |
+| `llm_calls` | **Sem delete automático** — cada chamada ao modelo, inclusive erro e resumo de carrossel. |
 | `comment_replies` | Preservado enquanto o comentário existir — `agent_run_id` referencia runs históricos. |
 
 Ver `IRIS_RETENTION_*` em `08_environments.md`. Delay antes de responder: **somente UI** (`reply_delay_seconds` em Configurações → Agente de comentários).

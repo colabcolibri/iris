@@ -9,9 +9,15 @@ import { summarizeImagesWithVision } from "../../domain/carousel-summary/summari
 
 test("createEnvLlmCompleter sends image bytes as data URLs in multimodal content", async () => {
   let body: { messages: Array<{ content: unknown }> } | null = null;
+  const recorded: string[] = [];
 
   const completer = createEnvLlmCompleter({
     apiKey: "test-key",
+    callLog: {
+      record(input) {
+        recorded.push(input.source);
+      },
+    },
     fetchImpl: async (_url, init) => {
       body = JSON.parse(String(init?.body)) as { messages: Array<{ content: unknown }> };
       return new Response(
@@ -26,7 +32,9 @@ test("createEnvLlmCompleter sends image bytes as data URLs in multimodal content
 
   await completer.complete("Descreva o slide.", {
     images: [{ mime: "image/jpeg", base64: "aGVsbG8=" }],
+    source: "carousel_slide",
   });
+  assert.deepEqual(recorded, ["carousel_slide"]);
 
   const content = body?.messages[0]?.content as Array<{ type: string; image_url?: { url: string } }>;
   assert.ok(Array.isArray(content));

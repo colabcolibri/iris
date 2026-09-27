@@ -25,6 +25,7 @@ import { createSqliteMcpConnectionStore } from "../adapters/sqlite/mcp-connectio
 import { createSqliteMcpPermissionStore } from "../adapters/sqlite/mcp-permission-repository.ts";
 import { createSqliteWebhookEventRepository } from "../adapters/sqlite/webhook-event-repository.ts";
 import { createSqlitePostInsightsStore } from "../adapters/sqlite/post-insights-store.ts";
+import { createSqliteLlmCallLog } from "../adapters/sqlite/llm-call-log.ts";
 import { createSqliteLlmSettingsStore } from "../adapters/sqlite/llm-settings-repository.ts";
 import { createSqliteAgentContentStore } from "../adapters/sqlite/agent-content-repository.ts";
 import { createSqliteMessageAgentContentStore } from "../adapters/sqlite/message-agent-content-repository.ts";
@@ -315,7 +316,8 @@ export function createAppContext(options: AppContextOptions): AppContext {
   const llmSettingsStore = createSqliteLlmSettingsStore(options.db, {
     encryptionKey: options.encryptionKey ?? process.env.IRIS_TOKEN_ENCRYPTION_KEY,
   });
-  const llmConfigResolver = createLlmConfigResolver(llmSettingsStore);
+  const llmCallLog = createSqliteLlmCallLog(options.db);
+  const llmConfigResolver = createLlmConfigResolver(llmSettingsStore, {}, llmCallLog);
   const llmCompleter = llmConfigResolver.createCompleter();
   const emailSender = options.emailSender ?? createEmailSenderFromEnv();
   const adminLoginChallenges = createSqliteAdminLoginChallengeRepository(options.db);

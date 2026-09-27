@@ -28,7 +28,7 @@ export async function generateReply(
       options.llm,
       input.prebuiltContext.persona,
       buildReplyPrompt(input.prebuiltContext),
-      { complement: "publicReplyOnly" },
+      { complement: "publicReplyOnly", source: "reply" },
     );
     return completion.text;
   }
@@ -43,7 +43,7 @@ export async function generateReply(
       options.llm,
       context.persona,
       buildReplyPrompt(context),
-      { complement: "publicReplyOnly" },
+      { complement: "publicReplyOnly", source: "reply" },
     );
     return completion.text;
   }
@@ -78,7 +78,7 @@ export async function generateReply(
     options.llm,
     context.persona,
     buildReplyPrompt(context),
-    { complement: "publicReplyOnly" },
+    { complement: "publicReplyOnly", source: "reply" },
   );
   return completion.text;
 }

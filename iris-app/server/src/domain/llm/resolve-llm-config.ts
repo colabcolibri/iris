@@ -1,3 +1,4 @@
+import type { LlmCallLog } from "../../ports/llm-call-log.ts";
 import type { LlmCompleter } from "../../ports/llm-completer.ts";
 import type { LlmSettingsStore } from "../../ports/llm-settings-store.ts";
 import {
@@ -26,6 +27,7 @@ export type LlmConfigResolver = {
 export function createLlmConfigResolver(
   store: LlmSettingsStore,
   env: EnvLlmCompleterConfig = {},
+  callLog?: LlmCallLog,
 ): LlmConfigResolver {
   const envApiKey = env.apiKey ?? process.env.LLM_API_KEY ?? "";
   const envApiUrl = env.apiUrl ?? process.env.LLM_API_URL ?? DEFAULT_API_URL;
@@ -68,12 +70,16 @@ export function createLlmConfigResolver(
       if (!config) {
         return null;
       }
+      if (!callLog) {
+        throw new Error("LLM call log is required");
+      }
 
       return createEnvLlmCompleter({
         apiKey: config.apiKey,
         apiUrl: config.apiUrl,
         model: config.model,
         fetchImpl: env.fetchImpl,
+        callLog,
       });
     },
 

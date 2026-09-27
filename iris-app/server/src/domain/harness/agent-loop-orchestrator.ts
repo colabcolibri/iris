@@ -286,7 +286,7 @@ export async function runAgentLoop(input: RunAgentLoopInput): Promise<AgentLoopR
     }
 
     const prompt = buildPromptForTurn(input, focusProduct, transcript);
-    const completion = await input.llm.complete(prompt);
+    const completion = await input.llm.complete(prompt, { source: "message_draft_turn" });
     const turnStep: AgentLoopStepResult = {
       stage: "message_draft_turn",
       stepKind: "llm",

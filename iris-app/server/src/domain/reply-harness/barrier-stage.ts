@@ -119,6 +119,7 @@ async function completeBarrierDraft(
   const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
     complement: "barrierFinalText",
     maxOutputChars: maxChars + 200,
+    source: "barrier",
   });
   const parsed = parseLlmJson<BarrierLlmJson>(completion.text);
   const body = parsed?.finalText?.trim() ?? "";

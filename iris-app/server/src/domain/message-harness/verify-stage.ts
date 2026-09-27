@@ -30,6 +30,7 @@ export async function runMessageVerifyStage(
   );
   const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
     complement: ["triageJsonNote", "verifyFinalText"],
+    source: "message_verify",
   });
   const raw = completion.text;
   const parsed = parseLlmJson<MessageVerifyStageOutput>(raw);

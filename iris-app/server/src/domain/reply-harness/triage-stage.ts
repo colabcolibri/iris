@@ -56,6 +56,7 @@ export async function runTriageStage(input: TriageStageInput): Promise<TriageSta
   const promptBody = buildTriagePrompt(input.context, input.agentContent.restrictions);
   const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
     complement: "triageJsonNote",
+    source: "triage",
   });
   const raw = completion.text;
   const parsed = parseLlmJson<TriageStageOutput>(raw);

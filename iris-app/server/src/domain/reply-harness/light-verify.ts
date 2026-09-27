@@ -91,6 +91,7 @@ export async function runLightVerifyStage(input: LightVerifyStageInput): Promise
     const promptBody = buildLightVerifyPrompt(input.context, trimmed, input.maxChars);
     const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
       complement: ["triageJsonNote", "verifyFinalText"],
+      source: "light_verify",
     });
     const raw = completion.text;
     const parsed = parseLlmJson<VerifyDecisionJson>(raw);

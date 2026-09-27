@@ -32,6 +32,7 @@ export async function runPrivateReplyDraft(input: {
   const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
     complement: "privateDmOnly",
     maxOutputChars: input.maxChars,
+    source: "private_reply",
   });
 
   const text = completion.text.trim().slice(0, input.maxChars);

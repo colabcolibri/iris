@@ -25,6 +25,7 @@ export async function runVerifyStage(input: VerifyStageInput): Promise<StageResu
   );
   const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
     complement: ["triageJsonNote", "verifyFinalText"],
+    source: "verify",
   });
   const raw = completion.text;
   const parsed = parseLlmJson<VerifyStageOutput>(raw);

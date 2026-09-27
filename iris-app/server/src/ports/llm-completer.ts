@@ -20,7 +20,26 @@ export type LlmCompleteOptions = {
   images?: LlmImageInput[];
   /** Default completer cap is 2200; carousel summaries may request more. */
   maxOutputChars?: number;
+  /** Where this call comes from. The provider is not called without it. */
+  source: string;
 };
+
+export class LlmCompletionError extends Error {
+  readonly model: string | null;
+  readonly usage: LlmUsage | null;
+  readonly latencyMs: number;
+
+  constructor(
+    message: string,
+    details: { model: string | null; usage: LlmUsage | null; latencyMs: number },
+  ) {
+    super(message);
+    this.name = "LlmCompletionError";
+    this.model = details.model;
+    this.usage = details.usage;
+    this.latencyMs = details.latencyMs;
+  }
+}
 
 export type LlmCompleter = {
   complete(prompt: string, options?: LlmCompleteOptions): Promise<LlmCompletionResult>;

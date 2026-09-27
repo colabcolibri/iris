@@ -26,6 +26,7 @@ export async function runDraftStage(input: DraftStageInput): Promise<StageResult
   );
   const completion = await completeAgentPrompt(input.llm, input.context.persona, promptBody, {
     complement: "publicReplyOnly",
+    source: "draft",
   });
   const draftText = completion.text.trim().slice(0, input.maxChars);
 

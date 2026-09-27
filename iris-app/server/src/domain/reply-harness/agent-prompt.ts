@@ -57,17 +57,18 @@ export function finalizeAgentPrompt(
 export type CompleteAgentPromptOptions = {
   complement?: AgentLanguageComplement;
   maxOutputChars?: number;
+  source: string;
 };
 
 export async function completeAgentPrompt(
   llm: LlmCompleter,
   persona: ReplyPersona,
   body: string,
-  options: CompleteAgentPromptOptions = {},
+  options: CompleteAgentPromptOptions,
 ): Promise<LlmCompletionResult> {
   const prompt = finalizeAgentPrompt(body, persona, options.complement);
-  return llm.complete(
-    prompt,
-    options.maxOutputChars !== undefined ? { maxOutputChars: options.maxOutputChars } : undefined,
-  );
+  return llm.complete(prompt, {
+    maxOutputChars: options.maxOutputChars,
+    source: options.source,
+  });
 }
