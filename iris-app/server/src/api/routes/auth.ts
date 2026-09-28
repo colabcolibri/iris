@@ -14,6 +14,7 @@ import {
   confirmAdminLoginCode,
   requestAdminLoginCode,
 } from "../../domain/auth/admin-login.ts";
+import { signupAllows } from "../../domain/accounts/tenant-signup-policy.ts";
 import {
   authIpRateLimiter,
   formatAuthIpRateLimitMessage,
@@ -58,7 +59,7 @@ export async function handleAuthRoute(
         challenges: tenancy?.challenges ?? ctx.adminLoginChallenges,
         emailSender: ctx.emailSender,
         locale,
-        allowUnlistedEmail: Boolean(tenancy?.enabled),
+        admit: (candidate) => signupAllowsEmail(candidate, tenancy),
       });
       sendJson(res, 200, result);
     } catch (error) {
@@ -84,9 +85,9 @@ export async function handleAuthRoute(
       const confirmed = await confirmAdminLoginCode(email, code, {
         challenges: tenancy?.challenges ?? ctx.adminLoginChallenges,
         emailSender: ctx.emailSender,
-        allowUnlistedEmail: Boolean(tenancy?.enabled),
+        admit: (candidate) => signupAllowsEmail(candidate, tenancy),
       });
-      const account = tenancy ? await tenancy.ensureAccount(confirmed.email) : null;
+      const account = await accountForConfirmedEmail(confirmed.email, tenancy);
       const token = createSessionToken(confirmed.email, account?.id);
       appendSessionCookie(res, token);
       sendJson(res, 200, { ok: true, slug: account?.slug ?? null });
@@ -122,6 +123,25 @@ export async function handleAuthRoute(
 
   sendError(res, 404, "Not found");
   return true;
+}
+
+function signupAllowsEmail(email: string, tenancy?: TenancyRuntime | null): boolean {
+  return signupAllows({
+    email,
+    hasAccount: tenancy?.hasAccount(email) ?? false,
+  });
+}
+
+async function accountForConfirmedEmail(email: string, tenancy?: TenancyRuntime | null) {
+  if (!tenancy) {
+    return null;
+  }
+
+  if (!signupAllowsEmail(email, tenancy)) {
+    throw new AdminLoginError("code_invalid", "Código inválido.");
+  }
+
+  return tenancy.ensureAccount(email);
 }
 
 function enforceAuthIpRateLimit(

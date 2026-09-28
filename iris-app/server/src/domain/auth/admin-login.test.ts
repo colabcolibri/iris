@@ -9,6 +9,7 @@ import {
   requestAdminLoginCode,
 } from "./admin-login.ts";
 import { hashOtpCode } from "./admin-otp-code.ts";
+import { signupAllows } from "../accounts/tenant-signup-policy.ts";
 import type { EmailSender } from "../../ports/email-sender.ts";
 
 function createMemoryDeps(captured: { text?: string }) {
@@ -31,7 +32,7 @@ test("request and confirm admin login code", async () => {
   const { db, challenges, emailSender } = createMemoryDeps(captured);
 
   try {
-    await requestAdminLoginCode("admin@example.com", { challenges, emailSender });
+    await requestAdminLoginCode("admin@example.com", { challenges, emailSender, admit: () => true });
     assert.ok(captured.text);
     const match = captured.text.match(/\b(\d{6})\b/);
     assert.ok(match);
@@ -39,7 +40,7 @@ test("request and confirm admin login code", async () => {
     const result = await confirmAdminLoginCode(
       "admin@example.com",
       match![1]!,
-      { challenges, emailSender },
+      { challenges, emailSender, admit: () => true },
     );
     assert.equal(result.email, "admin@example.com");
     assert.equal(challenges.find("admin@example.com"), null);
@@ -59,6 +60,11 @@ test("non-allowlisted email returns generic response without sending", async () 
     const result = await requestAdminLoginCode("other@example.com", {
       challenges,
       emailSender,
+      admit: (email) =>
+        signupAllows(
+          { email, hasAccount: false },
+          { IRIS_ADMIN_EMAIL: "admin@example.com", IRIS_TENANT_SIGNUP: "allowlist" },
+        ),
     });
     assert.equal(result.sent, true);
     assert.equal(captured.text, undefined);
@@ -75,7 +81,7 @@ test("allowlisted login fails closed when OTP pepper is missing", async () => {
 
   try {
     await assert.rejects(
-      () => requestAdminLoginCode("admin@example.com", { challenges, emailSender }),
+      () => requestAdminLoginCode("admin@example.com", { challenges, emailSender, admit: () => true }),
       (error: unknown) =>
         error instanceof AdminLoginError && error.code === "security_not_configured",
     );
@@ -105,6 +111,7 @@ test("confirm rejects expired code", async () => {
         confirmAdminLoginCode("admin@example.com", code, {
           challenges,
           emailSender,
+          admit: () => true,
         }),
       (error: unknown) =>
         error instanceof AdminLoginError && error.code === "code_expired",

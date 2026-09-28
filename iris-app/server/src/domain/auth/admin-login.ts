@@ -8,7 +8,6 @@ import {
   generateOtpCode,
   hashOtpCode,
   hasActiveOtpResendCooldown,
-  isEmailAllowlisted,
   normalizeAdminEmail,
   normalizeOtpCodeInput,
   otpPepper,
@@ -39,11 +38,15 @@ export type AdminLoginDeps = {
   challenges: AdminLoginChallengeRepository;
   emailSender: EmailSender;
   locale?: ServerAppLocale;
-  allowUnlistedEmail?: boolean;
+  admit: (email: string) => boolean;
 };
 
 const GENERIC_MESSAGE =
   "Se o email estiver autorizado, você receberá um código em instantes.";
+
+function emailMaySignIn(email: string, deps: AdminLoginDeps): boolean {
+  return deps.admit(email);
+}
 
 export async function requestAdminLoginCode(
   rawEmail: string,
@@ -55,7 +58,7 @@ export async function requestAdminLoginCode(
     return { sent: true, message: GENERIC_MESSAGE };
   }
 
-  if (!deps.allowUnlistedEmail && !isEmailAllowlisted(email)) {
+  if (!emailMaySignIn(email, deps)) {
     return { sent: true, message: GENERIC_MESSAGE };
   }
 
@@ -133,6 +136,10 @@ export async function confirmAdminLoginCode(
   try {
     code = normalizeOtpCodeInput(rawCode);
   } catch {
+    throw new AdminLoginError("code_invalid", "Código inválido.");
+  }
+
+  if (!emailMaySignIn(email, deps)) {
     throw new AdminLoginError("code_invalid", "Código inválido.");
   }
 

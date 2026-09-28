@@ -217,18 +217,19 @@ O repositório inclui um `docker-compose.yml` funcional (Íris + [Mailpit](https
 git clone https://github.com/colabcolibri/iris.git
 cd iris
 cp .env.docker.example .env.docker
-# Edite .env.docker — no mínimo IRIS_ADMIN_EMAIL e todos os change-me-*
+# Edite .env.docker — IRIS_ADMIN_EMAIL e todos os change-me-*.
+# IRIS_TENANT_SIGNUP=allowlist: só esse email abre conta.
 docker compose up -d --build
 ```
 
 | URL | Uso |
 | --- | --- |
-| http://localhost:8792 | Admin da Íris (login com `IRIS_ADMIN_EMAIL`) |
+| http://localhost:8792 | Admin da Íris. No padrão do Compose, o código vai só para `IRIS_ADMIN_EMAIL`. |
 | http://localhost:8025 | Mailpit — ler códigos OTP |
 
 Os dados ficam no volume Docker `iris-data` (`/app/data` no container). Healthcheck: `GET /health`.
 
-Em produção (HTTPS, Resend, webhooks Meta), troque o Mailpit por `IRIS_EMAIL_PROVIDER=resend` e defina `IRIS_PUBLIC_BASE_URL` com o domínio público. Veja [`.env.railway.example`](iris-app/.env.railway.example).
+Num host público (HTTPS, Resend, webhooks Meta), use `IRIS_EMAIL_PROVIDER=resend` e `IRIS_PUBLIC_BASE_URL` com o domínio. Os nomes são os de [`iris-app/.env.example`](iris-app/.env.example); os valores do Compose estão em [`.env.docker.example`](.env.docker.example).
 
 ### Outros hosts
 
@@ -236,7 +237,7 @@ Em produção (HTTPS, Resend, webhooks Meta), troque o Mailpit por `IRIS_EMAIL_P
 
 Checklist: `IRIS_PUBLIC_BASE_URL`, app Meta próprio, webhook `{base}/webhooks/meta`, `IRIS_TOKEN_ENCRYPTION_KEY`. Secrets só no painel do provedor.
 
-Guia: [`docs/08_environments.md`](docs/08_environments.md) · variáveis: [`iris-app/.env.railway.example`](iris-app/.env.railway.example).
+Guia: [`docs/08_environments.md`](docs/08_environments.md) · variáveis: [`iris-app/.env.example`](iris-app/.env.example).
 
 ---
 

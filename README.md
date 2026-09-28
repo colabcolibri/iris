@@ -217,18 +217,19 @@ The repo ships a working `docker-compose.yml` (Iris + [Mailpit](https://github.c
 git clone https://github.com/colabcolibri/iris.git
 cd iris
 cp .env.docker.example .env.docker
-# Edit .env.docker — at minimum IRIS_ADMIN_EMAIL and every change-me-* secret
+# Edit .env.docker — IRIS_ADMIN_EMAIL and every change-me-* secret.
+# IRIS_TENANT_SIGNUP=allowlist: only that email opens an account.
 docker compose up -d --build
 ```
 
 | URL | Purpose |
 | --- | ------- |
-| http://localhost:8792 | Iris admin (login with `IRIS_ADMIN_EMAIL`) |
+| http://localhost:8792 | Iris admin. With the Compose default, the OTP goes only to `IRIS_ADMIN_EMAIL`. |
 | http://localhost:8025 | Mailpit — read OTP codes |
 
 Data persists in the Docker volume `iris-data` (`/app/data` inside the container). Healthcheck: `GET /health`.
 
-For production (HTTPS, Resend, Meta webhooks), swap Mailpit for `IRIS_EMAIL_PROVIDER=resend` and set `IRIS_PUBLIC_BASE_URL` to your public domain. See [`.env.railway.example`](iris-app/.env.railway.example).
+For a public host (HTTPS, Resend, Meta webhooks), set `IRIS_EMAIL_PROVIDER=resend` and `IRIS_PUBLIC_BASE_URL` to your domain. Same names as [`iris-app/.env.example`](iris-app/.env.example); Compose values are in [`.env.docker.example`](.env.docker.example).
 
 ### Other hosts
 
@@ -236,7 +237,7 @@ For production (HTTPS, Resend, Meta webhooks), swap Mailpit for `IRIS_EMAIL_PROV
 
 Checklist: `IRIS_PUBLIC_BASE_URL`, your own Meta app, webhook `{base}/webhooks/meta`, `IRIS_TOKEN_ENCRYPTION_KEY`. Keep secrets in the provider dashboard only.
 
-Guide: [`docs/08_environments.md`](docs/08_environments.md) · variables: [`iris-app/.env.railway.example`](iris-app/.env.railway.example).
+Guide: [`docs/08_environments.md`](docs/08_environments.md) · variables: [`iris-app/.env.example`](iris-app/.env.example).
 
 ---
 

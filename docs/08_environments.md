@@ -2,12 +2,28 @@
 title: Environments
 status: review
 version: 1.2
-updated: 2026-09-27
+updated: 2026-09-28
 depends_on: [01_tech_stack.md, 05_architecture.md]
 blocks: []
 ---
 
 # 08 — Environments
+
+## Onde configurar
+
+Os nomes são os de `iris-app/.env.example`. Cada ambiente troca o valor, não a lista.
+
+| Arquivo | Quem lê |
+| ------- | ------- |
+| `iris-app/.env.example` | Ninguém. Modelo para copiar. |
+| `iris-app/.env` | `pnpm dev` |
+| `.env.docker.example` | Ninguém. Modelo do Compose. |
+| `.env.docker` | `docker compose`. Inclui `IRIS_HOST_PORT` e `MAILPIT_UI_PORT`, que o processo Iris ignora. |
+| Painel do host | Railway ou VPS. O processo não lê arquivo. |
+
+`pnpm dev`, `pnpm start` e o container Docker abrem um SQLite por conta. Quem pode criar conta é `IRIS_TENANT_SIGNUP`. Sem a variável, o modo é `open`. O Compose define `allowlist`.
+
+Segredos ficam fora do git. A chave do modelo fica na conta, em Configurações, não em `LLM_API_KEY`.
 
 ## Local development
 
@@ -16,8 +32,9 @@ blocks: []
 | `PORT` | `8792` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `IRIS_DB_PATH` | `./data/iris.db` | SQLite file — caminho relativo é resolvido a partir de `iris-app/` (workspace), **não** do `cwd` do processo (`server/`). Evita abrir um segundo DB vazio em `server/data/`. |
-| `IRIS_ADMIN_EMAIL` | required (UI) sem conta por arquivo | Com `pnpm dev`, qualquer email confirmado cria a própria conta. Esta variável continua sendo o email do operador. |
-| `IRIS_TENANCY` | vazio no processo de teste | O `pnpm dev` abre um arquivo SQLite por conta. A suíte deixa vazio e usa um arquivo só, a menos que o teste peça `local`. |
+| `IRIS_ADMIN_EMAIL` | required (UI) sem conta por arquivo | Email do operador. Entra sempre na allowlist de `IRIS_TENANT_SIGNUP=allowlist`. |
+| `IRIS_TENANT_SIGNUP` | `open` | `open` cria conta para qualquer email confirmado. `allowlist` só aceita `IRIS_ADMIN_EMAIL` e `IRIS_ALLOWED_EMAILS`. `closed` deixa entrar quem já tem conta e não abre conta nova. O Compose define `allowlist`. |
+| `IRIS_ALLOWED_EMAILS` | vazio | Emails extras da allowlist, separados por vírgula. Com a lista vazia, só o admin abre conta. |
 | `IRIS_SESSION_SECRET` | required (UI) | HMAC da sessão HttpOnly |
 | `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
 | `RESEND_API_KEY` | prod | Envio de email (Resend) |
@@ -132,7 +149,7 @@ pnpm dev
 
 UI (dev): `http://127.0.0.1:8792/` — servidor único com Vite embutido (HMR). `pnpm dev` define `NODE_ENV=development`.
 
-UI (produção): `pnpm build:admin` + `pnpm start` — bundle em `public/`; login em `/login` com OTP enviado ao `IRIS_ADMIN_EMAIL`.
+UI (produção): `pnpm build:admin` + `pnpm start` — bundle em `public/`. O login em `/login` segue `IRIS_TENANT_SIGNUP`. Com `allowlist` e lista vazia, o código vai só para `IRIS_ADMIN_EMAIL`.
 
 ## Production
 
@@ -144,7 +161,7 @@ Para subir localmente ou em um VPS com o mínimo de fricção:
 
 ```bash
 cp .env.docker.example .env.docker
-# edite secrets e IRIS_ADMIN_EMAIL
+# edite secrets, IRIS_ADMIN_EMAIL e, se quiser outros emails, IRIS_ALLOWED_EMAILS
 docker compose up -d --build
 ```
 
@@ -166,13 +183,13 @@ O comando cria a conta se o email ainda não existir, copia o arquivo por cima d
 | -------- | ----- |
 | `NODE_ENV` | `production` |
 | `IRIS_DB_PATH` | Caminho do arquivo antigo no volume (ex.: `/app/data/iris.db`). As contas ficam ao lado, em `/app/data/tenants`. |
-| `IRIS_TENANCY` | `local`. O processo do produto já abre um arquivo por conta; deixe a variável no painel. |
+| `IRIS_TENANT_SIGNUP` | `allowlist` ou `closed` num host público. `open` deixa qualquer email confirmado criar conta. |
 | `IRIS_PUBLIC_BASE_URL` | URL pública HTTPS (ex.: `https://iris.example.com`) |
 | `META_OAUTH_REDIRECT_URI` | `{IRIS_PUBLIC_BASE_URL}/auth/meta/callback` |
 | `IRIS_EMAIL_PROVIDER` | `resend` |
 | `IRIS_FROM_EMAIL` | Remetente verificado no Resend |
 | `RESEND_API_KEY` | API key Resend (somente no provedor) |
-| `IRIS_ADMIN_EMAIL` | Email do operador. Com `IRIS_TENANCY=local`, qualquer email confirmado também recebe código. |
+| `IRIS_ADMIN_EMAIL` | Email do operador. Com `IRIS_TENANT_SIGNUP=allowlist`, é o único email se `IRIS_ALLOWED_EMAILS` estiver vazio. |
 | `META_*` | App credentials + access token |
 | `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` | Opcionais — DMs: guias [07](../iris-app/docs/configuracao/07-page-access-token.md) e [06](../iris-app/docs/configuracao/06-mensagens-receptor-primario.md) em `iris-app/docs/configuracao/` |
 | `LLM_API_KEY` | Não chama o modelo. Cada conta salva a própria chave e a URL em Configurações. |

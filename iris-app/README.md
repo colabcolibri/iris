@@ -43,8 +43,9 @@ pnpm install
 pnpm dev
 ```
 
-- **Dev:** email via SMTP/Mailpit (default quando `NODE_ENV !== production`)
-- **Prod:** `IRIS_EMAIL_PROVIDER=resend` — ver [`.env.railway.example`](.env.railway.example)
+- **Dev:** copie [`.env.example`](.env.example) para `.env`. O e-mail vai ao Mailpit se o provedor não estiver definido.
+- **Docker:** copie [`../.env.docker.example`](../.env.docker.example) para `../.env.docker`.
+- **Host público:** os mesmos nomes, no painel. `IRIS_EMAIL_PROVIDER=resend` e URL https.
 - **Instagram:** app Meta próprio por deploy — [`docs/configuracao/README.md`](docs/configuracao/README.md)
 
 Login em `/login` com o email em `IRIS_ADMIN_EMAIL`.

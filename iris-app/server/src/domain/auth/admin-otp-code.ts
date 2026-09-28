@@ -46,19 +46,6 @@ export function normalizeAdminEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export function resolveAdminEmailAllowlist(): string | null {
-  const email = process.env.IRIS_ADMIN_EMAIL?.trim().toLowerCase();
-  return email && email.includes("@") ? email : null;
-}
-
-export function isEmailAllowlisted(email: string): boolean {
-  const allowed = resolveAdminEmailAllowlist();
-  if (!allowed) {
-    return false;
-  }
-  return normalizeAdminEmail(email) === allowed;
-}
-
 export type OtpChallengeRecord = {
   email: string;
   codeHash: string;

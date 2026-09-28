@@ -23,6 +23,7 @@ export type TenancyRuntime = {
   contextForIgUserId(igUserId: string): AppContext | null;
   contextForMcpCode(code: string): AppContext | null;
   listContexts(): AppContext[];
+  hasAccount(email: string): boolean;
   ensureAccount(email: string): Promise<{ id: string; slug: string; email: string }>;
   invalidate(accountId: string): void;
   filePathFor(accountId: string): string | null;
@@ -112,6 +113,10 @@ export function createTenancyRuntime(input: {
         .listActive()
         .map((account) => contextForRecord(account))
         .filter((ctx): ctx is AppContext => ctx !== null);
+    },
+    hasAccount(email: string) {
+      const record = store.findByEmail(email.trim().toLowerCase());
+      return record?.status === "active" && Boolean(record.databaseUrl);
     },
     ensureAccount(email: string) {
       return ensureAccountDatabase({ store, email, provisioner });

@@ -7,7 +7,7 @@ updated: 2026-09-27
 
 Detalhe de `docs/05_architecture.md` para a v1.31. O servidor continua um. Cada pessoa opera uma cópia do schema editorial que já existe, num arquivo no disco da VPS. A Iris autentica a pessoa e escolhe qual arquivo abrir.
 
-O processo que sobe com `pnpm dev` faz isso sempre. O controle fica em `data/control.db`. O arquivo da pessoa fica em `data/tenants/{id}/iris.db`. A suíte de testes, sem pedir tenancy, continua num arquivo só.
+`pnpm dev`, `pnpm start` e o container Docker fazem isso sempre. O controle fica em `data/control.db`. O arquivo da pessoa fica em `data/tenants/{id}/iris.db`. A suíte de testes, sem pedir tenancy, continua num arquivo só. Quem pode abrir conta é `IRIS_TENANT_SIGNUP` (`docs/08_environments.md`). Sem a variável, qualquer email confirmado cria conta. O Compose define `allowlist`.
 
 ## Banco de controle e banco da conta
 
@@ -15,7 +15,7 @@ Dois papéis, dois arquivos.
 
 O banco de controle guarda conta, email e slug. Não tem `posts`, `comments` nem `messages`. Não há banco na nuvem e não há token de plataforma.
 
-O arquivo da conta recebe as migrations em `iris-app/server/migrations/`. O cadastro reaproveita o OTP já existente. Confirmar o código de um email novo cria o arquivo. Repetir o login não cria outro.
+O arquivo da conta recebe as migrations em `iris-app/server/migrations/`. O cadastro reaproveita o OTP já existente. Confirmar o código cria o arquivo quando `IRIS_TENANT_SIGNUP` permite aquele email. Repetir o login não cria outro.
 
 ## Sessão e escolha da conexão
 

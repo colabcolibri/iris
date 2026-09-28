@@ -17,8 +17,8 @@ Arquivos de referência no repositório:
 
 | Arquivo | Uso |
 | ------- | --- |
-| `iris-app/.env.example` | Lista completa comentada |
-| `iris-app/.env.railway.example` | Nomes para Railway / produção |
+| `iris-app/.env.example` | Nomes do processo. Copie para `iris-app/.env`. |
+| `.env.docker.example` | Os mesmos nomes, com os valores do container. Copie para `.env.docker` na raiz. |
 | `iris-app/.env` | Local — **gitignored** |
 
 ## Passo 1 — Produção (Railway, VPS, etc.)
