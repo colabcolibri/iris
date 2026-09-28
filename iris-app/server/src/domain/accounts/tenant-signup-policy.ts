@@ -3,14 +3,19 @@ export const TENANT_SIGNUP_MODES = ["open", "allowlist", "closed"] as const;
 export type TenantSignupMode = (typeof TENANT_SIGNUP_MODES)[number];
 
 export function assertTenantSignupConfig(env: NodeJS.ProcessEnv = process.env): void {
-  parseTenantSignupMode(env.IRIS_TENANT_SIGNUP);
+  const mode = resolveSignupMode(env);
+  if (mode === "allowlist" && resolveAllowedEmails(env).size === 0) {
+    throw new Error(
+      "IRIS_ADMIN_EMAIL or IRIS_ALLOWED_EMAILS is required when IRIS_TENANT_SIGNUP=allowlist",
+    );
+  }
 }
 
 export function signupAllows(
   input: { email: string; hasAccount: boolean },
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  const mode = parseTenantSignupMode(env.IRIS_TENANT_SIGNUP);
+  const mode = resolveSignupMode(env);
   if (mode === "open") {
     return true;
   }
@@ -22,9 +27,14 @@ export function signupAllows(
   return resolveAllowedEmails(env).has(normalizeEmail(input.email));
 }
 
-function parseTenantSignupMode(raw: string | undefined): TenantSignupMode {
-  const value = raw?.trim().toLowerCase() ?? "";
+function resolveSignupMode(env: NodeJS.ProcessEnv): TenantSignupMode {
+  const value = env.IRIS_TENANT_SIGNUP?.trim().toLowerCase() ?? "";
   if (!value) {
+    if (env.NODE_ENV === "production") {
+      throw new Error(
+        "IRIS_TENANT_SIGNUP is required in production (open, allowlist, or closed)",
+      );
+    }
     return "open";
   }
 

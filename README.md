@@ -219,21 +219,22 @@ cd iris
 cp .env.docker.example .env.docker
 # Edit .env.docker — IRIS_ADMIN_EMAIL and every change-me-* secret.
 # IRIS_TENANT_SIGNUP=allowlist: only that email opens an account.
+# Optional tunables are already at the bottom of that file, commented out.
 docker compose up -d --build
 ```
 
 | URL | Purpose |
 | --- | ------- |
-| http://localhost:8792 | Iris admin. With the Compose default, the OTP goes only to `IRIS_ADMIN_EMAIL`. |
+| http://localhost:8792 | Iris admin. Production signup is `allowlist`: the OTP goes only to `IRIS_ADMIN_EMAIL`. |
 | http://localhost:8025 | Mailpit — read OTP codes |
 
 Data persists in the Docker volume `iris-data` (`/app/data` inside the container). Healthcheck: `GET /health`.
 
-For a public host (HTTPS, Resend, Meta webhooks), set `IRIS_EMAIL_PROVIDER=resend` and `IRIS_PUBLIC_BASE_URL` to your domain. Same names as [`iris-app/.env.example`](iris-app/.env.example); Compose values are in [`.env.docker.example`](.env.docker.example).
+For a public host (HTTPS, Resend, Meta webhooks), set `IRIS_EMAIL_PROVIDER=resend` and `IRIS_PUBLIC_BASE_URL` to your domain in that same `.env.docker`, or paste the same lines into the host panel: [`.env.docker.example`](.env.docker.example). The published host port is not in that file. Compose reads `IRIS_HOST_PORT` from a root `.env` or the shell.
 
 ### Other hosts
 
-`Dockerfile` and `railway.toml` at the **repo root** (build context includes `iris-app/`). Mount a volume at `/app/data`.
+`Dockerfile` and `railway.toml` at the **repo root** (build context includes `iris-app/`). Mount a volume at `/app/data`. Paste the same names from [`.env.docker.example`](.env.docker.example).
 
 Checklist: `IRIS_PUBLIC_BASE_URL`, your own Meta app, webhook `{base}/webhooks/meta`, `IRIS_TOKEN_ENCRYPTION_KEY`. Keep secrets in the provider dashboard only.
 

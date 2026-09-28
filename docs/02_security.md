@@ -39,7 +39,7 @@ Comparação de tokens com `timingSafeEqual`; OTP armazenado como hash SHA256 + 
 ## Contas (v1.31)
 
 - A sessão carrega o id da conta. O cliente não escolhe o arquivo por parâmetro. Sessão sem esse id não abre o SQLite editorial.
-- Quem recebe OTP e abre conta segue `IRIS_TENANT_SIGNUP`. `allowlist` aceita `IRIS_ADMIN_EMAIL` e `IRIS_ALLOWED_EMAILS`. `closed` não abre conta nova. Sem a variável, qualquer email confirmado abre conta. O Compose define `allowlist`.
+- Quem recebe OTP e abre conta segue `IRIS_TENANT_SIGNUP`. `allowlist` aceita `IRIS_ADMIN_EMAIL` e `IRIS_ALLOWED_EMAILS`. `closed` não abre conta nova. Fora de produção, omitir a variável abre conta para qualquer email confirmado. Em produção a variável é obrigatória e `allowlist` sem nenhum email impede o boot. O modelo de produção (`.env.docker.example`) define `allowlist`, no Compose ou no painel.
 - App id, app secret e verify token da Meta ficam no servidor da Iris. O HMAC do webhook e o OAuth usam esse secret. O evento chega em `/webhooks/meta` e a Iris abre o SQLite da conta cujo Instagram conectado é o `entry.id`. Id desconhecido não grava em banco nenhum.
 - O `state` do OAuth é assinado e tem prazo.
 - O isolamento é de arquivo entre contas. O processo da Iris lê o arquivo da conta para publicar.

@@ -219,21 +219,22 @@ cd iris
 cp .env.docker.example .env.docker
 # Edite .env.docker — IRIS_ADMIN_EMAIL e todos os change-me-*.
 # IRIS_TENANT_SIGNUP=allowlist: só esse email abre conta.
+# Os ajustes opcionais já estão no fim do arquivo, comentados.
 docker compose up -d --build
 ```
 
 | URL | Uso |
 | --- | --- |
-| http://localhost:8792 | Admin da Íris. No padrão do Compose, o código vai só para `IRIS_ADMIN_EMAIL`. |
+| http://localhost:8792 | Admin da Íris. O cadastro de produção é `allowlist`: o código vai só para `IRIS_ADMIN_EMAIL`. |
 | http://localhost:8025 | Mailpit — ler códigos OTP |
 
 Os dados ficam no volume Docker `iris-data` (`/app/data` no container). Healthcheck: `GET /health`.
 
-Num host público (HTTPS, Resend, webhooks Meta), use `IRIS_EMAIL_PROVIDER=resend` e `IRIS_PUBLIC_BASE_URL` com o domínio. Os nomes são os de [`iris-app/.env.example`](iris-app/.env.example); os valores do Compose estão em [`.env.docker.example`](.env.docker.example).
+Num host público (HTTPS, Resend, webhooks Meta), use `IRIS_EMAIL_PROVIDER=resend` e `IRIS_PUBLIC_BASE_URL` com o domínio, no mesmo `.env.docker` ou nas mesmas linhas do painel: [`.env.docker.example`](.env.docker.example). A porta publicada no host não sai desse arquivo: o Compose lê `IRIS_HOST_PORT` de um `.env` na raiz ou do shell.
 
 ### Outros hosts
 
-`Dockerfile` e `railway.toml` na **raiz do repositório** (build inclui `iris-app/`). Monte um volume em `/app/data`.
+`Dockerfile` e `railway.toml` na **raiz do repositório** (build inclui `iris-app/`). Monte um volume em `/app/data`. Cole os mesmos nomes de [`.env.docker.example`](.env.docker.example).
 
 Checklist: `IRIS_PUBLIC_BASE_URL`, app Meta próprio, webhook `{base}/webhooks/meta`, `IRIS_TOKEN_ENCRYPTION_KEY`. Secrets só no painel do provedor.
 

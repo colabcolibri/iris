@@ -9,12 +9,6 @@ export function localTenancyConfig(): TenancyConfig {
   return { enabled: true, mode: "local" };
 }
 
-export function readTenancyConfig(
-  env: NodeJS.ProcessEnv = process.env,
-): TenancyConfig {
-  if (env.IRIS_TENANCY?.trim().toLowerCase() === "local") {
-    return localTenancyConfig();
-  }
-
+export function tenancyOff(): TenancyConfig {
   return { enabled: false, mode: "off" };
 }

@@ -18,13 +18,15 @@ Arquivos de referência no repositório:
 | Arquivo | Uso |
 | ------- | --- |
 | `iris-app/.env.example` | Nomes do processo. Copie para `iris-app/.env`. |
-| `.env.docker.example` | Os mesmos nomes, com os valores do container. Copie para `.env.docker` na raiz. |
+| `.env.docker.example` | Modelo do container, com os ajustes opcionais. Copie para `.env.docker` na raiz. O Compose injeta esse arquivo no processo. |
 | `iris-app/.env` | Local — **gitignored** |
 
-## Passo 1 — Produção (Railway, VPS, etc.)
+## Passo 1 — Produção
 
-1. Abra o painel do host (ex.: Railway → serviço **iris** → **Variables**).
-2. Para **cada** variável da tabela abaixo, crie uma linha com o valor do passo 02.
+Os nomes são os de `.env.docker.example`. No Compose eles já estão no arquivo. No painel, crie as mesmas linhas.
+
+1. Abra o ambiente de produção (arquivo `.env.docker` ou o painel do host).
+2. Para **cada** variável da tabela abaixo, grave o valor do passo 02.
 3. **Salve** e aguarde o redeploy (ou reinicie o processo manualmente).
 
 **Como saber que deu certo:** logs do servidor sem mensagem de “Meta config missing” / variável obrigatória ausente.

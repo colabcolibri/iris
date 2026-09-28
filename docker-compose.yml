@@ -1,7 +1,9 @@
-# Quick self-hosted stack: Iris + Mailpit (OTP emails in dev/trial).
+# Iris + Mailpit. O container recebe .env.docker. O Compose não lê iris-app/.env.
 # 1. cp .env.docker.example .env.docker
-# 2. Edit secrets and IRIS_ADMIN_EMAIL in .env.docker
+# 2. Troque os change-me e o IRIS_ADMIN_EMAIL nesse arquivo.
 # 3. docker compose up -d --build
+# Porta no host: exporte IRIS_HOST_PORT / MAILPIT_UI_PORT, ou grave num arquivo
+# chamado .env na raiz. O env_file não altera a porta publicada.
 
 services:
   iris:

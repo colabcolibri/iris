@@ -44,7 +44,7 @@ pnpm dev
 ```
 
 - **Dev:** copie [`.env.example`](.env.example) para `.env`. O e-mail vai ao Mailpit se o provedor não estiver definido.
-- **Docker:** copie [`../.env.docker.example`](../.env.docker.example) para `../.env.docker`.
+- **Docker:** na raiz, `cp .env.docker.example .env.docker` e edite esse arquivo. O Compose não lê o `.env` daqui.
 - **Host público:** os mesmos nomes, no painel. `IRIS_EMAIL_PROVIDER=resend` e URL https.
 - **Instagram:** app Meta próprio por deploy — [`docs/configuracao/README.md`](docs/configuracao/README.md)
 

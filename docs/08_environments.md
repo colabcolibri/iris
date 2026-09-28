@@ -15,13 +15,14 @@ Os nomes são os de `iris-app/.env.example`. Cada ambiente troca o valor, não a
 
 | Arquivo | Quem lê |
 | ------- | ------- |
-| `iris-app/.env.example` | Ninguém. Modelo para copiar. |
-| `iris-app/.env` | `pnpm dev` |
-| `.env.docker.example` | Ninguém. Modelo do Compose. |
-| `.env.docker` | `docker compose`. Inclui `IRIS_HOST_PORT` e `MAILPIT_UI_PORT`, que o processo Iris ignora. |
-| Painel do host | Railway ou VPS. O processo não lê arquivo. |
+| `iris-app/.env.example` | Ninguém. Modelo do `pnpm dev`. |
+| `iris-app/.env` | `pnpm dev` e `pnpm start` na máquina. |
+| `.env.docker.example` | Ninguém. Modelo do container. Copie para `.env.docker`. |
+| `.env.docker` | O processo dentro do container, via `env_file`. |
+| `.env` na raiz, ou o shell | Só a interpolação do Compose: `IRIS_HOST_PORT` e `MAILPIT_UI_PORT`. |
+| Painel do host | Os mesmos nomes de `.env.docker.example`. O processo não lê arquivo. |
 
-`pnpm dev`, `pnpm start` e o container Docker abrem um SQLite por conta. Quem pode criar conta é `IRIS_TENANT_SIGNUP`. Sem a variável, o modo é `open`. O Compose define `allowlist`.
+`pnpm dev`, `pnpm start` e o container abrem um SQLite por conta. Quem pode criar conta é `IRIS_TENANT_SIGNUP`. Fora de produção, omitir a variável deixa o modo `open`. Com `NODE_ENV=production`, a variável é obrigatória: sem ela o processo não sobe. O modelo de produção define `allowlist`.
 
 Segredos ficam fora do git. A chave do modelo fica na conta, em Configurações, não em `LLM_API_KEY`.
 
@@ -33,7 +34,7 @@ Segredos ficam fora do git. A chave do modelo fica na conta, em Configurações,
 | `HOST` | `0.0.0.0` | Bind address |
 | `IRIS_DB_PATH` | `./data/iris.db` | SQLite file — caminho relativo é resolvido a partir de `iris-app/` (workspace), **não** do `cwd` do processo (`server/`). Evita abrir um segundo DB vazio em `server/data/`. |
 | `IRIS_ADMIN_EMAIL` | required (UI) sem conta por arquivo | Email do operador. Entra sempre na allowlist de `IRIS_TENANT_SIGNUP=allowlist`. |
-| `IRIS_TENANT_SIGNUP` | `open` | `open` cria conta para qualquer email confirmado. `allowlist` só aceita `IRIS_ADMIN_EMAIL` e `IRIS_ALLOWED_EMAILS`. `closed` deixa entrar quem já tem conta e não abre conta nova. O Compose define `allowlist`. |
+| `IRIS_TENANT_SIGNUP` | `open` fora de produção; obrigatório em produção | `open` cria conta para qualquer email confirmado. `allowlist` só aceita `IRIS_ADMIN_EMAIL` e `IRIS_ALLOWED_EMAILS`. `closed` deixa entrar quem já tem conta e não abre conta nova. Em produção, valor ausente ou `allowlist` sem nenhum email impedem o boot. O modelo de produção define `allowlist`. |
 | `IRIS_ALLOWED_EMAILS` | vazio | Emails extras da allowlist, separados por vírgula. Com a lista vazia, só o admin abre conta. |
 | `IRIS_SESSION_SECRET` | required (UI) | HMAC da sessão HttpOnly |
 | `IRIS_OTP_PEPPER` | required (prod) | Hash do código OTP |
@@ -153,7 +154,7 @@ UI (produção): `pnpm build:admin` + `pnpm start` — bundle em `public/`. O lo
 
 ## Production
 
-Configure no host de deploy (ex.: Railway com domínio custom). **Não commitar valores reais** — use variáveis de ambiente no provedor.
+O env do Compose se cria na raiz, a partir de `.env.docker.example`. Esse modelo já traz os ajustes opcionais comentados (concorrência, retenção, imagem, sessão). **Não commitar valores reais.** Num domínio público, troque a URL para HTTPS e o e-mail para Resend. O modo de conta continua `allowlist`. O painel do host recebe as mesmas linhas. O Compose não lê `iris-app/.env`.
 
 ### Docker Compose (self-hosted)
 
@@ -165,7 +166,7 @@ cp .env.docker.example .env.docker
 docker compose up -d --build
 ```
 
-- **Iris:** `http://localhost:8792` (ou `IRIS_HOST_PORT`)
+- **Iris:** `http://localhost:8792`. Para outra porta no host, exporte `IRIS_HOST_PORT` ou grave essa variável num arquivo chamado `.env` na raiz. Ela não entra no `.env.docker`.
 - **Mailpit (OTP em trial):** `http://localhost:8025`
 - **Dados:** volume `iris-data` → diretório `/app/data` (`control.db`, `tenants/`, `media/` e o `iris.db` de origem)
 
@@ -183,7 +184,7 @@ O comando cria a conta se o email ainda não existir, copia o arquivo por cima d
 | -------- | ----- |
 | `NODE_ENV` | `production` |
 | `IRIS_DB_PATH` | Caminho do arquivo antigo no volume (ex.: `/app/data/iris.db`). As contas ficam ao lado, em `/app/data/tenants`. |
-| `IRIS_TENANT_SIGNUP` | `allowlist` ou `closed` num host público. `open` deixa qualquer email confirmado criar conta. |
+| `IRIS_TENANT_SIGNUP` | Obrigatório com `NODE_ENV=production`. `allowlist` ou `closed` num host público. `open` só se estiver escrito. |
 | `IRIS_PUBLIC_BASE_URL` | URL pública HTTPS (ex.: `https://iris.example.com`) |
 | `META_OAUTH_REDIRECT_URI` | `{IRIS_PUBLIC_BASE_URL}/auth/meta/callback` |
 | `IRIS_EMAIL_PROVIDER` | `resend` |

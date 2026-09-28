@@ -53,7 +53,7 @@ import { startMessageResponder } from "../workers/message-responder.ts";
 import { startDataRetention } from "../workers/data-retention.ts";
 import { startAutoMonitorMedia } from "../workers/auto-monitor-media.ts";
 import { startAccountWorkers } from "../workers/account-workers.ts";
-import { readTenancyConfig, type TenancyConfig } from "../domain/accounts/tenancy-config.ts";
+import { tenancyOff, type TenancyConfig } from "../domain/accounts/tenancy-config.ts";
 import { createTenancyRuntime, type TenancyRuntime } from "./tenancy-runtime.ts";
 import { clearSessionCookie, verifySessionToken, readSessionToken } from "./session.ts";
 import { readAdminSession } from "../domain/auth/auth-session.ts";
@@ -585,7 +585,7 @@ async function handleRequest(
 }
 
 export function createServer(options: HttpServerOptions = {}): HttpServerHandle {
-  const tenancyConfig = options.tenancy ?? readTenancyConfig();
+  const tenancyConfig = options.tenancy ?? tenancyOff();
   const db = openDatabase(options.dbPath);
 
   if (!options.skipMigrations) {

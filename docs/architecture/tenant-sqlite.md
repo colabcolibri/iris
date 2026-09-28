@@ -7,7 +7,7 @@ updated: 2026-09-27
 
 Detalhe de `docs/05_architecture.md` para a v1.31. O servidor continua um. Cada pessoa opera uma cópia do schema editorial que já existe, num arquivo no disco da VPS. A Iris autentica a pessoa e escolhe qual arquivo abrir.
 
-`pnpm dev`, `pnpm start` e o container Docker fazem isso sempre. O controle fica em `data/control.db`. O arquivo da pessoa fica em `data/tenants/{id}/iris.db`. A suíte de testes, sem pedir tenancy, continua num arquivo só. Quem pode abrir conta é `IRIS_TENANT_SIGNUP` (`docs/08_environments.md`). Sem a variável, qualquer email confirmado cria conta. O Compose define `allowlist`.
+`pnpm dev`, `pnpm start` e o container Docker fazem isso sempre. O controle fica em `data/control.db`. O arquivo da pessoa fica em `data/tenants/{id}/iris.db`. A suíte de testes, sem pedir tenancy, continua num arquivo só. Quem pode abrir conta é `IRIS_TENANT_SIGNUP` (`docs/08_environments.md`). Fora de produção, omitir a variável deixa qualquer email confirmado criar conta. Em produção a variável é obrigatória. O modelo de produção (`.env.docker.example`) define `allowlist`, no Compose ou no painel.
 
 ## Banco de controle e banco da conta
 

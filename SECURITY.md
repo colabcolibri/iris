@@ -46,7 +46,7 @@ Out of scope (unless chained with a vulnerability above):
 Before exposing Iris to the internet:
 
 1. Generate strong values for `IRIS_SESSION_SECRET`, `IRIS_OTP_PEPPER`, `IRIS_PUBLISH_URL_SECRET`, `IRIS_TOKEN_ENCRYPTION_KEY`, `IRIS_AGENT_TOKEN`, and `IRIS_MCP_CONNECTION_CODE`.
-2. Set `IRIS_ADMIN_EMAIL` to an address you control. On a public host set `IRIS_TENANT_SIGNUP=allowlist` (Docker Compose already does) so only that address, plus `IRIS_ALLOWED_EMAILS`, can open an account. Use Resend or SMTP in production.
+2. Set `IRIS_ADMIN_EMAIL` to an address you control. On a public host set `IRIS_TENANT_SIGNUP=allowlist` (`.env.docker.example` already does, for Compose or a host panel) so only that address, plus `IRIS_ALLOWED_EMAILS`, can open an account. Use Resend or SMTP in production.
 3. Configure your own Meta app — never reuse another operator's app ID/secret.
 4. Use HTTPS on `IRIS_PUBLIC_BASE_URL`; MCP remote clients require it.
 5. Keep SQLite and `/app/data` on a private volume — not in the container image or git.

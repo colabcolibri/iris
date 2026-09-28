@@ -46,3 +46,28 @@ test("unknown signup mode fails at startup", () => {
     /IRIS_TENANT_SIGNUP must be open, allowlist, or closed/,
   );
 });
+
+test("production refuses to start without an explicit signup mode", () => {
+  assert.throws(
+    () => assertTenantSignupConfig({ NODE_ENV: "production" }),
+    /IRIS_TENANT_SIGNUP is required in production/,
+  );
+});
+
+test("production open stays open only when the mode is set", () => {
+  const env = { NODE_ENV: "production", IRIS_TENANT_SIGNUP: "open" };
+  assert.equal(signupAllows({ email: "new@example.com", hasAccount: false }, env), true);
+  assert.doesNotThrow(() => assertTenantSignupConfig(env));
+});
+
+test("allowlist without any email refuses to start", () => {
+  assert.throws(
+    () =>
+      assertTenantSignupConfig({
+        IRIS_TENANT_SIGNUP: "allowlist",
+        IRIS_ADMIN_EMAIL: "",
+        IRIS_ALLOWED_EMAILS: "",
+      }),
+    /IRIS_ADMIN_EMAIL or IRIS_ALLOWED_EMAILS is required/,
+  );
+});
