@@ -22,14 +22,9 @@ import { MessageActivityPanel } from "@/components/messages/message-activity-pan
 import { PageContainer } from "@/components/templates/page-container";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { OpsEmptyState } from "@/components/templates/ops-empty-state";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useAppRoutes } from "@/demo/demo-routes";
@@ -763,20 +758,13 @@ export function MessagesPage() {
         </div>
       </div>
 
-      <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-        <SheetContent
-          side="left"
-          className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
-        >
-          <SheetHeader className="border-b border-border">
-            <SheetTitle className="font-display text-lg font-semibold">
-              {messagesMsg.page.sheetTitle}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="shrink-0 border-b p-3">{listControls}</div>
-          <PageScrollArea className="flex-1">{listBody}</PageScrollArea>
-        </SheetContent>
-      </Sheet>
+      <AppSheet open={listSheetOpen} onOpenChange={setListSheetOpen} side="left" size="md">
+        <AppSheet.Header title={messagesMsg.page.sheetTitle} />
+        <div className="shrink-0 border-b p-3">{listControls}</div>
+        <AppSheet.Body scroll={false}>
+          <PageScrollArea className="min-h-0 flex-1">{listBody}</PageScrollArea>
+        </AppSheet.Body>
+      </AppSheet>
     </PageContainer>
   );
 }

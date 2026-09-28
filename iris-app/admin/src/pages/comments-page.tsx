@@ -21,6 +21,7 @@ import { ImportPostsDialog } from "@/components/comments/import-posts-dialog";
 import { CommentActivityPanel } from "@/components/comments/comment-activity-panel";
 import { PostDetailPanel } from "@/components/comments/post-detail-panel";
 import { PostInboxList } from "@/components/comments/post-inbox-list";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { PageContainer } from "@/components/templates/page-container";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
 import { OpsEmptyState } from "@/components/templates/ops-empty-state";
@@ -28,12 +29,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useMetaSession } from "@/contexts/meta-session-context";
 import { useAppRoutes } from "@/demo/demo-routes";
@@ -1263,20 +1258,13 @@ export function CommentsPage() {
             />
           </section>
 
-          <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-            <SheetContent
-              side="left"
-              className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
-            >
-              <SheetHeader className="border-b border-border">
-                <SheetTitle className="font-display text-lg font-semibold">
-                  {commentsMsg.page.sheetTitle}
-                </SheetTitle>
-              </SheetHeader>
-              <div className="shrink-0 border-b p-4">{listChrome}</div>
-              <PageScrollArea>{listBody}</PageScrollArea>
-            </SheetContent>
-          </Sheet>
+          <AppSheet open={listSheetOpen} onOpenChange={setListSheetOpen} side="left" size="md">
+            <AppSheet.Header title={commentsMsg.page.sheetTitle} />
+            <div className="shrink-0 border-b p-4">{listChrome}</div>
+            <AppSheet.Body scroll={false}>
+              <PageScrollArea className="min-h-0 flex-1">{listBody}</PageScrollArea>
+            </AppSheet.Body>
+          </AppSheet>
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-muted-foreground">

@@ -79,6 +79,24 @@ export const messagesEn = {
     briefing: "Briefing for this conversation",
     briefingHint: "Extra context injected into the harness for this DM.",
     replyMode: "Reply mode",
+    replyModes: {
+      inherit: {
+        label: "Follow the default",
+        description: "Uses the mode set in the message agent settings.",
+      },
+      off: {
+        label: "Pause this conversation",
+        description: "Iris does not reply in this DM. The global mode stays the same.",
+      },
+      auto: {
+        label: "Automatic",
+        description: "Iris replies and sends on Instagram without review.",
+      },
+      draft: {
+        label: "With approval",
+        description: "Iris suggests the reply; you review and approve before sending.",
+      },
+    },
     saveBriefing: "Save briefing",
   },
   thread: {

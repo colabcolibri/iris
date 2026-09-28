@@ -79,6 +79,24 @@ export const messagesPt = {
     briefing: "Briefing desta conversa",
     briefingHint: "Contexto extra injetado no harness para esta DM.",
     replyMode: "Modo de resposta",
+    replyModes: {
+      inherit: {
+        label: "Seguir o padrão",
+        description: "Usa o modo definido nas configurações do agente de mensagens.",
+      },
+      off: {
+        label: "Pausar nesta conversa",
+        description: "A Iris não responde esta DM. O modo global continua igual.",
+      },
+      auto: {
+        label: "Automático",
+        description: "A Iris responde e envia no Instagram sem revisão.",
+      },
+      draft: {
+        label: "Com aprovação",
+        description: "A Iris sugere a resposta; você revisa e aprova antes de enviar.",
+      },
+    },
     saveBriefing: "Salvar briefing",
   },
   thread: {

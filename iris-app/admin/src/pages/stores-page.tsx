@@ -8,14 +8,9 @@ import { StoreInboxList } from "@/components/stores/store-inbox-list";
 import { PageContainer } from "@/components/templates/page-container";
 import { OpsEmptyState } from "@/components/templates/ops-empty-state";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { useConfirmDialog } from "@/contexts/confirm-dialog-context";
 import { useAppLocale, useDomainMessages } from "@/i18n/provider";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -491,20 +486,13 @@ export function StoresPage() {
         </div>
       </PageContainer.Content>
 
-      <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-        <SheetContent
-          side="left"
-          className="flex w-full max-w-md flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
-        >
-          <SheetHeader className="border-b border-border">
-            <SheetTitle className="font-display text-lg font-semibold">
-              {storesMsg.page.sheetTitle}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="shrink-0 border-b p-3">{listControls}</div>
+      <AppSheet open={listSheetOpen} onOpenChange={setListSheetOpen} side="left" size="md">
+        <AppSheet.Header title={storesMsg.page.sheetTitle} />
+        <div className="shrink-0 border-b p-3">{listControls}</div>
+        <AppSheet.Body scroll={false}>
           <PageScrollArea className="min-h-0 flex-1">{listBody}</PageScrollArea>
-        </SheetContent>
-      </Sheet>
+        </AppSheet.Body>
+      </AppSheet>
     </PageContainer>
   );
 }

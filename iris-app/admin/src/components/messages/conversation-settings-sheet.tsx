@@ -1,17 +1,20 @@
-import { Loader2 } from "lucide-react";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ReplyModeSelect } from "@/components/posts/reply-mode-select";
 import { useDomainMessages } from "@/i18n/provider";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import type { ConversationReplyMode } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { BotOff, ClipboardCheck, Globe2, Loader2, Zap } from "lucide-react";
+
+const REPLY_MODES = ["inherit", "off", "auto", "draft"] as const;
+
+const REPLY_MODE_ICONS = {
+  inherit: Globe2,
+  off: BotOff,
+  auto: Zap,
+  draft: ClipboardCheck,
+} as const;
 
 type ConversationSettingsSheetProps = {
   open: boolean;
@@ -39,31 +42,53 @@ export function ConversationSettingsSheet({
   const detail = useDomainMessages("messages").detail;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-border px-4 py-4 text-left">
-          <SheetTitle className="font-display text-lg font-semibold">
-            {detail.settings}
-          </SheetTitle>
-          <SheetDescription>{detail.settingsDescription}</SheetDescription>
-        </SheetHeader>
+    <AppSheet open={open} onOpenChange={onOpenChange} size="md">
+      <AppSheet.Header title={detail.settings} description={detail.settingsDescription} />
+      <AppSheet.Body>
+        <div className="space-y-6">
+          <fieldset className="min-w-0 space-y-2" disabled={savingReplyMode}>
+            <legend className="text-sm font-medium text-foreground">{detail.replyMode}</legend>
+            <div className="grid gap-2" role="radiogroup" aria-label={detail.replyMode}>
+              {REPLY_MODES.map((mode) => {
+                const option = detail.replyModes[mode];
+                const Icon = REPLY_MODE_ICONS[mode];
+                const selected = replyMode === mode;
+                return (
+                  <label
+                    key={mode}
+                    className={cn(
+                      "flex min-w-0 cursor-pointer items-start gap-3 rounded-sm border p-3 text-left transition-colors",
+                      selected
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-card hover:bg-muted/40",
+                      savingReplyMode && "cursor-wait opacity-70",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="conversation-reply-mode"
+                      value={mode}
+                      checked={selected}
+                      disabled={savingReplyMode}
+                      onChange={() => onReplyModeChange(mode)}
+                      className="mt-1 size-4 shrink-0 accent-primary"
+                    />
+                    <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-foreground">
+                        {option.label}
+                      </span>
+                      <span className="mt-1 block text-sm leading-snug wrap-break-word text-muted-foreground">
+                        {option.description}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
-          <div className="space-y-2">
-            <Label htmlFor="conversation-reply-mode">{detail.replyMode}</Label>
-            <ReplyModeSelect
-              id="conversation-reply-mode"
-              variant="post"
-              value={replyMode}
-              disabled={savingReplyMode}
-              onChange={(value) => onReplyModeChange(value as ConversationReplyMode)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {detail.replyModeInheritHint}
-            </p>
-          </div>
-
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label htmlFor="conversation-reply-prompt">{detail.briefing}</Label>
             <Textarea
               id="conversation-reply-prompt"
@@ -71,20 +96,23 @@ export function ConversationSettingsSheet({
               onChange={(event) => onReplyPromptChange(event.target.value)}
               rows={6}
               placeholder={detail.briefingPlaceholder}
-              className="min-h-32 resize-y"
+              className="min-h-32 w-full resize-y"
             />
-            <Button
-              type="button"
-              size="sm"
-              disabled={savingBriefing}
-              onClick={onSaveBriefing}
-            >
-              {savingBriefing ? <Loader2 className="size-4 animate-spin" /> : null}
-              {detail.saveBriefing}
-            </Button>
+            <p className="text-sm leading-snug text-muted-foreground">{detail.briefingHint}</p>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </AppSheet.Body>
+      <AppSheet.Footer>
+        <Button
+          type="button"
+          className="w-full sm:w-auto"
+          disabled={savingBriefing}
+          onClick={onSaveBriefing}
+        >
+          {savingBriefing ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {detail.saveBriefing}
+        </Button>
+      </AppSheet.Footer>
+    </AppSheet>
   );
 }

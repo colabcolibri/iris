@@ -288,6 +288,8 @@ A transição browse → stage é por query param ou navegação; o browse **nã
 | Button / input / badge | `components/ui/*` (shadcn remapeado) |
 | Shell | `components/layout/*` |
 | Page chrome | `components/templates/page-container.tsx` |
+| Dialog | `components/templates/app-dialog.tsx` sobre `components/ui/dialog` |
+| Drawer | `components/templates/app-sheet.tsx` sobre `components/ui/drawer` — embaixo no celular, lateral no desktop; header, corpo com ScrollArea e footer |
 | Scroll | `components/templates/page-scroll-area.tsx` → shadcn `ScrollArea` — **proibido** reinventar `overflow-y-auto` + scrollbar nativa nas páginas |
 | Status | `components/posts/status-badge.tsx` |
 

@@ -7,13 +7,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -636,22 +631,15 @@ export function WebhookEventsPanel() {
         )}
       </PageScrollArea>
 
-      <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-        <SheetContent
-          side="left"
-          className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
-        >
-          <SheetHeader className="border-b border-border">
-            <SheetTitle className="font-display text-lg font-semibold">
-              {webhooks.page.sheetTitle}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="shrink-0 space-y-3 border-b border-border p-4">
-            {listChrome}
-          </div>
-          <PageScrollArea>{sheetListBody}</PageScrollArea>
-        </SheetContent>
-      </Sheet>
+      <AppSheet open={listSheetOpen} onOpenChange={setListSheetOpen} side="left" size="md">
+        <AppSheet.Header title={webhooks.page.sheetTitle} />
+        <div className="shrink-0 space-y-3 border-b border-border p-4">
+          {listChrome}
+        </div>
+        <AppSheet.Body scroll={false}>
+          <PageScrollArea className="min-h-0 flex-1">{sheetListBody}</PageScrollArea>
+        </AppSheet.Body>
+      </AppSheet>
     </div>
   );
 }

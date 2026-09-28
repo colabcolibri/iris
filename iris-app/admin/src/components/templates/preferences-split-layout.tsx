@@ -4,13 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import { PageContainer } from "@/components/templates/page-container";
 import { PagePanel } from "@/components/templates/page-panel";
 import { PageScrollArea } from "@/components/templates/page-scroll-area";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export type PreferencesSection = {
@@ -202,19 +197,12 @@ export function PreferencesSplitLayout({
         </div>
       </PageContainer.Content>
 
-      <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-        <SheetContent
-          side="left"
-          className="flex w-full max-w-md flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
-        >
-          <SheetHeader className="border-b border-border">
-            <SheetTitle className="text-base font-semibold text-foreground">
-              {title}
-            </SheetTitle>
-          </SheetHeader>
+      <AppSheet open={listSheetOpen} onOpenChange={setListSheetOpen} side="left" size="md">
+        <AppSheet.Header title={title} />
+        <AppSheet.Body scroll={false}>
           <PageScrollArea className="min-h-0 flex-1">{navBody}</PageScrollArea>
-        </SheetContent>
-      </Sheet>
+        </AppSheet.Body>
+      </AppSheet>
     </PageContainer>
   );
 }

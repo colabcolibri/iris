@@ -3,13 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, PanelLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { ReplyAuditTimeline } from "@/components/comments/reply-audit-timeline";
+import { AppSheet } from "@/components/templates/app-sheet";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -382,22 +377,15 @@ export function AgentRunsPage() {
                 </div>
               </PageScrollArea>
 
-              <Sheet open={listSheetOpen} onOpenChange={setListSheetOpen}>
-                <SheetContent
-                  side="left"
-                  className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
-                >
-                  <SheetHeader className="border-b border-border">
-                    <SheetTitle className="font-display text-lg font-semibold">
-                      {t.page.sheetTitle}
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="shrink-0 space-y-3 border-b border-border p-4">
-                    {listFilters}
-                  </div>
-                  <PageScrollArea>{listBody}</PageScrollArea>
-                </SheetContent>
-              </Sheet>
+              <AppSheet open={listSheetOpen} onOpenChange={setListSheetOpen} side="left" size="md">
+                <AppSheet.Header title={t.page.sheetTitle} />
+                <div className="shrink-0 space-y-3 border-b border-border p-4">
+                  {listFilters}
+                </div>
+                <AppSheet.Body scroll={false}>
+                  <PageScrollArea className="min-h-0 flex-1">{listBody}</PageScrollArea>
+                </AppSheet.Body>
+              </AppSheet>
             </>
           )}
         </div>
